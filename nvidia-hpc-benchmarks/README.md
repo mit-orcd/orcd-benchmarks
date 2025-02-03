@@ -1,5 +1,5 @@
 ## Download
-First, downlad a container from NGC. 
+First, downlad a container image from NGC. 
 https://catalog.ngc.nvidia.com/orgs/nvidia/containers/hpc-benchmarks
 ```
 module load apptainer
