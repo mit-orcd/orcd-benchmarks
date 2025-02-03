@@ -1,0 +1,23 @@
+#!/bin/bash
+#SBATCH -p pi_cdrennan_gpu            # Specifies the partition (queue) to use, here "pi_cdrennan_gpu"
+##SBATCH -C rocky8                      # Specifies the constraint that the node must run Rocky Linux 8
+#SBATCH -t 60                          # Sets a time limit of 60 minutes for the job
+#SBATCH -N 1                           # Requests 1 node for this job
+#SBATCH -n 48                          # Requests 96 CPU tasks (cores)
+##SBATCH -w node1804                    # Specifies a specific node to run the job (node1804)
+#SBATCH -o out_files/full-%N-%J.out    # Sets the output file format to "full-<node>-<jobID>.out" in the "out_files" directory
+##SBATCH --exclusive                    # (Commented out) Would make the node exclusively reserved for this job
+
+# Print the hostname of the node the job is running on
+hostname
+# Output the total number of requested cores
+echo "Requested cores = $SLURM_NTASKS"
+
+# Loop over different values for the number of threads to run the program with varying levels of parallelism
+for i in 1 2 4 8 16 48 72 96 144 192
+do
+  export OMP_NUM_THREADS=$i            # Set the number of OpenMP threads to the current value in the loop
+  echo "====== Run with $OMP_NUM_THREADS threads. ======"
+  time ../../src/pi_omp                # Run the program "pi_omp" and time its execution
+done
+

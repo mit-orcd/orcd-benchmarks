@@ -1,0 +1,10 @@
+/var/spool/slurmd/job60555595/slurm_script: line 17: ./MatrixMultiplication: No such file or directory
+/var/spool/slurmd/job60555595/slurm_script: line 17: ./MatrixMultiplication: No such file or directory
+/var/spool/slurmd/job60555595/slurm_script: line 17: ./MatrixMultiplication: No such file or directory
+/var/spool/slurmd/job60555595/slurm_script: line 17: ./MatrixMultiplication: No such file or directory
+/var/spool/slurmd/job60555595/slurm_script: line 17: ./MatrixMultiplication: No such file or directory
+/var/spool/slurmd/job60555595/slurm_script: line 17: ./MatrixMultiplication: No such file or directory
+/var/spool/slurmd/job60555595/slurm_script: line 17: ./MatrixMultiplication: No such file or directory
+/var/spool/slurmd/job60555595/slurm_script: line 17: ./MatrixMultiplication: No such file or directory
+/var/spool/slurmd/job60555595/slurm_script: line 17: ./MatrixMultiplication: No such file or directory
+/var/spool/slurmd/job60555595/slurm_script: line 17: ./MatrixMultiplication: No such file or directory
