@@ -22,9 +22,6 @@ nvidia-hpc-benchmarks/hpc-benchmarks_24.03.sif
 lamdalab-dl-benchmarks/pytorch/DeepLearningExamples
 lamdalab-dl-benchmarks/pytorch/results*
 nccl-tests/build-nvhpc*
-mpi-p2p/install
-mpi-p2p/src/r8*
-mpi-p2p/src/tsq*
 */log*
 */*/log*
 */*/*/log*
