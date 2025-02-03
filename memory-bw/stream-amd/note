@@ -1,0 +1,26 @@
+#AMD stream
+https://www.amd.com/en/developer/zen-software-studio/applications/spack/stream-benchmark.html
+# stream
+# https://www.cs.virginia.edu/stream/
+#
+# install with spack
+ spack install stream +openmp
+# run
+/orcd/software/community/001/rocky8/stream/5.10/2yg/bin/stream_c.exe
+
+# isntall from source
+# https://github.com/jeffhammond/STREAM/tree/master
+
+
+# description
+The STREAM benchmark is a simple, synthetic benchmark program that measures sustainable main memory bandwidth in MB/s and the corresponding computation rate for simple vector kernels.
+
+The general rule for running STREAM is that each array must be at least 4x the size of the sum of all the last-level caches used in the run, or 1 million elements, whichever is larger. 
+
+STREAM uses four kernels for analysis:
+
+"Copy'' measures transfer rates in the absence of arithmetic.
+"Scale'' adds a simple arithmetic operation.
+"Sum'' adds a third operand to allow multiple load/store ports on vector machines to be tested.
+"Triad'' allows chained/overlapped/fused multiply/add operations.
+
