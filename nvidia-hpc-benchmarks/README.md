@@ -1,9 +1,11 @@
-# First, downlad a container from NGC. 
-# https://catalog.ngc.nvidia.com/orgs/nvidia/containers/hpc-benchmarks
-
+## Download
+First, downlad a container from NGC. 
+https://catalog.ngc.nvidia.com/orgs/nvidia/containers/hpc-benchmarks
+```
 module load apptainer
 apptainer pull docker://nvcr.io/nvidia/hpc-benchmarks:24.09
+```
 
-# Run the job
+## Submit the job
 sbatch job.sh
 
