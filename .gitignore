@@ -25,7 +25,6 @@ nccl-tests/build-nvhpc*
 mpi-p2p/install
 mpi-p2p/src/r8*
 mpi-p2p/src/tsq*
-nccl-test/build-nvhpc*
 */log*
 */*/log*
 */*/*/log*
