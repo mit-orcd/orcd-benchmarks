@@ -1,7 +1,5 @@
 # NCCL Benchmark Report on Server with 8 H200 GPUs
 
-**Author:** Mikhail Serkov
-
 ## Overview
 
 This report presents the results of NCCL benchmark tests conducted on a server equipped with 8 H200 GPUs. The tests were run on two different kernel configurations:
