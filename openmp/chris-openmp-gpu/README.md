@@ -20,7 +20,7 @@ This directory contains example commands and scripts for building and running Op
 3. **Start an Apptainer shell with CUDA and custom path bindings**  
    ```bash
    apptainer shell --nv --env PATH="${PATH}" \
-       $(echo $PATH | tr ':' '\n' | grep -v /home/cnh/bin | grep -v /usr/bin | awk '{printf "--bind %s ", $1}') \
+       $(echo $PATH | tr ':' '\n' | grep -v /home/${USER}/bin | grep -v /usr/bin | awk '{printf "--bind %s ", $1}') \
        --bind /orcd/software/ rocky8-llvm.sif
    ```
 
