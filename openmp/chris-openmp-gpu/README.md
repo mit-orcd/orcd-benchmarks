@@ -1,4 +1,4 @@
-````markdown name=openmp/chris-openmp-gpu/README.md
+
 # chris-openmp-gpu
 
 This directory contains example commands and scripts for building and running OpenMP GPU benchmarks using LLVM and Apptainer on NVIDIA hardware.
@@ -44,4 +44,4 @@ This directory contains example commands and scripts for building and running Op
 ## Reference
 
 This setup is used for benchmarking OpenMP GPU offloading using LLVM on Rocky Linux 8.
-````
+
