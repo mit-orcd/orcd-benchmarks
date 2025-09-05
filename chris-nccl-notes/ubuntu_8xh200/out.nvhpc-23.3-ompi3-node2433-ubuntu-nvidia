@@ -1,0 +1,282 @@
+Bin dir = ../build-nvhpc-23.3-ompi3
+num_cpu = num_mpi_tasks = 
+num_gpu_per_task = 8
+%%%%%%%%% sendrecv_perf %%%%%%%%%%
+# nThread 1 nGpus 8 minBytes 1048576 maxBytes 17179869184 step: 4(factor) warmup iters: 5 iters: 20 agg iters: 1 validation: 1 graph: 0
+#
+# Using devices
+#  Rank  0 Group  0 Pid  32245 on   node2433 device  0 [0x19] NVIDIA H200
+#  Rank  1 Group  0 Pid  32245 on   node2433 device  1 [0x3b] NVIDIA H200
+#  Rank  2 Group  0 Pid  32245 on   node2433 device  2 [0x4c] NVIDIA H200
+#  Rank  3 Group  0 Pid  32245 on   node2433 device  3 [0x5d] NVIDIA H200
+#  Rank  4 Group  0 Pid  32245 on   node2433 device  4 [0x9b] NVIDIA H200
+#  Rank  5 Group  0 Pid  32245 on   node2433 device  5 [0xbb] NVIDIA H200
+#  Rank  6 Group  0 Pid  32245 on   node2433 device  6 [0xcb] NVIDIA H200
+#  Rank  7 Group  0 Pid  32245 on   node2433 device  7 [0xdb] NVIDIA H200
+#
+#                                                              out-of-place                       in-place          
+#       size         count      type   redop    root     time   algbw   busbw #wrong     time   algbw   busbw #wrong
+#        (B)    (elements)                               (us)  (GB/s)  (GB/s)            (us)  (GB/s)  (GB/s)       
+     1048576        262144     float     sum      -1    97.92   10.71   10.71      0    95.33   11.00   11.00    N/A
+     4194304       1048576     float     sum      -1    65.69   63.85   63.85      0    96.76   43.35   43.35    N/A
+    16777216       4194304     float     sum      -1    130.0  129.05  129.05      0    128.2  130.90  130.90    N/A
+    67108864      16777216     float     sum      -1    477.9  140.42  140.42      0    466.2  143.95  143.95    N/A
+   268435456      67108864     float     sum      -1    749.8  358.00  358.00      0    747.2  359.24  359.24    N/A
+  1073741824     268435456     float     sum      -1   2950.1  363.96  363.96      0   2950.5  363.92  363.92    N/A
+  4294967296    1073741824     float     sum      -1    11737  365.94  365.94      0    11736  365.96  365.96    N/A
+ 17179869184    4294967296     float     sum      -1    46862  366.61  366.61      0    46862  366.61  366.61    N/A
+# Out of bounds values : 0 OK
+# Avg bus bandwidth    : 223.966 
+#
+
+%%%%%%%%% reduce_perf %%%%%%%%%%
+# nThread 1 nGpus 8 minBytes 1048576 maxBytes 17179869184 step: 4(factor) warmup iters: 5 iters: 20 agg iters: 1 validation: 1 graph: 0
+#
+# Using devices
+#  Rank  0 Group  0 Pid  32386 on   node2433 device  0 [0x19] NVIDIA H200
+#  Rank  1 Group  0 Pid  32386 on   node2433 device  1 [0x3b] NVIDIA H200
+#  Rank  2 Group  0 Pid  32386 on   node2433 device  2 [0x4c] NVIDIA H200
+#  Rank  3 Group  0 Pid  32386 on   node2433 device  3 [0x5d] NVIDIA H200
+#  Rank  4 Group  0 Pid  32386 on   node2433 device  4 [0x9b] NVIDIA H200
+#  Rank  5 Group  0 Pid  32386 on   node2433 device  5 [0xbb] NVIDIA H200
+#  Rank  6 Group  0 Pid  32386 on   node2433 device  6 [0xcb] NVIDIA H200
+#  Rank  7 Group  0 Pid  32386 on   node2433 device  7 [0xdb] NVIDIA H200
+#
+#                                                              out-of-place                       in-place          
+#       size         count      type   redop    root     time   algbw   busbw #wrong     time   algbw   busbw #wrong
+#        (B)    (elements)                               (us)  (GB/s)  (GB/s)            (us)  (GB/s)  (GB/s)       
+     1048576        262144     float     sum       0    54.99   19.07   19.07      0    55.20   19.00   19.00      0
+     4194304       1048576     float     sum       0    59.36   70.66   70.66      0    58.04   72.27   72.27      0
+    16777216       4194304     float     sum       0    76.54  219.19  219.19      0    76.67  218.82  218.82      0
+    67108864      16777216     float     sum       0    215.7  311.12  311.12      0    215.5  311.41  311.41      0
+   268435456      67108864     float     sum       0    764.3  351.22  351.22      0    764.4  351.17  351.17      0
+  1073741824     268435456     float     sum       0   2951.3  363.83  363.83      0   2951.1  363.84  363.84      0
+  4294967296    1073741824     float     sum       0    11709  366.82  366.82      0    11709  366.81  366.81      0
+ 17179869184    4294967296     float     sum       0    46774  367.29  367.29      0    46768  367.34  367.34      0
+# Out of bounds values : 0 OK
+# Avg bus bandwidth    : 258.741 
+#
+
+%%%%%%%%% broadcast_perf %%%%%%%%%%
+# nThread 1 nGpus 8 minBytes 1048576 maxBytes 17179869184 step: 4(factor) warmup iters: 5 iters: 20 agg iters: 1 validation: 1 graph: 0
+#
+# Using devices
+#  Rank  0 Group  0 Pid  32519 on   node2433 device  0 [0x19] NVIDIA H200
+#  Rank  1 Group  0 Pid  32519 on   node2433 device  1 [0x3b] NVIDIA H200
+#  Rank  2 Group  0 Pid  32519 on   node2433 device  2 [0x4c] NVIDIA H200
+#  Rank  3 Group  0 Pid  32519 on   node2433 device  3 [0x5d] NVIDIA H200
+#  Rank  4 Group  0 Pid  32519 on   node2433 device  4 [0x9b] NVIDIA H200
+#  Rank  5 Group  0 Pid  32519 on   node2433 device  5 [0xbb] NVIDIA H200
+#  Rank  6 Group  0 Pid  32519 on   node2433 device  6 [0xcb] NVIDIA H200
+#  Rank  7 Group  0 Pid  32519 on   node2433 device  7 [0xdb] NVIDIA H200
+#
+#                                                              out-of-place                       in-place          
+#       size         count      type   redop    root     time   algbw   busbw #wrong     time   algbw   busbw #wrong
+#        (B)    (elements)                               (us)  (GB/s)  (GB/s)            (us)  (GB/s)  (GB/s)       
+     1048576        262144     float    none       0    56.83   18.45   18.45      0    55.55   18.88   18.88      0
+     4194304       1048576     float    none       0    178.5   23.50   23.50      0    59.25   70.79   70.79      0
+    16777216       4194304     float    none       0    77.11  217.58  217.58      0    77.22  217.26  217.26      0
+    67108864      16777216     float    none       0    218.7  306.91  306.91      0    217.4  308.73  308.73      0
+   268435456      67108864     float    none       0    769.1  349.02  349.02      0    768.8  349.17  349.17      0
+  1073741824     268435456     float    none       0   2984.2  359.81  359.81      0   2965.0  362.14  362.14      0
+  4294967296    1073741824     float    none       0    11771  364.89  364.89      0    11770  364.92  364.92      0
+ 17179869184    4294967296     float    none       0    47042  365.20  365.20      0    46950  365.92  365.92      0
+# Out of bounds values : 0 OK
+# Avg bus bandwidth    : 253.949 
+#
+
+%%%%%%%%% gather_perf %%%%%%%%%%
+# nThread 1 nGpus 8 minBytes 1048576 maxBytes 17179869184 step: 4(factor) warmup iters: 5 iters: 20 agg iters: 1 validation: 1 graph: 0
+#
+# Using devices
+#  Rank  0 Group  0 Pid  32643 on   node2433 device  0 [0x19] NVIDIA H200
+#  Rank  1 Group  0 Pid  32643 on   node2433 device  1 [0x3b] NVIDIA H200
+#  Rank  2 Group  0 Pid  32643 on   node2433 device  2 [0x4c] NVIDIA H200
+#  Rank  3 Group  0 Pid  32643 on   node2433 device  3 [0x5d] NVIDIA H200
+#  Rank  4 Group  0 Pid  32643 on   node2433 device  4 [0x9b] NVIDIA H200
+#  Rank  5 Group  0 Pid  32643 on   node2433 device  5 [0xbb] NVIDIA H200
+#  Rank  6 Group  0 Pid  32643 on   node2433 device  6 [0xcb] NVIDIA H200
+#  Rank  7 Group  0 Pid  32643 on   node2433 device  7 [0xdb] NVIDIA H200
+#
+#                                                              out-of-place                       in-place          
+#       size         count      type   redop    root     time   algbw   busbw #wrong     time   algbw   busbw #wrong
+#        (B)    (elements)                               (us)  (GB/s)  (GB/s)            (us)  (GB/s)  (GB/s)       
+     1048576         32768     float    none       0    40.68   25.77   22.55      0    39.69   26.42   23.12      0
+     4194304        131072     float    none       0    45.35   92.49   80.93      0    44.87   93.48   81.79      0
+    16777216        524288     float    none       0    52.91  317.08  277.44      0    52.54  319.32  279.40      0
+    67108864       2097152     float    none       0    171.3  391.79  342.82      0    171.1  392.33  343.29      0
+   268435456       8388608     float    none       0    638.4  420.49  367.93      0    638.3  420.54  367.97      0
+  1073741824      33554432     float    none       0   2506.6  428.36  374.81      0   2506.4  428.41  374.86      0
+  4294967296     134217728     float    none       0   9971.4  430.73  376.89      0   9971.3  430.73  376.89      0
+ 17179869184     536870912     float    none       0    39836  431.26  377.36      0    39838  431.24  377.34      0
+# Out of bounds values : 0 OK
+# Avg bus bandwidth    : 277.836 
+#
+
+%%%%%%%%% scatter_perf %%%%%%%%%%
+# nThread 1 nGpus 8 minBytes 1048576 maxBytes 17179869184 step: 4(factor) warmup iters: 5 iters: 20 agg iters: 1 validation: 1 graph: 0
+#
+# Using devices
+#  Rank  0 Group  0 Pid  32784 on   node2433 device  0 [0x19] NVIDIA H200
+#  Rank  1 Group  0 Pid  32784 on   node2433 device  1 [0x3b] NVIDIA H200
+#  Rank  2 Group  0 Pid  32784 on   node2433 device  2 [0x4c] NVIDIA H200
+#  Rank  3 Group  0 Pid  32784 on   node2433 device  3 [0x5d] NVIDIA H200
+#  Rank  4 Group  0 Pid  32784 on   node2433 device  4 [0x9b] NVIDIA H200
+#  Rank  5 Group  0 Pid  32784 on   node2433 device  5 [0xbb] NVIDIA H200
+#  Rank  6 Group  0 Pid  32784 on   node2433 device  6 [0xcb] NVIDIA H200
+#  Rank  7 Group  0 Pid  32784 on   node2433 device  7 [0xdb] NVIDIA H200
+#
+#                                                              out-of-place                       in-place          
+#       size         count      type   redop    root     time   algbw   busbw #wrong     time   algbw   busbw #wrong
+#        (B)    (elements)                               (us)  (GB/s)  (GB/s)            (us)  (GB/s)  (GB/s)       
+     1048576         32768     float    none       0    41.69   25.15   22.01      0    40.42   25.94   22.70      0
+     4194304        131072     float    none       0    46.75   89.73   78.51      0    46.23   90.72   79.38      0
+    16777216        524288     float    none       0    52.71  318.32  278.53      0    50.64  331.28  289.87      0
+    67108864       2097152     float    none       0    174.6  384.37  336.32      0    170.7  393.04  343.91      0
+   268435456       8388608     float    none       0    649.0  413.59  361.89      0    643.2  417.31  365.15      0
+  1073741824      33554432     float    none       0   2549.9  421.08  368.45      0   2538.0  423.06  370.18      0
+  4294967296     134217728     float    none       0    10136  423.74  370.77      0    10110  424.84  371.74      0
+ 17179869184     536870912     float    none       0    40412  425.12  371.98      0    40389  425.36  372.19      0
+# Out of bounds values : 0 OK
+# Avg bus bandwidth    : 275.222 
+#
+
+%%%%%%%%% reduce_scatter_perf %%%%%%%%%%
+# nThread 1 nGpus 8 minBytes 1048576 maxBytes 17179869184 step: 4(factor) warmup iters: 5 iters: 20 agg iters: 1 validation: 1 graph: 0
+#
+# Using devices
+#  Rank  0 Group  0 Pid  32920 on   node2433 device  0 [0x19] NVIDIA H200
+#  Rank  1 Group  0 Pid  32920 on   node2433 device  1 [0x3b] NVIDIA H200
+#  Rank  2 Group  0 Pid  32920 on   node2433 device  2 [0x4c] NVIDIA H200
+#  Rank  3 Group  0 Pid  32920 on   node2433 device  3 [0x5d] NVIDIA H200
+#  Rank  4 Group  0 Pid  32920 on   node2433 device  4 [0x9b] NVIDIA H200
+#  Rank  5 Group  0 Pid  32920 on   node2433 device  5 [0xbb] NVIDIA H200
+#  Rank  6 Group  0 Pid  32920 on   node2433 device  6 [0xcb] NVIDIA H200
+#  Rank  7 Group  0 Pid  32920 on   node2433 device  7 [0xdb] NVIDIA H200
+#
+#                                                              out-of-place                       in-place          
+#       size         count      type   redop    root     time   algbw   busbw #wrong     time   algbw   busbw #wrong
+#        (B)    (elements)                               (us)  (GB/s)  (GB/s)            (us)  (GB/s)  (GB/s)       
+     1048576         32768     float     sum      -1    52.30   20.05   17.54      0    51.95   20.18   17.66      0
+     4194304        131072     float     sum      -1    51.79   80.99   70.86      0    52.48   79.92   69.93      0
+    16777216        524288     float     sum      -1    72.21  232.32  203.28      0    71.60  234.30  205.02      0
+    67108864       2097152     float     sum      -1    193.8  346.28  303.00      0    193.7  346.48  303.17      0
+   268435456       8388608     float     sum      -1    703.8  381.39  333.71      0    702.5  382.13  334.36      0
+  1073741824      33554432     float     sum      -1   2684.4  400.00  350.00      0   2683.4  400.14  350.12      0
+  4294967296     134217728     float     sum      -1    10520  408.28  357.24      0    10411  412.56  360.99      0
+ 17179869184     536870912     float     sum      -1    41259  416.39  364.34      0    41354  415.44  363.51      0
+# Out of bounds values : 0 OK
+# Avg bus bandwidth    : 250.295 
+#
+
+%%%%%%%%% all_gather_perf %%%%%%%%%%
+# nThread 1 nGpus 8 minBytes 1048576 maxBytes 17179869184 step: 4(factor) warmup iters: 5 iters: 20 agg iters: 1 validation: 1 graph: 0
+#
+# Using devices
+#  Rank  0 Group  0 Pid  33055 on   node2433 device  0 [0x19] NVIDIA H200
+#  Rank  1 Group  0 Pid  33055 on   node2433 device  1 [0x3b] NVIDIA H200
+#  Rank  2 Group  0 Pid  33055 on   node2433 device  2 [0x4c] NVIDIA H200
+#  Rank  3 Group  0 Pid  33055 on   node2433 device  3 [0x5d] NVIDIA H200
+#  Rank  4 Group  0 Pid  33055 on   node2433 device  4 [0x9b] NVIDIA H200
+#  Rank  5 Group  0 Pid  33055 on   node2433 device  5 [0xbb] NVIDIA H200
+#  Rank  6 Group  0 Pid  33055 on   node2433 device  6 [0xcb] NVIDIA H200
+#  Rank  7 Group  0 Pid  33055 on   node2433 device  7 [0xdb] NVIDIA H200
+#
+#                                                              out-of-place                       in-place          
+#       size         count      type   redop    root     time   algbw   busbw #wrong     time   algbw   busbw #wrong
+#        (B)    (elements)                               (us)  (GB/s)  (GB/s)            (us)  (GB/s)  (GB/s)       
+     1048576         32768     float    none      -1    51.53   20.35   17.80      0    51.91   20.20   17.68      0
+     4194304        131072     float    none      -1    53.95   77.75   68.03      0    52.68   79.61   69.66      0
+    16777216        524288     float    none      -1    68.31  245.60  214.90      0    67.12  249.96  218.71      0
+    67108864       2097152     float    none      -1    186.3  360.15  315.13      0    185.7  361.38  316.20      0
+   268435456       8388608     float    none      -1    665.0  403.68  353.22      0    663.8  404.37  353.82      0
+  1073741824      33554432     float    none      -1   2581.1  416.00  364.00      0   2572.9  417.33  365.16      0
+  4294967296     134217728     float    none      -1    10240  419.44  367.01      0    10216  420.41  367.86      0
+ 17179869184     536870912     float    none      -1    40737  421.73  369.01      0    40743  421.66  368.96      0
+# Out of bounds values : 0 OK
+# Avg bus bandwidth    : 259.197 
+#
+
+%%%%%%%%% all_reduce_perf %%%%%%%%%%
+# nThread 1 nGpus 8 minBytes 1048576 maxBytes 17179869184 step: 4(factor) warmup iters: 5 iters: 20 agg iters: 1 validation: 1 graph: 0
+#
+# Using devices
+#  Rank  0 Group  0 Pid  33170 on   node2433 device  0 [0x19] NVIDIA H200
+#  Rank  1 Group  0 Pid  33170 on   node2433 device  1 [0x3b] NVIDIA H200
+#  Rank  2 Group  0 Pid  33170 on   node2433 device  2 [0x4c] NVIDIA H200
+#  Rank  3 Group  0 Pid  33170 on   node2433 device  3 [0x5d] NVIDIA H200
+#  Rank  4 Group  0 Pid  33170 on   node2433 device  4 [0x9b] NVIDIA H200
+#  Rank  5 Group  0 Pid  33170 on   node2433 device  5 [0xbb] NVIDIA H200
+#  Rank  6 Group  0 Pid  33170 on   node2433 device  6 [0xcb] NVIDIA H200
+#  Rank  7 Group  0 Pid  33170 on   node2433 device  7 [0xdb] NVIDIA H200
+#
+#                                                              out-of-place                       in-place          
+#       size         count      type   redop    root     time   algbw   busbw #wrong     time   algbw   busbw #wrong
+#        (B)    (elements)                               (us)  (GB/s)  (GB/s)            (us)  (GB/s)  (GB/s)       
+     1048576        262144     float     sum      -1    54.95   19.08   33.39      0    53.40   19.64   34.36      0
+     4194304       1048576     float     sum      -1    53.40   78.55  137.45      0    54.49   76.97  134.69      0
+    16777216       4194304     float     sum      -1    123.4  135.99  237.99      0    122.3  137.14  239.99      0
+    67108864      16777216     float     sum      -1    347.2  193.31  338.30      0    347.6  193.04  337.82      0
+   268435456      67108864     float     sum      -1   1318.9  203.53  356.18      0   1302.3  206.13  360.72      0
+  1073741824     268435456     float     sum      -1   5126.8  209.44  366.51      0   5120.8  209.68  366.94      0
+  4294967296    1073741824     float     sum      -1    20394  210.60  368.56      0    20408  210.45  368.30      0
+ 17179869184    4294967296     float     sum      -1    81457  210.91  369.09      0    81491  210.82  368.93      0
+# Out of bounds values : 0 OK
+# Avg bus bandwidth    : 276.202 
+#
+
+%%%%%%%%% alltoall_perf %%%%%%%%%%
+# nThread 1 nGpus 8 minBytes 1048576 maxBytes 17179869184 step: 4(factor) warmup iters: 5 iters: 20 agg iters: 1 validation: 1 graph: 0
+#
+# Using devices
+#  Rank  0 Group  0 Pid  40380 on   node2433 device  0 [0x19] NVIDIA H200
+#  Rank  1 Group  0 Pid  40380 on   node2433 device  1 [0x3b] NVIDIA H200
+#  Rank  2 Group  0 Pid  40380 on   node2433 device  2 [0x4c] NVIDIA H200
+#  Rank  3 Group  0 Pid  40380 on   node2433 device  3 [0x5d] NVIDIA H200
+#  Rank  4 Group  0 Pid  40380 on   node2433 device  4 [0x9b] NVIDIA H200
+#  Rank  5 Group  0 Pid  40380 on   node2433 device  5 [0xbb] NVIDIA H200
+#  Rank  6 Group  0 Pid  40380 on   node2433 device  6 [0xcb] NVIDIA H200
+#  Rank  7 Group  0 Pid  40380 on   node2433 device  7 [0xdb] NVIDIA H200
+#
+#                                                              out-of-place                       in-place          
+#       size         count      type   redop    root     time   algbw   busbw #wrong     time   algbw   busbw #wrong
+#        (B)    (elements)                               (us)  (GB/s)  (GB/s)            (us)  (GB/s)  (GB/s)       
+     1048576         32768     float    none      -1    76.66   13.68   11.97      0    76.27   13.75   12.03    N/A
+     4194304        131072     float    none      -1    104.9   40.00   35.00      0    104.4   40.17   35.15    N/A
+    16777216        524288     float    none      -1    108.3  154.95  135.58      0    107.2  156.53  136.96    N/A
+    67108864       2097152     float    none      -1    209.5  320.36  280.32      0    205.3  326.93  286.07    N/A
+   268435456       8388608     float    none      -1    746.5  359.61  314.66      0    725.8  369.85  323.62    N/A
+  1073741824      33554432     float    none      -1   2822.3  380.45  332.90      0   2771.3  387.45  339.02    N/A
+  4294967296     134217728     float    none      -1    10811  397.29  347.63      0    10991  390.77  341.93    N/A
+ 17179869184     536870912     float    none      -1    43203  397.66  347.95      0    43303  396.74  347.15    N/A
+# Out of bounds values : 0 OK
+# Avg bus bandwidth    : 226.744 
+#
+
+%%%%%%%%% hypercube_perf %%%%%%%%%%
+# nThread 1 nGpus 8 minBytes 1048576 maxBytes 17179869184 step: 4(factor) warmup iters: 5 iters: 20 agg iters: 1 validation: 1 graph: 0
+#
+# Using devices
+#  Rank  0 Group  0 Pid  40667 on   node2433 device  0 [0x19] NVIDIA H200
+#  Rank  1 Group  0 Pid  40667 on   node2433 device  1 [0x3b] NVIDIA H200
+#  Rank  2 Group  0 Pid  40667 on   node2433 device  2 [0x4c] NVIDIA H200
+#  Rank  3 Group  0 Pid  40667 on   node2433 device  3 [0x5d] NVIDIA H200
+#  Rank  4 Group  0 Pid  40667 on   node2433 device  4 [0x9b] NVIDIA H200
+#  Rank  5 Group  0 Pid  40667 on   node2433 device  5 [0xbb] NVIDIA H200
+#  Rank  6 Group  0 Pid  40667 on   node2433 device  6 [0xcb] NVIDIA H200
+#  Rank  7 Group  0 Pid  40667 on   node2433 device  7 [0xdb] NVIDIA H200
+#
+#                                                              out-of-place                       in-place          
+#       size         count      type   redop    root     time   algbw   busbw #wrong     time   algbw   busbw #wrong
+#        (B)    (elements)                               (us)  (GB/s)  (GB/s)            (us)  (GB/s)  (GB/s)       
+     1048576         32768     float              -1    177.5    5.17    5.17  586144    120.6    7.61    7.61  589024
+     4194304        131072     float              -1    220.3   16.66   16.66  1.75693e+06    145.8   25.16   25.16  1.6871e+06
+    16777216        524288     float              -1    101.8  144.19  144.19  4.23776e+06    74.29  197.60  197.60  4.0415e+06
+    67108864       2097152     float              -1    275.8  212.88  212.88  1.54766e+07    271.7  216.14  216.14  1.61979e+07
+   268435456       8388608     float              -1   1046.3  224.50  224.50  8.50159e+07    993.2  236.48  236.48  7.38512e+07
+  1073741824      33554432     float              -1   4135.5  227.19  227.19  4.55052e+08   4016.3  233.93  233.93  4.4309e+08
+  4294967296     134217728     float              -1    15851  237.09  237.09  9.53236e+08    15470  242.93  242.93  1.00243e+09
+ 17179869184     536870912     float              -1    62741  239.60  239.60  4.25755e+09    60748  247.46  247.46  4.18293e+09
+# Out of bounds values : 16 FAILED
+# Avg bus bandwidth    : 169.66 
+#
