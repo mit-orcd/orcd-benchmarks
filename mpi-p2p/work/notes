@@ -1,5 +1,0 @@
-
-
-#sbatch name.sh r8 4.1.4-pmi-ucx-x86_64
-bash pt2pt_dynamic.sh r8 4.1.4-pmi-ucx-x86_64
-

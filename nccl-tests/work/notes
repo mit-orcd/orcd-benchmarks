@@ -1,4 +1,0 @@
-
-nodes 1802-1803, 2702-2703: without nv_mempeer, 15 GB/s
-nodes 1702-1703, 2802-2803: with nv_mempeer, network error
-
