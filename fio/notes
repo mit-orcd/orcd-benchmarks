@@ -1,0 +1,15 @@
+
+# document
+https://fio.readthedocs.io/en/latest/fio_doc.html
+
+# test scratch dir, available in mit_normal, mit_nomral_gpu
+/orcd/scratch/orcd/005/shaohao/
+/orcd/scratch/orcd/006/shaohao/
+/orcd/scratch/orcd/007/shaohao/
+/orcd/scratch/orcd/008/shaohao/
+
+# get results
+
+grep -e "directory" -e "IOPS" output-1node/* 
+grep -e "directory" -e "IOPS" output-1node/* |grep "orcd/011" -A 2
+grep -e "directory" -e "IOPS" output-mnode/* |grep "orcd/011" -A 2

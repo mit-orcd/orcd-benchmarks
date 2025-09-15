@@ -1,0 +1,33 @@
+# =====================================
+# build with the mpi in nvhpc 
+module load nvhpc/24.5
+NVHPC_HOME=/orcd/software/community/001/rocky8/nvhpc/2024_245/Linux_x86_64/24.5
+make MPI=1 MPI_HOME=$NVHPC_HOME/comm_libs/mpi CUDA_HOME=$NVHPC_HOME/cuda  NCCL_HOME=$NVHPC_HOME/comm_libs/nccl
+# CUDA_HOME is also set in the modules
+
+# or run the build script
+./build.sh
+
+#rename the build dir
+mv build build-nvhpc-24.5
+
+# =====================================
+# build with the mpi in nvhpc 
+#module load gcc/12.2.0-x86_64
+#module load openmpi/4.1.4-pmi-ucx-x86_64
+make MPI=1 MPI_HOME=/orcd/software/community/001/rocky8/openmpi/4.1.4/o6z CUDA_HOME=/software/nvhpc/2023_233/Linux_x86_64/23.3/cuda  NCCL_HOME=/software/nvhpc/2023_233/Linux_x86_64/23.3/comm_libs/nccl
+
+
+# =====================================
+module use /orcd/software/community/001/modulefiles/rocky8
+module purge
+module load nvhpc/2024_245/24.5
+make MPI=1 MPI_HOME=/orcd/software/community/001/rocky8/nvhpc/2024_245/Linux_x86_64/24.5/comm_libs/mpi CUDA_HOME=/orcd/software/community/001/rocky8/nvhpc/2024_245/Linux_x86_64/24.5/cuda  NCCL_HOME=/orcd/software/community/001/rocky8/nvhpc/2024_245/Linux_x86_64/24.5/comm_libs/nccl
+
+# =====================================
+# best build. Build on compute nodes not on the head node.
+module use /orcd/software/community/001/modulefiles/rocky8
+module purge
+module load nvhpc/2024_245/24.5
+module load openmpi/4.1.4-pmi-ucx-x86_64
+make MPI=1 MPI_HOME=/orcd/software/community/001/rocky8/openmpi/4.1.4/o6z CUDA_HOME=/orcd/software/community/001/rocky8/nvhpc/2024_245/Linux_x86_64/24.5/cuda  NCCL_HOME=/orcd/software/community/001/rocky8/nvhpc/2024_245/Linux_x86_64/24.5/comm_libs/nccl

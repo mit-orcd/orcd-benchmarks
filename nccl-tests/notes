@@ -1,0 +1,59 @@
+#!/bin/bash
+# new nodes
+-p mit_normal_gpu 
+--reservation=orcd_testing
+
+3100-3101,3202-3205,3300,3400,3404,3506
+
+added  gpu node3614 to partition pi_jhm (included in orcd_testing reservation)
+added cpu nodes node[3303-3314] to mit_normal (included in orcd_testing reservation)
+
+# notes
+GPU communication benchmarks:
+https://github.com/NVIDIA/nvbandwidth 
+https://github.com/NVIDIA/cuda-samples/tree/master/Samples/5_Domain_Specific/p2pBandwidthLatencyTest
+
+----------------------
+
+To enable NCCL on two GPUs across two nodes, the admin team needs to do these on the compute nodes
+The bandwitch reaches ~ 23 GB/s after 1, 2 and 3 is done. 
+
+
+1. Install nv_peermem.
+
+check if nvidia_peermem is installed
+lsmod |grep peer
+modprobe -v nvidia-peermem
+
+The bandwidth is ~ 15 GB without 1.
+
+2. Resetting IP address of the IB cards.
+
+3. Turning off the PCI Access Control Services (ACS). 
+This can be done from the BIOS by disabling IO virtualization (vt-d or iommu) or VT-d. 
+
+There will be error like this without 2 and 3. 
+
+node2434: Test NCCL failure common.cu:307 'remote process exited or there was a network error / '
+ .. node2434 pid 204080: Test failure common.cu:405
+ .. node2434 pid 204080: Test failure common.cu:592
+ .. node2434 pid 204080: Test failure sendrecv.cu:103
+ .. node2434 pid 204080: Test failure common.cu:623
+ .. node2434 pid 204080: Test failure common.cu:1078
+ .. node2434 pid 204080: Test failure common.cu:891
+node2433: Test NCCL failure common.cu:307 'remote process exited or there was a network error / '
+ .. node2433 pid 47492: Test failure common.cu:405
+ .. node2433 pid 47492: Test failure common.cu:592
+ .. node2433 pid 47492: Test failure sendrecv.cu:103
+ .. node2433 pid 47492: Test failure common.cu:623
+ .. node2433 pid 47492: Test failure common.cu:1078
+ .. node2433 pid 47492: Test failure common.cu:891
+
+
+# Refernces:
+
+https://mit-orcd.slack.com/archives/C07E238AJ9G/p1734119002703879?thread_ts=1733933099.093179&cid=C07E238AJ9G
+https://github.com/NVIDIA/nccl/issues/162
+https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/troubleshooting.html
+
+

@@ -1,0 +1,36 @@
+#get results
+grep num_workers=0 out/bw-llama* |grep GB
+grep num_workers=96 out/bw-imagenet*
+
+======================================
+Your LLaMA dataset is stored in .pt or .bin files, each containing tokenized chunks (e.g., [seq_len] int32 or int16 arrays).
+
+You can adjust this for real datasets once you're using actual LLaMA training files.
+
+Real LLaMA datasets may use .bin files with memory-mapped reads. If that’s the case, we can update this to benchmark using mmap.
+
+You can change torch.save/load to numpy or memmap if needed.
+
+You can also simulate larger vocab sizes or use int16 instead of int32 to match the tokenizer output format.
+
+
+========================================
+
+In PyTorch's DataLoader, setting num_workers=0 means that data loading will occur in the main process. This implies that no additional worker processes will be spawned for parallel data loading.
+
+Here's a breakdown of the differences between num_workers=0 and num_workers=1 in PyTorch's DataLoader:
+num_workers=0
+Data Loading: The data loading process happens entirely within the main process.
+Single Thread: Only the main thread is used for fetching data.
+Bottleneck Potential: This can create a bottleneck, as the main process must wait for data loading to complete before proceeding with training.
+Debugging: It's useful for debugging purposes or when working with very small datasets.
+Memory Usage: Lower memory consumption because it doesn't spawn additional processes.
+Speed: Can be faster if data is already in memory, as no extra overhead from process creation.
+No Parallelism: Data loading is not parallelized.
+num_workers=1
+Data Loading: Data loading is handled by a single worker process.
+Separate Process: This worker process is separate from the main training process.
+Improved Performance: Can provide a small performance improvement over num_workers=0 by offloading data loading from the main process.
+Still Slow: While better than num_workers=0, it's still not utilizing full parallelism, so it can be slow.
+Memory Usage: Slightly higher memory usage compared to num_workers=0 because of the additional process.
+Parallelism: Limited parallelism as it only uses one worker process.

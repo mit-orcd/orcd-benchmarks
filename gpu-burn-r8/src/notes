@@ -1,0 +1,4 @@
+
+module load cuda/12.4
+make CUDAPATH=/orcd/software/core/001/pkg/cuda/12.4
+

@@ -1,0 +1,9 @@
+
+
+#sbatch name.sh r8 4.1.4-pmi-ucx-x86_64
+bash pt2pt_dynamic.sh r8 4.1.4-pmi-ucx-x86_64
+
+
+# new openmpi
+module use /orcd/software/community/001/spack/stage/milechin/20250829/core/modulefiles/
+module load gcc/12.2.0/openmpi/4.1.4

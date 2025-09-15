@@ -1,0 +1,12 @@
+# ssh to the node or get an interactive session
+srun -t 60 -n 8 --gres=gpu:4 -p ou_bcs_low --mem=10GB --pty bash
+srun -t 60 -n 8 --gres=gpu:4 -p mit_normal_gpu -w node2906 --mem=10GB --pty bash
+srun -t 60 -n 8 --gres=gpu:4 -p mit_normal_gpu -w node2804 --mem=10GB --pty bash
+# run 
+./gpu_burn -tc 300  
+./gpu_burn 300
+./gpu_burn -d 300
+
+# get results
+grep -B 1  Killing  mit_normal_gpu/output-l40s/std32_node*
+

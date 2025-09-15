@@ -1,0 +1,13 @@
+# Docs
+https://catalog.ngc.nvidia.com/orgs/nvidia/containers/hpc-benchmarks
+
+# Download
+module load apptainer
+apptainer pull docker://nvcr.io/nvidia/hpc-benchmarks:24.03
+apptainer pull docker://nvcr.io/nvidia/hpc-benchmarks:25.04
+
+# run
+srun -N 16 --ntasks-per-node=4 --cpu-bind=none --mpi=pmix \
+     --container-image="${CONT}" \
+     ./hpl.sh --dat /workspace/hpl-linux-x86_64/sample-dat/HPL-64GPUs.dat
+
