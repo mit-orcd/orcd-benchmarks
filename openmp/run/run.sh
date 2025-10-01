@@ -1,4 +1,3 @@
-#nodes=(4505 4506 4507)
 nodes=($1)
 partition=$2  # mit_normal_gpu #ou_sloan_gpu  # mit_normal # mit_normal_gpu
 reservation=$3 # orcd_testing # ""  #orcd_testing  #  WareWulf_testing

@@ -32,7 +32,8 @@ for i in ${!nodes[@]}; do
 echo "env_file: ${env_dir}/env.sh"
 
 #source $env_dir/env.sh r8 4.1.4-pmi-ucx-x86_64
-source $env_dir/env.sh r8 4.1.4-new
+#source $env_dir/env.sh r8 4.1.4-new
+source $env_dir/env.sh r8 4.1.4
 
 echo "number of nodes = \${SLURM_NNODES}"
 echo "total number of tasks = \${SLURM_NTASKS}"

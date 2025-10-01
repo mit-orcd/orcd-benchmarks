@@ -1,14 +1,15 @@
 #!/bin/bash
 #SBATCH -t 100
-#SBATCH -p pi_mshoulde
+#SBATCH -p ou_bcs_low  #pi_mshoulde
 #SBATCH -q normal
 #SBATCH --mem=100GB
 #SBATCH -N 1
-#SBATCH -n 4
-#SBATCH -w node4508
-#SBATCH --gres=gpu:h100:2
+#SBATCH -n 8
+#SBATCH -w node3804
+#SBATCH --gres=gpu:a100:8
 #SBATCH --reservation=orcd_testing
 #SBATCH --exclusive
+#SBATCH -o out/%N-%J.out
 
 hostname
 
@@ -18,7 +19,7 @@ module load apptainer/1.1.9
 module list
 which singularity
 
-gpu_count=2
+gpu_count=8
 root_dir=/orcd/data/orcd/002/benchmarks/nvidia-hpc-benchmarks
 script_dir=$root_dir/run/hpc-benchmarks_25.04.sif
 

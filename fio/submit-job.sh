@@ -4,5 +4,6 @@
 #sbatch -p mit_normal_gpu -w node3101 job.sh scratch 008
 #sbatch -p mit_normal_gpu -w node3005 job.sh scratch 007
 #sbatch -p mit_normal_gpu -w node3007 job.sh scratch 006
-sbatch -p mit_normal job.sh scratch 002
+#sbatch -p mit_normal job.sh scratch 002
+sbatch -p ou_bcs_low -w node3804 job.sh scratch 002
 

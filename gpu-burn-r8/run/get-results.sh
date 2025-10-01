@@ -1,5 +1,6 @@
 partition=$1  # pg_tata #mit_normal_gpu
-N_lines=$2 
+N_lines=$(( $2 + 2 ))   # $2 
+echo $N_line
 gpu_type=$3
 
 root_dir=/orcd/data/orcd/002/benchmarks/gpu-burn-r8

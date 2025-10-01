@@ -4,7 +4,13 @@
 # 3 = version
 
 OSU_BENCH=osu-micro-benchmarks-7.5-1
-DESTINATION="$1-$3"
+
+if [ $2 = "intel-hpc" ]; then
+  DESTINATION="$1-intel-$3"
+else
+  DESTINATION="$1-$3"
+fi
+
 INSTALL_DIR="$PWD/../install/$DESTINATION"
 
 # create install dir
@@ -21,15 +27,10 @@ if [ ! -d $OSU_BENCH ]; then
 fi
 
 # load modules
-#module use /orcd/software/community/001/spack/stage/lauren/modulefiles
-#module use /orcd/software/community/001/spack/modulefiles/linux-rocky8-x86_64/gcc/12.2.0
-module use /orcd/software/community/001/modulefiles
 
-# module purge
-module load gcc/12.2.0-x86_64 
 module load "$2/$3"  # openmpi/$2
 
-if [ $2 = "intel" ]; then
+if [ $2 = "intel-hpc" ]; then
   MPIC=mpiicx
   MPICPP=mpiicpx
 else

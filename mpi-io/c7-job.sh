@@ -7,9 +7,11 @@
 #SBATCH --mem=30GB   # 128GB
 #SBATCH -o out/%x-%N-%j
 
-module load gcc/6.2.0 openmpi/3.0.
+module load gcc/6.2.0 openmpi/3.0.4
 
-DIR="/orcd/scratch/orcd/002/shaohao/mpi-io"
+#DIR="/orcd/scratch/orcd/002/shaohao/mpi-io"
+DIR="/home/shaohao/orcd/scratch/mpi-io"
+echo $DIR
 mkdir -p $DIR
 EXE="mpi-io-bw-c7"
 cp $EXE $DIR
@@ -20,7 +22,7 @@ pwd
 for n in 1 2 4 8 16 32
 do
   echo "====== Run with $n MPI tasks ======"
-  mpirun -np $n ./mpi-io-bw
+  mpirun -np $n ./$EXE
 done
 
 #rm -f $EXE

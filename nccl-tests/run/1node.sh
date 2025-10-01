@@ -12,7 +12,8 @@
 job_name=$SLURM_JOB_NAME
 BUILD_DIR=../build-$job_name
 
-module load nvhpc/24.5
+#module load nvhpc/24.5
+module load nvhpc/23.3
 #module load openmpi/5.0.6
 #module load openmpi/4.1.4
 
