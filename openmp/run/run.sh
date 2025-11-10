@@ -4,6 +4,17 @@ reservation=$3 # orcd_testing # ""  #orcd_testing  #  WareWulf_testing
 qos=$4 # unlimited 
 cpu_count=$5 # 32  #48  # 176 # 96 # 88  # 120  # 240  # cores: reserved cores for GPUs
 
+# Source the reservation access control library
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LIB_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")/lib"
+source "${LIB_DIR}/reservation_access_control.sh"
+
+# Validate reservation access before submitting jobs
+if ! validate_reservation_access "$reservation"; then
+    echo "ERROR: Cannot submit jobs due to reservation access restrictions." >&2
+    exit 1
+fi
+
 #echo $nodes
 #echo $partition
 #echo $reservation

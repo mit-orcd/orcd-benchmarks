@@ -7,6 +7,17 @@ cpu_count=$5   # 8 # 4
 gpu_type=$6  #l40s  # h200
 ngpus=$7
 
+# Source the reservation access control library
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LIB_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")/lib"
+source "${LIB_DIR}/reservation_access_control.sh"
+
+# Validate reservation access before submitting jobs
+if ! validate_reservation_access "$reservation"; then
+    echo "ERROR: Cannot submit jobs due to reservation access restrictions." >&2
+    exit 1
+fi
+
 #echo $nodes
 #echo $partition
 #echo $reservation
