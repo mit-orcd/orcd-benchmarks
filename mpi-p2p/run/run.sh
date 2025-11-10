@@ -4,6 +4,17 @@ partition=$2  # mit_normal_gpu #ou_sloan_gpu  # mit_normal # mit_normal_gpu
 reservation=$3 # orcd_testing # ""  #orcd_testing  #  WareWulf_testing
 qos=$4 # unlimited 
 
+# Source the reservation access control library
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LIB_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")/lib"
+source "${LIB_DIR}/reservation_access_control.sh"
+
+# Validate reservation access before submitting jobs
+if ! validate_reservation_access "$reservation"; then
+    echo "ERROR: Cannot submit jobs due to reservation access restrictions." >&2
+    exit 1
+fi
+
 output_dir=/orcd/data/orcd/002/benchmarks/mpi-p2p/work/$partition/output
 mkdir -p $output_dir
 env_dir=/orcd/data/orcd/002/benchmarks/mpi-p2p/work

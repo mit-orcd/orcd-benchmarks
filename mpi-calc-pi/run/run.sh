@@ -5,6 +5,17 @@ reservation=$3 #orcd_testing  # "" #WareWulf_testing  # orcd_testing
 qos=$4
 cpu_count=$5  # 32 #48  # 176  #96  # 88  # 40  # 192    # CHANGE_ME: how many physical cores are on the node.
 
+# Source the reservation access control library
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LIB_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")/lib"
+source "${LIB_DIR}/reservation_access_control.sh"
+
+# Validate reservation access before submitting jobs
+if ! validate_reservation_access "$reservation"; then
+    echo "ERROR: Cannot submit jobs due to reservation access restrictions." >&2
+    exit 1
+fi
+
 output_dir=/orcd/data/orcd/002/benchmarks/mpi-calc-pi/work/$partition/output   # CHANGE_ME: where the output results should be stored
 echo "$output_dir"
 
