@@ -108,7 +108,11 @@ The validation gracefully handles environments where:
 
 ## Testing
 
-A test script is provided at `/test/test_reservation_access.sh` to verify the validation logic works correctly:
+Two test scripts are provided to verify and demonstrate the validation logic:
+
+### 1. Unit Test Script
+
+`/test/test_reservation_access.sh` verifies the validation logic works correctly:
 
 ```bash
 ./test/test_reservation_access.sh
@@ -119,6 +123,21 @@ The test script validates:
 - 'none' reservation handling
 - Real reservation access (if SLURM available)
 - Non-existent reservation handling
+
+### 2. Demonstration Script
+
+`/test/demo_reservation_access.sh` demonstrates the access control mechanism with realistic scenarios:
+
+```bash
+./test/demo_reservation_access.sh
+```
+
+The demo script shows:
+- Unrestricted reservation access (allows all users)
+- Restricted reservation access (only allows explicitly listed users)
+- Non-existent reservation handling (clear error messages)
+
+This helps users understand how the access control works in practice.
 
 ## Benefits
 
