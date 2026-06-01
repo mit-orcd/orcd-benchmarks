@@ -72,10 +72,8 @@ gpu-fryer/gpu-fryer
 nccl-tests/build-*/
 nccl-tests/build_logs/
 
-# Embedded upstream git repos — excluded wholesale.
-# User should decide: submodule, flatten (remove inner .git), or keep external.
-gpu-burn-r8/
-nccl-tests/
+# Embedded upstream git repos: integrated via the claude.md whitelist
+# (run/job scripts + readme/md only); their source subtrees stay excluded below.
 
 # ─── Benchmark source trees (commit run scripts only) ───────────────────
 megatron-lm/Megatron-LM/
@@ -117,30 +115,24 @@ rsync.sh.bak
 *.swo
 CLAUDE.md
 
-# ─── Secondary benchmarks not yet integrated with py-all-bench ──────────
-# These dirs contain mostly benchmark source trees / tarballs / outputs.
-# Exclude wholesale for now; add a README + whitelist of run scripts when
-# integrating any of them.
-cuda/
+# ─── Secondary benchmarks ──────────────────────────────────────────────
+# Integrated dirs (cuda, dataloader, fio, mpi-io, mpi-laplace, stream-amd,
+# stream-intel, plus gpu-burn-r8 / nccl-tests above) sync run scripts +
+# readme/md per claude.md; their source/output is filtered by the type rules
+# elsewhere in this file. The dirs below stay excluded wholesale until integrated.
 cupy/
 dask/
-dataloader/
 dl/
 dlio/
 dynamo/
-fio/
 hep-score/
 hpl/
 memory-bw/
 mlperf/
 mpi-gpu/
-mpi-io/
-mpi-laplace/
 nccl_tests/
 node_architecture/
 nodes/
-stream-amd/
-stream-intel/
 
 # all-bench: keep only run*.sh and get-results*.sh
 all-bench/out*

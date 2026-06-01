@@ -1,0 +1,50 @@
+export work_path="/orcd/data/orcd/022/benchmarks/megatron-lm"
+export megatron_path="$work_path/Megatron-LM"
+
+#Optional but often useful in containers. Set path to cuda driver libs for compiling pytorchInductor and TRITON. 
+export TRITON_LIBCUDA_PATH=/.singularity.d/libs
+export LD_LIBRARY_PATH=/.singularity.d/libs:$LD_LIBRARY_PATH
+export TORCH_EXTENSIONS_DIR=$PWD/torch_extensions
+export XDG_CACHE_HOME=$PWD/xdg_cache
+
+# the number of gpus is the first input argument, should be equal to nproc_per_node
+torchrun --standalone --nproc_per_node=$1 \
+        ${megatron_path}/pretrain_gpt.py \
+        --mock-data \
+        --tokenizer-type NullTokenizer \
+        --vocab-size 50304 \
+        \
+        --tensor-model-parallel-size 1 \
+        --pipeline-model-parallel-size 1 \
+        --data-parallel-sharding-strategy no_shard \
+        \
+        --micro-batch-size 8 \
+        --global-batch-size 128 \
+        \
+        --num-layers 12 \
+        --hidden-size 768 \
+        --num-attention-heads 12 \
+        --seq-length 1024 \
+        --max-position-embeddings 1024 \
+        \
+        --train-iters 2000 \
+        --lr 3e-4 \
+        --min-lr 3e-5 \
+        --lr-decay-style cosine \
+        --lr-warmup-iters 10 \
+        --lr-decay-iters 50 \
+        \
+        --weight-decay 0.1 \
+        --adam-beta1 0.9 \
+        --adam-beta2 0.95 \
+        --clip-grad 1.0 \
+        \
+        --bf16 \
+        \
+        --eval-interval 1000000 \
+        --save-interval 1000000 \
+        --log-interval 20 \
+	--log-throughput \
+	--timing-log-level 2 
+
+
