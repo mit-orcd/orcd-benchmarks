@@ -6,7 +6,7 @@
 #SBATCH -J fstor
 #SBATCH -o output/out.%x-%N-%J
 
-#DIR=/orcd/scratch/orcd/002/shaohao/fio-data/
+#DIR=/orcd/scratch/orcd/022/shaohao/fio-data/
 DIR=/orcd/scratch/bcs/002/shaohao/fio-data/
 #DIR=/orcd/compute/bcs/001/shaohao/fio-data/
 mkdir -p $DIR

@@ -14,11 +14,11 @@ partition=pi_mshoulde #pg_tata # mit_normal_gpu #ou_sloan_gpu  # mit_normal # mi
 reservation=orcd_testing # ""  #orcd_testing  #  WareWulf_testing
 qos=unlimited
 cpu_count=32  #48  # 176 # 96  # 48 # 88  # 120  # 32 # 96  # 240  # physical cores - reserved cores for GPUs
-output_dir=/orcd/data/orcd/002/benchmarks/openmp/work/$partition/output
+output_dir=/orcd/data/orcd/022/benchmarks/openmp/work/$partition/output
 
 # don't change anything below
 mkdir -p $output_dir
-script_dir=/orcd/data/orcd/002/benchmarks/openmp/src/pi_omp
+script_dir=/orcd/data/orcd/022/benchmarks/openmp/src/pi_omp
 cores=$cpu_count
 thread_list=(1)
 threads=1

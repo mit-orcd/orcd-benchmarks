@@ -2,4 +2,8 @@
 https://mvapich.cse.ohio-state.edu/benchmarks/
 
 
+# cuda-aware mpi
+https://developer.nvidia.com/blog/benchmarking-cuda-aware-mpi/
+https://github.com/NVIDIA-developer-blog/code-samples/tree/master/posts/cuda-aware-mpi-example
+
 

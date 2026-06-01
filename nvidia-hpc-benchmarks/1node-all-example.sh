@@ -11,11 +11,11 @@ nodes=(3200)
 
 gpu_type=h200  # l40s  #h200  # l40s
 gpu_count=8  #4    # 8
-output_dir=/orcd/data/orcd/002/benchmarks/nvidia-hpc-benchmarks/$partition/output
+output_dir=/orcd/data/orcd/022/benchmarks/nvidia-hpc-benchmarks/$partition/output
 res=monthly_maint
 
 mkdir -p $output_dir
-script_dir=/orcd/data/orcd/002/benchmarks/nvidia-hpc-benchmarks/hpc-benchmarks_24.03.sif
+script_dir=/orcd/data/orcd/022/benchmarks/nvidia-hpc-benchmarks/hpc-benchmarks_24.03.sif
 
 for i in ${!nodes[@]}; do 
 	host=node${nodes[$i]}

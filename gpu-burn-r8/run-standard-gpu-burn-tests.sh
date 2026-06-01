@@ -15,13 +15,13 @@ partition_name=new_nodes
 host_name=$(hostname)
  
 # Define the directory path for test results
-output_dir="/orcd/data/orcd/002/benchmarks/gpu-burn-r8/$partition_name"
+output_dir="/orcd/data/orcd/022/benchmarks/gpu-burn-r8/$partition_name"
  
 # Create the directory if it doesn't exist
 mkdir -p "$output_dir"
  
 # Move to the GPU-Burn directory
-cd /orcd/data/orcd/002/benchmarks/gpu-burn-r8
+cd /orcd/data/orcd/022/benchmarks/gpu-burn-r8
  
 # Run the tests and save the output in the new directory with hostname in filenames
 echo "Running Test 1: Using tensor cores (300s)"

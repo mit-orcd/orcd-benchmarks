@@ -1,5 +1,5 @@
 partition=$1  # pg_tata #mit_normal_gpu
-N_lines=$2  # 5
+N_lines=$2
 
 dir=../work/$partition/output
 

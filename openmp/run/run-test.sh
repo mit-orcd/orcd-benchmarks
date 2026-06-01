@@ -4,11 +4,11 @@ res=$3 # orcd_testing # ""  #orcd_testing  #  WareWulf_testing
 qos=$4 # unlimited 
 cpu_count=$5 # 32  #48  # 176 # 96 # 88  # 120  # 240  # cores: reserved cores for GPUs
 
-output_dir=/orcd/data/orcd/002/benchmarks/openmp/work/$partition/output
+output_dir=/orcd/data/orcd/022/benchmarks/openmp/work/$partition/output
 
 # don't change anything below
 mkdir -p $output_dir
-script_dir=/orcd/data/orcd/002/benchmarks/openmp/src/pi_omp
+script_dir=/orcd/data/orcd/022/benchmarks/openmp/src/pi_omp
 cores=$cpu_count
 thread_list=(1)
 threads=1

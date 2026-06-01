@@ -20,7 +20,7 @@ gpus=4  #8  #4
 #all_bench="mpi-calc-pi nccl-tests" 
 all_bench="nccl-tests" 
 
-root_dir=/orcd/data/orcd/002/benchmarks
+root_dir=/orcd/data/orcd/022/benchmarks
 
 for bench in $all_bench
 do

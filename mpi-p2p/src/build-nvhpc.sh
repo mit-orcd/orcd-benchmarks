@@ -1,10 +1,13 @@
 
 # 1 = c7 or r8
-# 2 = module name
+# 2 = module name: nvhpc
+# 3 = version
 
-OSU_BENCH=osu-micro-benchmarks-7.3
-DESTINATION="$1-nvhpc-$2"
-INSTALL_DIR="/orcd/home/001/shaohao/mpi/osu-bench/install/$DESTINATION"
+OSU_BENCH=osu-micro-benchmarks-7.5.2
+
+DESTINATION="$1-$2-$3"
+
+INSTALL_DIR="$PWD/../install/$DESTINATION"
 
 # create install dir
 rm -rf $INSTALL_DIR
@@ -20,16 +23,29 @@ if [ ! -d $OSU_BENCH ]; then
 fi
 
 # load modules
-module purge
-module load nvhpc/2023_233/nvhpc/$2
 
-which mpicc
-mpicc --version
+module load "$2/$3"  # openmpi/$2
+
+MPIC=mpicc
+MPICPP=mpicxx
+
+which nvc
+which $MPIC
+which $MPICPP
+$MPIC --version
+$MPICPP --version
+$MPIC --show
 
 # build. No command should run in background with &
 cd $DESTINATION
-./configure CC=mpicc CXX=mpicxx --prefix=$INSTALL_DIR >log.config
+echo "----- configure ------"
+./configure CC=$MPIC CXX=$MPICPP --prefix=$INSTALL_DIR --enable-cuda --with-cuda=${NVHPC_ROOT}/cuda  >log.config
+echo "----- clean ------"
 make clean
+echo "----- make ------"
 make >log.make
+echo "----- make install ------"
 make install >log.install
 cd ..
+
+

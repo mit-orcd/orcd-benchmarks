@@ -11,3 +11,54 @@ srun -N 16 --ntasks-per-node=4 --cpu-bind=none --mpi=pmix \
      --container-image="${CONT}" \
      ./hpl.sh --dat /workspace/hpl-linux-x86_64/sample-dat/HPL-64GPUs.dat
 
+
+# flags
+x86 container image
+The scripts hpl.sh and hpcg.sh can be invoked on a command line or through a Slurm batch-script to launch the NVIDIA HPL and NVIDIA HPCG benchmarks, respectively. The scripts hpl.sh and hpcg.sh accept the following parameters:
+
+--dat path to HPL.dat. Optional parameters:
+--gpu-affinity <string> colon separated list of GPU indices
+--cpu-affinity <string> colon separated list of CPU index ranges
+--mem-affinity <string> colon separated list of memory indices
+--ucx-affinity <string> colon separated list of UCX devices
+--ucx-tls <string> UCX transport to use
+--exec-name <string> HPL executable file
+--no-multinode enable flags for no-multinode (no-network) execution (HPL only)
+In addition, the script hpcg.sh alternatively to input file accepts the following parameters:
+
+--nx specifies the local (to an MPI process) X dimensions of the problem
+--ny specifies the local (to an MPI process) Y dimensions of the problem
+--nz specifies the local (to an MPI process) Z dimensions of the problem
+--rt specifies the number of seconds of how long the timed portion of the benchmark should run
+--b activates benchmarking mode to bypass CPU reference execution when set to one (--b 1)
+--l2cmp activates compression in GPU L2 cache when set to one (--l2cmp 1)
+--of activates generating the log into textfiles, instead of console (--of=1)
+--gss specifies the slice size for the GPU rank (default is 2048)
+--p2p specifies the p2p comm mode: 0 MPI_CPU, 1 MPI_CPU_All2allv, 2 MPI_CUDA_AWARE, 3 MPI_CUDA_AWARE_All2allv, 4 NCCL. Default MPI_CPU
+--npx specifies the process grid X dimension of the problem
+--npy specifies the process grid Y dimension of the problem
+--npz specifies the process grid Z dimension of the problem
+The script hpl-mxp.sh can be invoked on a command line or through a Slurm batch script to launch the NVIDIA HPL-MxP benchmark. The script hpl-mxp.sh requires the following parameters:
+
+--gpu-affinity <string> colon separated list of GPU indices
+--nprow <int> number of rows in the processor grid"
+--npcol <int> number of columns in the processor grid"
+--nporder <string> "row" or "column" major layout of the processor grid"
+--n <int> size of N-by-N matrix
+--nb <int> nb is the blocking constant (panel size)" The full list of accepted parameters can be found in README and TUNING files, or NVIDIA HPL-MxP Documentation on NVIDIA.DEVELOPER.
+Note:
+
+CPU and memory affinities can improve performance of NVIDIA HPCG and NVIDIA HPL-MxP benchmarks. Below is an example for DGX nodes:
+DGX-H100 and DGX-B200: --mem-affinity 0:0:0:0:1:1:1:1 --cpu-affinity 0-13:14-27:28-41:42-55:56-69:70-83:84-97:98-111
+DGX-A100: --mem-affinity 2:3:0:1:6:7:4:5 --cpu-affinity 32-47:48-63:0-15:16-31:96-111:112-127:64-79:80-95
+Multi-Instance GPU (MIG) technology can help improve HPCG benchmark performance on Nvidia Blackwell with dual-die design. More details can be found in NVIDIA HPCG Documentation on NVIDIA.DEVELOPER
+The script stream-gpu-test.sh can be invoked on a command line or through a Slurm batch script to launch the NVIDIA STREAM benchmark. The script stream-gpu-test.sh accepts the following optional parameters:
+
+--d <int> device number
+--n <int> number of elements in the arrays
+--dt fp32 enable fp32 stream test
+--t <string> tests which will be executed, can be any combination of:
+C - COPY test
+S - SCALE test
+A - ADD test
+T - TRAID test for example, value --t CST means that COPY, SCALE, and TRIAD tests will be executed. Default value CSAT

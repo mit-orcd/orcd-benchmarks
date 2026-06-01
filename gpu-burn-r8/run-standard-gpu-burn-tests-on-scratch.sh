@@ -12,7 +12,7 @@ read -p "Enter the partition being tested: " partition_name
 host_name=$(hostname)
 
 # Define the final output directory
-output_dir="/orcd/data/orcd/002/benchmarks/gpu-burn-r8/$partition_name"
+output_dir="/orcd/data/orcd/022/benchmarks/gpu-burn-r8/$partition_name"
 mkdir -p "$output_dir"
 
 # Define temporary scratch directory
@@ -20,7 +20,7 @@ scratch_dir="/scratch/gpu-burn-tmp-$host_name"
 mkdir -p "$scratch_dir"
 
 # Move to the GPU-Burn directory
-cd /orcd/data/orcd/002/benchmarks/gpu-burn-r8
+cd /orcd/data/orcd/022/benchmarks/gpu-burn-r8
 
 # Run the tests and save output to scratch
 echo "Running Test 1: Using tensor cores (300s)"

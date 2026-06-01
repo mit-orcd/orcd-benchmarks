@@ -4,6 +4,7 @@
 #module use /orcd/software/community/001/modulefiles
 module load gcc/12.2.0 
 module load openmpi/4.1.4
+
 #module load deprecated-modules
 #module use /orcd/software/community/001/old_modulefiles/rocky8
 #module load gcc/12.2.0-x86_64
@@ -13,7 +14,7 @@ which mpicc
 
 test_dir="$1-$2"
 
-INSTALL_ROOT=/orcd/data/orcd/002/benchmarks/mpi-p2p/install
+INSTALL_ROOT=/orcd/data/orcd/022/benchmarks/mpi-p2p/install
 INSTALL_DIR=${INSTALL_ROOT}/${test_dir}
 OSU_BENCH_HOME=${INSTALL_DIR}/libexec/osu-micro-benchmarks/mpi
 export PATH=$PATH:${OSU_BENCH_HOME}/pt2pt:${OSU_BENCH_HOME}/collective:${OSU_BENCH_HOME}/one-sided:${OSU_BENCH_HOME}/startup

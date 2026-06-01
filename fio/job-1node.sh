@@ -12,7 +12,7 @@
 
 #DIR=/orcd/scratch/bcs/002/shaohao/fio-data/
 #DIR=/orcd/compute/bcs/001/shaohao/fio-data/
-#DIR=/orcd/scratch/orcd/002/shaohao/fio-data/
+#DIR=/orcd/scratch/orcd/022/shaohao/fio-data/
 #DIR=/orcd/scratch/orcd/005/shaohao/fio-data/
 DIR="/orcd/$1/orcd/$2/shaohao/fio/data-$SLURM_JOBID"
 mkdir -p $DIR

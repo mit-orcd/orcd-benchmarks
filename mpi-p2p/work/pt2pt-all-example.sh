@@ -1,11 +1,11 @@
 #!/bin/bash
-nodes=(3619 3618)
-partition=pi_keating
-output_dir=/orcd/data/orcd/002/benchmarks/mpi-p2p/work/$partition/output
+nodes=(1920 1921)
+partition=sched_mit_psfc_r8
+output_dir=/orcd/data/orcd/022/benchmarks/mpi-p2p/work/$partition/output
 res=orcd_testing # monthly_maint  # orcd_testing
 
 mkdir -p $output_dir
-env_dir=/orcd/data/orcd/002/benchmarks/mpi-p2p/work
+env_dir=/orcd/data/orcd/022/benchmarks/mpi-p2p/work
 
 for i in ${!nodes[@]}; do
     for j in ${!nodes[@]}; do
@@ -24,7 +24,7 @@ for i in ${!nodes[@]}; do
 #SBATCH -w ${host1},${host2}
 #SBATCH -o $output_dir/out.${host1}_${host2}-%J
 #SBATCH -J benchmark_mpi_p2p
-#SBATCH --reservation=$res 
+##SBATCH --reservation=$res 
 ##SBATCH --exclusive
 # #SBATCH -q unlimited
 

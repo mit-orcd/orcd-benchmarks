@@ -18,7 +18,7 @@ all_bench="gpu-burn-r8 nvidia-hpc-benchmarks nccl-tests openmp mpi-calc-pi"   # 
 #all_bench="gpu-burn-r8"    
 #all_bench="nccl-tests" 
 
-root_dir=/orcd/data/orcd/002/benchmarks
+root_dir=/orcd/data/orcd/022/benchmarks
 
 for bench in $all_bench
 do

@@ -19,7 +19,7 @@ all_bench="openmp mpi-calc-pi mpi-p2p"  # two or more CPU nodes
 #all_bench="nvidia-hpc-benchmarks"    
 all_bench="mpi-calc-pi nccl-tests" 
 
-root_dir=/orcd/data/orcd/002/benchmarks
+root_dir=/orcd/data/orcd/022/benchmarks
 
 for bench in $all_bench
 do

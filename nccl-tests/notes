@@ -1,4 +1,27 @@
 #!/bin/bash
+
+# nccl between two nodes only works with this combination for the previous tests. The bw is ~ 15 GB or 23 GB
+BUILD_DIR=../build-nvhpc-24.5-ompi-5.0.8
+module load nvhpc/24.5
+module load openmpi/5.0.8
+
+# this does not work between two nodes. The bw is only ~ 1.9 GB/s
+
+BUILD_DIR=../build-nvhpc-24.5
+module load nvhpc/24.5
+
+BUILD_DIR=../build-nvhpc-24.5-ompi-4.1.4
+module load nvhpc/24.5
+module load openmpi/4.1.4
+export LD_LIBRARY_PATH=/orcd/software/core/001/spack/pkg/openmpi/4.1.4/zuyo6jx/lib:$LD_LIBRARY_PATH
+
+# build for avx2
+# get on a node with avx2
+salloc -p sched_mit_psfc_gpu_r8 -n 2 --mem=10GB
+# build
+./build-ompi.sh 
+
+
 # new nodes
 -p mit_normal_gpu 
 --reservation=orcd_testing

@@ -1,30 +1,189 @@
-bak
-*/bak
-*/*/bak
-*/*/*/bak
-*/out*
-*/*/out*
-*/*/*/out*
-*/*/*/*/out*
-*/*.out
-*/*/*.out
-*/*/*/*.out
-*/*/*/*/*.out
-*/*/*/*/*/*.out
-*/*/*/*/*/*/*.out
-cuda/cuda-examples  
-cuda/github-cuda-ex  
-cuda/gpu-harvard-workshop
-*/*.gz
-*/*/*.gz
-hep-score/workdir
-nvidia-hpc-benchmarks/hpc-benchmarks_24.03.sif
-lamdalab-dl-benchmarks/pytorch/DeepLearningExamples
-lamdalab-dl-benchmarks/pytorch/results*
-nccl-tests/build-nvhpc*
-*/log*
-*/*/log*
-*/*/*/log*
-*/*/*/*log
-*/.git*
+# ─── Container images ───────────────────────────────────────────────────
+*.sif
 
+# ─── Output / log files ─────────────────────────────────────────────────
+slurm-*.out
+*.out.*
+out.rsync
+out.submit
+log.*
+log
+*.log
+
+# Common output directory names used by the benchmarks
+output/
+out/
+out-*/
+out_dir/
+output-*/
+std-out/
+misc_slurm_outputs/
+work/
+
+# Per-partition / per-PI output subtrees (benchmarks dump results here)
+**/mit_normal/
+**/mit_normal_gpu/
+**/mit_normal_gpu-test/
+**/mit_normal_gpu_h200/
+**/mit_testing/
+**/mit_preemptable/
+**/sched_*/
+**/ou_*/
+**/pi_*/
+**/pg_*/
+**/new_nodes/
+**/node3001/
+**/nodes.cpu
+**/nodes.h200
+**/nodes.l40s
+**/nodes.txt
+**/ware-wulf/
+**/WareWulf_testing/
+
+# ─── Notes ──────────────────────────────────────────────────────────────
+notes
+notes.*
+note.md
+note.txt
+notes.ai
+notes.apptainer
+notes.conda
+notes.flags
+notes.install
+
+# ─── Build artifacts / executables ──────────────────────────────────────
+*.o
+*.ptx
+*.so
+*.a
+__pycache__/
+*.pyc
+*.pyo
+bak/
+bak1/
+bak2/
+
+# Specific binaries built in-tree
+gpu-burn-r8/gpu_burn
+gpu-burn-r8/gpu_burn_old
+gpu-fryer/gpu-fryer
+
+# NCCL-tests in-tree build outputs
+nccl-tests/build-*/
+nccl-tests/build_logs/
+
+# Embedded upstream git repos — excluded wholesale.
+# User should decide: submodule, flatten (remove inner .git), or keep external.
+gpu-burn-r8/
+nccl-tests/
+
+# ─── Benchmark source trees (commit run scripts only) ───────────────────
+megatron-lm/Megatron-LM/
+megatron-lm/apex/
+megatron-lm/my_python_libs/
+megatron-lm/imag/
+openmp/src/
+mpi-calc-pi/src/
+mpi-p2p/src/
+mpi-p2p/install/
+nccl-tests/src/
+nccl-tests/doc/
+nccl-tests/verifiable/
+nccl-tests/example/
+nccl-tests/lgar/
+nccl-tests/ubuntu/
+nccl-tests/scripts/
+nccl-tests/Dockerfile
+gpu-burn-r8/src/
+gpu-burn-r8/script/
+gpu-burn-r8/gpu_burn-drv.cpp
+gpu-burn-r8/gpu_burn-drv.o
+gpu-burn-r8/compare.cu
+gpu-burn-r8/compare.ptx
+
+# ─── Older / local-only working copies ──────────────────────────────────
+py-all-bench-v1/
+py-all-bench-v2/
+py-all-bench-v3/
+old/
+bak/
+rsync.sh.bak
+
+# ─── Editor / VCS / AI tooling state ───────────────────────────────────
+.claude/
+.nfs*
+*.swp
+.*.swp
+*.swo
+CLAUDE.md
+
+# ─── Secondary benchmarks not yet integrated with py-all-bench ──────────
+# These dirs contain mostly benchmark source trees / tarballs / outputs.
+# Exclude wholesale for now; add a README + whitelist of run scripts when
+# integrating any of them.
+cuda/
+cupy/
+dask/
+dataloader/
+dl/
+dlio/
+dynamo/
+fio/
+hep-score/
+hpl/
+memory-bw/
+mlperf/
+mpi-gpu/
+mpi-io/
+mpi-laplace/
+nccl_tests/
+node_architecture/
+nodes/
+stream-amd/
+stream-intel/
+
+# all-bench: keep only run*.sh and get-results*.sh
+all-bench/out*
+all-bench/log*
+all-bench/test.sh
+all-bench/submit-mig-421.sh
+
+# Files owned by other users (unreadable to us)
+all-bench/run-apollo.sh
+all-bench/run-bcs.sh
+all-bench/run-bcs2.sh
+all-bench/run-ghoniem.sh
+all-bench/run_ccoley_cpu.sh
+all-bench/run_eilers.sh
+all-bench/run_ki.sh
+all-bench/run_lhtsai_cpu.sh
+
+# Top-level helpers / outputs not needed for Github
+/test.sh
+/rsync.sh
+/rsync.sh.bak
+/out.rsync
+megatron-lm/out.pylib
+nvidia-hpc-benchmarks/out.*
+nvidia-hpc-benchmarks/out1/
+nvidia-hpc-benchmarks/nodefile
+gpu-fryer/h200.txt
+gpu-fryer/rtx6000.txt
+gpu-fryer/log.*
+
+# Archive blobs
+*.tgz
+*.tar.gz
+*.tar
+*.zip
+
+# Benchmark source extensions
+*.c
+*.cpp
+*.cu
+*.h
+*.hpp
+*.f
+*.f90
+*.F
+*.F90

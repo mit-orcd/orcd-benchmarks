@@ -1,21 +1,12 @@
 #!/bin/bash
-#SBATCH -p mit_normal_gpu
 #SBATCH -t 30
 #SBATCH -N 1
 #SBATCH --ntasks=8
 #SBATCH --gres=gpu:4  
 #SBATCH --mem=50GB
+#SBATCH -J nccl-1node
 
-#SBATCH -J nvhpc-24.5  # -ompi-5.0.6
-#SBATCH -o out-1node/%x-%N-%J
-
-job_name=$SLURM_JOB_NAME
-BUILD_DIR=../build-$job_name
-
-#module load nvhpc/24.5
-module load nvhpc/23.3
-#module load openmpi/5.0.6
-#module load openmpi/4.1.4
+source env.sh
 
 mpirun hostname
 which mpirun
@@ -32,7 +23,7 @@ echo "num_gpu_per_task = $GPUS_PER_TASK"
 
 #export NCCL_DEBUG=INFO
 
-for program in sendrecv_perf reduce_perf broadcast_perf gather_perf scatter_perf  reduce_scatter_perf all_gather_perf all_reduce_perf alltoall_perf hypercube_perf
+for program in sendrecv_perf #reduce_perf broadcast_perf gather_perf scatter_perf  reduce_scatter_perf all_gather_perf all_reduce_perf alltoall_perf hypercube_perf
 do
    echo "%%%%%%%%% $program %%%%%%%%%%"
    mpirun -np 1 --mca btl_openib_warn_no_device_params_found 0 $BUILD_DIR/$program -b $MIN_SIZE -e $MAX_SIZE -f $FACTOR -g $GPUS_PER_TASK

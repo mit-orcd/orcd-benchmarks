@@ -1,14 +1,13 @@
 #!/bin/bash
 #SBATCH -t 100
-#SBATCH -p ou_bcs_low  #pi_mshoulde
-#SBATCH -q normal
+#SBATCH -p mit_normal_gpu  #pi_mshoulde
+#SBATCH -q unlimited
 #SBATCH --mem=100GB
 #SBATCH -N 1
 #SBATCH -n 8
-#SBATCH -w node3804
-#SBATCH --gres=gpu:a100:8
-#SBATCH --reservation=orcd_testing
-#SBATCH --exclusive
+#SBATCH --gres=gpu:h200:8
+# #SBATCH --reservation=orcd_testing
+# #SBATCH --exclusive
 #SBATCH -o out/%N-%J.out
 
 hostname
@@ -20,7 +19,7 @@ module list
 which singularity
 
 gpu_count=8
-root_dir=/orcd/data/orcd/002/benchmarks/nvidia-hpc-benchmarks
+root_dir=/orcd/data/orcd/022/benchmarks/nvidia-hpc-benchmarks
 script_dir=$root_dir/run/hpc-benchmarks_25.04.sif
 
 # run a single gpu job

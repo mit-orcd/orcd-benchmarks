@@ -10,7 +10,7 @@
 
 module load openmpi/5.0.6
 
-DIR="/orcd/scratch/orcd/002/shaohao/mpi-io"
+DIR="/orcd/scratch/orcd/022/shaohao/mpi-io"
 mkdir -p $DIR
 EXE="mpi-io-bw"
 cp $EXE $DIR

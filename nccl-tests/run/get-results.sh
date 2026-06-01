@@ -1,5 +1,5 @@
 partition=$1  # pg_tata #mit_normal_gpu
-N_lines=$2  # 5
+N_lines=$(( $2 + 1 ))
 
 dir_1node=../$partition/out-1node
 dir_2node=../$partition/out-2node
@@ -12,7 +12,8 @@ do
      echo "========================================================================================="
      echo $file
      #grep -e "_perf" -e "Rank" -e "4294967296" $dir/$file  # get all communications
-     grep -e "sendrecv_perf" -A 23 $dir/$file | grep -e "sendrecv_perf" -e "Rank" -e "4294967296"  # only get sendrecv
+     #grep -e "sendrecv_perf" -A 23 $dir/$file | grep -e "sendrecv_perf" -e "Rank" -e "4294967296"  # only get sendrecv
+     grep -e "sendrecv_perf" -A 45 $dir/$file | grep -e "sendrecv_perf" -e "4294967296"  # only get sendrecv
    done
 done
 

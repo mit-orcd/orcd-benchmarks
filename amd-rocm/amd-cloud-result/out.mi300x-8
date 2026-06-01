@@ -1,0 +1,2170 @@
+root@snapshots-gpu-mi300x8-1536gb-contracted-atl1:/home/shaohao/ROCmValidationSuite-release-rocm-rel-6.4/build/bin# ./rvs -c conf/gst_single.conf
+[RESULT] [   254.993875] Action name :gpustress-9000-sgemm-false
+[RESULT] [   255.5292  ] Module name :gst
+[RESULT] [   256.480071] [gpustress-9000-sgemm-false] [GPU:: 21947] Start of GPU ramp up
+[RESULT] [   263.486536] [gpustress-9000-sgemm-false] [GPU:: 21947] GFLOPS 96502
+[RESULT] [   264.493035] [gpustress-9000-sgemm-false] [GPU:: 21947] GFLOPS 99112
+[RESULT] [   265.497753] [gpustress-9000-sgemm-false] [GPU:: 21947] GFLOPS 95750
+[RESULT] [   266.485759] [gpustress-9000-sgemm-false] [GPU:: 21947] End of GPU ramp up
+[RESULT] [   267.486535] [gpustress-9000-sgemm-false] [GPU:: 21947] GFLOPS 97968
+[RESULT] [   268.499565] [gpustress-9000-sgemm-false] [GPU:: 21947] GFLOPS 96782
+[RESULT] [   269.509925] [gpustress-9000-sgemm-false] [GPU:: 21947] GFLOPS 95760
+[RESULT] [   270.515579] [gpustress-9000-sgemm-false] [GPU:: 21947] GFLOPS 96208
+[RESULT] [   271.520346] [gpustress-9000-sgemm-false] [GPU:: 21947] GFLOPS 96295
+[RESULT] [   272.525020] [gpustress-9000-sgemm-false] [GPU:: 21947] GFLOPS 96302
+[RESULT] [   273.538245] [gpustress-9000-sgemm-false] [GPU:: 21947] GFLOPS 95489
+[RESULT] [   274.544095] [gpustress-9000-sgemm-false] [GPU:: 21947] GFLOPS 96188
+[RESULT] [   275.545765] [gpustress-9000-sgemm-false] [GPU:: 21947] GFLOPS 95302
+[RESULT] [   276.487089] [gpustress-9000-sgemm-false] [GPU:: 21947] GFLOPS 97968
+[RESULT] [   276.487097] [gpustress-9000-sgemm-false] [GPU:: 21947] GFLOPS 97968 Target GFLOPS: 9000 met: TRUE
+[RESULT] [   276.487551] [gpustress-9000-sgemm-false] [GPU:: 37820] Start of GPU ramp up
+[RESULT] [   282.920673] [gpustress-9000-sgemm-false] [GPU:: 37820] GFLOPS 97032
+[RESULT] [   283.923506] [gpustress-9000-sgemm-false] [GPU:: 37820] GFLOPS 99318
+[RESULT] [   284.931873] [gpustress-9000-sgemm-false] [GPU:: 37820] GFLOPS 100330
+[RESULT] [   286.87494 ] [gpustress-9000-sgemm-false] [GPU:: 37820] GFLOPS 7476
+[RESULT] [   286.87512 ] [gpustress-9000-sgemm-false] [GPU:: 37820] End of GPU ramp up
+[RESULT] [   287.93958 ] [gpustress-9000-sgemm-false] [GPU:: 37820] GFLOPS 93567
+[RESULT] [   288.97429 ] [gpustress-9000-sgemm-false] [GPU:: 37820] GFLOPS 97705
+[RESULT] [   289.102256] [gpustress-9000-sgemm-false] [GPU:: 37820] GFLOPS 97571
+[RESULT] [   290.111456] [gpustress-9000-sgemm-false] [GPU:: 37820] GFLOPS 97148
+[RESULT] [   291.117753] [gpustress-9000-sgemm-false] [GPU:: 37820] GFLOPS 97428
+[RESULT] [   292.119375] [gpustress-9000-sgemm-false] [GPU:: 37820] GFLOPS 95308
+[RESULT] [   293.123961] [gpustress-9000-sgemm-false] [GPU:: 37820] GFLOPS 93743
+[RESULT] [   294.131345] [gpustress-9000-sgemm-false] [GPU:: 37820] GFLOPS 90937
+[RESULT] [   295.134756] [gpustress-9000-sgemm-false] [GPU:: 37820] GFLOPS 92568
+[RESULT] [   296.100759] [gpustress-9000-sgemm-false] [GPU:: 37820] GFLOPS 97705
+[RESULT] [   296.100779] [gpustress-9000-sgemm-false] [GPU:: 37820] GFLOPS 97705 Target GFLOPS: 9000 met: TRUE
+[RESULT] [   296.101291] [gpustress-9000-sgemm-false] [GPU:: 39350] Start of GPU ramp up
+[RESULT] [   302.636343] [gpustress-9000-sgemm-false] [GPU:: 39350] GFLOPS 98559
+[RESULT] [   303.639748] [gpustress-9000-sgemm-false] [GPU:: 39350] GFLOPS 99196
+[RESULT] [   304.652190] [gpustress-9000-sgemm-false] [GPU:: 39350] GFLOPS 97649
+[RESULT] [   305.642316] [gpustress-9000-sgemm-false] [GPU:: 39350] End of GPU ramp up
+[RESULT] [   306.653931] [gpustress-9000-sgemm-false] [GPU:: 39350] GFLOPS 95641
+[RESULT] [   307.656243] [gpustress-9000-sgemm-false] [GPU:: 39350] GFLOPS 93953
+[RESULT] [   308.656447] [gpustress-9000-sgemm-false] [GPU:: 39350] GFLOPS 95441
+[RESULT] [   309.657522] [gpustress-9000-sgemm-false] [GPU:: 39350] GFLOPS 95359
+[RESULT] [   310.668685] [gpustress-9000-sgemm-false] [GPU:: 39350] GFLOPS 95683
+[RESULT] [   311.671968] [gpustress-9000-sgemm-false] [GPU:: 39350] GFLOPS 95148
+[RESULT] [   312.682448] [gpustress-9000-sgemm-false] [GPU:: 39350] GFLOPS 95748
+[RESULT] [   313.694306] [gpustress-9000-sgemm-false] [GPU:: 39350] GFLOPS 95617
+[RESULT] [   314.707157] [gpustress-9000-sgemm-false] [GPU:: 39350] GFLOPS 95524
+[RESULT] [   315.652724] [gpustress-9000-sgemm-false] [GPU:: 39350] GFLOPS 95748
+[RESULT] [   315.652739] [gpustress-9000-sgemm-false] [GPU:: 39350] GFLOPS 95748 Target GFLOPS: 9000 met: TRUE
+[RESULT] [   315.653298] [gpustress-9000-sgemm-false] [GPU:: 24497] Start of GPU ramp up
+[RESULT] [   322.252152] [gpustress-9000-sgemm-false] [GPU:: 24497] GFLOPS 98499
+[RESULT] [   323.259499] [gpustress-9000-sgemm-false] [GPU:: 24497] GFLOPS 99425
+[RESULT] [   324.266874] [gpustress-9000-sgemm-false] [GPU:: 24497] GFLOPS 98378
+[RESULT] [   325.247075] [gpustress-9000-sgemm-false] [GPU:: 24497] End of GPU ramp up
+[RESULT] [   326.251307] [gpustress-9000-sgemm-false] [GPU:: 24497] GFLOPS 98914
+[RESULT] [   327.255768] [gpustress-9000-sgemm-false] [GPU:: 24497] GFLOPS 97607
+[RESULT] [   328.263022] [gpustress-9000-sgemm-false] [GPU:: 24497] GFLOPS 97335
+[RESULT] [   329.267350] [gpustress-9000-sgemm-false] [GPU:: 24497] GFLOPS 97619
+[RESULT] [   330.275694] [gpustress-9000-sgemm-false] [GPU:: 24497] GFLOPS 97232
+[RESULT] [   331.283797] [gpustress-9000-sgemm-false] [GPU:: 24497] GFLOPS 98534
+[RESULT] [   332.291172] [gpustress-9000-sgemm-false] [GPU:: 24497] GFLOPS 98605
+[RESULT] [   333.293513] [gpustress-9000-sgemm-false] [GPU:: 24497] GFLOPS 97812
+[RESULT] [   334.303835] [gpustress-9000-sgemm-false] [GPU:: 24497] GFLOPS 98316
+[RESULT] [   335.252048] [gpustress-9000-sgemm-false] [GPU:: 24497] GFLOPS 98914
+[RESULT] [   335.252061] [gpustress-9000-sgemm-false] [GPU:: 24497] GFLOPS 98914 Target GFLOPS: 9000 met: TRUE
+[RESULT] [   335.252649] [gpustress-9000-sgemm-false] [GPU:: 36258] Start of GPU ramp up
+[RESULT] [   341.827253] [gpustress-9000-sgemm-false] [GPU:: 36258] GFLOPS 96567
+[RESULT] [   342.833809] [gpustress-9000-sgemm-false] [GPU:: 36258] GFLOPS 97346
+[RESULT] [   343.838014] [gpustress-9000-sgemm-false] [GPU:: 36258] GFLOPS 98102
+[RESULT] [   344.827477] [gpustress-9000-sgemm-false] [GPU:: 36258] End of GPU ramp up
+[RESULT] [   345.828299] [gpustress-9000-sgemm-false] [GPU:: 36258] GFLOPS 96672
+[RESULT] [   346.832131] [gpustress-9000-sgemm-false] [GPU:: 36258] GFLOPS 96383
+[RESULT] [   347.837259] [gpustress-9000-sgemm-false] [GPU:: 36258] GFLOPS 96258
+[RESULT] [   348.843977] [gpustress-9000-sgemm-false] [GPU:: 36258] GFLOPS 96106
+[RESULT] [   349.844159] [gpustress-9000-sgemm-false] [GPU:: 36258] GFLOPS 95445
+[RESULT] [   350.848197] [gpustress-9000-sgemm-false] [GPU:: 36258] GFLOPS 95080
+[RESULT] [   351.857888] [gpustress-9000-sgemm-false] [GPU:: 36258] GFLOPS 95828
+[RESULT] [   352.866904] [gpustress-9000-sgemm-false] [GPU:: 36258] GFLOPS 95888
+[RESULT] [   353.870321] [gpustress-9000-sgemm-false] [GPU:: 36258] GFLOPS 96427
+[RESULT] [   354.832664] [gpustress-9000-sgemm-false] [GPU:: 36258] GFLOPS 96672
+[RESULT] [   354.832683] [gpustress-9000-sgemm-false] [GPU:: 36258] GFLOPS 96672 Target GFLOPS: 9000 met: TRUE
+[RESULT] [   354.833073] [gpustress-9000-sgemm-false] [GPU:: 19365] Start of GPU ramp up
+[RESULT] [   361.290983] [gpustress-9000-sgemm-false] [GPU:: 19365] GFLOPS 95629
+[RESULT] [   362.301650] [gpustress-9000-sgemm-false] [GPU:: 19365] GFLOPS 96235
+[RESULT] [   363.308755] [gpustress-9000-sgemm-false] [GPU:: 19365] GFLOPS 95128
+[RESULT] [   364.296447] [gpustress-9000-sgemm-false] [GPU:: 19365] End of GPU ramp up
+[RESULT] [   365.310005] [gpustress-9000-sgemm-false] [GPU:: 19365] GFLOPS 95458
+[RESULT] [   366.322979] [gpustress-9000-sgemm-false] [GPU:: 19365] GFLOPS 95513
+[RESULT] [   367.328800] [gpustress-9000-sgemm-false] [GPU:: 19365] GFLOPS 94909
+[RESULT] [   368.329353] [gpustress-9000-sgemm-false] [GPU:: 19365] GFLOPS 95409
+[RESULT] [   369.332674] [gpustress-9000-sgemm-false] [GPU:: 19365] GFLOPS 95145
+[RESULT] [   370.346024] [gpustress-9000-sgemm-false] [GPU:: 19365] GFLOPS 94204
+[RESULT] [   371.352159] [gpustress-9000-sgemm-false] [GPU:: 19365] GFLOPS 94880
+[RESULT] [   372.365927] [gpustress-9000-sgemm-false] [GPU:: 19365] GFLOPS 94166
+[RESULT] [   373.370476] [gpustress-9000-sgemm-false] [GPU:: 19365] GFLOPS 93746
+[RESULT] [   374.308757] [gpustress-9000-sgemm-false] [GPU:: 19365] GFLOPS 95513
+[RESULT] [   374.308771] [gpustress-9000-sgemm-false] [GPU:: 19365] GFLOPS 95513 Target GFLOPS: 9000 met: TRUE
+[RESULT] [   374.309138] [gpustress-9000-sgemm-false] [GPU:: 16815] Start of GPU ramp up
+[RESULT] [   380.832885] [gpustress-9000-sgemm-false] [GPU:: 16815] GFLOPS 95072
+[RESULT] [   381.840314] [gpustress-9000-sgemm-false] [GPU:: 16815] GFLOPS 93671
+[RESULT] [   382.844301] [gpustress-9000-sgemm-false] [GPU:: 16815] GFLOPS 93916
+[RESULT] [   383.834372] [gpustress-9000-sgemm-false] [GPU:: 16815] End of GPU ramp up
+[RESULT] [   384.839063] [gpustress-9000-sgemm-false] [GPU:: 16815] GFLOPS 93733
+[RESULT] [   385.846755] [gpustress-9000-sgemm-false] [GPU:: 16815] GFLOPS 94735
+[RESULT] [   386.852318] [gpustress-9000-sgemm-false] [GPU:: 16815] GFLOPS 94934
+[RESULT] [   387.862976] [gpustress-9000-sgemm-false] [GPU:: 16815] GFLOPS 94456
+[RESULT] [   388.872306] [gpustress-9000-sgemm-false] [GPU:: 16815] GFLOPS 94581
+[RESULT] [   389.875239] [gpustress-9000-sgemm-false] [GPU:: 16815] GFLOPS 92611
+[RESULT] [   390.877824] [gpustress-9000-sgemm-false] [GPU:: 16815] GFLOPS 93929
+[RESULT] [   391.882426] [gpustress-9000-sgemm-false] [GPU:: 16815] GFLOPS 93740
+[RESULT] [   392.884146] [gpustress-9000-sgemm-false] [GPU:: 16815] GFLOPS 95297
+[RESULT] [   393.842184] [gpustress-9000-sgemm-false] [GPU:: 16815] GFLOPS 95297
+[RESULT] [   393.842199] [gpustress-9000-sgemm-false] [GPU:: 16815] GFLOPS 95297 Target GFLOPS: 9000 met: TRUE
+[RESULT] [   393.842766] [gpustress-9000-sgemm-false] [GPU:: 34728] Start of GPU ramp up
+[RESULT] [   400.545605] [gpustress-9000-sgemm-false] [GPU:: 34728] GFLOPS 95156
+[RESULT] [   401.546581] [gpustress-9000-sgemm-false] [GPU:: 34728] GFLOPS 98604
+[RESULT] [   402.546802] [gpustress-9000-sgemm-false] [GPU:: 34728] GFLOPS 98266
+[RESULT] [   403.555201] [gpustress-9000-sgemm-false] [GPU:: 34728] GFLOPS 98853
+[RESULT] [   403.555220] [gpustress-9000-sgemm-false] [GPU:: 34728] End of GPU ramp up
+[RESULT] [   404.561662] [gpustress-9000-sgemm-false] [GPU:: 34728] GFLOPS 96131
+[RESULT] [   405.569919] [gpustress-9000-sgemm-false] [GPU:: 34728] GFLOPS 97239
+[RESULT] [   406.573156] [gpustress-9000-sgemm-false] [GPU:: 34728] GFLOPS 96440
+[RESULT] [   407.573487] [gpustress-9000-sgemm-false] [GPU:: 34728] GFLOPS 96720
+[RESULT] [   408.584670] [gpustress-9000-sgemm-false] [GPU:: 34728] GFLOPS 96957
+[RESULT] [   409.585080] [gpustress-9000-sgemm-false] [GPU:: 34728] GFLOPS 96712
+[RESULT] [   410.592792] [gpustress-9000-sgemm-false] [GPU:: 34728] GFLOPS 97292
+[RESULT] [   411.598824] [gpustress-9000-sgemm-false] [GPU:: 34728] GFLOPS 97454
+[RESULT] [   412.603380] [gpustress-9000-sgemm-false] [GPU:: 34728] GFLOPS 97597
+[RESULT] [   413.560372] [gpustress-9000-sgemm-false] [GPU:: 34728] GFLOPS 97597
+[RESULT] [   413.560393] [gpustress-9000-sgemm-false] [GPU:: 34728] GFLOPS 97597 Target GFLOPS: 9000 met: TRUE
+[RESULT] [   413.779607] Action name :gpustress-8000-sgemm-true
+[RESULT] [   413.779630] Module name :gst
+[RESULT] [   413.880078] [gpustress-8000-sgemm-true] [GPU:: 21947] Start of GPU ramp up
+[RESULT] [   413.880182] [gpustress-8000-sgemm-true] [GPU:: 37820] Start of GPU ramp up
+[RESULT] [   413.880217] [gpustress-8000-sgemm-true] [GPU:: 39350] Start of GPU ramp up
+[RESULT] [   413.880331] [gpustress-8000-sgemm-true] [GPU:: 24497] Start of GPU ramp up
+[RESULT] [   413.880332] [gpustress-8000-sgemm-true] [GPU:: 36258] Start of GPU ramp up
+[RESULT] [   413.880413] [gpustress-8000-sgemm-true] [GPU:: 19365] Start of GPU ramp up
+[RESULT] [   413.880420] [gpustress-8000-sgemm-true] [GPU:: 16815] Start of GPU ramp up
+[RESULT] [   413.880543] [gpustress-8000-sgemm-true] [GPU:: 34728] Start of GPU ramp up
+[RESULT] [   416.914728] [gpustress-8000-sgemm-true] [GPU:: 37820] GFLOPS 90605
+[RESULT] [   416.915658] [gpustress-8000-sgemm-true] [GPU:: 21947] GFLOPS 90061
+[RESULT] [   416.916155] [gpustress-8000-sgemm-true] [GPU:: 16815] GFLOPS 89152
+[RESULT] [   416.916585] [gpustress-8000-sgemm-true] [GPU:: 39350] GFLOPS 89035
+[RESULT] [   416.917927] [gpustress-8000-sgemm-true] [GPU:: 34728] GFLOPS 88937
+[RESULT] [   416.918635] [gpustress-8000-sgemm-true] [GPU:: 24497] GFLOPS 93848
+[RESULT] [   416.920099] [gpustress-8000-sgemm-true] [GPU:: 36258] GFLOPS 89511
+[RESULT] [   416.920380] [gpustress-8000-sgemm-true] [GPU:: 19365] GFLOPS 92429
+[RESULT] [   418.271409] [gpustress-8000-sgemm-true] [GPU:: 34728] GFLOPS 91589
+[RESULT] [   418.272454] [gpustress-8000-sgemm-true] [GPU:: 37820] GFLOPS 94308
+[RESULT] [   418.272791] [gpustress-8000-sgemm-true] [GPU:: 16815] GFLOPS 90636
+[RESULT] [   418.273020] [gpustress-8000-sgemm-true] [GPU:: 36258] GFLOPS 91517
+[RESULT] [   418.274351] [gpustress-8000-sgemm-true] [GPU:: 19365] GFLOPS 91961
+[RESULT] [   418.276170] [gpustress-8000-sgemm-true] [GPU:: 39350] GFLOPS 90408
+[RESULT] [   418.276486] [gpustress-8000-sgemm-true] [GPU:: 21947] GFLOPS 93352
+[RESULT] [   418.279054] [gpustress-8000-sgemm-true] [GPU:: 24497] GFLOPS 90484
+[RESULT] [   419.618664] [gpustress-8000-sgemm-true] [GPU:: 34728] GFLOPS 90694
+[RESULT] [   419.619628] [gpustress-8000-sgemm-true] [GPU:: 36258] GFLOPS 92237
+[RESULT] [   419.621639] [gpustress-8000-sgemm-true] [GPU:: 16815] GFLOPS 90560
+[RESULT] [   419.624207] [gpustress-8000-sgemm-true] [GPU:: 19365] GFLOPS 91110
+[RESULT] [   419.627518] [gpustress-8000-sgemm-true] [GPU:: 37820] GFLOPS 93508
+[RESULT] [   419.633302] [gpustress-8000-sgemm-true] [GPU:: 39350] GFLOPS 90694
+[RESULT] [   419.634186] [gpustress-8000-sgemm-true] [GPU:: 21947] GFLOPS 89766
+[RESULT] [   419.637975] [gpustress-8000-sgemm-true] [GPU:: 24497] GFLOPS 90420
+[RESULT] [   420.969726] [gpustress-8000-sgemm-true] [GPU:: 34728] GFLOPS 89835
+[RESULT] [   420.970074] [gpustress-8000-sgemm-true] [GPU:: 36258] GFLOPS 89213
+[RESULT] [   420.972441] [gpustress-8000-sgemm-true] [GPU:: 16815] GFLOPS 89991
+[RESULT] [   420.974771] [gpustress-8000-sgemm-true] [GPU:: 19365] GFLOPS 90783
+[RESULT] [   420.984714] [gpustress-8000-sgemm-true] [GPU:: 37820] GFLOPS 90630
+[RESULT] [   420.992707] [gpustress-8000-sgemm-true] [GPU:: 39350] GFLOPS 89804
+[RESULT] [   420.993697] [gpustress-8000-sgemm-true] [GPU:: 21947] GFLOPS 89023
+[RESULT] [   420.999109] [gpustress-8000-sgemm-true] [GPU:: 24497] GFLOPS 91830
+[RESULT] [   422.316885] [gpustress-8000-sgemm-true] [GPU:: 36258] GFLOPS 89716
+[RESULT] [   422.316903] [gpustress-8000-sgemm-true] [GPU:: 36258] End of GPU ramp up
+[RESULT] [   422.318922] [gpustress-8000-sgemm-true] [GPU:: 34728] GFLOPS 89735
+[RESULT] [   422.318935] [gpustress-8000-sgemm-true] [GPU:: 34728] End of GPU ramp up
+[RESULT] [   422.324029] [gpustress-8000-sgemm-true] [GPU:: 19365] GFLOPS 90155
+[RESULT] [   422.324053] [gpustress-8000-sgemm-true] [GPU:: 19365] End of GPU ramp up
+[RESULT] [   422.325667] [gpustress-8000-sgemm-true] [GPU:: 16815] GFLOPS 89232
+[RESULT] [   422.325688] [gpustress-8000-sgemm-true] [GPU:: 16815] End of GPU ramp up
+[RESULT] [   422.335515] [gpustress-8000-sgemm-true] [GPU:: 37820] GFLOPS 91621
+[RESULT] [   422.335539] [gpustress-8000-sgemm-true] [GPU:: 37820] End of GPU ramp up
+[RESULT] [   422.350891] [gpustress-8000-sgemm-true] [GPU:: 21947] GFLOPS 89424
+[RESULT] [   422.350906] [gpustress-8000-sgemm-true] [GPU:: 21947] End of GPU ramp up
+[RESULT] [   422.354263] [gpustress-8000-sgemm-true] [GPU:: 39350] GFLOPS 89418
+[RESULT] [   422.354284] [gpustress-8000-sgemm-true] [GPU:: 39350] End of GPU ramp up
+[RESULT] [   422.360796] [gpustress-8000-sgemm-true] [GPU:: 24497] GFLOPS 88833
+[RESULT] [   422.360812] [gpustress-8000-sgemm-true] [GPU:: 24497] End of GPU ramp up
+[RESULT] [   423.319636] [gpustress-8000-sgemm-true] [GPU:: 34728] GFLOPS 88075
+[RESULT] [   423.328417] [gpustress-8000-sgemm-true] [GPU:: 19365] GFLOPS 88267
+[RESULT] [   423.330005] [gpustress-8000-sgemm-true] [GPU:: 16815] GFLOPS 87798
+[RESULT] [   423.334258] [gpustress-8000-sgemm-true] [GPU:: 36258] GFLOPS 90880
+[RESULT] [   423.377525] [gpustress-8000-sgemm-true] [GPU:: 37820] GFLOPS 91710
+[RESULT] [   423.378496] [gpustress-8000-sgemm-true] [GPU:: 24497] GFLOPS 90401
+[RESULT] [   423.382344] [gpustress-8000-sgemm-true] [GPU:: 21947] GFLOPS 87738
+[RESULT] [   423.384802] [gpustress-8000-sgemm-true] [GPU:: 39350] GFLOPS 89699
+[RESULT] [   424.332288] [gpustress-8000-sgemm-true] [GPU:: 16815] GFLOPS 87022
+[RESULT] [   424.333174] [gpustress-8000-sgemm-true] [GPU:: 34728] GFLOPS 87156
+[RESULT] [   424.346314] [gpustress-8000-sgemm-true] [GPU:: 19365] GFLOPS 90471
+[RESULT] [   424.358588] [gpustress-8000-sgemm-true] [GPU:: 36258] GFLOPS 88460
+[RESULT] [   424.379492] [gpustress-8000-sgemm-true] [GPU:: 24497] GFLOPS 90515
+[RESULT] [   424.397770] [gpustress-8000-sgemm-true] [GPU:: 37820] GFLOPS 88140
+[RESULT] [   424.423415] [gpustress-8000-sgemm-true] [GPU:: 21947] GFLOPS 91099
+[RESULT] [   424.426054] [gpustress-8000-sgemm-true] [GPU:: 39350] GFLOPS 86472
+[RESULT] [   425.333800] [gpustress-8000-sgemm-true] [GPU:: 16815] GFLOPS 89486
+[RESULT] [   425.354291] [gpustress-8000-sgemm-true] [GPU:: 34728] GFLOPS 87782
+[RESULT] [   425.367030] [gpustress-8000-sgemm-true] [GPU:: 19365] GFLOPS 90246
+[RESULT] [   425.367613] [gpustress-8000-sgemm-true] [GPU:: 36258] GFLOPS 91127
+[RESULT] [   425.400796] [gpustress-8000-sgemm-true] [GPU:: 24497] GFLOPS 87070
+[RESULT] [   425.402953] [gpustress-8000-sgemm-true] [GPU:: 37820] GFLOPS 88647
+[RESULT] [   425.433079] [gpustress-8000-sgemm-true] [GPU:: 21947] GFLOPS 88085
+[RESULT] [   425.444748] [gpustress-8000-sgemm-true] [GPU:: 39350] GFLOPS 87005
+[RESULT] [   426.334927] [gpustress-8000-sgemm-true] [GPU:: 16815] GFLOPS 89745
+[RESULT] [   426.367129] [gpustress-8000-sgemm-true] [GPU:: 34728] GFLOPS 87704
+[RESULT] [   426.387345] [gpustress-8000-sgemm-true] [GPU:: 36258] GFLOPS 91843
+[RESULT] [   426.395867] [gpustress-8000-sgemm-true] [GPU:: 19365] GFLOPS 90675
+[RESULT] [   426.430662] [gpustress-8000-sgemm-true] [GPU:: 24497] GFLOPS 90597
+[RESULT] [   426.432745] [gpustress-8000-sgemm-true] [GPU:: 37820] GFLOPS 92178
+[RESULT] [   426.441847] [gpustress-8000-sgemm-true] [GPU:: 21947] GFLOPS 91013
+[RESULT] [   426.479984] [gpustress-8000-sgemm-true] [GPU:: 39350] GFLOPS 90240
+[RESULT] [   427.340809] [gpustress-8000-sgemm-true] [GPU:: 16815] GFLOPS 89469
+[RESULT] [   427.371989] [gpustress-8000-sgemm-true] [GPU:: 34728] GFLOPS 89955
+[RESULT] [   427.408380] [gpustress-8000-sgemm-true] [GPU:: 36258] GFLOPS 91286
+[RESULT] [   427.415311] [gpustress-8000-sgemm-true] [GPU:: 19365] GFLOPS 87675
+[RESULT] [   427.432495] [gpustress-8000-sgemm-true] [GPU:: 24497] GFLOPS 90461
+[RESULT] [   427.479756] [gpustress-8000-sgemm-true] [GPU:: 37820] GFLOPS 92059
+[RESULT] [   427.482151] [gpustress-8000-sgemm-true] [GPU:: 21947] GFLOPS 91621
+[RESULT] [   427.482391] [gpustress-8000-sgemm-true] [GPU:: 39350] GFLOPS 90470
+[RESULT] [   428.351733] [gpustress-8000-sgemm-true] [GPU:: 16815] GFLOPS 86932
+[RESULT] [   428.381506] [gpustress-8000-sgemm-true] [GPU:: 34728] GFLOPS 90047
+[RESULT] [   428.413834] [gpustress-8000-sgemm-true] [GPU:: 36258] GFLOPS 90943
+[RESULT] [   428.420301] [gpustress-8000-sgemm-true] [GPU:: 19365] GFLOPS 88362
+[RESULT] [   428.471602] [gpustress-8000-sgemm-true] [GPU:: 24497] GFLOPS 87295
+[RESULT] [   428.486620] [gpustress-8000-sgemm-true] [GPU:: 37820] GFLOPS 88654
+[RESULT] [   428.511025] [gpustress-8000-sgemm-true] [GPU:: 21947] GFLOPS 91451
+[RESULT] [   428.512158] [gpustress-8000-sgemm-true] [GPU:: 39350] GFLOPS 86607
+[RESULT] [   429.371222] [gpustress-8000-sgemm-true] [GPU:: 16815] GFLOPS 89644
+[RESULT] [   429.393808] [gpustress-8000-sgemm-true] [GPU:: 34728] GFLOPS 90100
+[RESULT] [   429.434407] [gpustress-8000-sgemm-true] [GPU:: 19365] GFLOPS 90474
+[RESULT] [   429.438385] [gpustress-8000-sgemm-true] [GPU:: 36258] GFLOPS 89085
+[RESULT] [   429.481648] [gpustress-8000-sgemm-true] [GPU:: 24497] GFLOPS 90283
+[RESULT] [   429.530943] [gpustress-8000-sgemm-true] [GPU:: 37820] GFLOPS 92012
+[RESULT] [   429.531283] [gpustress-8000-sgemm-true] [GPU:: 39350] GFLOPS 87111
+[RESULT] [   429.535411] [gpustress-8000-sgemm-true] [GPU:: 21947] GFLOPS 91380
+[RESULT] [   430.403643] [gpustress-8000-sgemm-true] [GPU:: 16815] GFLOPS 88938
+[RESULT] [   430.404107] [gpustress-8000-sgemm-true] [GPU:: 34728] GFLOPS 89854
+[RESULT] [   430.454885] [gpustress-8000-sgemm-true] [GPU:: 19365] GFLOPS 90140
+[RESULT] [   430.458771] [gpustress-8000-sgemm-true] [GPU:: 36258] GFLOPS 91091
+[RESULT] [   430.496887] [gpustress-8000-sgemm-true] [GPU:: 24497] GFLOPS 90101
+[RESULT] [   430.539640] [gpustress-8000-sgemm-true] [GPU:: 37820] GFLOPS 91774
+[RESULT] [   430.540626] [gpustress-8000-sgemm-true] [GPU:: 21947] GFLOPS 91233
+[RESULT] [   430.564277] [gpustress-8000-sgemm-true] [GPU:: 39350] GFLOPS 90151
+[RESULT] [   431.407276] [gpustress-8000-sgemm-true] [GPU:: 16815] GFLOPS 88354
+[RESULT] [   431.428672] [gpustress-8000-sgemm-true] [GPU:: 34728] GFLOPS 89251
+[RESULT] [   431.479936] [gpustress-8000-sgemm-true] [GPU:: 19365] GFLOPS 87578
+[RESULT] [   431.480898] [gpustress-8000-sgemm-true] [GPU:: 36258] GFLOPS 88454
+[RESULT] [   431.526007] [gpustress-8000-sgemm-true] [GPU:: 24497] GFLOPS 87280
+[RESULT] [   431.575540] [gpustress-8000-sgemm-true] [GPU:: 37820] GFLOPS 88906
+[RESULT] [   431.578671] [gpustress-8000-sgemm-true] [GPU:: 21947] GFLOPS 87859
+[RESULT] [   431.578855] [gpustress-8000-sgemm-true] [GPU:: 39350] GFLOPS 86794
+[RESULT] [   432.430448] [gpustress-8000-sgemm-true] [GPU:: 34728] GFLOPS 87218
+[RESULT] [   432.436409] [gpustress-8000-sgemm-true] [GPU:: 16815] GFLOPS 88712
+[RESULT] [   432.483343] [gpustress-8000-sgemm-true] [GPU:: 36258] GFLOPS 88411
+[RESULT] [   432.489996] [gpustress-8000-sgemm-true] [GPU:: 19365] GFLOPS 87629
+[RESULT] [   432.533934] [gpustress-8000-sgemm-true] [GPU:: 24497] GFLOPS 87396
+[RESULT] [   432.577838] [gpustress-8000-sgemm-true] [GPU:: 37820] GFLOPS 88586
+[RESULT] [   432.582176] [gpustress-8000-sgemm-true] [GPU:: 21947] GFLOPS 87978
+[RESULT] [   432.582887] [gpustress-8000-sgemm-true] [GPU:: 39350] GFLOPS 90129
+[RESULT] [   433.431476] [gpustress-8000-sgemm-true] [GPU:: 34728] GFLOPS 89360
+[RESULT] [   433.443664] [gpustress-8000-sgemm-true] [GPU:: 16815] GFLOPS 88968
+[RESULT] [   433.507172] [gpustress-8000-sgemm-true] [GPU:: 36258] GFLOPS 90514
+[RESULT] [   433.515018] [gpustress-8000-sgemm-true] [GPU:: 19365] GFLOPS 87476
+[RESULT] [   433.567094] [gpustress-8000-sgemm-true] [GPU:: 24497] GFLOPS 90499
+[RESULT] [   433.608754] [gpustress-8000-sgemm-true] [GPU:: 37820] GFLOPS 92223
+[RESULT] [   433.609276] [gpustress-8000-sgemm-true] [GPU:: 21947] GFLOPS 91124
+[RESULT] [   433.612932] [gpustress-8000-sgemm-true] [GPU:: 39350] GFLOPS 89949
+[RESULT] [   434.442266] [gpustress-8000-sgemm-true] [GPU:: 34728] GFLOPS 87161
+[RESULT] [   434.467790] [gpustress-8000-sgemm-true] [GPU:: 16815] GFLOPS 86674
+[RESULT] [   434.512505] [gpustress-8000-sgemm-true] [GPU:: 36258] GFLOPS 90534
+[RESULT] [   434.541580] [gpustress-8000-sgemm-true] [GPU:: 19365] GFLOPS 87534
+[RESULT] [   434.600460] [gpustress-8000-sgemm-true] [GPU:: 24497] GFLOPS 87088
+[RESULT] [   434.611471] [gpustress-8000-sgemm-true] [GPU:: 37820] GFLOPS 88028
+[RESULT] [   434.633047] [gpustress-8000-sgemm-true] [GPU:: 21947] GFLOPS 90664
+[RESULT] [   434.645624] [gpustress-8000-sgemm-true] [GPU:: 39350] GFLOPS 86596
+[RESULT] [   435.463460] [gpustress-8000-sgemm-true] [GPU:: 34728] GFLOPS 90127
+[RESULT] [   435.477747] [gpustress-8000-sgemm-true] [GPU:: 16815] GFLOPS 86809
+[RESULT] [   435.527503] [gpustress-8000-sgemm-true] [GPU:: 36258] GFLOPS 91153
+[RESULT] [   435.559976] [gpustress-8000-sgemm-true] [GPU:: 19365] GFLOPS 90685
+[RESULT] [   435.631051] [gpustress-8000-sgemm-true] [GPU:: 37820] GFLOPS 88158
+[RESULT] [   435.638163] [gpustress-8000-sgemm-true] [GPU:: 21947] GFLOPS 90695
+[RESULT] [   435.638616] [gpustress-8000-sgemm-true] [GPU:: 24497] GFLOPS 90257
+[RESULT] [   435.676661] [gpustress-8000-sgemm-true] [GPU:: 39350] GFLOPS 89451
+[RESULT] [   436.489075] [gpustress-8000-sgemm-true] [GPU:: 34728] GFLOPS 87841
+[RESULT] [   436.491404] [gpustress-8000-sgemm-true] [GPU:: 16815] GFLOPS 87031
+[RESULT] [   436.536745] [gpustress-8000-sgemm-true] [GPU:: 36258] GFLOPS 88390
+[RESULT] [   436.582186] [gpustress-8000-sgemm-true] [GPU:: 19365] GFLOPS 88161
+[RESULT] [   436.638896] [gpustress-8000-sgemm-true] [GPU:: 21947] GFLOPS 87760
+[RESULT] [   436.644183] [gpustress-8000-sgemm-true] [GPU:: 24497] GFLOPS 90388
+[RESULT] [   436.664460] [gpustress-8000-sgemm-true] [GPU:: 37820] GFLOPS 91760
+[RESULT] [   436.683966] [gpustress-8000-sgemm-true] [GPU:: 39350] GFLOPS 89741
+[RESULT] [   437.501189] [gpustress-8000-sgemm-true] [GPU:: 34728] GFLOPS 89722
+[RESULT] [   437.513817] [gpustress-8000-sgemm-true] [GPU:: 16815] GFLOPS 89279
+[RESULT] [   437.543887] [gpustress-8000-sgemm-true] [GPU:: 36258] GFLOPS 90212
+[RESULT] [   437.613938] [gpustress-8000-sgemm-true] [GPU:: 19365] GFLOPS 87395
+[RESULT] [   437.662028] [gpustress-8000-sgemm-true] [GPU:: 21947] GFLOPS 87541
+[RESULT] [   437.663595] [gpustress-8000-sgemm-true] [GPU:: 24497] GFLOPS 86846
+[RESULT] [   437.666042] [gpustress-8000-sgemm-true] [GPU:: 37820] GFLOPS 88409
+[RESULT] [   437.712528] [gpustress-8000-sgemm-true] [GPU:: 39350] GFLOPS 89653
+[RESULT] [   438.513283] [gpustress-8000-sgemm-true] [GPU:: 34728] GFLOPS 89586
+[RESULT] [   438.544714] [gpustress-8000-sgemm-true] [GPU:: 16815] GFLOPS 87185
+[RESULT] [   438.550640] [gpustress-8000-sgemm-true] [GPU:: 36258] GFLOPS 90451
+[RESULT] [   438.637792] [gpustress-8000-sgemm-true] [GPU:: 19365] GFLOPS 87840
+[RESULT] [   438.671810] [gpustress-8000-sgemm-true] [GPU:: 21947] GFLOPS 91046
+[RESULT] [   438.691587] [gpustress-8000-sgemm-true] [GPU:: 24497] GFLOPS 90192
+[RESULT] [   438.693221] [gpustress-8000-sgemm-true] [GPU:: 37820] GFLOPS 91695
+[RESULT] [   438.731390] [gpustress-8000-sgemm-true] [GPU:: 39350] GFLOPS 89665
+[RESULT] [   439.542950] [gpustress-8000-sgemm-true] [GPU:: 34728] GFLOPS 90404
+[RESULT] [   439.576469] [gpustress-8000-sgemm-true] [GPU:: 36258] GFLOPS 90631
+[RESULT] [   439.580268] [gpustress-8000-sgemm-true] [GPU:: 16815] GFLOPS 89513
+[RESULT] [   439.653599] [gpustress-8000-sgemm-true] [GPU:: 19365] GFLOPS 88183
+[RESULT] [   439.711168] [gpustress-8000-sgemm-true] [GPU:: 37820] GFLOPS 89911
+[RESULT] [   439.712048] [gpustress-8000-sgemm-true] [GPU:: 24497] GFLOPS 87926
+[RESULT] [   439.714813] [gpustress-8000-sgemm-true] [GPU:: 21947] GFLOPS 88751
+[RESULT] [   439.765411] [gpustress-8000-sgemm-true] [GPU:: 39350] GFLOPS 87625
+[RESULT] [   440.331539] [gpustress-8000-sgemm-true] [GPU:: 34728] GFLOPS 90404
+[RESULT] [   440.331559] [gpustress-8000-sgemm-true] [GPU:: 34728] GFLOPS 90404 Target GFLOPS: 8000 met: TRUE
+[RESULT] [   440.332182] [gpustress-8000-sgemm-true] [GPU:: 19365] GFLOPS 90685
+[RESULT] [   440.332194] [gpustress-8000-sgemm-true] [GPU:: 19365] GFLOPS 90685 Target GFLOPS: 8000 met: TRUE
+[RESULT] [   440.333398] [gpustress-8000-sgemm-true] [GPU:: 16815] GFLOPS 89745
+[RESULT] [   440.333412] [gpustress-8000-sgemm-true] [GPU:: 16815] GFLOPS 89745 Target GFLOPS: 8000 met: TRUE
+[RESULT] [   440.341564] [gpustress-8000-sgemm-true] [GPU:: 36258] GFLOPS 91843
+[RESULT] [   440.341585] [gpustress-8000-sgemm-true] [GPU:: 36258] GFLOPS 91843 Target GFLOPS: 8000 met: TRUE
+[RESULT] [   440.362348] [gpustress-8000-sgemm-true] [GPU:: 21947] GFLOPS 91621
+[RESULT] [   440.362361] [gpustress-8000-sgemm-true] [GPU:: 21947] GFLOPS 91621 Target GFLOPS: 8000 met: TRUE
+[RESULT] [   440.369187] [gpustress-8000-sgemm-true] [GPU:: 37820] GFLOPS 92223
+[RESULT] [   440.369201] [gpustress-8000-sgemm-true] [GPU:: 37820] GFLOPS 92223 Target GFLOPS: 8000 met: TRUE
+[RESULT] [   440.370659] [gpustress-8000-sgemm-true] [GPU:: 39350] GFLOPS 90470
+[RESULT] [   440.370673] [gpustress-8000-sgemm-true] [GPU:: 39350] GFLOPS 90470 Target GFLOPS: 8000 met: TRUE
+[RESULT] [   440.373427] [gpustress-8000-sgemm-true] [GPU:: 24497] GFLOPS 90597
+[RESULT] [   440.373438] [gpustress-8000-sgemm-true] [GPU:: 24497] GFLOPS 90597 Target GFLOPS: 8000 met: TRUE
+[RESULT] [   440.597551] Action name :gpustress-8000-hgemm-false
+[RESULT] [   440.597575] Module name :gst
+[RESULT] [   440.698055] [gpustress-8000-hgemm-false] [GPU:: 21947] Start of GPU ramp up
+[RESULT] [   444.220438] [gpustress-8000-hgemm-false] [GPU:: 21947] GFLOPS 105741
+[RESULT] [   445.921894] [gpustress-8000-hgemm-false] [GPU:: 21947] GFLOPS 119075
+[RESULT] [   447.619683] [gpustress-8000-hgemm-false] [GPU:: 21947] GFLOPS 118834
+[RESULT] [   449.320098] [gpustress-8000-hgemm-false] [GPU:: 21947] GFLOPS 119550
+[RESULT] [   449.320118] [gpustress-8000-hgemm-false] [GPU:: 21947] End of GPU ramp up
+[RESULT] [   450.329370] [gpustress-8000-hgemm-false] [GPU:: 21947] GFLOPS 120600
+[RESULT] [   451.340876] [gpustress-8000-hgemm-false] [GPU:: 21947] GFLOPS 120435
+[RESULT] [   452.352232] [gpustress-8000-hgemm-false] [GPU:: 21947] GFLOPS 120274
+[RESULT] [   453.363417] [gpustress-8000-hgemm-false] [GPU:: 21947] GFLOPS 120285
+[RESULT] [   454.376865] [gpustress-8000-hgemm-false] [GPU:: 21947] GFLOPS 119907
+[RESULT] [   455.390184] [gpustress-8000-hgemm-false] [GPU:: 21947] GFLOPS 119977
+[RESULT] [   456.404524] [gpustress-8000-hgemm-false] [GPU:: 21947] GFLOPS 119761
+[RESULT] [   457.418631] [gpustress-8000-hgemm-false] [GPU:: 21947] GFLOPS 119697
+[RESULT] [   458.433984] [gpustress-8000-hgemm-false] [GPU:: 21947] GFLOPS 119654
+[RESULT] [   459.447518] [gpustress-8000-hgemm-false] [GPU:: 21947] GFLOPS 119806
+[RESULT] [   460.461129] [gpustress-8000-hgemm-false] [GPU:: 21947] GFLOPS 119732
+[RESULT] [   461.477077] [gpustress-8000-hgemm-false] [GPU:: 21947] GFLOPS 119435
+[RESULT] [   462.491798] [gpustress-8000-hgemm-false] [GPU:: 21947] GFLOPS 119500
+[RESULT] [   463.506381] [gpustress-8000-hgemm-false] [GPU:: 21947] GFLOPS 119550
+[RESULT] [   464.522520] [gpustress-8000-hgemm-false] [GPU:: 21947] GFLOPS 119444
+[RESULT] [   465.538441] [gpustress-8000-hgemm-false] [GPU:: 21947] GFLOPS 119242
+[RESULT] [   466.553968] [gpustress-8000-hgemm-false] [GPU:: 21947] GFLOPS 119364
+[RESULT] [   467.339042] [gpustress-8000-hgemm-false] [GPU:: 21947] GFLOPS 120600
+[RESULT] [   467.339060] [gpustress-8000-hgemm-false] [GPU:: 21947] GFLOPS 120600 Target GFLOPS: 16000 met: TRUE
+[RESULT] [   467.339489] [gpustress-8000-hgemm-false] [GPU:: 37820] Start of GPU ramp up
+[RESULT] [   470.867119] [gpustress-8000-hgemm-false] [GPU:: 37820] GFLOPS 113441
+[RESULT] [   472.565272] [gpustress-8000-hgemm-false] [GPU:: 37820] GFLOPS 120566
+[RESULT] [   474.263294] [gpustress-8000-hgemm-false] [GPU:: 37820] GFLOPS 120724
+[RESULT] [   475.963761] [gpustress-8000-hgemm-false] [GPU:: 37820] GFLOPS 119649
+[RESULT] [   475.963782] [gpustress-8000-hgemm-false] [GPU:: 37820] End of GPU ramp up
+[RESULT] [   476.973147] [gpustress-8000-hgemm-false] [GPU:: 37820] GFLOPS 120802
+[RESULT] [   477.982490] [gpustress-8000-hgemm-false] [GPU:: 37820] GFLOPS 120735
+[RESULT] [   478.991800] [gpustress-8000-hgemm-false] [GPU:: 37820] GFLOPS 120602
+[RESULT] [   480.1144  ] [gpustress-8000-hgemm-false] [GPU:: 37820] GFLOPS 120599
+[RESULT] [   481.10577 ] [gpustress-8000-hgemm-false] [GPU:: 37820] GFLOPS 120511
+[RESULT] [   482.19888 ] [gpustress-8000-hgemm-false] [GPU:: 37820] GFLOPS 120505
+[RESULT] [   483.32210 ] [gpustress-8000-hgemm-false] [GPU:: 37820] GFLOPS 120635
+[RESULT] [   484.43581 ] [gpustress-8000-hgemm-false] [GPU:: 37820] GFLOPS 120128
+[RESULT] [   485.53915 ] [gpustress-8000-hgemm-false] [GPU:: 37820] GFLOPS 120878
+[RESULT] [   486.64424 ] [gpustress-8000-hgemm-false] [GPU:: 37820] GFLOPS 120853
+[RESULT] [   487.73728 ] [gpustress-8000-hgemm-false] [GPU:: 37820] GFLOPS 120951
+[RESULT] [   488.89047 ] [gpustress-8000-hgemm-false] [GPU:: 37820] GFLOPS 120315
+[RESULT] [   489.100340] [gpustress-8000-hgemm-false] [GPU:: 37820] GFLOPS 120909
+[RESULT] [   490.110711] [gpustress-8000-hgemm-false] [GPU:: 37820] GFLOPS 120859
+[RESULT] [   491.119991] [gpustress-8000-hgemm-false] [GPU:: 37820] GFLOPS 120938
+[RESULT] [   492.130413] [gpustress-8000-hgemm-false] [GPU:: 37820] GFLOPS 120824
+[RESULT] [   493.139785] [gpustress-8000-hgemm-false] [GPU:: 37820] GFLOPS 120756
+[RESULT] [   493.981620] [gpustress-8000-hgemm-false] [GPU:: 37820] GFLOPS 120951
+[RESULT] [   493.981640] [gpustress-8000-hgemm-false] [GPU:: 37820] GFLOPS 120951 Target GFLOPS: 16000 met: TRUE
+[RESULT] [   493.981944] [gpustress-8000-hgemm-false] [GPU:: 39350] Start of GPU ramp up
+[RESULT] [   497.521676] [gpustress-8000-hgemm-false] [GPU:: 39350] GFLOPS 110166
+[RESULT] [   499.221021] [gpustress-8000-hgemm-false] [GPU:: 39350] GFLOPS 116673
+[RESULT] [   500.921589] [gpustress-8000-hgemm-false] [GPU:: 39350] GFLOPS 118572
+[RESULT] [   502.616881] [gpustress-8000-hgemm-false] [GPU:: 39350] GFLOPS 117770
+[RESULT] [   502.616892] [gpustress-8000-hgemm-false] [GPU:: 39350] End of GPU ramp up
+[RESULT] [   503.621502] [gpustress-8000-hgemm-false] [GPU:: 39350] GFLOPS 119153
+[RESULT] [   504.639818] [gpustress-8000-hgemm-false] [GPU:: 39350] GFLOPS 119050
+[RESULT] [   505.643021] [gpustress-8000-hgemm-false] [GPU:: 39350] GFLOPS 118123
+[RESULT] [   506.661052] [gpustress-8000-hgemm-false] [GPU:: 39350] GFLOPS 118989
+[RESULT] [   507.662344] [gpustress-8000-hgemm-false] [GPU:: 39350] GFLOPS 118678
+[RESULT] [   508.677451] [gpustress-8000-hgemm-false] [GPU:: 39350] GFLOPS 116411
+[RESULT] [   509.685968] [gpustress-8000-hgemm-false] [GPU:: 39350] GFLOPS 116806
+[RESULT] [   510.690796] [gpustress-8000-hgemm-false] [GPU:: 39350] GFLOPS 117749
+[RESULT] [   511.696983] [gpustress-8000-hgemm-false] [GPU:: 39350] GFLOPS 118250
+[RESULT] [   512.697850] [gpustress-8000-hgemm-false] [GPU:: 39350] GFLOPS 118456
+[RESULT] [   513.698905] [gpustress-8000-hgemm-false] [GPU:: 39350] GFLOPS 118414
+[RESULT] [   514.699639] [gpustress-8000-hgemm-false] [GPU:: 39350] GFLOPS 118424
+[RESULT] [   515.700755] [gpustress-8000-hgemm-false] [GPU:: 39350] GFLOPS 118438
+[RESULT] [   516.702368] [gpustress-8000-hgemm-false] [GPU:: 39350] GFLOPS 118393
+[RESULT] [   517.703742] [gpustress-8000-hgemm-false] [GPU:: 39350] GFLOPS 118341
+[RESULT] [   518.705104] [gpustress-8000-hgemm-false] [GPU:: 39350] GFLOPS 118397
+[RESULT] [   519.706904] [gpustress-8000-hgemm-false] [GPU:: 39350] GFLOPS 118375
+[RESULT] [   520.631359] [gpustress-8000-hgemm-false] [GPU:: 39350] GFLOPS 119153
+[RESULT] [   520.631378] [gpustress-8000-hgemm-false] [GPU:: 39350] GFLOPS 119153 Target GFLOPS: 16000 met: TRUE
+[RESULT] [   520.631789] [gpustress-8000-hgemm-false] [GPU:: 24497] Start of GPU ramp up
+[RESULT] [   524.150706] [gpustress-8000-hgemm-false] [GPU:: 24497] GFLOPS 110007
+[RESULT] [   525.855327] [gpustress-8000-hgemm-false] [GPU:: 24497] GFLOPS 116684
+[RESULT] [   527.551840] [gpustress-8000-hgemm-false] [GPU:: 24497] GFLOPS 118180
+[RESULT] [   529.254250] [gpustress-8000-hgemm-false] [GPU:: 24497] GFLOPS 116811
+[RESULT] [   529.254269] [gpustress-8000-hgemm-false] [GPU:: 24497] End of GPU ramp up
+[RESULT] [   530.263492] [gpustress-8000-hgemm-false] [GPU:: 24497] GFLOPS 117121
+[RESULT] [   531.282531] [gpustress-8000-hgemm-false] [GPU:: 24497] GFLOPS 118749
+[RESULT] [   532.295149] [gpustress-8000-hgemm-false] [GPU:: 24497] GFLOPS 118388
+[RESULT] [   533.303460] [gpustress-8000-hgemm-false] [GPU:: 24497] GFLOPS 118370
+[RESULT] [   534.303594] [gpustress-8000-hgemm-false] [GPU:: 24497] GFLOPS 118704
+[RESULT] [   535.305385] [gpustress-8000-hgemm-false] [GPU:: 24497] GFLOPS 118624
+[RESULT] [   536.307914] [gpustress-8000-hgemm-false] [GPU:: 24497] GFLOPS 118646
+[RESULT] [   537.308241] [gpustress-8000-hgemm-false] [GPU:: 24497] GFLOPS 118776
+[RESULT] [   538.311736] [gpustress-8000-hgemm-false] [GPU:: 24497] GFLOPS 118483
+[RESULT] [   539.314225] [gpustress-8000-hgemm-false] [GPU:: 24497] GFLOPS 118488
+[RESULT] [   540.317330] [gpustress-8000-hgemm-false] [GPU:: 24497] GFLOPS 118479
+[RESULT] [   541.319732] [gpustress-8000-hgemm-false] [GPU:: 24497] GFLOPS 118529
+[RESULT] [   542.322550] [gpustress-8000-hgemm-false] [GPU:: 24497] GFLOPS 118500
+[RESULT] [   543.326321] [gpustress-8000-hgemm-false] [GPU:: 24497] GFLOPS 118375
+[RESULT] [   544.331543] [gpustress-8000-hgemm-false] [GPU:: 24497] GFLOPS 118285
+[RESULT] [   545.335230] [gpustress-8000-hgemm-false] [GPU:: 24497] GFLOPS 118411
+[RESULT] [   546.340215] [gpustress-8000-hgemm-false] [GPU:: 24497] GFLOPS 118386
+[RESULT] [   547.266886] [gpustress-8000-hgemm-false] [GPU:: 24497] GFLOPS 118776
+[RESULT] [   547.266905] [gpustress-8000-hgemm-false] [GPU:: 24497] GFLOPS 118776 Target GFLOPS: 16000 met: TRUE
+[RESULT] [   547.267330] [gpustress-8000-hgemm-false] [GPU:: 36258] Start of GPU ramp up
+[RESULT] [   550.800012] [gpustress-8000-hgemm-false] [GPU:: 36258] GFLOPS 110667
+[RESULT] [   552.496870] [gpustress-8000-hgemm-false] [GPU:: 36258] GFLOPS 118278
+[RESULT] [   554.185118] [gpustress-8000-hgemm-false] [GPU:: 36258] GFLOPS 118007
+[RESULT] [   555.875387] [gpustress-8000-hgemm-false] [GPU:: 36258] GFLOPS 118105
+[RESULT] [   555.875408] [gpustress-8000-hgemm-false] [GPU:: 36258] End of GPU ramp up
+[RESULT] [   556.889015] [gpustress-8000-hgemm-false] [GPU:: 36258] GFLOPS 119554
+[RESULT] [   557.889607] [gpustress-8000-hgemm-false] [GPU:: 36258] GFLOPS 119463
+[RESULT] [   558.906681] [gpustress-8000-hgemm-false] [GPU:: 36258] GFLOPS 119200
+[RESULT] [   559.920897] [gpustress-8000-hgemm-false] [GPU:: 36258] GFLOPS 119381
+[RESULT] [   560.938637] [gpustress-8000-hgemm-false] [GPU:: 36258] GFLOPS 119299
+[RESULT] [   561.946633] [gpustress-8000-hgemm-false] [GPU:: 36258] GFLOPS 116716
+[RESULT] [   562.960387] [gpustress-8000-hgemm-false] [GPU:: 36258] GFLOPS 119155
+[RESULT] [   563.976059] [gpustress-8000-hgemm-false] [GPU:: 36258] GFLOPS 119092
+[RESULT] [   564.991859] [gpustress-8000-hgemm-false] [GPU:: 36258] GFLOPS 119093
+[RESULT] [   566.7190  ] [gpustress-8000-hgemm-false] [GPU:: 36258] GFLOPS 119215
+[RESULT] [   567.23342 ] [gpustress-8000-hgemm-false] [GPU:: 36258] GFLOPS 119046
+[RESULT] [   568.39768 ] [gpustress-8000-hgemm-false] [GPU:: 36258] GFLOPS 119002
+[RESULT] [   569.56004 ] [gpustress-8000-hgemm-false] [GPU:: 36258] GFLOPS 119003
+[RESULT] [   570.72016 ] [gpustress-8000-hgemm-false] [GPU:: 36258] GFLOPS 119066
+[RESULT] [   571.88715 ] [gpustress-8000-hgemm-false] [GPU:: 36258] GFLOPS 118985
+[RESULT] [   572.105224] [gpustress-8000-hgemm-false] [GPU:: 36258] GFLOPS 119074
+[RESULT] [   573.121798] [gpustress-8000-hgemm-false] [GPU:: 36258] GFLOPS 119114
+[RESULT] [   573.889581] [gpustress-8000-hgemm-false] [GPU:: 36258] GFLOPS 119554
+[RESULT] [   573.889598] [gpustress-8000-hgemm-false] [GPU:: 36258] GFLOPS 119554 Target GFLOPS: 16000 met: TRUE
+[RESULT] [   573.890025] [gpustress-8000-hgemm-false] [GPU:: 19365] Start of GPU ramp up
+[RESULT] [   577.386912] [gpustress-8000-hgemm-false] [GPU:: 19365] GFLOPS 110026
+[RESULT] [   579.78575 ] [gpustress-8000-hgemm-false] [GPU:: 19365] GFLOPS 119042
+[RESULT] [   580.771024] [gpustress-8000-hgemm-false] [GPU:: 19365] GFLOPS 118018
+[RESULT] [   582.457043] [gpustress-8000-hgemm-false] [GPU:: 19365] GFLOPS 118007
+[RESULT] [   582.457062] [gpustress-8000-hgemm-false] [GPU:: 19365] End of GPU ramp up
+[RESULT] [   583.470991] [gpustress-8000-hgemm-false] [GPU:: 19365] GFLOPS 119782
+[RESULT] [   584.486359] [gpustress-8000-hgemm-false] [GPU:: 19365] GFLOPS 119590
+[RESULT] [   585.501852] [gpustress-8000-hgemm-false] [GPU:: 19365] GFLOPS 119462
+[RESULT] [   586.520923] [gpustress-8000-hgemm-false] [GPU:: 19365] GFLOPS 118818
+[RESULT] [   587.534709] [gpustress-8000-hgemm-false] [GPU:: 19365] GFLOPS 115919
+[RESULT] [   588.535400] [gpustress-8000-hgemm-false] [GPU:: 19365] GFLOPS 118677
+[RESULT] [   589.545177] [gpustress-8000-hgemm-false] [GPU:: 19365] GFLOPS 119124
+[RESULT] [   590.561322] [gpustress-8000-hgemm-false] [GPU:: 19365] GFLOPS 119380
+[RESULT] [   591.577895] [gpustress-8000-hgemm-false] [GPU:: 19365] GFLOPS 119279
+[RESULT] [   592.595017] [gpustress-8000-hgemm-false] [GPU:: 19365] GFLOPS 119241
+[RESULT] [   593.604232] [gpustress-8000-hgemm-false] [GPU:: 19365] GFLOPS 116711
+[RESULT] [   594.606562] [gpustress-8000-hgemm-false] [GPU:: 19365] GFLOPS 118320
+[RESULT] [   595.609810] [gpustress-8000-hgemm-false] [GPU:: 19365] GFLOPS 118094
+[RESULT] [   596.618965] [gpustress-8000-hgemm-false] [GPU:: 19365] GFLOPS 116762
+[RESULT] [   597.632440] [gpustress-8000-hgemm-false] [GPU:: 19365] GFLOPS 115877
+[RESULT] [   598.644238] [gpustress-8000-hgemm-false] [GPU:: 19365] GFLOPS 116942
+[RESULT] [   599.662154] [gpustress-8000-hgemm-false] [GPU:: 19365] GFLOPS 118767
+[RESULT] [   600.470062] [gpustress-8000-hgemm-false] [GPU:: 19365] GFLOPS 119782
+[RESULT] [   600.470080] [gpustress-8000-hgemm-false] [GPU:: 19365] GFLOPS 119782 Target GFLOPS: 16000 met: TRUE
+[RESULT] [   600.470488] [gpustress-8000-hgemm-false] [GPU:: 16815] Start of GPU ramp up
+[RESULT] [   603.989111] [gpustress-8000-hgemm-false] [GPU:: 16815] GFLOPS 108244
+[RESULT] [   605.676610] [gpustress-8000-hgemm-false] [GPU:: 16815] GFLOPS 116536
+[RESULT] [   607.362906] [gpustress-8000-hgemm-false] [GPU:: 16815] GFLOPS 115700
+[RESULT] [   609.52077 ] [gpustress-8000-hgemm-false] [GPU:: 16815] GFLOPS 116726
+[RESULT] [   609.52095 ] [gpustress-8000-hgemm-false] [GPU:: 16815] End of GPU ramp up
+[RESULT] [   610.54751 ] [gpustress-8000-hgemm-false] [GPU:: 16815] GFLOPS 118036
+[RESULT] [   611.59744 ] [gpustress-8000-hgemm-false] [GPU:: 16815] GFLOPS 117786
+[RESULT] [   612.65218 ] [gpustress-8000-hgemm-false] [GPU:: 16815] GFLOPS 117661
+[RESULT] [   613.75840 ] [gpustress-8000-hgemm-false] [GPU:: 16815] GFLOPS 117693
+[RESULT] [   614.82410 ] [gpustress-8000-hgemm-false] [GPU:: 16815] GFLOPS 117614
+[RESULT] [   615.96974 ] [gpustress-8000-hgemm-false] [GPU:: 16815] GFLOPS 117643
+[RESULT] [   616.103149] [gpustress-8000-hgemm-false] [GPU:: 16815] GFLOPS 117748
+[RESULT] [   617.113728] [gpustress-8000-hgemm-false] [GPU:: 16815] GFLOPS 117906
+[RESULT] [   618.124401] [gpustress-8000-hgemm-false] [GPU:: 16815] GFLOPS 116828
+[RESULT] [   619.140324] [gpustress-8000-hgemm-false] [GPU:: 16815] GFLOPS 117626
+[RESULT] [   620.155486] [gpustress-8000-hgemm-false] [GPU:: 16815] GFLOPS 117358
+[RESULT] [   621.163079] [gpustress-8000-hgemm-false] [GPU:: 16815] GFLOPS 117468
+[RESULT] [   622.170690] [gpustress-8000-hgemm-false] [GPU:: 16815] GFLOPS 117413
+[RESULT] [   623.178451] [gpustress-8000-hgemm-false] [GPU:: 16815] GFLOPS 117406
+[RESULT] [   624.186742] [gpustress-8000-hgemm-false] [GPU:: 16815] GFLOPS 117391
+[RESULT] [   625.194513] [gpustress-8000-hgemm-false] [GPU:: 16815] GFLOPS 117309
+[RESULT] [   626.202477] [gpustress-8000-hgemm-false] [GPU:: 16815] GFLOPS 117271
+[RESULT] [   627.55007 ] [gpustress-8000-hgemm-false] [GPU:: 16815] GFLOPS 118036
+[RESULT] [   627.55024 ] [gpustress-8000-hgemm-false] [GPU:: 16815] GFLOPS 118036 Target GFLOPS: 16000 met: TRUE
+[RESULT] [   627.55472 ] [gpustress-8000-hgemm-false] [GPU:: 34728] Start of GPU ramp up
+[RESULT] [   630.568072] [gpustress-8000-hgemm-false] [GPU:: 34728] GFLOPS 108663
+[RESULT] [   632.259739] [gpustress-8000-hgemm-false] [GPU:: 34728] GFLOPS 116557
+[RESULT] [   633.947661] [gpustress-8000-hgemm-false] [GPU:: 34728] GFLOPS 117524
+[RESULT] [   635.635352] [gpustress-8000-hgemm-false] [GPU:: 34728] GFLOPS 117235
+[RESULT] [   635.635371] [gpustress-8000-hgemm-false] [GPU:: 34728] End of GPU ramp up
+[RESULT] [   636.636029] [gpustress-8000-hgemm-false] [GPU:: 34728] GFLOPS 118483
+[RESULT] [   637.641769] [gpustress-8000-hgemm-false] [GPU:: 34728] GFLOPS 118247
+[RESULT] [   638.646512] [gpustress-8000-hgemm-false] [GPU:: 34728] GFLOPS 114247
+[RESULT] [   639.649575] [gpustress-8000-hgemm-false] [GPU:: 34728] GFLOPS 118130
+[RESULT] [   640.652688] [gpustress-8000-hgemm-false] [GPU:: 34728] GFLOPS 118203
+[RESULT] [   641.657310] [gpustress-8000-hgemm-false] [GPU:: 34728] GFLOPS 117849
+[RESULT] [   642.671404] [gpustress-8000-hgemm-false] [GPU:: 34728] GFLOPS 118039
+[RESULT] [   643.680853] [gpustress-8000-hgemm-false] [GPU:: 34728] GFLOPS 117298
+[RESULT] [   644.697280] [gpustress-8000-hgemm-false] [GPU:: 34728] GFLOPS 117959
+[RESULT] [   645.703527] [gpustress-8000-hgemm-false] [GPU:: 34728] GFLOPS 117932
+[RESULT] [   646.709705] [gpustress-8000-hgemm-false] [GPU:: 34728] GFLOPS 118017
+[RESULT] [   647.714197] [gpustress-8000-hgemm-false] [GPU:: 34728] GFLOPS 117896
+[RESULT] [   648.719252] [gpustress-8000-hgemm-false] [GPU:: 34728] GFLOPS 117846
+[RESULT] [   649.733066] [gpustress-8000-hgemm-false] [GPU:: 34728] GFLOPS 116034
+[RESULT] [   650.743125] [gpustress-8000-hgemm-false] [GPU:: 34728] GFLOPS 117884
+[RESULT] [   651.759347] [gpustress-8000-hgemm-false] [GPU:: 34728] GFLOPS 117844
+[RESULT] [   652.775615] [gpustress-8000-hgemm-false] [GPU:: 34728] GFLOPS 111554
+[RESULT] [   653.648682] [gpustress-8000-hgemm-false] [GPU:: 34728] GFLOPS 118483
+[RESULT] [   653.648703] [gpustress-8000-hgemm-false] [GPU:: 34728] GFLOPS 118483 Target GFLOPS: 16000 met: TRUE
+[RESULT] [   653.764777] Action name :gpustress-8000-hgemm-true
+[RESULT] [   653.764802] Module name :gst
+[RESULT] [   653.865240] [gpustress-8000-hgemm-true] [GPU:: 39350] Start of GPU ramp up
+[RESULT] [   653.865256] [gpustress-8000-hgemm-true] [GPU:: 21947] Start of GPU ramp up
+[RESULT] [   653.865315] [gpustress-8000-hgemm-true] [GPU:: 37820] Start of GPU ramp up
+[RESULT] [   653.865373] [gpustress-8000-hgemm-true] [GPU:: 19365] Start of GPU ramp up
+[RESULT] [   653.865383] [gpustress-8000-hgemm-true] [GPU:: 24497] Start of GPU ramp up
+[RESULT] [   653.865443] [gpustress-8000-hgemm-true] [GPU:: 36258] Start of GPU ramp up
+[RESULT] [   653.865525] [gpustress-8000-hgemm-true] [GPU:: 16815] Start of GPU ramp up
+[RESULT] [   653.865586] [gpustress-8000-hgemm-true] [GPU:: 34728] Start of GPU ramp up
+[RESULT] [   657.402198] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 119395
+[RESULT] [   657.402361] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 114733
+[RESULT] [   657.404795] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 120476
+[RESULT] [   657.407486] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 118943
+[RESULT] [   657.408148] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 119994
+[RESULT] [   657.411047] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 116295
+[RESULT] [   657.411101] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 118768
+[RESULT] [   657.413405] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 118812
+[RESULT] [   659.87466 ] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 117257
+[RESULT] [   659.89927 ] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 119339
+[RESULT] [   659.93391 ] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 116874
+[RESULT] [   659.93741 ] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 118463
+[RESULT] [   659.95361 ] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 121589
+[RESULT] [   659.95621 ] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 116938
+[RESULT] [   659.95943 ] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 116895
+[RESULT] [   659.99517 ] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 118495
+[RESULT] [   660.775477] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 117246
+[RESULT] [   660.781477] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 119119
+[RESULT] [   660.782781] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 119660
+[RESULT] [   660.783864] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 116705
+[RESULT] [   660.784080] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 118735
+[RESULT] [   660.786637] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 117492
+[RESULT] [   660.787455] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 120330
+[RESULT] [   660.790111] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 118998
+[RESULT] [   662.460653] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 116726
+[RESULT] [   662.460664] [gpustress-8000-hgemm-true] [GPU:: 16815] End of GPU ramp up
+[RESULT] [   662.466507] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 118387
+[RESULT] [   662.466525] [gpustress-8000-hgemm-true] [GPU:: 36258] End of GPU ramp up
+[RESULT] [   662.468887] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 117943
+[RESULT] [   662.468904] [gpustress-8000-hgemm-true] [GPU:: 34728] End of GPU ramp up
+[RESULT] [   662.469661] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 119097
+[RESULT] [   662.469685] [gpustress-8000-hgemm-true] [GPU:: 19365] End of GPU ramp up
+[RESULT] [   662.472995] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 118094
+[RESULT] [   662.473019] [gpustress-8000-hgemm-true] [GPU:: 21947] End of GPU ramp up
+[RESULT] [   662.476598] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 117867
+[RESULT] [   662.476616] [gpustress-8000-hgemm-true] [GPU:: 39350] End of GPU ramp up
+[RESULT] [   662.477009] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 119350
+[RESULT] [   662.477026] [gpustress-8000-hgemm-true] [GPU:: 37820] End of GPU ramp up
+[RESULT] [   662.478713] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 119108
+[RESULT] [   662.478732] [gpustress-8000-hgemm-true] [GPU:: 24497] End of GPU ramp up
+[RESULT] [   663.466880] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 118091
+[RESULT] [   663.473704] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 119222
+[RESULT] [   663.475165] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 119746
+[RESULT] [   663.476185] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 119813
+[RESULT] [   663.481625] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 118513
+[RESULT] [   663.494261] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 121067
+[RESULT] [   663.497511] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 118287
+[RESULT] [   663.498164] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 118690
+[RESULT] [   664.480630] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 119075
+[RESULT] [   664.481275] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 119579
+[RESULT] [   664.482032] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 117844
+[RESULT] [   664.484280] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 118287
+[RESULT] [   664.485436] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 119210
+[RESULT] [   664.507736] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 120535
+[RESULT] [   664.510755] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 118260
+[RESULT] [   664.516027] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 118318
+[RESULT] [   665.488144] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 119097
+[RESULT] [   665.491289] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 119407
+[RESULT] [   665.499933] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 118001
+[RESULT] [   665.500642] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 117809
+[RESULT] [   665.500923] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 119453
+[RESULT] [   665.521206] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 118223
+[RESULT] [   665.526545] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 120978
+[RESULT] [   665.526552] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 118283
+[RESULT] [   666.493421] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 119135
+[RESULT] [   666.493641] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 119451
+[RESULT] [   666.500523] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 118075
+[RESULT] [   666.515638] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 117969
+[RESULT] [   666.517080] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 119129
+[RESULT] [   666.536033] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 118355
+[RESULT] [   666.542634] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 120640
+[RESULT] [   666.542841] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 118609
+[RESULT] [   667.494882] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 119100
+[RESULT] [   667.496715] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 119430
+[RESULT] [   667.506384] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 118106
+[RESULT] [   667.525903] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 117823
+[RESULT] [   667.533875] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 119404
+[RESULT] [   667.538084] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 118208
+[RESULT] [   667.553758] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 120725
+[RESULT] [   667.558637] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 118442
+[RESULT] [   668.500087] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 119164
+[RESULT] [   668.500153] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 119296
+[RESULT] [   668.514766] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 118190
+[RESULT] [   668.541900] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 117729
+[RESULT] [   668.548170] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 119399
+[RESULT] [   668.550259] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 118484
+[RESULT] [   668.557450] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 120877
+[RESULT] [   668.567395] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 118398
+[RESULT] [   669.516479] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 119325
+[RESULT] [   669.517430] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 118980
+[RESULT] [   669.529438] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 118080
+[RESULT] [   669.542714] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 117465
+[RESULT] [   669.562868] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 119590
+[RESULT] [   669.564495] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 120585
+[RESULT] [   669.566606] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 118163
+[RESULT] [   669.572427] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 118802
+[RESULT] [   670.528689] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 119145
+[RESULT] [   670.529432] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 119072
+[RESULT] [   670.545203] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 118034
+[RESULT] [   670.553731] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 117601
+[RESULT] [   670.569641] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 120890
+[RESULT] [   670.571264] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 119771
+[RESULT] [   670.583996] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 118843
+[RESULT] [   670.585760] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 118466
+[RESULT] [   671.531608] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 118960
+[RESULT] [   671.532195] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 118976
+[RESULT] [   671.557399] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 117523
+[RESULT] [   671.563362] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 117965
+[RESULT] [   671.579717] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 120799
+[RESULT] [   671.584506] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 119562
+[RESULT] [   671.586019] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 118422
+[RESULT] [   671.588135] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 118765
+[RESULT] [   672.542539] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 119037
+[RESULT] [   672.543548] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 119012
+[RESULT] [   672.568762] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 117538
+[RESULT] [   672.577738] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 118049
+[RESULT] [   672.598983] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 118138
+[RESULT] [   672.600620] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 119050
+[RESULT] [   672.601214] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 118086
+[RESULT] [   672.601352] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 120477
+[RESULT] [   673.558582] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 118813
+[RESULT] [   673.560397] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 118896
+[RESULT] [   673.584356] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 117325
+[RESULT] [   673.594043] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 117977
+[RESULT] [   673.616725] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 117800
+[RESULT] [   673.620583] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 120447
+[RESULT] [   673.620954] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 118373
+[RESULT] [   673.621572] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 119235
+[RESULT] [   674.572572] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 118683
+[RESULT] [   674.575176] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 118833
+[RESULT] [   674.599384] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 117352
+[RESULT] [   674.608303] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 117975
+[RESULT] [   674.624619] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 120249
+[RESULT] [   674.627143] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 119295
+[RESULT] [   674.627199] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 118222
+[RESULT] [   674.634956] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 118103
+[RESULT] [   675.583244] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 118642
+[RESULT] [   675.588325] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 118900
+[RESULT] [   675.611436] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 117283
+[RESULT] [   675.628418] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 117707
+[RESULT] [   675.628872] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 120670
+[RESULT] [   675.631177] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 118473
+[RESULT] [   675.633599] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 119470
+[RESULT] [   675.645254] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 118078
+[RESULT] [   676.593337] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 118689
+[RESULT] [   676.599198] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 118816
+[RESULT] [   676.617424] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 116998
+[RESULT] [   676.635507] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 118349
+[RESULT] [   676.636006] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 120581
+[RESULT] [   676.639131] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 119039
+[RESULT] [   676.647780] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 117788
+[RESULT] [   676.657345] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 117978
+[RESULT] [   677.599410] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 118749
+[RESULT] [   677.604923] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 118846
+[RESULT] [   677.631899] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 117236
+[RESULT] [   677.645348] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 119006
+[RESULT] [   677.653108] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 120255
+[RESULT] [   677.654638] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 117709
+[RESULT] [   677.658577] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 117724
+[RESULT] [   677.678022] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 118010
+[RESULT] [   678.608826] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 118745
+[RESULT] [   678.614725] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 118858
+[RESULT] [   678.644005] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 117067
+[RESULT] [   678.653729] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 120518
+[RESULT] [   678.660536] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 119040
+[RESULT] [   678.663060] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 117865
+[RESULT] [   678.675114] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 117654
+[RESULT] [   678.683988] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 117784
+[RESULT] [   679.610416] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 118796
+[RESULT] [   679.621285] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 118726
+[RESULT] [   679.661366] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 117084
+[RESULT] [   679.663551] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 120611
+[RESULT] [   679.664313] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 118071
+[RESULT] [   679.671389] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 119355
+[RESULT] [   679.686388] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 117562
+[RESULT] [   679.691057] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 118109
+[RESULT] [   680.467487] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 118091
+[RESULT] [   680.467507] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 118091 Target GFLOPS: 16000 met: TRUE
+[RESULT] [   680.469203] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 119222
+[RESULT] [   680.469217] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 119222 Target GFLOPS: 16000 met: TRUE
+[RESULT] [   680.483098] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 118802
+[RESULT] [   680.483110] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 118802 Target GFLOPS: 16000 met: TRUE
+[RESULT] [   680.483374] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 119813
+[RESULT] [   680.483389] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 119813 Target GFLOPS: 16000 met: TRUE
+[RESULT] [   680.486797] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 118513
+[RESULT] [   680.486809] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 118513 Target GFLOPS: 16000 met: TRUE
+[RESULT] [   680.488071] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 121067
+[RESULT] [   680.488083] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 121067 Target GFLOPS: 16000 met: TRUE
+[RESULT] [   680.489880] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 118843
+[RESULT] [   680.489901] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 118843 Target GFLOPS: 16000 met: TRUE
+[RESULT] [   680.491911] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 119771
+[RESULT] [   680.491924] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 119771 Target GFLOPS: 16000 met: TRUE
+[RESULT] [   680.720257] [gpustress-8000-hgemm-true] [GPU:: 21947] Start of GPU ramp up
+[RESULT] [   680.720303] [gpustress-8000-hgemm-true] [GPU:: 37820] Start of GPU ramp up
+[RESULT] [   680.720360] [gpustress-8000-hgemm-true] [GPU:: 39350] Start of GPU ramp up
+[RESULT] [   680.720362] [gpustress-8000-hgemm-true] [GPU:: 24497] Start of GPU ramp up
+[RESULT] [   680.720403] [gpustress-8000-hgemm-true] [GPU:: 16815] Start of GPU ramp up
+[RESULT] [   680.720430] [gpustress-8000-hgemm-true] [GPU:: 36258] Start of GPU ramp up
+[RESULT] [   680.720489] [gpustress-8000-hgemm-true] [GPU:: 19365] Start of GPU ramp up
+[RESULT] [   680.720558] [gpustress-8000-hgemm-true] [GPU:: 34728] Start of GPU ramp up
+[RESULT] [   684.251262] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 118517
+[RESULT] [   684.257067] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 124080
+[RESULT] [   684.257902] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 117182
+[RESULT] [   684.260087] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 121658
+[RESULT] [   684.261090] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 117910
+[RESULT] [   684.261991] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 115648
+[RESULT] [   684.262111] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 117449
+[RESULT] [   684.262445] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 117214
+[RESULT] [   685.941404] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 118845
+[RESULT] [   685.948595] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 117921
+[RESULT] [   685.950514] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 119916
+[RESULT] [   685.950824] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 117878
+[RESULT] [   685.951583] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 117438
+[RESULT] [   685.952545] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 116938
+[RESULT] [   685.954225] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 119306
+[RESULT] [   685.954525] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 119816
+[RESULT] [   687.626677] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 118213
+[RESULT] [   687.633867] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 118659
+[RESULT] [   687.636417] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 118932
+[RESULT] [   687.636872] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 118051
+[RESULT] [   687.637847] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 115877
+[RESULT] [   687.638389] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 123357
+[RESULT] [   687.641268] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 121110
+[RESULT] [   687.642110] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 117620
+[RESULT] [   689.314970] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 118137
+[RESULT] [   689.314990] [gpustress-8000-hgemm-true] [GPU:: 21947] End of GPU ramp up
+[RESULT] [   689.321482] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 118801
+[RESULT] [   689.321501] [gpustress-8000-hgemm-true] [GPU:: 19365] End of GPU ramp up
+[RESULT] [   689.324699] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 117577
+[RESULT] [   689.324718] [gpustress-8000-hgemm-true] [GPU:: 34728] End of GPU ramp up
+[RESULT] [   689.325008] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 117342
+[RESULT] [   689.325030] [gpustress-8000-hgemm-true] [GPU:: 36258] End of GPU ramp up
+[RESULT] [   689.326090] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 117353
+[RESULT] [   689.326114] [gpustress-8000-hgemm-true] [GPU:: 16815] End of GPU ramp up
+[RESULT] [   689.331753] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 120386
+[RESULT] [   689.331769] [gpustress-8000-hgemm-true] [GPU:: 37820] End of GPU ramp up
+[RESULT] [   689.335291] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 118224
+[RESULT] [   689.335309] [gpustress-8000-hgemm-true] [GPU:: 24497] End of GPU ramp up
+[RESULT] [   689.336041] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 117835
+[RESULT] [   689.336057] [gpustress-8000-hgemm-true] [GPU:: 39350] End of GPU ramp up
+[RESULT] [   690.317651] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 119262
+[RESULT] [   690.326272] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 118694
+[RESULT] [   690.334422] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 118309
+[RESULT] [   690.336182] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 119443
+[RESULT] [   690.338196] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 117711
+[RESULT] [   690.346416] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 118035
+[RESULT] [   690.347581] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 118100
+[RESULT] [   690.347711] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 120798
+[RESULT] [   691.327854] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 119045
+[RESULT] [   691.337471] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 117967
+[RESULT] [   691.340434] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 118686
+[RESULT] [   691.343984] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 117262
+[RESULT] [   691.346488] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 118023
+[RESULT] [   691.349559] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 119038
+[RESULT] [   691.364738] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 120770
+[RESULT] [   691.371074] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 118193
+[RESULT] [   692.335981] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 118768
+[RESULT] [   692.344573] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 118612
+[RESULT] [   692.346785] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 118096
+[RESULT] [   692.351882] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 119007
+[RESULT] [   692.357202] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 117066
+[RESULT] [   692.360393] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 117950
+[RESULT] [   692.375512] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 120275
+[RESULT] [   692.383549] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 117872
+[RESULT] [   693.347721] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 119068
+[RESULT] [   693.350632] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 118614
+[RESULT] [   693.357309] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 118847
+[RESULT] [   693.357968] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 117994
+[RESULT] [   693.369662] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 117148
+[RESULT] [   693.370822] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 118118
+[RESULT] [   693.375828] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 120203
+[RESULT] [   693.395713] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 118097
+[RESULT] [   694.363668] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 117696
+[RESULT] [   694.365250] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 118440
+[RESULT] [   694.366617] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 118773
+[RESULT] [   694.375965] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 118858
+[RESULT] [   694.382087] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 116985
+[RESULT] [   694.394243] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 117709
+[RESULT] [   694.395939] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 118032
+[RESULT] [   694.396475] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 120300
+[RESULT] [   695.378118] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 118395
+[RESULT] [   695.379035] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 118807
+[RESULT] [   695.380955] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 118920
+[RESULT] [   695.381947] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 117818
+[RESULT] [   695.384021] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 116934
+[RESULT] [   695.408664] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 120064
+[RESULT] [   695.409529] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 118065
+[RESULT] [   695.409928] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 118003
+[RESULT] [   696.382465] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 117794
+[RESULT] [   696.389934] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 116977
+[RESULT] [   696.390118] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 118512
+[RESULT] [   696.393345] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 118884
+[RESULT] [   696.402443] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 118873
+[RESULT] [   696.418241] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 120684
+[RESULT] [   696.426460] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 117867
+[RESULT] [   696.428882] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 117882
+[RESULT] [   697.401083] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 117692
+[RESULT] [   697.401920] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 116957
+[RESULT] [   697.404938] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 118377
+[RESULT] [   697.411825] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 118767
+[RESULT] [   697.418838] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 118790
+[RESULT] [   697.427800] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 120487
+[RESULT] [   697.444444] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 117608
+[RESULT] [   697.445665] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 118126
+[RESULT] [   698.403330] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 117616
+[RESULT] [   698.412827] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 118443
+[RESULT] [   698.413625] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 118666
+[RESULT] [   698.418293] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 116843
+[RESULT] [   698.432654] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 120147
+[RESULT] [   698.432824] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 118923
+[RESULT] [   698.457289] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 117803
+[RESULT] [   698.460366] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 117956
+[RESULT] [   699.418471] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 117713
+[RESULT] [   699.421563] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 116873
+[RESULT] [   699.424467] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 118734
+[RESULT] [   699.425199] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 118487
+[RESULT] [   699.451123] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 120166
+[RESULT] [   699.453056] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 118763
+[RESULT] [   699.473095] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 117653
+[RESULT] [   699.478014] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 118021
+[RESULT] [   700.424956] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 118404
+[RESULT] [   700.430386] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 118342
+[RESULT] [   700.435782] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 116637
+[RESULT] [   700.436368] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 117527
+[RESULT] [   700.453937] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 120443
+[RESULT] [   700.472788] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 118723
+[RESULT] [   700.475779] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 117633
+[RESULT] [   700.498411] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 117756
+[RESULT] [   701.430275] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 118583
+[RESULT] [   701.432745] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 118600
+[RESULT] [   701.445778] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 117586
+[RESULT] [   701.453774] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 116801
+[RESULT] [   701.463475] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 120126
+[RESULT] [   701.493866] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 118555
+[RESULT] [   701.496431] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 117800
+[RESULT] [   701.520363] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 117863
+[RESULT] [   702.439278] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 118344
+[RESULT] [   702.443858] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 118304
+[RESULT] [   702.457549] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 117523
+[RESULT] [   702.471253] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 116689
+[RESULT] [   702.481852] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 120228
+[RESULT] [   702.495062] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 118654
+[RESULT] [   702.505370] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 117616
+[RESULT] [   702.526806] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 117656
+[RESULT] [   703.452715] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 118452
+[RESULT] [   703.459006] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 118344
+[RESULT] [   703.459357] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 117538
+[RESULT] [   703.486034] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 116613
+[RESULT] [   703.499203] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 120424
+[RESULT] [   703.507029] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 118492
+[RESULT] [   703.507589] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 117599
+[RESULT] [   703.531521] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 117709
+[RESULT] [   704.455808] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 118379
+[RESULT] [   704.466981] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 118150
+[RESULT] [   704.470352] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 117372
+[RESULT] [   704.501098] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 116481
+[RESULT] [   704.506448] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 120258
+[RESULT] [   704.514933] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 117234
+[RESULT] [   704.519023] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 118555
+[RESULT] [   704.536209] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 117997
+[RESULT] [   705.470022] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 118269
+[RESULT] [   705.474476] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 118409
+[RESULT] [   705.476430] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 117233
+[RESULT] [   705.514080] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 116164
+[RESULT] [   705.521617] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 118603
+[RESULT] [   705.524418] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 117507
+[RESULT] [   705.524702] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 120060
+[RESULT] [   705.548377] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 117590
+[RESULT] [   706.474625] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 118327
+[RESULT] [   706.477682] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 118289
+[RESULT] [   706.490407] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 117195
+[RESULT] [   706.516420] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 116332
+[RESULT] [   706.532938] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 117101
+[RESULT] [   706.538197] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 119664
+[RESULT] [   706.538203] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 118311
+[RESULT] [   706.564253] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 117457
+[RESULT] [   707.327036] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 117711
+[RESULT] [   707.327048] [gpustress-8000-hgemm-true] [GPU:: 16815] GFLOPS 117711 Target GFLOPS: 16000 met: TRUE
+[RESULT] [   707.330172] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 118309
+[RESULT] [   707.330186] [gpustress-8000-hgemm-true] [GPU:: 34728] GFLOPS 118309 Target GFLOPS: 16000 met: TRUE
+[RESULT] [   707.336222] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 119262
+[RESULT] [   707.336237] [gpustress-8000-hgemm-true] [GPU:: 21947] GFLOPS 119262 Target GFLOPS: 16000 met: TRUE
+[RESULT] [   707.337352] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 119443
+[RESULT] [   707.337368] [gpustress-8000-hgemm-true] [GPU:: 19365] GFLOPS 119443 Target GFLOPS: 16000 met: TRUE
+[RESULT] [   707.337801] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 118694
+[RESULT] [   707.337816] [gpustress-8000-hgemm-true] [GPU:: 36258] GFLOPS 118694 Target GFLOPS: 16000 met: TRUE
+[RESULT] [   707.338038] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 118118
+[RESULT] [   707.338053] [gpustress-8000-hgemm-true] [GPU:: 39350] GFLOPS 118118 Target GFLOPS: 16000 met: TRUE
+[RESULT] [   707.340558] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 118193
+[RESULT] [   707.340576] [gpustress-8000-hgemm-true] [GPU:: 24497] GFLOPS 118193 Target GFLOPS: 16000 met: TRUE
+[RESULT] [   707.342765] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 120798
+[RESULT] [   707.342780] [gpustress-8000-hgemm-true] [GPU:: 37820] GFLOPS 120798 Target GFLOPS: 16000 met: TRUE
+[RESULT] [   707.470640] Action name :gpustress-8000-dgemm-false
+[RESULT] [   707.470668] Module name :gst
+[RESULT] [   707.571077] [gpustress-8000-dgemm-false] [GPU:: 21947] Start of GPU ramp up
+[RESULT] [   711.361106] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 69760
+[RESULT] [   713.11983 ] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 74753
+[RESULT] [   714.654103] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 75154
+[RESULT] [   716.291897] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 75479
+[RESULT] [   716.291921] [gpustress-8000-dgemm-false] [GPU:: 21947] End of GPU ramp up
+[RESULT] [   717.305170] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 73904
+[RESULT] [   718.319817] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 73768
+[RESULT] [   719.335099] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 73494
+[RESULT] [   720.355886] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 73794
+[RESULT] [   721.382528] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 71521
+[RESULT] [   722.397816] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 73421
+[RESULT] [   723.414392] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 73180
+[RESULT] [   724.429952] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 73483
+[RESULT] [   725.444677] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 73482
+[RESULT] [   726.462908] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 73346
+[RESULT] [   727.477960] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 73810
+[RESULT] [   728.510031] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 72464
+[RESULT] [   729.547503] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 73457
+[RESULT] [   730.564012] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 73451
+[RESULT] [   731.586819] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 73516
+[RESULT] [   732.615574] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 73623
+[RESULT] [   733.646360] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 70488
+[RESULT] [   734.316943] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 73904
+[RESULT] [   734.316966] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 73904 Target GFLOPS: 4000 met: TRUE
+[RESULT] [   734.317393] [gpustress-8000-dgemm-false] [GPU:: 37820] Start of GPU ramp up
+[RESULT] [   738.115952] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 69908
+[RESULT] [   739.754857] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 71619
+[RESULT] [   741.390160] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 75838
+[RESULT] [   743.25901 ] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 73981
+[RESULT] [   743.25920 ] [gpustress-8000-dgemm-false] [GPU:: 37820] End of GPU ramp up
+[RESULT] [   744.41457 ] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 72872
+[RESULT] [   745.64889 ] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 72234
+[RESULT] [   746.85771 ] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 72960
+[RESULT] [   747.105115] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 72372
+[RESULT] [   748.120230] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 73176
+[RESULT] [   749.134171] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 73289
+[RESULT] [   750.152373] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 72505
+[RESULT] [   751.166996] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 73272
+[RESULT] [   752.184473] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 72652
+[RESULT] [   753.197983] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 73427
+[RESULT] [   754.215016] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 72990
+[RESULT] [   755.231208] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 72948
+[RESULT] [   756.257698] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 70828
+[RESULT] [   757.293996] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 69409
+[RESULT] [   758.328536] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 72362
+[RESULT] [   759.368341] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 72018
+[RESULT] [   760.407384] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 68464
+[RESULT] [   761.31557 ] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 73427
+[RESULT] [   761.31581 ] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 73427 Target GFLOPS: 4000 met: TRUE
+[RESULT] [   761.31987 ] [gpustress-8000-dgemm-false] [GPU:: 39350] Start of GPU ramp up
+[RESULT] [   764.845685] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 73039
+[RESULT] [   766.481716] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 75298
+[RESULT] [   768.126278] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 75197
+[RESULT] [   769.769804] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 71544
+[RESULT] [   769.769826] [gpustress-8000-dgemm-false] [GPU:: 39350] End of GPU ramp up
+[RESULT] [   770.783061] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 74258
+[RESULT] [   771.797962] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 73638
+[RESULT] [   772.809200] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 74589
+[RESULT] [   773.822599] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 73873
+[RESULT] [   774.836667] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 73734
+[RESULT] [   775.849879] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 74235
+[RESULT] [   776.863867] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 74439
+[RESULT] [   777.877946] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 74011
+[RESULT] [   778.892018] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 74309
+[RESULT] [   779.903716] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 74555
+[RESULT] [   780.916730] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 74421
+[RESULT] [   781.930040] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 74355
+[RESULT] [   782.943756] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 74344
+[RESULT] [   783.957549] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 74134
+[RESULT] [   784.973126] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 73839
+[RESULT] [   785.985452] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 74379
+[RESULT] [   786.997664] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 74396
+[RESULT] [   787.806852] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 74589
+[RESULT] [   787.806867] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 74589 Target GFLOPS: 4000 met: TRUE
+[RESULT] [   787.807152] [gpustress-8000-dgemm-false] [GPU:: 24497] Start of GPU ramp up
+[RESULT] [   791.590952] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 70504
+[RESULT] [   793.256619] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 70006
+[RESULT] [   794.924169] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 72359
+[RESULT] [   796.570685] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 73188
+[RESULT] [   796.570708] [gpustress-8000-dgemm-false] [GPU:: 24497] End of GPU ramp up
+[RESULT] [   797.597653] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 72091
+[RESULT] [   798.622081] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 72339
+[RESULT] [   799.643181] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 72287
+[RESULT] [   800.666133] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 72148
+[RESULT] [   801.686655] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 72443
+[RESULT] [   802.713368] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 72808
+[RESULT] [   803.737731] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 72296
+[RESULT] [   804.761743] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 71929
+[RESULT] [   805.781121] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 72612
+[RESULT] [   806.805188] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 73028
+[RESULT] [   807.836962] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 72056
+[RESULT] [   808.855197] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 72985
+[RESULT] [   809.874383] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 72717
+[RESULT] [   810.918398] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 71045
+[RESULT] [   811.954978] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 69567
+[RESULT] [   813.8434  ] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 16942
+[RESULT] [   814.8654  ] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 65074
+[RESULT] [   814.620308] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 73028
+[RESULT] [   814.620327] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 73028 Target GFLOPS: 4000 met: TRUE
+[RESULT] [   814.620584] [gpustress-8000-dgemm-false] [GPU:: 36258] Start of GPU ramp up
+[RESULT] [   818.429145] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 69411
+[RESULT] [   820.66718 ] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 70981
+[RESULT] [   821.715200] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 73184
+[RESULT] [   823.351606] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 74245
+[RESULT] [   823.351628] [gpustress-8000-dgemm-false] [GPU:: 36258] End of GPU ramp up
+[RESULT] [   824.370190] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 72750
+[RESULT] [   825.386793] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 73361
+[RESULT] [   826.404205] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 73212
+[RESULT] [   827.438873] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 72322
+[RESULT] [   828.486394] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 73328
+[RESULT] [   829.490912] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 72888
+[RESULT] [   830.527427] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 72872
+[RESULT] [   831.548304] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 72510
+[RESULT] [   832.566142] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 73055
+[RESULT] [   833.588576] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 72986
+[RESULT] [   834.636388] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 72970
+[RESULT] [   835.679977] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 72989
+[RESULT] [   836.706735] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 72560
+[RESULT] [   837.729925] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 72419
+[RESULT] [   838.750196] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 72558
+[RESULT] [   839.767751] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 73004
+[RESULT] [   840.787764] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 72358
+[RESULT] [   841.399968] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 73361
+[RESULT] [   841.399985] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 73361 Target GFLOPS: 4000 met: TRUE
+[RESULT] [   841.400313] [gpustress-8000-dgemm-false] [GPU:: 19365] Start of GPU ramp up
+[RESULT] [   845.173611] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 67845
+[RESULT] [   846.829853] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 72468
+[RESULT] [   848.469638] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 75879
+[RESULT] [   850.114455] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 68833
+[RESULT] [   850.114473] [gpustress-8000-dgemm-false] [GPU:: 19365] End of GPU ramp up
+[RESULT] [   851.125752] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 74081
+[RESULT] [   852.134005] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 74841
+[RESULT] [   853.145473] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 74144
+[RESULT] [   854.155543] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 74304
+[RESULT] [   855.167026] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 74034
+[RESULT] [   856.179034] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 73899
+[RESULT] [   857.198226] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 74407
+[RESULT] [   858.225728] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 70805
+[RESULT] [   859.263586] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 72678
+[RESULT] [   860.305056] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 74206
+[RESULT] [   861.345273] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 72234
+[RESULT] [   862.394048] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 71078
+[RESULT] [   863.397205] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 69128
+[RESULT] [   864.426878] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 71631
+[RESULT] [   865.449844] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 73123
+[RESULT] [   866.466988] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 74524
+[RESULT] [   867.477963] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 74298
+[RESULT] [   868.134098] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 74841
+[RESULT] [   868.134112] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 74841 Target GFLOPS: 4000 met: TRUE
+[RESULT] [   868.134536] [gpustress-8000-dgemm-false] [GPU:: 16815] Start of GPU ramp up
+[RESULT] [   871.922309] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 70542
+[RESULT] [   873.582017] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 73225
+[RESULT] [   875.240750] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 73787
+[RESULT] [   876.881727] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 73317
+[RESULT] [   876.881749] [gpustress-8000-dgemm-false] [GPU:: 16815] End of GPU ramp up
+[RESULT] [   877.909338] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 70979
+[RESULT] [   878.954561] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 70097
+[RESULT] [   879.971734] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 73094
+[RESULT] [   880.992928] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 73142
+[RESULT] [   882.21198 ] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 71016
+[RESULT] [   883.24104 ] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 72764
+[RESULT] [   884.54459 ] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 70684
+[RESULT] [   885.102475] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 67306
+[RESULT] [   886.132754] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 73223
+[RESULT] [   887.172854] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 68547
+[RESULT] [   888.188961] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 73104
+[RESULT] [   889.220185] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 70227
+[RESULT] [   890.258494] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 72875
+[RESULT] [   891.306790] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 72850
+[RESULT] [   892.344217] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 72895
+[RESULT] [   893.367786] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 72884
+[RESULT] [   894.403733] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 72253
+[RESULT] [   894.914206] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 73223
+[RESULT] [   894.914227] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 73223 Target GFLOPS: 4000 met: TRUE
+[RESULT] [   894.914615] [gpustress-8000-dgemm-false] [GPU:: 34728] Start of GPU ramp up
+[RESULT] [   898.691011] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 71512
+[RESULT] [   900.337812] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 73568
+[RESULT] [   901.988415] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 71867
+[RESULT] [   903.664027] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 74528
+[RESULT] [   903.664049] [gpustress-8000-dgemm-false] [GPU:: 34728] End of GPU ramp up
+[RESULT] [   904.691610] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 72412
+[RESULT] [   905.710219] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 72545
+[RESULT] [   906.729017] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 72664
+[RESULT] [   907.764283] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 71363
+[RESULT] [   908.810446] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 69559
+[RESULT] [   909.844013] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 72840
+[RESULT] [   910.857418] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 73690
+[RESULT] [   911.874196] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 72816
+[RESULT] [   912.888467] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 73381
+[RESULT] [   913.907400] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 72428
+[RESULT] [   914.934102] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 71430
+[RESULT] [   915.953360] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 72379
+[RESULT] [   916.973702] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 72368
+[RESULT] [   917.994598] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 72327
+[RESULT] [   919.14209 ] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 72533
+[RESULT] [   920.30433 ] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 73300
+[RESULT] [   921.49983 ] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 72612
+[RESULT] [   921.675051] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 73690
+[RESULT] [   921.675071] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 73690 Target GFLOPS: 4000 met: TRUE
+[RESULT] [   922.174108] [gpustress-8000-dgemm-false] [GPU:: 21947] Start of GPU ramp up
+[RESULT] [   926.35555 ] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 72940
+[RESULT] [   927.683473] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 74211
+[RESULT] [   929.323312] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 73858
+[RESULT] [   930.985325] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 74805
+[RESULT] [   930.985348] [gpustress-8000-dgemm-false] [GPU:: 21947] End of GPU ramp up
+[RESULT] [   932.6030  ] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 73892
+[RESULT] [   933.22437 ] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 73293
+[RESULT] [   934.37228 ] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 73771
+[RESULT] [   935.62038 ] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 73300
+[RESULT] [   936.95234 ] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 69872
+[RESULT] [   937.145593] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 69145
+[RESULT] [   938.172397] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 71280
+[RESULT] [   939.196984] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 73834
+[RESULT] [   940.230722] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 71794
+[RESULT] [   941.259112] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 73496
+[RESULT] [   942.281902] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 72327
+[RESULT] [   943.297015] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 73518
+[RESULT] [   944.311015] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 73837
+[RESULT] [   945.325369] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 73617
+[RESULT] [   946.338480] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 73892
+[RESULT] [   947.351816] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 73920
+[RESULT] [   948.367560] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 73591
+[RESULT] [   949.27045 ] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 73920
+[RESULT] [   949.27062 ] [gpustress-8000-dgemm-false] [GPU:: 21947] GFLOPS 73920 Target GFLOPS: 4000 met: TRUE
+[RESULT] [   949.27495 ] [gpustress-8000-dgemm-false] [GPU:: 37820] Start of GPU ramp up
+[RESULT] [   952.806902] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 76125
+[RESULT] [   954.444088] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 72407
+[RESULT] [   956.91153 ] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 72201
+[RESULT] [   957.726262] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 75373
+[RESULT] [   957.726282] [gpustress-8000-dgemm-false] [GPU:: 37820] End of GPU ramp up
+[RESULT] [   958.743364] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 72779
+[RESULT] [   959.758924] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 72990
+[RESULT] [   960.771880] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 73620
+[RESULT] [   961.786872] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 73091
+[RESULT] [   962.799129] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 73726
+[RESULT] [   963.817618] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 72424
+[RESULT] [   964.833635] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 73052
+[RESULT] [   965.851245] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 72529
+[RESULT] [   966.867353] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 72943
+[RESULT] [   967.902968] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 72801
+[RESULT] [   968.940320] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 72925
+[RESULT] [   969.989326] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 70627
+[RESULT] [   971.27437 ] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 73226
+[RESULT] [   972.75804 ] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 70505
+[RESULT] [   973.97988 ] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 73210
+[RESULT] [   974.122059] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 71315
+[RESULT] [   975.144368] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 72108
+[RESULT] [   975.753820] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 73726
+[RESULT] [   975.753829] [gpustress-8000-dgemm-false] [GPU:: 37820] GFLOPS 73726 Target GFLOPS: 4000 met: TRUE
+[RESULT] [   975.754247] [gpustress-8000-dgemm-false] [GPU:: 39350] Start of GPU ramp up
+[RESULT] [   979.533500] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 75661
+[RESULT] [   981.169170] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 74649
+[RESULT] [   982.804546] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 74861
+[RESULT] [   984.438761] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 75132
+[RESULT] [   984.438779] [gpustress-8000-dgemm-false] [GPU:: 39350] End of GPU ramp up
+[RESULT] [   985.456067] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 73309
+[RESULT] [   986.473917] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 73056
+[RESULT] [   987.486558] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 74246
+[RESULT] [   988.511688] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 73939
+[RESULT] [   989.555927] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 69954
+[RESULT] [   990.591807] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 73947
+[RESULT] [   991.629341] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 73739
+[RESULT] [   992.654559] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 72083
+[RESULT] [   993.668809] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 73870
+[RESULT] [   994.685089] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 73503
+[RESULT] [   995.697115] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 74495
+[RESULT] [   996.709860] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 74148
+[RESULT] [   997.723246] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 74019
+[RESULT] [   998.739273] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 73366
+[RESULT] [   999.754377] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 73743
+[RESULT] [  1000.766965] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 74284
+[RESULT] [  1001.781575] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 73937
+[RESULT] [  1002.440218] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 74495
+[RESULT] [  1002.440231] [gpustress-8000-dgemm-false] [GPU:: 39350] GFLOPS 74495 Target GFLOPS: 4000 met: TRUE
+[RESULT] [  1002.440669] [gpustress-8000-dgemm-false] [GPU:: 24497] Start of GPU ramp up
+[RESULT] [  1006.227221] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 73677
+[RESULT] [  1007.881941] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 74092
+[RESULT] [  1009.541547] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 71449
+[RESULT] [  1011.196951] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 69658
+[RESULT] [  1011.196973] [gpustress-8000-dgemm-false] [GPU:: 24497] End of GPU ramp up
+[RESULT] [  1012.243790] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 72737
+[RESULT] [  1013.286926] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 68174
+[RESULT] [  1014.314261] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 71025
+[RESULT] [  1015.331440] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 73122
+[RESULT] [  1016.354156] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 73147
+[RESULT] [  1017.383914] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 72934
+[RESULT] [  1018.420016] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 70025
+[RESULT] [  1019.465557] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 73389
+[RESULT] [  1020.514089] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 69148
+[RESULT] [  1021.547824] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 73257
+[RESULT] [  1022.566858] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 73699
+[RESULT] [  1023.593339] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 71824
+[RESULT] [  1024.610522] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 73459
+[RESULT] [  1025.627976] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 73232
+[RESULT] [  1026.644941] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 73283
+[RESULT] [  1027.662489] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 73198
+[RESULT] [  1028.681861] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 72757
+[RESULT] [  1029.242613] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 73699
+[RESULT] [  1029.242628] [gpustress-8000-dgemm-false] [GPU:: 24497] GFLOPS 73699 Target GFLOPS: 4000 met: TRUE
+[RESULT] [  1029.243054] [gpustress-8000-dgemm-false] [GPU:: 36258] Start of GPU ramp up
+[RESULT] [  1033.53622 ] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 72148
+[RESULT] [  1034.717304] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 71795
+[RESULT] [  1036.389198] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 72849
+[RESULT] [  1038.83312 ] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 74387
+[RESULT] [  1038.83333 ] [gpustress-8000-dgemm-false] [GPU:: 36258] End of GPU ramp up
+[RESULT] [  1039.118869] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 72711
+[RESULT] [  1040.137285] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 72965
+[RESULT] [  1041.156363] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 72814
+[RESULT] [  1042.174635] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 72835
+[RESULT] [  1043.192978] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 72924
+[RESULT] [  1044.221533] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 73008
+[RESULT] [  1045.224661] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 72841
+[RESULT] [  1046.233904] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 72663
+[RESULT] [  1047.263256] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 72858
+[RESULT] [  1048.291374] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 72496
+[RESULT] [  1049.309931] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 72905
+[RESULT] [  1050.330822] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 73178
+[RESULT] [  1051.351321] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 72713
+[RESULT] [  1052.372312] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 72527
+[RESULT] [  1053.392556] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 72725
+[RESULT] [  1054.412228] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 72840
+[RESULT] [  1055.431334] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 72871
+[RESULT] [  1056.93892 ] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 73178
+[RESULT] [  1056.93907 ] [gpustress-8000-dgemm-false] [GPU:: 36258] GFLOPS 73178 Target GFLOPS: 4000 met: TRUE
+[RESULT] [  1056.94313 ] [gpustress-8000-dgemm-false] [GPU:: 19365] Start of GPU ramp up
+[RESULT] [  1059.906306] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 75031
+[RESULT] [  1061.580955] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 74770
+[RESULT] [  1063.244596] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 76273
+[RESULT] [  1064.899451] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 72035
+[RESULT] [  1064.899473] [gpustress-8000-dgemm-false] [GPU:: 19365] End of GPU ramp up
+[RESULT] [  1065.908070] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 74716
+[RESULT] [  1066.919799] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 74323
+[RESULT] [  1067.931714] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 74322
+[RESULT] [  1068.943392] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 74434
+[RESULT] [  1069.953120] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 74828
+[RESULT] [  1070.963470] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 74671
+[RESULT] [  1071.986513] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 74219
+[RESULT] [  1073.29295 ] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 70708
+[RESULT] [  1074.72120 ] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 70346
+[RESULT] [  1075.110227] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 71992
+[RESULT] [  1076.128589] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 74666
+[RESULT] [  1077.169869] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 72875
+[RESULT] [  1078.218006] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 68992
+[RESULT] [  1079.251245] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 72057
+[RESULT] [  1080.280103] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 70669
+[RESULT] [  1081.315722] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 70378
+[RESULT] [  1082.328315] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 74055
+[RESULT] [  1082.903792] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 74828
+[RESULT] [  1082.903811] [gpustress-8000-dgemm-false] [GPU:: 19365] GFLOPS 74828 Target GFLOPS: 4000 met: TRUE
+[RESULT] [  1082.904143] [gpustress-8000-dgemm-false] [GPU:: 16815] Start of GPU ramp up
+[RESULT] [  1086.756319] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 73059
+[RESULT] [  1088.418741] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 73643
+[RESULT] [  1090.83139 ] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 73238
+[RESULT] [  1091.730132] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 73723
+[RESULT] [  1091.730153] [gpustress-8000-dgemm-false] [GPU:: 16815] End of GPU ramp up
+[RESULT] [  1092.750626] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 72776
+[RESULT] [  1093.778238] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 71398
+[RESULT] [  1094.797262] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 73099
+[RESULT] [  1095.822188] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 72921
+[RESULT] [  1096.847391] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 72786
+[RESULT] [  1097.868148] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 72637
+[RESULT] [  1098.889497] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 72539
+[RESULT] [  1099.909313] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 72841
+[RESULT] [  1100.928947] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 72904
+[RESULT] [  1101.949031] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 72734
+[RESULT] [  1102.968773] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 72826
+[RESULT] [  1103.989274] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 72680
+[RESULT] [  1105.9961  ] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 72629
+[RESULT] [  1106.29824 ] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 72741
+[RESULT] [  1107.50512 ] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 72606
+[RESULT] [  1108.72638 ] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 72286
+[RESULT] [  1109.93694 ] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 72543
+[RESULT] [  1109.756642] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 73099
+[RESULT] [  1109.756656] [gpustress-8000-dgemm-false] [GPU:: 16815] GFLOPS 73099 Target GFLOPS: 4000 met: TRUE
+[RESULT] [  1109.757067] [gpustress-8000-dgemm-false] [GPU:: 34728] Start of GPU ramp up
+[RESULT] [  1113.571278] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 67251
+[RESULT] [  1115.221850] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 72985
+[RESULT] [  1116.896929] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 70212
+[RESULT] [  1118.542741] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 74168
+[RESULT] [  1118.542764] [gpustress-8000-dgemm-false] [GPU:: 34728] End of GPU ramp up
+[RESULT] [  1119.563584] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 72438
+[RESULT] [  1120.581904] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 72992
+[RESULT] [  1121.598029] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 73417
+[RESULT] [  1122.617422] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 72708
+[RESULT] [  1123.635011] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 73066
+[RESULT] [  1124.653757] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 72824
+[RESULT] [  1125.671338] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 72998
+[RESULT] [  1126.690150] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 72757
+[RESULT] [  1127.708656] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 72875
+[RESULT] [  1128.729220] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 72370
+[RESULT] [  1129.749584] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 72435
+[RESULT] [  1130.768854] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 72738
+[RESULT] [  1131.804903] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 71395
+[RESULT] [  1132.853278] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 72821
+[RESULT] [  1133.858238] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 67469
+[RESULT] [  1134.862111] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 69981
+[RESULT] [  1135.887310] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 72468
+[RESULT] [  1136.550925] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 73417
+[RESULT] [  1136.550943] [gpustress-8000-dgemm-false] [GPU:: 34728] GFLOPS 73417 Target GFLOPS: 4000 met: TRUE
+[RESULT] [  1136.942418] Action name :gpustress-8000-dgemm-true
+[RESULT] [  1136.942442] Module name :gst
+[RESULT] [  1137.42740 ] [gpustress-8000-dgemm-true] [GPU:: 21947] Start of GPU ramp up
+[RESULT] [  1137.42780 ] [gpustress-8000-dgemm-true] [GPU:: 37820] Start of GPU ramp up
+[RESULT] [  1137.42858 ] [gpustress-8000-dgemm-true] [GPU:: 39350] Start of GPU ramp up
+[RESULT] [  1137.42866 ] [gpustress-8000-dgemm-true] [GPU:: 24497] Start of GPU ramp up
+[RESULT] [  1137.42979 ] [gpustress-8000-dgemm-true] [GPU:: 19365] Start of GPU ramp up
+[RESULT] [  1137.43055 ] [gpustress-8000-dgemm-true] [GPU:: 36258] Start of GPU ramp up
+[RESULT] [  1137.43202 ] [gpustress-8000-dgemm-true] [GPU:: 16815] Start of GPU ramp up
+[RESULT] [  1137.43277 ] [gpustress-8000-dgemm-true] [GPU:: 34728] Start of GPU ramp up
+[RESULT] [  1140.998783] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 75022
+[RESULT] [  1141.690   ] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 73998
+[RESULT] [  1141.6026  ] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 73698
+[RESULT] [  1141.9170  ] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 74658
+[RESULT] [  1141.32085 ] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 72440
+[RESULT] [  1141.33992 ] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 74292
+[RESULT] [  1141.34057 ] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 72574
+[RESULT] [  1141.34152 ] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 75206
+[RESULT] [  1142.656700] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 74636
+[RESULT] [  1142.661103] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 75224
+[RESULT] [  1142.686926] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 70550
+[RESULT] [  1142.688883] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 70829
+[RESULT] [  1142.695826] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 74075
+[RESULT] [  1142.696119] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 71075
+[RESULT] [  1142.703551] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 73113
+[RESULT] [  1142.705109] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 71627
+[RESULT] [  1144.310301] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 70802
+[RESULT] [  1144.312724] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 75084
+[RESULT] [  1144.339902] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 73589
+[RESULT] [  1144.343136] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 73384
+[RESULT] [  1144.357141] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 72302
+[RESULT] [  1144.363067] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 75514
+[RESULT] [  1144.365028] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 72257
+[RESULT] [  1144.371965] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 73059
+[RESULT] [  1145.961841] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 75483
+[RESULT] [  1145.961859] [gpustress-8000-dgemm-true] [GPU:: 19365] End of GPU ramp up
+[RESULT] [  1145.963602] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 74434
+[RESULT] [  1145.963621] [gpustress-8000-dgemm-true] [GPU:: 39350] End of GPU ramp up
+[RESULT] [  1145.995540] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 68866
+[RESULT] [  1145.995557] [gpustress-8000-dgemm-true] [GPU:: 36258] End of GPU ramp up
+[RESULT] [  1145.998781] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 73271
+[RESULT] [  1145.998804] [gpustress-8000-dgemm-true] [GPU:: 34728] End of GPU ramp up
+[RESULT] [  1146.12886 ] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 72652
+[RESULT] [  1146.12913 ] [gpustress-8000-dgemm-true] [GPU:: 16815] End of GPU ramp up
+[RESULT] [  1146.51464 ] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 72346
+[RESULT] [  1146.51484 ] [gpustress-8000-dgemm-true] [GPU:: 21947] End of GPU ramp up
+[RESULT] [  1146.52839 ] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 71528
+[RESULT] [  1146.52860 ] [gpustress-8000-dgemm-true] [GPU:: 37820] End of GPU ramp up
+[RESULT] [  1146.56544 ] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 73530
+[RESULT] [  1146.56604 ] [gpustress-8000-dgemm-true] [GPU:: 24497] End of GPU ramp up
+[RESULT] [  1146.981554] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 74594
+[RESULT] [  1146.994539] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 73400
+[RESULT] [  1147.17305 ] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 71881
+[RESULT] [  1147.25153 ] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 73309
+[RESULT] [  1147.38113 ] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 73219
+[RESULT] [  1147.80366 ] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 73200
+[RESULT] [  1147.82766 ] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 73079
+[RESULT] [  1147.88235 ] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 73441
+[RESULT] [  1148.31508 ] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 73709
+[RESULT] [  1148.34707 ] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 74518
+[RESULT] [  1148.54190 ] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 72154
+[RESULT] [  1148.66688 ] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 72893
+[RESULT] [  1148.92004 ] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 73152
+[RESULT] [  1148.125240] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 73793
+[RESULT] [  1148.126502] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 72617
+[RESULT] [  1148.127726] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 73209
+[RESULT] [  1149.62487 ] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 72009
+[RESULT] [  1149.84898 ] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 74580
+[RESULT] [  1149.94849 ] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 72724
+[RESULT] [  1149.102546] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 72561
+[RESULT] [  1149.144176] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 70786
+[RESULT] [  1149.179343] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 73338
+[RESULT] [  1149.180677] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 72676
+[RESULT] [  1149.203810] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 73700
+[RESULT] [  1150.84722 ] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 74193
+[RESULT] [  1150.105423] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 70177
+[RESULT] [  1150.138605] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 71954
+[RESULT] [  1150.140492] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 73061
+[RESULT] [  1150.150660] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 72862
+[RESULT] [  1150.181086] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 72362
+[RESULT] [  1150.226255] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 73666
+[RESULT] [  1150.229876] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 64956
+[RESULT] [  1151.135531] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 73808
+[RESULT] [  1151.148690] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 70153
+[RESULT] [  1151.158543] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 71334
+[RESULT] [  1151.179080] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 72707
+[RESULT] [  1151.202176] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 73041
+[RESULT] [  1151.235195] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 69675
+[RESULT] [  1151.241535] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 69500
+[RESULT] [  1151.248542] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 74210
+[RESULT] [  1152.137850] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 71774
+[RESULT] [  1152.172764] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 72673
+[RESULT] [  1152.177193] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 75310
+[RESULT] [  1152.188094] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 70390
+[RESULT] [  1152.231433] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 72800
+[RESULT] [  1152.271881] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 74397
+[RESULT] [  1152.274479] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 72749
+[RESULT] [  1152.275946] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 72360
+[RESULT] [  1153.190049] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 68035
+[RESULT] [  1153.192344] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 66599
+[RESULT] [  1153.201005] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 74726
+[RESULT] [  1153.227194] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 72864
+[RESULT] [  1153.233818] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 73108
+[RESULT] [  1153.294454] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 66106
+[RESULT] [  1153.299056] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 66703
+[RESULT] [  1153.320791] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 69422
+[RESULT] [  1154.241055] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 69110
+[RESULT] [  1154.244368] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 70235
+[RESULT] [  1154.256697] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 69787
+[RESULT] [  1154.259229] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 74160
+[RESULT] [  1154.263720] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 72069
+[RESULT] [  1154.349690] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 74259
+[RESULT] [  1154.350713] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 73529
+[RESULT] [  1154.354054] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 73303
+[RESULT] [  1155.260261] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 73010
+[RESULT] [  1155.273809] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 72278
+[RESULT] [  1155.305866] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 74803
+[RESULT] [  1155.320152] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 69400
+[RESULT] [  1155.320910] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 72427
+[RESULT] [  1155.364681] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 68439
+[RESULT] [  1155.404621] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 68287
+[RESULT] [  1155.411721] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 65976
+[RESULT] [  1156.275626] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 72393
+[RESULT] [  1156.279673] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 69232
+[RESULT] [  1156.329843] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 70115
+[RESULT] [  1156.343393] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 74121
+[RESULT] [  1156.381285] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 72777
+[RESULT] [  1156.386294] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 71206
+[RESULT] [  1156.443715] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 72476
+[RESULT] [  1156.463390] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 73716
+[RESULT] [  1157.309227] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 70176
+[RESULT] [  1157.314464] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 68662
+[RESULT] [  1157.334720] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 72473
+[RESULT] [  1157.364077] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 71351
+[RESULT] [  1157.431664] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 71385
+[RESULT] [  1157.441119] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 69017
+[RESULT] [  1157.541684] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 69802
+[RESULT] [  1157.542859] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 74014
+[RESULT] [  1158.312387] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 72930
+[RESULT] [  1158.317191] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 72213
+[RESULT] [  1158.376422] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 72892
+[RESULT] [  1158.413487] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 69410
+[RESULT] [  1158.515375] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 74525
+[RESULT] [  1158.517740] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 68448
+[RESULT] [  1158.604613] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 73540
+[RESULT] [  1158.606066] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 73048
+[RESULT] [  1159.322393] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 69329
+[RESULT] [  1159.343676] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 70077
+[RESULT] [  1159.406478] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 70083
+[RESULT] [  1159.462947] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 72133
+[RESULT] [  1159.518253] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 70738
+[RESULT] [  1159.521801] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 64894
+[RESULT] [  1159.609752] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 69134
+[RESULT] [  1159.614304] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 69713
+[RESULT] [  1160.339925] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 66082
+[RESULT] [  1160.371182] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 72627
+[RESULT] [  1160.429865] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 72466
+[RESULT] [  1160.479705] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 74477
+[RESULT] [  1160.599537] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 73267
+[RESULT] [  1160.603525] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 73396
+[RESULT] [  1160.678171] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 70118
+[RESULT] [  1160.692840] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 72849
+[RESULT] [  1161.369795] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 70831
+[RESULT] [  1161.421390] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 71891
+[RESULT] [  1161.477661] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 72807
+[RESULT] [  1161.494005] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 71849
+[RESULT] [  1161.642250] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 74709
+[RESULT] [  1161.674685] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 65989
+[RESULT] [  1161.745154] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 72951
+[RESULT] [  1161.745809] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 73894
+[RESULT] [  1162.398368] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 70624
+[RESULT] [  1162.461570] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 71107
+[RESULT] [  1162.494155] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 72615
+[RESULT] [  1162.517430] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 71433
+[RESULT] [  1162.649019] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 74681
+[RESULT] [  1162.740879] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 72839
+[RESULT] [  1162.825532] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 72511
+[RESULT] [  1162.831706] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 73664
+[RESULT] [  1163.407056] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 69609
+[RESULT] [  1163.464598] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 69006
+[RESULT] [  1163.541736] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 72145
+[RESULT] [  1163.560296] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 69154
+[RESULT] [  1163.658230] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 70490
+[RESULT] [  1163.794627] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 73030
+[RESULT] [  1163.879874] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 73917
+[RESULT] [  1163.884356] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 72812
+[RESULT] [  1163.986509] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 75310
+[RESULT] [  1163.986522] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 75310 Target GFLOPS: 4000 met: TRUE
+[RESULT] [  1164.4718  ] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 72864
+[RESULT] [  1164.4740  ] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 72864 Target GFLOPS: 4000 met: TRUE
+[RESULT] [  1164.12303 ] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 73309
+[RESULT] [  1164.12324 ] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 73309 Target GFLOPS: 4000 met: TRUE
+[RESULT] [  1164.19328 ] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 74803
+[RESULT] [  1164.19352 ] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 74803 Target GFLOPS: 4000 met: TRUE
+[RESULT] [  1164.54421 ] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 73219
+[RESULT] [  1164.54441 ] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 73219 Target GFLOPS: 4000 met: TRUE
+[RESULT] [  1164.98405 ] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 73529
+[RESULT] [  1164.98418 ] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 73529 Target GFLOPS: 4000 met: TRUE
+[RESULT] [  1164.103836] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 74397
+[RESULT] [  1164.103851] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 74397 Target GFLOPS: 4000 met: TRUE
+[RESULT] [  1164.108921] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 73338
+[RESULT] [  1164.108938] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 73338 Target GFLOPS: 4000 met: TRUE
+[RESULT] [  1164.631357] [gpustress-8000-dgemm-true] [GPU:: 21947] Start of GPU ramp up
+[RESULT] [  1164.631416] [gpustress-8000-dgemm-true] [GPU:: 37820] Start of GPU ramp up
+[RESULT] [  1164.631427] [gpustress-8000-dgemm-true] [GPU:: 39350] Start of GPU ramp up
+[RESULT] [  1164.631469] [gpustress-8000-dgemm-true] [GPU:: 24497] Start of GPU ramp up
+[RESULT] [  1164.631531] [gpustress-8000-dgemm-true] [GPU:: 36258] Start of GPU ramp up
+[RESULT] [  1164.631588] [gpustress-8000-dgemm-true] [GPU:: 19365] Start of GPU ramp up
+[RESULT] [  1164.631589] [gpustress-8000-dgemm-true] [GPU:: 16815] Start of GPU ramp up
+[RESULT] [  1164.631659] [gpustress-8000-dgemm-true] [GPU:: 34728] Start of GPU ramp up
+[RESULT] [  1168.544729] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 73400
+[RESULT] [  1168.548946] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 73338
+[RESULT] [  1168.556163] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 73977
+[RESULT] [  1168.618365] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 75514
+[RESULT] [  1168.621058] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 71759
+[RESULT] [  1168.622097] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 72787
+[RESULT] [  1168.622734] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 71639
+[RESULT] [  1168.628097] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 73833
+[RESULT] [  1170.205526] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 75197
+[RESULT] [  1170.223816] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 75847
+[RESULT] [  1170.224185] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 72448
+[RESULT] [  1170.270318] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 75523
+[RESULT] [  1170.275580] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 71153
+[RESULT] [  1170.276738] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 75140
+[RESULT] [  1170.289946] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 72754
+[RESULT] [  1170.289994] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 72550
+[RESULT] [  1171.870447] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 72718
+[RESULT] [  1171.882875] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 75241
+[RESULT] [  1171.883818] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 74318
+[RESULT] [  1171.920343] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 76058
+[RESULT] [  1171.927074] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 74434
+[RESULT] [  1171.927077] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 73467
+[RESULT] [  1171.942196] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 74322
+[RESULT] [  1171.948742] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 72672
+[RESULT] [  1173.545732] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 72249
+[RESULT] [  1173.545751] [gpustress-8000-dgemm-true] [GPU:: 21947] End of GPU ramp up
+[RESULT] [  1173.547657] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 73288
+[RESULT] [  1173.547676] [gpustress-8000-dgemm-true] [GPU:: 37820] End of GPU ramp up
+[RESULT] [  1173.548512] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 74580
+[RESULT] [  1173.548540] [gpustress-8000-dgemm-true] [GPU:: 39350] End of GPU ramp up
+[RESULT] [  1173.572864] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 75439
+[RESULT] [  1173.572885] [gpustress-8000-dgemm-true] [GPU:: 19365] End of GPU ramp up
+[RESULT] [  1173.580153] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 71200
+[RESULT] [  1173.580173] [gpustress-8000-dgemm-true] [GPU:: 34728] End of GPU ramp up
+[RESULT] [  1173.591173] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 73284
+[RESULT] [  1173.591196] [gpustress-8000-dgemm-true] [GPU:: 36258] End of GPU ramp up
+[RESULT] [  1173.602666] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 72302
+[RESULT] [  1173.602693] [gpustress-8000-dgemm-true] [GPU:: 16815] End of GPU ramp up
+[RESULT] [  1173.625193] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 72144
+[RESULT] [  1173.625214] [gpustress-8000-dgemm-true] [GPU:: 24497] End of GPU ramp up
+[RESULT] [  1174.561248] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 70974
+[RESULT] [  1174.564282] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 69359
+[RESULT] [  1174.575219] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 73433
+[RESULT] [  1174.603022] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 70804
+[RESULT] [  1174.623131] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 72578
+[RESULT] [  1174.644188] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 72532
+[RESULT] [  1174.650625] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 72665
+[RESULT] [  1174.653263] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 72933
+[RESULT] [  1175.600070] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 69274
+[RESULT] [  1175.610306] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 70925
+[RESULT] [  1175.617006] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 68838
+[RESULT] [  1175.620612] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 74973
+[RESULT] [  1175.633191] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 69533
+[RESULT] [  1175.659395] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 72291
+[RESULT] [  1175.681736] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 72826
+[RESULT] [  1175.693642] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 67980
+[RESULT] [  1176.638731] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 70092
+[RESULT] [  1176.657823] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 74479
+[RESULT] [  1176.658901] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 74343
+[RESULT] [  1176.661511] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 69510
+[RESULT] [  1176.662506] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 73417
+[RESULT] [  1176.689576] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 70308
+[RESULT] [  1176.700827] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 72882
+[RESULT] [  1176.704409] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 71819
+[RESULT] [  1177.663399] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 74585
+[RESULT] [  1177.667625] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 73063
+[RESULT] [  1177.673806] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 70592
+[RESULT] [  1177.685958] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 74441
+[RESULT] [  1177.717658] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 74174
+[RESULT] [  1177.727919] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 72702
+[RESULT] [  1177.747572] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 68724
+[RESULT] [  1177.748516] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 72573
+[RESULT] [  1178.683772] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 69004
+[RESULT] [  1178.684040] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 74627
+[RESULT] [  1178.712639] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 73187
+[RESULT] [  1178.718139] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 74491
+[RESULT] [  1178.752542] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 71765
+[RESULT] [  1178.755846] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 72651
+[RESULT] [  1178.782260] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 70074
+[RESULT] [  1178.794463] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 72157
+[RESULT] [  1179.701024] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 69844
+[RESULT] [  1179.716195] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 68878
+[RESULT] [  1179.721710] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 70517
+[RESULT] [  1179.756035] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 70180
+[RESULT] [  1179.796282] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 72599
+[RESULT] [  1179.804388] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 72462
+[RESULT] [  1179.813264] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 72284
+[RESULT] [  1179.815630] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 73585
+[RESULT] [  1180.736204] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 70672
+[RESULT] [  1180.739383] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 73470
+[RESULT] [  1180.764003] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 71284
+[RESULT] [  1180.803658] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 72360
+[RESULT] [  1180.820641] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 72654
+[RESULT] [  1180.821970] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 73296
+[RESULT] [  1180.826929] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 72255
+[RESULT] [  1180.841168] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 73774
+[RESULT] [  1181.771368] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 73464
+[RESULT] [  1181.807304] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 74504
+[RESULT] [  1181.810282] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 74299
+[RESULT] [  1181.821354] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 72295
+[RESULT] [  1181.857464] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 70259
+[RESULT] [  1181.866441] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 73669
+[RESULT] [  1181.870789] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 69820
+[RESULT] [  1181.873783] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 71931
+[RESULT] [  1182.818804] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 68893
+[RESULT] [  1182.838087] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 72185
+[RESULT] [  1182.860593] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 74658
+[RESULT] [  1182.890552] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 74687
+[RESULT] [  1182.894240] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 72552
+[RESULT] [  1182.895898] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 68897
+[RESULT] [  1182.898557] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 69567
+[RESULT] [  1182.906859] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 72625
+[RESULT] [  1183.853289] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 71613
+[RESULT] [  1183.862874] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 73081
+[RESULT] [  1183.896216] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 72549
+[RESULT] [  1183.909320] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 68359
+[RESULT] [  1183.916842] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 74726
+[RESULT] [  1183.916948] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 73416
+[RESULT] [  1183.951991] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 72990
+[RESULT] [  1183.952155] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 74915
+[RESULT] [  1184.909557] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 68942
+[RESULT] [  1184.911490] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 72623
+[RESULT] [  1184.943731] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 73653
+[RESULT] [  1184.944556] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 73306
+[RESULT] [  1184.953293] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 73830
+[RESULT] [  1184.965042] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 74694
+[RESULT] [  1184.972766] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 72286
+[RESULT] [  1185.24584 ] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 74678
+[RESULT] [  1185.947631] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 72438
+[RESULT] [  1185.948440] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 72797
+[RESULT] [  1185.974589] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 74662
+[RESULT] [  1186.8663  ] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 73858
+[RESULT] [  1186.8789  ] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 72696
+[RESULT] [  1186.11210 ] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 73073
+[RESULT] [  1186.17957 ] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 68477
+[RESULT] [  1186.101777] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 74815
+[RESULT] [  1186.988301] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 75051
+[RESULT] [  1186.989934] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 72733
+[RESULT] [  1186.993368] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 68313
+[RESULT] [  1187.34981 ] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 70587
+[RESULT] [  1187.84130 ] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 72555
+[RESULT] [  1187.84333 ] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 73143
+[RESULT] [  1187.85503 ] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 73703
+[RESULT] [  1187.178925] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 74867
+[RESULT] [  1188.3201  ] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 70586
+[RESULT] [  1188.26571 ] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 72488
+[RESULT] [  1188.30219 ] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 71691
+[RESULT] [  1188.37701 ] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 72778
+[RESULT] [  1188.94240 ] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 73266
+[RESULT] [  1188.95363 ] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 72057
+[RESULT] [  1188.161467] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 73749
+[RESULT] [  1188.264297] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 74633
+[RESULT] [  1189.33263 ] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 69486
+[RESULT] [  1189.37297 ] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 71262
+[RESULT] [  1189.66091 ] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 72449
+[RESULT] [  1189.94292 ] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 69745
+[RESULT] [  1189.113934] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 72720
+[RESULT] [  1189.140306] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 72084
+[RESULT] [  1189.226441] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 73574
+[RESULT] [  1189.315957] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 74644
+[RESULT] [  1190.43807 ] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 71625
+[RESULT] [  1190.45853 ] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 70044
+[RESULT] [  1190.109139] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 69750
+[RESULT] [  1190.118022] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 69159
+[RESULT] [  1190.175825] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 69029
+[RESULT] [  1190.182779] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 72153
+[RESULT] [  1190.286103] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 73733
+[RESULT] [  1190.336455] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 70391
+[RESULT] [  1191.53878 ] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 72406
+[RESULT] [  1191.78980 ] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 74735
+[RESULT] [  1191.118669] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 71965
+[RESULT] [  1191.120613] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 72593
+[RESULT] [  1191.209168] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 71978
+[RESULT] [  1191.220367] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 72519
+[RESULT] [  1191.297546] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 73789
+[RESULT] [  1191.389032] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 74862
+[RESULT] [  1191.565593] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 74174
+[RESULT] [  1191.565605] [gpustress-8000-dgemm-true] [GPU:: 21947] GFLOPS 74174 Target GFLOPS: 4000 met: TRUE
+[RESULT] [  1191.566188] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 74915
+[RESULT] [  1191.566201] [gpustress-8000-dgemm-true] [GPU:: 39350] GFLOPS 74915 Target GFLOPS: 4000 met: TRUE
+[RESULT] [  1191.567883] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 74343
+[RESULT] [  1191.567897] [gpustress-8000-dgemm-true] [GPU:: 37820] GFLOPS 74343 Target GFLOPS: 4000 met: TRUE
+[RESULT] [  1191.583385] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 73416
+[RESULT] [  1191.583400] [gpustress-8000-dgemm-true] [GPU:: 34728] GFLOPS 73416 Target GFLOPS: 4000 met: TRUE
+[RESULT] [  1191.589490] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 75051
+[RESULT] [  1191.589505] [gpustress-8000-dgemm-true] [GPU:: 19365] GFLOPS 75051 Target GFLOPS: 4000 met: TRUE
+[RESULT] [  1191.622849] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 72623
+[RESULT] [  1191.622863] [gpustress-8000-dgemm-true] [GPU:: 36258] GFLOPS 72623 Target GFLOPS: 4000 met: TRUE
+[RESULT] [  1191.636905] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 72826
+[RESULT] [  1191.636919] [gpustress-8000-dgemm-true] [GPU:: 16815] GFLOPS 72826 Target GFLOPS: 4000 met: TRUE
+[RESULT] [  1191.659319] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 73653
+[RESULT] [  1191.659331] [gpustress-8000-dgemm-true] [GPU:: 24497] GFLOPS 73653 Target GFLOPS: 4000 met: TRUE
+[RESULT] [  1192.116706] Action name :gpustress-8000-device-false
+[RESULT] [  1192.116729] Module name :gst
+[RESULT] [  1192.217173] [gpustress-8000-device-false] [GPU:: 21947] Start of GPU ramp up
+[RESULT] [  1195.187159] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 91817
+[RESULT] [  1196.543707] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 89916
+[RESULT] [  1197.894022] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 89337
+[RESULT] [  1199.237127] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 89238
+[RESULT] [  1200.594738] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 90319
+[RESULT] [  1200.594762] [gpustress-8000-device-false] [GPU:: 21947] End of GPU ramp up
+[RESULT] [  1201.622042] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 89850
+[RESULT] [  1202.625327] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 89562
+[RESULT] [  1203.660336] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 88794
+[RESULT] [  1204.662299] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 89663
+[RESULT] [  1205.667431] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 88169
+[RESULT] [  1206.668839] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 88933
+[RESULT] [  1207.675883] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 89601
+[RESULT] [  1208.686175] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 89681
+[RESULT] [  1209.711773] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 84760
+[RESULT] [  1210.716830] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 88301
+[RESULT] [  1211.746806] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 89417
+[RESULT] [  1212.776777] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 89480
+[RESULT] [  1213.806893] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 89305
+[RESULT] [  1214.836891] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 89279
+[RESULT] [  1215.866983] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 89371
+[RESULT] [  1216.870478] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 89292
+[RESULT] [  1217.875929] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 88882
+[RESULT] [  1218.625509] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 89850
+[RESULT] [  1218.625534] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 89850 Target GFLOPS: 8000 met: TRUE
+[RESULT] [  1218.625957] [gpustress-8000-device-false] [GPU:: 37820] Start of GPU ramp up
+[RESULT] [  1221.577097] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 90465
+[RESULT] [  1222.927596] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 90924
+[RESULT] [  1224.270534] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 90105
+[RESULT] [  1225.608904] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 91304
+[RESULT] [  1226.950586] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 91046
+[RESULT] [  1226.950609] [gpustress-8000-device-false] [GPU:: 37820] End of GPU ramp up
+[RESULT] [  1227.968172] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 91372
+[RESULT] [  1228.986381] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 91234
+[RESULT] [  1230.13906 ] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 91004
+[RESULT] [  1231.33825 ] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 86851
+[RESULT] [  1232.63596 ] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 89288
+[RESULT] [  1233.65977 ] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 88154
+[RESULT] [  1234.67362 ] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 90481
+[RESULT] [  1235.89631 ] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 90379
+[RESULT] [  1236.112946] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 90178
+[RESULT] [  1237.134731] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 90336
+[RESULT] [  1238.156977] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 90427
+[RESULT] [  1239.180172] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 90062
+[RESULT] [  1240.204508] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 90031
+[RESULT] [  1241.227756] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 90273
+[RESULT] [  1242.252218] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 90077
+[RESULT] [  1243.275669] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 90137
+[RESULT] [  1244.296697] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 90319
+[RESULT] [  1244.977872] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 91372
+[RESULT] [  1244.977885] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 91372 Target GFLOPS: 8000 met: TRUE
+[RESULT] [  1244.978289] [gpustress-8000-device-false] [GPU:: 39350] Start of GPU ramp up
+[RESULT] [  1247.922115] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 89189
+[RESULT] [  1249.265746] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 89263
+[RESULT] [  1250.604623] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 89300
+[RESULT] [  1251.948535] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 88704
+[RESULT] [  1253.299062] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 89029
+[RESULT] [  1253.299073] [gpustress-8000-device-false] [GPU:: 39350] End of GPU ramp up
+[RESULT] [  1254.300925] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 88953
+[RESULT] [  1255.303974] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 88957
+[RESULT] [  1256.335143] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 89195
+[RESULT] [  1257.366294] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 89124
+[RESULT] [  1258.370815] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 88145
+[RESULT] [  1259.401500] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 88968
+[RESULT] [  1260.424776] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 87142
+[RESULT] [  1261.444860] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 85422
+[RESULT] [  1262.469946] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 86608
+[RESULT] [  1263.486666] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 88821
+[RESULT] [  1264.490111] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 88208
+[RESULT] [  1265.491820] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 88533
+[RESULT] [  1266.492087] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 88791
+[RESULT] [  1267.493712] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 88831
+[RESULT] [  1268.496037] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 88661
+[RESULT] [  1269.497765] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 88777
+[RESULT] [  1270.501287] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 88607
+[RESULT] [  1271.315140] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 89195
+[RESULT] [  1271.315158] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 89195 Target GFLOPS: 8000 met: TRUE
+[RESULT] [  1271.315580] [gpustress-8000-device-false] [GPU:: 24497] Start of GPU ramp up
+[RESULT] [  1274.251071] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 89306
+[RESULT] [  1275.596185] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 89349
+[RESULT] [  1276.950196] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 89053
+[RESULT] [  1278.297598] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 89785
+[RESULT] [  1279.646300] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 90288
+[RESULT] [  1279.646323] [gpustress-8000-device-false] [GPU:: 24497] End of GPU ramp up
+[RESULT] [  1280.650630] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 88227
+[RESULT] [  1281.653633] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 89201
+[RESULT] [  1282.665265] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 89220
+[RESULT] [  1283.687939] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 86631
+[RESULT] [  1284.701628] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 89122
+[RESULT] [  1285.701917] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 88976
+[RESULT] [  1286.702129] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 89124
+[RESULT] [  1287.731281] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 89222
+[RESULT] [  1288.761413] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 89225
+[RESULT] [  1289.790705] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 89471
+[RESULT] [  1290.820501] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 89328
+[RESULT] [  1291.849569] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 89415
+[RESULT] [  1292.878854] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 89459
+[RESULT] [  1293.909113] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 89269
+[RESULT] [  1294.939181] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 89428
+[RESULT] [  1295.961160] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 89391
+[RESULT] [  1296.975122] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 86546
+[RESULT] [  1297.677354] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 89471
+[RESULT] [  1297.677374] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 89471 Target GFLOPS: 8000 met: TRUE
+[RESULT] [  1297.677793] [gpustress-8000-device-false] [GPU:: 36258] Start of GPU ramp up
+[RESULT] [  1300.615866] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 90332
+[RESULT] [  1301.966306] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 89648
+[RESULT] [  1303.311613] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 89960
+[RESULT] [  1304.651175] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 89973
+[RESULT] [  1305.993391] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 90886
+[RESULT] [  1305.993403] [gpustress-8000-device-false] [GPU:: 36258] End of GPU ramp up
+[RESULT] [  1307.15343 ] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 90547
+[RESULT] [  1308.38940 ] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 90248
+[RESULT] [  1309.41530 ] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 90293
+[RESULT] [  1310.58635 ] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 90084
+[RESULT] [  1311.80117 ] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 88358
+[RESULT] [  1312.96915 ] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 85564
+[RESULT] [  1313.121206] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 89883
+[RESULT] [  1314.147112] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 89804
+[RESULT] [  1315.172893] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 89698
+[RESULT] [  1316.197892] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 89823
+[RESULT] [  1317.223552] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 89695
+[RESULT] [  1318.248485] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 89847
+[RESULT] [  1319.274168] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 89738
+[RESULT] [  1320.299331] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 89824
+[RESULT] [  1321.324951] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 89771
+[RESULT] [  1322.350197] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 89822
+[RESULT] [  1323.375264] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 89909
+[RESULT] [  1323.996204] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 90547
+[RESULT] [  1323.996218] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 90547 Target GFLOPS: 8000 met: TRUE
+[RESULT] [  1323.996619] [gpustress-8000-device-false] [GPU:: 19365] Start of GPU ramp up
+[RESULT] [  1326.941589] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 89860
+[RESULT] [  1328.286648] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 88479
+[RESULT] [  1329.628807] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 89985
+[RESULT] [  1330.977899] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 88129
+[RESULT] [  1332.344718] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 90751
+[RESULT] [  1332.344740] [gpustress-8000-device-false] [GPU:: 19365] End of GPU ramp up
+[RESULT] [  1333.375576] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 88463
+[RESULT] [  1334.400908] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 89516
+[RESULT] [  1335.402445] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 87896
+[RESULT] [  1336.420517] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 89263
+[RESULT] [  1337.445607] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 89414
+[RESULT] [  1338.471235] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 89283
+[RESULT] [  1339.497657] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 89251
+[RESULT] [  1340.522925] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 89437
+[RESULT] [  1341.548780] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 89500
+[RESULT] [  1342.575667] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 89497
+[RESULT] [  1343.602672] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 89685
+[RESULT] [  1344.630096] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 89556
+[RESULT] [  1345.655945] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 89736
+[RESULT] [  1346.685450] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 89054
+[RESULT] [  1347.703834] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 87302
+[RESULT] [  1348.716925] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 88369
+[RESULT] [  1349.744436] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 89292
+[RESULT] [  1350.372745] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 89736
+[RESULT] [  1350.372767] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 89736 Target GFLOPS: 8000 met: TRUE
+[RESULT] [  1350.373160] [gpustress-8000-device-false] [GPU:: 16815] Start of GPU ramp up
+[RESULT] [  1353.319947] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 87111
+[RESULT] [  1354.682947] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 89591
+[RESULT] [  1356.31231 ] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 88201
+[RESULT] [  1357.382781] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 88613
+[RESULT] [  1358.743007] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 89201
+[RESULT] [  1358.743030] [gpustress-8000-device-false] [GPU:: 16815] End of GPU ramp up
+[RESULT] [  1359.759334] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 88532
+[RESULT] [  1360.762461] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 88597
+[RESULT] [  1361.764483] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 88673
+[RESULT] [  1362.766332] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 88898
+[RESULT] [  1363.776540] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 88073
+[RESULT] [  1364.781916] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 88900
+[RESULT] [  1365.787094] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 88899
+[RESULT] [  1366.800736] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 86553
+[RESULT] [  1367.805576] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 86417
+[RESULT] [  1368.824788] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 85943
+[RESULT] [  1369.826160] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 88894
+[RESULT] [  1370.830866] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 88690
+[RESULT] [  1371.832870] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 88752
+[RESULT] [  1372.837104] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 88396
+[RESULT] [  1373.839403] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 88690
+[RESULT] [  1374.843227] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 88497
+[RESULT] [  1375.847552] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 88451
+[RESULT] [  1376.757264] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 88900
+[RESULT] [  1376.757278] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 88900 Target GFLOPS: 8000 met: TRUE
+[RESULT] [  1376.757684] [gpustress-8000-device-false] [GPU:: 34728] Start of GPU ramp up
+[RESULT] [  1379.704678] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 89991
+[RESULT] [  1381.50942 ] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 88686
+[RESULT] [  1382.431797] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 89504
+[RESULT] [  1383.790713] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 89922
+[RESULT] [  1385.159443] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 89213
+[RESULT] [  1385.159464] [gpustress-8000-device-false] [GPU:: 34728] End of GPU ramp up
+[RESULT] [  1386.167087] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 89250
+[RESULT] [  1387.179288] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 88257
+[RESULT] [  1388.194282] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 89001
+[RESULT] [  1389.222090] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 89215
+[RESULT] [  1390.253210] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 88600
+[RESULT] [  1391.281817] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 89095
+[RESULT] [  1392.330166] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 85759
+[RESULT] [  1393.340763] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 87368
+[RESULT] [  1394.358080] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 86582
+[RESULT] [  1395.386241] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 89416
+[RESULT] [  1396.414796] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 89381
+[RESULT] [  1397.431785] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 89375
+[RESULT] [  1398.456183] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 84375
+[RESULT] [  1399.480606] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 89035
+[RESULT] [  1400.488024] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 89014
+[RESULT] [  1401.518250] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 88869
+[RESULT] [  1402.528465] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 89039
+[RESULT] [  1403.173932] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 89416
+[RESULT] [  1403.173950] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 89416 Target GFLOPS: 8000 met: TRUE
+[RESULT] [  1403.483746] [gpustress-8000-device-false] [GPU:: 21947] Start of GPU ramp up
+[RESULT] [  1406.399557] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 90073
+[RESULT] [  1407.739495] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 90319
+[RESULT] [  1409.84869 ] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 90288
+[RESULT] [  1410.433047] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 90439
+[RESULT] [  1411.778812] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 91123
+[RESULT] [  1411.778834] [gpustress-8000-device-false] [GPU:: 21947] End of GPU ramp up
+[RESULT] [  1412.804867] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 90062
+[RESULT] [  1413.830660] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 89964
+[RESULT] [  1414.830923] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 89947
+[RESULT] [  1415.861206] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 88820
+[RESULT] [  1416.891874] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 89840
+[RESULT] [  1417.919772] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 89649
+[RESULT] [  1418.924789] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 89579
+[RESULT] [  1419.956041] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 84606
+[RESULT] [  1420.986126] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 89060
+[RESULT] [  1422.12073 ] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 89797
+[RESULT] [  1423.38098 ] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 89531
+[RESULT] [  1424.64177 ] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 89935
+[RESULT] [  1425.89736 ] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 89910
+[RESULT] [  1426.117414] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 89393
+[RESULT] [  1427.145905] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 89522
+[RESULT] [  1428.173477] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 89650
+[RESULT] [  1429.200004] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 89964
+[RESULT] [  1429.791393] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 90062
+[RESULT] [  1429.791406] [gpustress-8000-device-false] [GPU:: 21947] GFLOPS 90062 Target GFLOPS: 8000 met: TRUE
+[RESULT] [  1429.791821] [gpustress-8000-device-false] [GPU:: 37820] Start of GPU ramp up
+[RESULT] [  1432.715242] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 90313
+[RESULT] [  1434.52104 ] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 91046
+[RESULT] [  1435.392506] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 90306
+[RESULT] [  1436.725829] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 91530
+[RESULT] [  1438.71102 ] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 90853
+[RESULT] [  1438.71120 ] [gpustress-8000-device-false] [GPU:: 37820] End of GPU ramp up
+[RESULT] [  1439.97078 ] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 90860
+[RESULT] [  1440.120867] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 90821
+[RESULT] [  1441.131994] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 86309
+[RESULT] [  1442.154255] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 90489
+[RESULT] [  1443.173536] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 90752
+[RESULT] [  1444.194963] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 90334
+[RESULT] [  1445.217467] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 90029
+[RESULT] [  1446.243770] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 89491
+[RESULT] [  1447.264854] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 90532
+[RESULT] [  1448.295482] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 90447
+[RESULT] [  1449.303918] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 86656
+[RESULT] [  1450.311150] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 87272
+[RESULT] [  1451.319285] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 89009
+[RESULT] [  1452.322005] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 90967
+[RESULT] [  1453.341057] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 90994
+[RESULT] [  1454.360383] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 90913
+[RESULT] [  1455.379548] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 91005
+[RESULT] [  1456.90962 ] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 91005
+[RESULT] [  1456.90977 ] [gpustress-8000-device-false] [GPU:: 37820] GFLOPS 91005 Target GFLOPS: 8000 met: TRUE
+[RESULT] [  1456.91383 ] [gpustress-8000-device-false] [GPU:: 39350] Start of GPU ramp up
+[RESULT] [  1459.8676  ] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 88931
+[RESULT] [  1460.343824] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 89029
+[RESULT] [  1461.680254] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 88419
+[RESULT] [  1463.18798 ] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 88231
+[RESULT] [  1464.357948] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 88123
+[RESULT] [  1464.357970] [gpustress-8000-device-false] [GPU:: 39350] End of GPU ramp up
+[RESULT] [  1465.386803] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 89058
+[RESULT] [  1466.396081] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 88750
+[RESULT] [  1467.401542] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 88904
+[RESULT] [  1468.430648] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 88955
+[RESULT] [  1469.461205] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 88763
+[RESULT] [  1470.491694] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 88636
+[RESULT] [  1471.493759] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 89024
+[RESULT] [  1472.495746] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 88797
+[RESULT] [  1473.507185] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 86795
+[RESULT] [  1474.535127] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 88994
+[RESULT] [  1475.552759] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 86658
+[RESULT] [  1476.555661] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 88551
+[RESULT] [  1477.575600] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 86537
+[RESULT] [  1478.575729] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 89026
+[RESULT] [  1479.576049] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 88940
+[RESULT] [  1480.576779] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 88946
+[RESULT] [  1481.577360] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 89061
+[RESULT] [  1482.359841] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 89061
+[RESULT] [  1482.359851] [gpustress-8000-device-false] [GPU:: 39350] GFLOPS 89061 Target GFLOPS: 8000 met: TRUE
+[RESULT] [  1482.360278] [gpustress-8000-device-false] [GPU:: 24497] Start of GPU ramp up
+[RESULT] [  1485.289944] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 89405
+[RESULT] [  1486.623017] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 89548
+[RESULT] [  1487.961848] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 90149
+[RESULT] [  1489.296095] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 89146
+[RESULT] [  1490.647476] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 89710
+[RESULT] [  1490.647495] [gpustress-8000-device-false] [GPU:: 24497] End of GPU ramp up
+[RESULT] [  1491.678850] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 88779
+[RESULT] [  1492.705670] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 89862
+[RESULT] [  1493.714392] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 89408
+[RESULT] [  1494.735791] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 85090
+[RESULT] [  1495.740412] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 89753
+[RESULT] [  1496.769679] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 89542
+[RESULT] [  1497.774727] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 89714
+[RESULT] [  1498.795851] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 87387
+[RESULT] [  1499.803865] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 87619
+[RESULT] [  1500.820825] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 89484
+[RESULT] [  1501.827532] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 87718
+[RESULT] [  1502.839817] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 86780
+[RESULT] [  1503.870674] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 89210
+[RESULT] [  1504.899305] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 89416
+[RESULT] [  1505.899797] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 88722
+[RESULT] [  1506.928613] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 89322
+[RESULT] [  1507.937486] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 88330
+[RESULT] [  1508.655521] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 89862
+[RESULT] [  1508.655538] [gpustress-8000-device-false] [GPU:: 24497] GFLOPS 89862 Target GFLOPS: 8000 met: TRUE
+[RESULT] [  1508.655705] [gpustress-8000-device-false] [GPU:: 36258] Start of GPU ramp up
+[RESULT] [  1511.571630] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 88790
+[RESULT] [  1512.915612] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 90061
+[RESULT] [  1514.267516] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 89288
+[RESULT] [  1515.609799] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 89716
+[RESULT] [  1516.950383] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 91065
+[RESULT] [  1516.950393] [gpustress-8000-device-false] [GPU:: 36258] End of GPU ramp up
+[RESULT] [  1517.957070] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 90017
+[RESULT] [  1518.981897] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 90160
+[RESULT] [  1520.7323  ] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 90007
+[RESULT] [  1521.32721 ] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 90145
+[RESULT] [  1522.58132 ] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 89947
+[RESULT] [  1523.82759 ] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 90248
+[RESULT] [  1524.108239] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 90151
+[RESULT] [  1525.118971] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 90147
+[RESULT] [  1526.142286] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 90325
+[RESULT] [  1527.166853] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 90189
+[RESULT] [  1528.192440] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 90151
+[RESULT] [  1529.216182] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 90518
+[RESULT] [  1530.240082] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 90228
+[RESULT] [  1531.264368] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 90314
+[RESULT] [  1532.289255] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 90222
+[RESULT] [  1533.313855] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 90163
+[RESULT] [  1534.338594] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 90065
+[RESULT] [  1534.960032] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 90518
+[RESULT] [  1534.960044] [gpustress-8000-device-false] [GPU:: 36258] GFLOPS 90518 Target GFLOPS: 8000 met: TRUE
+[RESULT] [  1534.960287] [gpustress-8000-device-false] [GPU:: 19365] Start of GPU ramp up
+[RESULT] [  1537.881040] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 90516
+[RESULT] [  1539.216557] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 88219
+[RESULT] [  1540.552858] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 89766
+[RESULT] [  1541.897566] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 89164
+[RESULT] [  1543.252127] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 90694
+[RESULT] [  1543.252146] [gpustress-8000-device-false] [GPU:: 19365] End of GPU ramp up
+[RESULT] [  1544.258280] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 88052
+[RESULT] [  1545.292941] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 88397
+[RESULT] [  1546.306898] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 90062
+[RESULT] [  1547.324459] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 86656
+[RESULT] [  1548.349874] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 89796
+[RESULT] [  1549.351699] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 89894
+[RESULT] [  1550.357543] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 89738
+[RESULT] [  1551.384976] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 89511
+[RESULT] [  1552.412467] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 89398
+[RESULT] [  1553.438733] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 89421
+[RESULT] [  1554.465477] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 89086
+[RESULT] [  1555.491465] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 89344
+[RESULT] [  1556.517956] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 89285
+[RESULT] [  1557.544625] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 89001
+[RESULT] [  1558.571855] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 89003
+[RESULT] [  1559.599172] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 89031
+[RESULT] [  1560.603943] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 89200
+[RESULT] [  1561.273049] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 90062
+[RESULT] [  1561.273067] [gpustress-8000-device-false] [GPU:: 19365] GFLOPS 90062 Target GFLOPS: 8000 met: TRUE
+[RESULT] [  1561.273346] [gpustress-8000-device-false] [GPU:: 16815] Start of GPU ramp up
+[RESULT] [  1564.215511] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 89035
+[RESULT] [  1565.549155] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 89511
+[RESULT] [  1566.924791] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 89146
+[RESULT] [  1568.262464] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 88098
+[RESULT] [  1569.610813] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 89047
+[RESULT] [  1569.610830] [gpustress-8000-device-false] [GPU:: 16815] End of GPU ramp up
+[RESULT] [  1570.621041] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 89073
+[RESULT] [  1571.633656] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 88830
+[RESULT] [  1572.658737] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 84656
+[RESULT] [  1573.661815] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 88980
+[RESULT] [  1574.663169] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 88862
+[RESULT] [  1575.663981] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 88997
+[RESULT] [  1576.677416] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 86749
+[RESULT] [  1577.686400] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 87907
+[RESULT] [  1578.691061] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 84456
+[RESULT] [  1579.705479] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 86503
+[RESULT] [  1580.707698] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 85790
+[RESULT] [  1581.717020] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 88448
+[RESULT] [  1582.720959] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 88570
+[RESULT] [  1583.726610] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 88139
+[RESULT] [  1584.732807] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 88160
+[RESULT] [  1585.738317] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 88235
+[RESULT] [  1586.743379] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 88331
+[RESULT] [  1587.621637] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 89073
+[RESULT] [  1587.621655] [gpustress-8000-device-false] [GPU:: 16815] GFLOPS 89073 Target GFLOPS: 8000 met: TRUE
+[RESULT] [  1587.621969] [gpustress-8000-device-false] [GPU:: 34728] Start of GPU ramp up
+[RESULT] [  1590.553506] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 88279
+[RESULT] [  1591.890066] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 88546
+[RESULT] [  1593.225961] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 89579
+[RESULT] [  1594.581917] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 89127
+[RESULT] [  1595.934889] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 88961
+[RESULT] [  1595.934913] [gpustress-8000-device-false] [GPU:: 34728] End of GPU ramp up
+[RESULT] [  1596.961841] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 89675
+[RESULT] [  1597.989923] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 89276
+[RESULT] [  1599.7594  ] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 85469
+[RESULT] [  1600.34353 ] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 83897
+[RESULT] [  1601.37948 ] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 89317
+[RESULT] [  1602.50864 ] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 86253
+[RESULT] [  1603.51824 ] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 88395
+[RESULT] [  1604.80150 ] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 89105
+[RESULT] [  1605.109375] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 88954
+[RESULT] [  1606.137963] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 88871
+[RESULT] [  1607.166086] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 89019
+[RESULT] [  1608.193860] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 89096
+[RESULT] [  1609.222417] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 88996
+[RESULT] [  1610.251331] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 88917
+[RESULT] [  1611.281275] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 88599
+[RESULT] [  1612.306998] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 89172
+[RESULT] [  1613.326098] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 88695
+[RESULT] [  1613.959683] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 89675
+[RESULT] [  1613.959701] [gpustress-8000-device-false] [GPU:: 34728] GFLOPS 89675 Target GFLOPS: 8000 met: TRUE
+

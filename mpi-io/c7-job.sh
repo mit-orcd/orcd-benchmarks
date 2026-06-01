@@ -9,7 +9,7 @@
 
 module load gcc/6.2.0 openmpi/3.0.4
 
-#DIR="/orcd/scratch/orcd/002/shaohao/mpi-io"
+#DIR="/orcd/scratch/orcd/022/shaohao/mpi-io"
 DIR="/home/shaohao/orcd/scratch/mpi-io"
 echo $DIR
 mkdir -p $DIR

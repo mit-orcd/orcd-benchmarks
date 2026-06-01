@@ -16,7 +16,7 @@ reservation=orcd_testing # monthly_maint  # "" # orcd_testing  # WareWulf_testin
 gpu_type=l40s  # h200
 gpu_count=4   # 8 # 4
 subdir=output-l40s  # h200  # output-l40s
-out_dir=/orcd/data/orcd/002/benchmarks/gpu-burn-r8/${partition}/${subdir}
+out_dir=/orcd/data/orcd/022/benchmarks/gpu-burn-r8/${partition}/${subdir}
 
 mkdir -p $out_dir
 
@@ -37,7 +37,7 @@ for i in ${!nodes[@]}; do
 
 hostname
 
-cd /orcd/data/orcd/002/benchmarks/gpu-burn-r8
+cd /orcd/data/orcd/022/benchmarks/gpu-burn-r8
 
 echo "Running tensor core single precision"
 ./gpu_burn -tc 300 > ${out_dir}/tc32_${host}-\${SLURM_JOB_ID}.out

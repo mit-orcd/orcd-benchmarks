@@ -18,7 +18,7 @@ all_bench="openmp mpi-calc-pi"  # single CPU node
 #all_bench="nvidia-hpc-benchmarks"    
 #all_bench="nccl-tests" 
 
-root_dir=/orcd/data/orcd/002/benchmarks
+root_dir=/orcd/data/orcd/022/benchmarks
 
 for bench in $all_bench
 do

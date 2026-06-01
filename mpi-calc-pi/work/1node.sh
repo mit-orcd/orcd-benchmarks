@@ -6,12 +6,12 @@ qos=$2
 nodes=($3)
 cpu_count=$4  # 32  # 96  # 40  # 192                        # CHANGE_ME: how many physical cores are on the node.
 reservation=$5
-output_dir=/orcd/data/orcd/002/benchmarks/mpi-calc-pi/work/$partition/output   # CHANGE_ME: where the output results should be stored
+output_dir=/orcd/data/orcd/022/benchmarks/mpi-calc-pi/work/$partition/output   # CHANGE_ME: where the output results should be stored
 echo "$output_dir"
 
 # don't change anything below
 mkdir -p $output_dir
-script_dir=/orcd/data/orcd/002/benchmarks/mpi-calc-pi/src
+script_dir=/orcd/data/orcd/022/benchmarks/mpi-calc-pi/src
 cores=$cpu_count
 thread_list=(1)
 threads=1

@@ -1,6 +1,6 @@
 nodes=($1)
 partition=$2  # mit_normal_gpu #ou_sloan_gpu  # mit_normal # mit_normal_gpu
-reservation=$3 # orcd_testing # ""  #orcd_testing  #  WareWulf_testing
+res=$3 # orcd_testing # ""  #orcd_testing  #  WareWulf_testing
 qos=$4 # unlimited 
 cpu_count=$5 # 32  #48  # 176 # 96 # 88  # 120  # 240  # cores: reserved cores for GPUs
 
@@ -10,11 +10,11 @@ cpu_count=$5 # 32  #48  # 176 # 96 # 88  # 120  # 240  # cores: reserved cores f
 #echo $qos
 #echo $cpu_count
 
-output_dir=/orcd/data/orcd/002/benchmarks/openmp/work/$partition/output
+output_dir=/orcd/data/orcd/022/benchmarks/openmp/work/$partition/output
 
 # don't change anything below
 mkdir -p $output_dir
-script_dir=/orcd/data/orcd/002/benchmarks/openmp/src/pi_omp
+script_dir=/orcd/data/orcd/022/benchmarks/openmp/src/pi_omp
 cores=$cpu_count
 thread_list=(1)
 threads=1
@@ -41,10 +41,17 @@ THREAD_LIST_STR="${thread_list[*]}"
 echo "List of threads: $THREAD_LIST_STR"
 export THREAD_LIST_STR
 
+# set optional flags
+if [[ "$res" == "none" ]]; then
+   submit="sbatch"
+else
+   submit="sbatch --reservation=$res"
+fi
+
 for i in ${!nodes[@]}; do
         host=node${nodes[i]}
         echo "running on host $host"
-        sbatch << EOF
+        $submit << EOF
 #!/bin/bash
 #SBATCH -t 30
 #SBATCH -p $partition
@@ -52,9 +59,9 @@ for i in ${!nodes[@]}; do
 #SBATCH -N 1
 #SBATCH -w $host
 #SBATCH -o $output_dir/out_full.%N-%J
-#SBATCH --reservation=$reservation
 #SBATCH -q $qos
 #SBATCH --exclusive
+#SBATCH -J openmp
 
 IFS=' ' read -a thread_list <<< "\$THREAD_LIST_STR"
 

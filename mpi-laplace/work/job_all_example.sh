@@ -1,8 +1,8 @@
 #!/bin/bash
 
-nodes=(3619)
-partition=pi_keating
-output_dir=/orcd/data/orcd/002/benchmarks/mpi-laplace/work/$partition/output
+nodes=(2437)
+partition=pi_ghoniem
+output_dir=/orcd/data/orcd/022/benchmarks/mpi-laplace/work/$partition/output
 
 mkdir -p output_dir
 
@@ -17,7 +17,7 @@ for i in ${!nodes[@]}; do
 #SBATCH -n 8
 #SBATCH --time=00:10:00
 #SBATCH -J benchmark_mpi_laplace
-#SBATCH --reservation=orcd_testing
+##SBATCH --reservation=orcd_testing
 ##SBATCH --reservation=monthly_maint
 ##SBATCH -q unlimited
 
@@ -37,8 +37,8 @@ mpirun hostname
 lscpu
 echo "========================="
 
-BIN_DIR=/orcd/data/orcd/002/benchmarks/mpi-laplace/src/bin-r8 # For mpi 4.1.4?
-#BIN_DIR=/orcd/data/orcd/002/benchmarks/mpi-laplace/src/bin-r8/mpi-5.0.6
+BIN_DIR=/orcd/data/orcd/022/benchmarks/mpi-laplace/src/bin-r8 # For mpi 4.1.4?
+#BIN_DIR=/orcd/data/orcd/022/benchmarks/mpi-laplace/src/bin-r8/mpi-5.0.6
 
 \$BIN_DIR/laplace_serial < ./inp
 echo "========================="

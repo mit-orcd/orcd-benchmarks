@@ -4,16 +4,10 @@
 #SBATCH --mem=80GB
 #SBATCH --ntasks-per-node=1
 #SBATCH --gpus-per-node=h200:1
-#SBATCH -J nvhpc-24.5-ompi-5.0.6
-#SBATCH -o out-2node-2gpu/%x-%N-%J
+#SBATCH -J nccl-2node-2gpu
 #SBATCH --exclusive
 
-job_name=$SLURM_JOB_NAME
-BUILD_DIR=../build-$job_name
-
-module load nvhpc/24.5
-#module load openmpi/5.0.6
-#module load openmpi/4.1.4
+source env.sh
 
 mpirun hostname
 which mpirun
@@ -32,9 +26,9 @@ echo "num_gpu_per_task = $GPUS_PER_TASK"
 #export NCCL_SOCKET_IFNAME=ib5
 #export NCCL_IB_HCA=mlx5_5
 
-echo $NCCL_DEBUG
-echo $NCCL_SOCKET_IFNAME
-echo $NCCL_IB_HCA
+#echo $NCCL_DEBUG
+#echo $NCCL_SOCKET_IFNAME
+#echo $NCCL_IB_HCA
 
 for program in sendrecv_perf # reduce_perf broadcast_perf gather_perf scatter_perf  reduce_scatter_perf all_gather_perf all_reduce_perf alltoall_perf hypercube_perf
 do
