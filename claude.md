@@ -3,7 +3,7 @@
 original dir: /orcd/data/orcd/022/benchmarks
 destination dir:  /orcd/data/orcd/022/shaohao/orcd-benchmarks
 
-sync these dirs, not other dirs:
+sync these dirs with two level down:
 all-bench
 megatron-lm
 gpu-fryer
@@ -25,7 +25,7 @@ stream-intel
 only sync these files:
 run and job scripts
 readme
-summary md files
+all md files
 
 Never sync these files:
 container image
@@ -38,3 +38,6 @@ Never modify or delete files in the original dir
 overwrite and delete files in the destination dir and github remote
 
 push to github remote from the destination dir
+
+never modify or delete the directories starting with chris- in the github remote. 
+
