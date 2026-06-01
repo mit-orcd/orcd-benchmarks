@@ -1,0 +1,9 @@
+# apptainer build --fakeroot rocky8-llvm.sif rocky8-llvm.def
+
+module load apptainer
+module load cuda
+
+
+apptainer shell --nv --env PATH="${PATH}"    $(echo $PATH | tr ':' '\n' | grep -v /home/cnh/bin  | grep -v /usr/bin | awk '{printf "--bind %s ", $1}')  --bind /orcd/software/   rocky8-llvm.sif
+
+clang -O3 -fopenmp -fopenmp-targets=nvptx64-nvidia-cuda     -o d2d_bandwidth omp_device_to_device_bandwidth.c; ./d2d_bandwidth
