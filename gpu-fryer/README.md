@@ -1,38 +1,59 @@
 # gpu-fryer
 
-GPU stress test that sweeps fp32 / bf16 / fp8 and reports memory usage.
-Runs from an Apptainer/Singularity image.
+## Introduction
 
-## Prerequisites
+[gpu-fryer](https://github.com/huggingface/gpu-fryer) is a GPU stress
+test from Hugging Face. It runs a sustained matrix-multiply load on each
+GPU and reports achieved TFLOP/s, temperature, and HBM/thermal
+throttling — useful for spotting underperforming or throttling GPUs in a
+node. Runs here from an Apptainer/Singularity image.
 
-Download `gpu-fryer_1.1.0.sif` (not committed to this repo) and place it
-in this directory:
+## Installation
 
-```bash
-module load apptainer/1.4.2
-singularity pull gpu-fryer_1.1.0.sif docker://<source>/gpu-fryer:1.1.0
-```
-
-Also ensure `/lib64/libnvidia-ml.so.1` (NVML) is accessible — the job
-scripts bind-mount `/lib64` into the container.
-
-## Run (single benchmark)
+Pull the image (the `.sif` is **not** committed — it is multi-GB) and
+place it in this directory:
 
 ```bash
-sbatch job.sh           # one node, runs fp32 + bf16 + fp8 for 300s each
-# or
-./submit.sh             # wrapper that sbatches job.sh for a list of nodes
+module load apptainer
+singularity pull gpu-fryer_1.1.0.sif \
+    docker://ghcr.io/huggingface/gpu-fryer:1.1.0
 ```
 
-Outputs land in `output/<node>-<jobid>.out`.
+The container needs NVML (`libnvidia-ml.so.1`); the job scripts
+bind-mount the host `/lib64` and pass `--nvml-lib-path` so the tool can
+find it.
 
-## Run via py-all-bench
+## Usage
+
+The tool is invoked as `gpu-fryer [--nvml-lib-path <path>] <seconds>`.
+
+### Automated, many runs — `submit.sh`
+
+`submit.sh` sbatches `job.sh` for a list of nodes (one job per node).
+Edit the node list inside it, then:
 
 ```bash
-cd ../py-all-bench
-module load miniforge/24.3.0-0
-python bench_submit.py  gpu-fryer \
-    --partition mit_normal_gpu --nodes 3506 3507 \
-    --gpu-type l40s --gpus 4 --qos unlimited
-python bench_analyze.py gpu-fryer --partition mit_normal_gpu --num-results 2
+./submit.sh
 ```
+
+Output lands in `output/<node>-<jobid>.out`.
+
+### Single run — root dir
+
+```bash
+sbatch job.sh        # one node; runs gpu-fryer for its built-in duration
+# l40s.sh is a partition-specific variant of job.sh
+```
+
+For an interactive check inside the container:
+
+```bash
+singularity shell --nv -B /lib64:/home/$USER/lib64 gpu-fryer_1.1.0.sif
+gpu-fryer --nvml-lib-path /home/$USER/lib64/libnvidia-ml.so.1 60
+```
+
+## Analysis
+
+Each output file lists per-GPU achieved TFLOP/s plus temperature and
+throttling flags. Compare TFLOP/s across GPUs in a node — outliers, or
+GPUs reporting thermal/HBM throttling, indicate a problem.

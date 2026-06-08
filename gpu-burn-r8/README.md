@@ -1,74 +1,66 @@
-# gpu-burn
-Multi-GPU CUDA stress test
-http://wili.cc/blog/gpu-burn.html
+# gpu-burn-r8
 
-# Easy docker build and run
+## Introduction
 
+A multi-GPU CUDA stress test based on
+[gpu-burn](https://github.com/wilicc/gpu-burn) (http://wili.cc/blog/gpu-burn.html).
+It runs heavy matrix-multiply kernels on every GPU for a fixed duration
+and reports per-GPU Gflop/s plus any compute errors, so it is used both
+as a burn-in/health check and a rough throughput check. Runs are done in
+three modes: tensor-core FP (`-tc`), standard single precision, and
+doubles (`-d`).
+
+## Installation
+
+The source is in this repo (`gpu_burn-drv.cpp`, `compare.cu`, `Makefile`).
+Build with CUDA:
+
+```bash
+module load cuda
+make                 # produces ./gpu_burn   (override arch: make COMPUTE=8.0)
 ```
-git clone https://github.com/wilicc/gpu-burn
-cd gpu-burn
-docker build -t gpu_burn .
-docker run --rm --gpus all gpu_burn
+
+Upstream / Docker build instructions: <https://github.com/wilicc/gpu-burn>.
+
+## Usage
+
+The binary is `./gpu_burn [options] [seconds]` (`-tc` tensor cores,
+`-d` doubles, `-m` memory, `-i N` only GPU N, `-l` list GPUs).
+
+### Automated, many runs — `run/`
+
+`run.sh` submits one job per node; each runs the three modes for 300 s
+and writes a file per mode.
+
+```bash
+cd run
+# args: "<nodes>" <partition> <reservation|none> <qos> <cpu_count> <gpu_type> <gpu_count>
+./run.sh "3100 3101" mit_normal_gpu none unlimited 8 l40s 4
 ```
 
-# Building
-To build GPU Burn:
+Output lands in `<partition>/output-<gpu_type>/`.
 
-`make`
+### Single run — root dir
 
-To remove artifacts built by GPU Burn:
+Get an interactive GPU session, then run directly, or use the standalone
+scripts:
 
-`make clean`
+```bash
+srun -t 60 -n 8 --gres=gpu:4 -p mit_normal_gpu --mem=10GB --pty bash
+./gpu_burn -tc 300        # tensor cores, 300 s
 
-GPU Burn builds with a default Compute Capability of 5.0.
-To override this with a different value:
+# or a packaged 3-mode run on the current host:
+./run-standard-gpu-burn-tests.sh
+```
 
-`make COMPUTE=<compute capability value>`
+## Analysis
 
-CFLAGS can be added when invoking make to add to the default
-list of compiler flags:
+```bash
+cd run
+# get-results.sh <partition> <N> <gpu_type>
+./get-results.sh mit_normal_gpu 2 l40s
+```
 
-`make CFLAGS=-Wall`
-
-LDFLAGS can be added when invoking make to add to the default
-list of linker flags:
-
-`make LDFLAGS=-lmylib`
-
-NVCCFLAGS can be added when invoking make to add to the default
-list of nvcc flags:
-
-`make NVCCFLAGS=-ccbin <path to host compiler>`
-
-CUDAPATH can be added to point to a non standard install or
-specific version of the cuda toolkit (default is 
-/usr/local/cuda):
-
-`make CUDAPATH=/usr/local/cuda-<version>`
-
-CCPATH can be specified to point to a specific gcc (default is
-/usr/bin):
-
-`make CCPATH=/usr/local/bin`
-
-CUDA_VERSION and IMAGE_DISTRO can be used to override the base
-images used when building the Docker `image` target, while IMAGE_NAME
-can be set to change the resulting image tag:
-
-`make IMAGE_NAME=myregistry.private.com/gpu-burn CUDA_VERSION=12.0.1 IMAGE_DISTRO=ubuntu22.04 image`
-
-# Usage
-
-    GPU Burn
-    Usage: gpu_burn [OPTIONS] [TIME]
-    
-    -m X   Use X MB of memory
-    -m N%  Use N% of the available GPU memory
-    -d     Use doubles
-    -tc    Try to use Tensor cores (if available)
-    -l     List all GPUs in the system
-    -i N   Execute only on GPU N
-    -h     Show this help message
-    
-    Example:
-    gpu_burn -d 3600
+Prints the per-GPU summary (`100.0%` proc'd line → Gflop/s and error
+count) from the most recent runs. A healthy GPU finishes with `OK` and
+zero errors; `FAULTY`/`Killing` indicates a failing GPU.

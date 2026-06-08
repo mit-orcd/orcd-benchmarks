@@ -1,10 +1,44 @@
+# numpy
 
-# set env
+## Introduction
+
+A NumPy matrix-multiply benchmark. It times `np.matmul` on two large
+random `n × n` matrices, exercising the multithreaded BLAS backend
+(OpenBLAS/MKL) that NumPy links against. It is a quick check of
+multi-core dense linear-algebra throughput on a node.
+
+## Installation
+
+Only NumPy is required:
+
+```bash
 module load miniforge/23.11.0-0
+pip install numpy      # once
+```
 
-# Install only once
-pip install numpy
+The benchmark itself is `mat_mult.py` in this directory.
 
-# run
-time python mat_mult.py
+## Usage
 
+### Automated, many runs — `job_*_all_example.sh`
+
+`job_full_all_example.sh` / `job_half_all_example.sh` submit one Slurm
+job per node over a list, sweeping the BLAS thread count. Edit the
+`nodes`, `partition`, `cpu_count`, and `output_dir` variables at the top,
+then run the script to submit.
+
+### Single run — root dir
+
+```bash
+module load miniforge/23.11.0-0
+time python mat_mult.py        # set n inside the script; time = matmul wall clock
+```
+
+Set the BLAS thread count with e.g. `export OMP_NUM_THREADS=8` (or
+`OPENBLAS_NUM_THREADS` / `MKL_NUM_THREADS`) before running.
+
+## Analysis
+
+Each run prints `<seconds> seconds to matrix multiply`. Lower is better;
+compare across thread counts to see BLAS scaling. For an `n × n` matmul
+the work is ≈ `2·n³` FLOPs, so GFLOP/s ≈ `2·n³ / time / 1e9`.

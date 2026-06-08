@@ -1,12 +1,16 @@
 # nvidia-hpc-benchmarks
 
-NVIDIA HPC-Benchmarks container — HPL, HPL-MxP, HPCG, STREAM, etc. Runs
-from an Apptainer/Singularity image.
+## Introduction
 
-## Prerequisites
+NVIDIA's [HPC-Benchmarks](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/hpc-benchmarks)
+container (HPL, HPL-MxP, HPCG, STREAM) run on GPUs. This setup focuses on
+**HPL** (dense LU / Linpack), reporting GFLOP/s for 1, 2, 4, and 8 GPUs
+so you can see GPU LU throughput and multi-GPU scaling on a node.
 
-Download `hpc-benchmarks_25.04.sif` (or compatible release) from NVIDIA
-NGC and place it in `run/`:
+## Installation
+
+Pull the container image from NGC into `run/` (the `.sif` is **not**
+committed — it is multi-GB):
 
 ```bash
 module load apptainer/1.1.9
@@ -14,36 +18,40 @@ singularity pull run/hpc-benchmarks_25.04.sif \
     docker://nvcr.io/nvidia/hpc-benchmarks:25.04
 ```
 
-The `.sif` file is **not** committed to this repo.
+HPL input decks (`HPL-*GPU*.dat`) ship inside the image under
+`/workspace/hpl-linux-x86_64/sample-dat/`.
 
-## Run (single node)
+## Usage
 
-```bash
-cd run
-sbatch run.sh             # submits a job that runs execute-all.sh in the container
-```
+### Automated, many runs — `run/`
 
-Other helpers in `run/`:
-
-- `execute-all.sh` — runs every benchmark in the image
-- `execute-h200.sh`, `execute-mig.sh` — variants for specific hardware
-- `submit.sh`, `submit-h200.sh`, `submit-mig.sh` — thin Slurm wrappers
-
-## Analyze
+`run.sh` submits one job per node; inside the container each job runs
+`execute-all.sh`, which sweeps 1→N GPUs.
 
 ```bash
 cd run
-./get-results.sh          # prints GFLOPs from HPL (WC0 lines) and LU output
+# args: "<nodes>" <partition> <reservation|none> <qos> <cpu_count> <gpu_type> <gpu_count>
+./run.sh "3100 3101" mit_normal_gpu none unlimited 8 l40s 4
 ```
 
-## Run via py-all-bench
+`execute-h200.sh` / `execute-mig.sh` and `submit-h200.sh` /
+`submit-mig.sh` are hardware-specific variants. Output lands in
+`<partition>/output-<gpu_type>/`.
+
+### Single run — `run/job.sh` (or root `run.sh` / `job.sh`)
+
+`run/job.sh` is a self-contained sbatch script: edit the partition, GPU
+type/count, then `sbatch job.sh`. It runs HPL at 1/2/4/8 GPUs via
+`singularity exec --nv … /workspace/hpl.sh --dat <deck>`.
+
+## Analysis
 
 ```bash
-cd ../py-all-bench
-module load miniforge/24.3.0-0
-python bench_submit.py  nvidia-hpc-benchmarks \
-    --partition mit_normal_gpu --nodes 3506 3507 \
-    --gpu-type l40s --gpus 4 --qos unlimited
-python bench_analyze.py nvidia-hpc-benchmarks \
-    --partition mit_normal_gpu --gpu-type l40s --num-results 2
+cd run
+# get-results.sh <partition> <N> <gpu_type>
+./get-results.sh mit_normal_gpu 2 l40s
 ```
+
+Prints HPL performance from the `WC0` summary lines (total and per-GPU
+GFLOP/s) and the `LU GFLOPS` line for the most recent N runs; higher is
+better.

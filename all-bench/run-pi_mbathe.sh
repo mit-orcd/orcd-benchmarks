@@ -1,9 +1,9 @@
 # for all nodes
-nodes="9904 9905"  #"9902 9903" 
-partition=pi_mbathe   # pi_mshoulde # pi_qmqi # pi_mshoulde pg_tata #ou_sloan_gpu  # mit_normal # mit_normal_gpu
-reservation=orcd_testing  # none #none #orcd_testing  #  WareWulf_testing
+nodes="4501 4417 4309" #"3009 3209" 
+partition=mit_testing   # pi_mshoulde # pi_qmqi # pi_mshoulde pg_tata #ou_sloan_gpu  # mit_normal # mit_normal_gpu
+reservation=root_503  #orcd_testing  # none #none #orcd_testing  #  WareWulf_testing
 qos=normal  #unlimited  # normal   # unlimited
-cpus=48  #64  # 48  # 40  #96  # 40  # 88  # all cores on a CPU  node, substract reserved cores on a GPU node
+cpus=64  # 48  # 40  #96  # 40  # 88  # all cores on a CPU  node, substract reserved cores on a GPU node
 
 # only for GPU nodes
 gpu_type=a100 # l40s  # a100 #h100 # h200 # l40s
@@ -17,8 +17,10 @@ gpus=4  #2  #8  #4
 #all_bench="openmp mpi-calc-pi gpu-burn-r8 nvidia-hpc-benchmarks nccl-test"  # single GPU node
 #all_bench="gpu-burn-r8 nccl-tests"   # L40S GPU nodes
 #all_bench="gpu-burn-r8 nvidia-hpc-benchmarks nccl-tests openmp mpi-calc-pi"   # H200 GPU nodes
-all_bench="mpi-p2p nccl-tests gpu-burn-r8 nvidia-hpc-benchmarks openmp mpi-calc-pi"   # >1 H200 GPU nodes
-#all_bench="nccl-tests nvidia-hpc-benchmarks"    
+all_bench="nccl-tests gpu-burn-r8 nvidia-hpc-benchmarks"   #  H100 GPU nodes
+#all_bench="nccl-tests openmp mpi-calc-pi nvidia-hpc-benchmarks"  
+#all_bench="nvidia-hpc-benchmarks"    
+#all_bench="nccl-tests nvidia-hpc-benchmarks" 
 #all_bench="nccl-tests" 
 
 root_dir=/orcd/data/orcd/022/benchmarks

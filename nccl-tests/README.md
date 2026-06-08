@@ -1,77 +1,65 @@
-# NCCL Tests
+# nccl-tests
 
-These tests check both the performance and the correctness of [NCCL](http://github.com/nvidia/nccl) operations.
+## Introduction
 
-## Build
+[NCCL Tests](https://github.com/NVIDIA/nccl-tests) measure the
+performance and correctness of NCCL collective/point-to-point operations
+on NVIDIA GPUs. This setup focuses on `sendrecv_perf` (and the other
+`*_perf` binaries), reporting in-place/out-of-place bus bandwidth
+(busbw, GB/s) for intra-node (NVLink) and inter-node (InfiniBand) GPU
+communication.
 
-To build the tests, just type `make`.
+## Installation
 
-If CUDA is not installed in /usr/local/cuda, you may specify CUDA\_HOME. Similarly, if NCCL is not installed in /usr, you may specify NCCL\_HOME.
+Cloned from <https://github.com/NVIDIA/nccl-tests>. Build against an
+nvhpc + OpenMPI stack:
 
-```shell
-$ make CUDA_HOME=/path/to/cuda NCCL_HOME=/path/to/nccl
+```bash
+module load nvhpc/24.5 openmpi/5.0.8
+make MPI=1                       # binaries land in build/
+# or use the helper:
+./build.sh                       # see also build-nvhpc.sh / build-ompi.sh
 ```
 
-NCCL tests rely on MPI to work on multiple processes, hence multiple nodes. If you want to compile the tests with MPI support, you need to set MPI=1 and set MPI\_HOME to the path where MPI is installed.
-
-```shell
-$ make MPI=1 MPI_HOME=/path/to/mpi CUDA_HOME=/path/to/cuda NCCL_HOME=/path/to/nccl
-```
+Prebuilt trees are kept under `build-nvhpc-*/`. `run/env.sh` selects the
+module stack and `BUILD_DIR` used at run time.
 
 ## Usage
 
-NCCL tests can run on multiple processes, multiple threads, and multiple CUDA devices per thread. The number of process is managed by MPI and is therefore not passed to the tests as argument. The total number of ranks (=CUDA devices) will be equal to (number of processes)\*(number of threads)\*(number of GPUs per thread).
+### Automated, many runs — `run/`
 
-### Quick examples
+`run.sh` submits a single-node (all-GPU) job per node; `run-2node.sh`
+submits a 2-GPU job for every pair of nodes.
 
-Run on single node with 8 GPUs (`-g 8`), scanning from 8 Bytes to 128MBytes :
-```shell
-$ ./build/all_reduce_perf -b 8 -e 128M -f 2 -g 8
+```bash
+cd run
+# args: "<nodes>" <partition> <reservation|none> <qos> <cpu_count> <gpu_type> <ngpus>
+./run.sh       "3506 3507" mit_normal_gpu none unlimited 8 l40s 4
+./run-2node.sh "3506 3507" mit_normal_gpu none unlimited 8 l40s 4
 ```
 
-Run 64 MPI processes on nodes with 8 GPUs each, for a total of 64 GPUs spread across 8 nodes :
-(NB: The nccl-tests binaries must be compiled with `MPI=1` for this case)
-```shell
-$ mpirun -np 64 -N 8 ./build/all_reduce_perf -b 8 -e 8G -f 2 -g 1
+Output lands in `<partition>/out-1node/` and `<partition>/out-2node/`.
+
+### Single run — `scripts/` or root
+
+`1node_example.sh` and `2node_example.sh` (repo root) and the scripts in
+`scripts/` (`1node.sh`, `2nodes-2gpus.sh`, …) are standalone sbatch
+scripts for one configuration. Inside a GPU allocation you can also run
+a binary directly:
+
+```bash
+source run/env.sh
+mpirun -np 8 build/sendrecv_perf -b 8 -e 8G -f 2 -g 1
 ```
 
-### Performance
+## Analysis
 
-See the [Performance](doc/PERFORMANCE.md) page for explanation about numbers, and in particular the "busbw" column.
+```bash
+cd run
+# get-results.sh <partition> <N>
+./get-results.sh mit_normal_gpu 2
+```
 
-### Arguments
-
-All tests support the same set of arguments :
-
-* Number of GPUs
-  * `-t,--nthreads <num threads>` number of threads per process. Default : 1.
-  * `-g,--ngpus <GPUs per thread>` number of gpus per thread. Default : 1.
-* Sizes to scan
-  * `-b,--minbytes <min size in bytes>` minimum size to start with. Default : 32M.
-  * `-e,--maxbytes <max size in bytes>` maximum size to end at. Default : 32M.
-  * Increments can be either fixed or a multiplication factor. Only one of those should be used
-    * `-i,--stepbytes <increment size>` fixed increment between sizes. Default : 1M.
-    * `-f,--stepfactor <increment factor>` multiplication factor between sizes. Default : disabled.
-* NCCL operations arguments
-  * `-o,--op <sum/prod/min/max/avg/all>` Specify which reduction operation to perform. Only relevant for reduction operations like Allreduce, Reduce or ReduceScatter. Default : Sum.
-  * `-d,--datatype <nccltype/all>` Specify which datatype to use. Default : Float.
-  * `-r,--root <root/all>` Specify which root to use. Only for operations with a root like broadcast or reduce. Default : 0.
-* Performance
-  * `-n,--iters <iteration count>` number of iterations. Default : 20.
-  * `-w,--warmup_iters <warmup iteration count>` number of warmup iterations (not timed). Default : 5.
-  * `-m,--agg_iters <aggregation count>` number of operations to aggregate together in each iteration. Default : 1.
-  * `-N,--run_cycles <cycle count>` run & print each cycle. Default : 1; 0=infinite.
-  * `-a,--average <0/1/2/3>` Report performance as an average across all ranks (MPI=1 only). <0=Rank0,1=Avg,2=Min,3=Max>. Default : 1.
-* Test operation
-  * `-p,--parallel_init <0/1>` use threads to initialize NCCL in parallel. Default : 0.
-  * `-c,--check <check iteration count>` perform count iterations, checking correctness of results on each iteration. This can be quite slow on large numbers of GPUs. Default : 1.
-  * `-z,--blocking <0/1>` Make NCCL collective blocking, i.e. have CPUs wait and sync after each collective. Default : 0.
-  * `-G,--cudagraph <num graph launches>` Capture iterations as a CUDA graph and then replay specified number of times. Default : 0.
-  * `-C,--report_cputime <0/1>]` Report CPU time instead of latency. Default : 0.
-  * `-R,--local_register <1/0>` enable local buffer registration on send/recv buffers. Default : 0.
-  * `-T,--timeout <time in seconds>` timeout each test after specified number of seconds. Default : disabled.
-
-## Copyright
-
-NCCL tests are provided under the BSD license. All source code and accompanying documentation is copyright (c) 2016-2024, NVIDIA CORPORATION. All rights reserved.
-
+Pulls the `sendrecv_perf` rows at the 4 GiB (4294967296-byte) message
+size from the most recent N outputs; read the **busbw** column (GB/s) —
+higher is better. See `doc/PERFORMANCE.md` for what busbw means.

@@ -1,55 +1,47 @@
-# DISCONTINUATION OF PROJECT #  
-This project will no longer be maintained by Intel.  
-Intel has ceased development and contributions including, but not limited to, maintenance, bug fixes, new releases, or updates, to this project.  
-Intel no longer accepts patches to this project.  
- If you have an ongoing need to use this project, are interested in independently developing it, or would like to maintain patches for the open source software community, please create your own fork of this project.  
-  
-# Memory Bandwidth Benchmarks
+# stream-intel
 
-## Overview
-This repository intends to provides a set of benchmarks that can be used to measure the memory bandwidth performance of CPU's. In the initial release, we provide the de-facto memory bandwidth benchmark, [STREAM](https://www.cs.virginia.edu/stream/) [1] along with compilation and run scripts to obtain ideal performance on Intel(R) Processors.
+## Introduction
 
-## STREAM Overview
-STREAM is a simple, synthetic benchmark designed to measure sustainable memory bandwidth (in MB/s) for four simple vector kernels: Copy, Scale, Add and Triad. Its source code is freely available [here](https://www.cs.virginia.edu/stream/FTP/Code/)
+The [STREAM](https://www.cs.virginia.edu/stream/) memory-bandwidth
+benchmark, packaged by Intel with compile/run scripts tuned for Intel
+CPUs. STREAM measures sustainable main memory bandwidth (MB/s) via four
+vector kernels — Copy, Scale, Add, Triad — built with the Intel compiler
+so it emits non-temporal stores for peak bandwidth.
 
-There are two categories created by STREAM benchmark author for citing memory bandwidth performance -- Standard and Tuned. Results obtained from the unmodified source code are considered as "Standard" whereas a "Tuned" category has been added to allow users or vendors to submit results based on modified source code. On Intel(R) processors, we don't need to modify the source code of the benchmark for optimal performance. We provide instructions to compile and run STREAM without any source code modifications. Hence, the performance results obtained would fall under the Standard category.
+## Installation
 
-The general rule for STREAM is that each array must be at least 4x the size of the sum of all the last-level caches used in the run, or 1 million elements, whichever is larger.
+Requires the Intel C compiler (`icc`) on `PATH`. Build with `make`, which
+produces one binary per ISA:
 
-## Pre-requisites
-- Intel C Compiler: Performance of STREAM benchmark is dependent on the Compiler options used. Hence, we rely on the Intel C Compiler to generate the underlying non-temporal store instructions to achieve optimal performance on Intel CPU's.
-- Linux environment: Currently, the makefile assume Linux OS environment.
+```bash
+module load intel        # provides icc
+make                     # -> stream_avx.bin, stream_avx2.bin, stream_avx512.bin
+# options: make cpu=avx512   make size=<elems_per_array>   make rfo=1
+```
 
-## Compilation
-- Ensure Intel C Compiler (icc) is available in your shell environment.
-- Run `make`. This would generate the following binaries:
-  - stream_avx.bin        => Targeted for Intel CPU's that support AVX ISA
-  - stream_avx2.bin       => Targeted for Intel CPU's that support AVX2 ISA
-  - stream_avx512.bin     => Targeted for Intel CPU's that support AVX512 ISA
+Default config: FP64, `STREAM_ARRAY_SIZE=269000000` (~2 GB/array),
+`NTIMES=100`. Source is `stream.c` (vendored from the STREAM project).
 
-Be default, the following STREAM configuration parameters are used in compiling the binaries:
-- STREAM_TYPE = double
-- STREAM_ARRAY_SIZE = 269000000 (this translates to about 2 GB per array of memory footprint)
-- NTIMES = 100
-- OFFSET = 0
+## Usage
 
-Makefile supports the following options:
-- size=<number_of_elements_per_array>
-- cpu=<avx,avx2,avx512>
-- rfo=1 forces to use regular cached stores instead of non-temporal stores
-- help
+There is no `run/` many-runs driver; `run.sh` (repo root) is the single
+benchmarking entry point.
 
-Few examples:
-- To compile STREAM benchmark only for Intel AVX512 CPU's, do: `make cpu=avx512`
-- To compile STREAM benchmark for Intel AVX512 CPU's with each buffer containing 67108864 elements, do:  `make size=67108864 cpu=avx512`
-- To explicitly use regular cached stores, do: `make rfo=1`
+### Single run — root `run.sh`
 
-## Running STREAM
-We provide a run script (`run.sh`) that can be used for benchmarking purposes. The run script does the following --
+```bash
+./run.sh
+```
 
-1.  Binary: Use the appropriate STREAM binary produced from the compilation step, i.e picks the highest supported ISA on your target system
-2.  OpenMP settings: Sets the OMP_NUM_THREADS to number of physical cores on the system. KMP_AFFINITY (thread affininity control variable of Intel OpenMP runtime) set to compact pinning. Ignores Hyper-threading cores even if enabled on system.
-3.  Store the results to a log file. Also, output relevant system info such as number of sockets, cores, threads, NUMA domains, memory sub-system etc. Running with sudo would result in more detailed info on memory subsystem as it parses output of `dmidecode`
+`run.sh` auto-detects the machine (sockets/cores/caches/NUMA), picks the
+highest-ISA binary your CPU supports, sets `OMP_NUM_THREADS` to the
+physical core count with compact `KMP_AFFINITY` (ignoring hyperthreads),
+runs STREAM, and writes a log with the result plus system info. Running
+under `sudo` adds `dmidecode` memory details.
 
+## Analysis
 
-[1]: McCalpin, John D., 1995: "Memory Bandwidth and Machine Balance in Current High Performance Computers", IEEE Computer Society Technical Committee on Computer Architecture (TCCA) Newsletter, December 1995.
+The run log contains STREAM's best-rate table; the **Triad** MB/s value is
+the headline sustained-memory-bandwidth number (Copy/Scale/Add are also
+reported). Higher is better; compare against the platform's theoretical
+DRAM bandwidth to gauge efficiency.
