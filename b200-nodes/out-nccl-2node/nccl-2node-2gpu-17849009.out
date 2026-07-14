@@ -1,0 +1,28 @@
+node5500
+node5502
+/orcd/software/core/001/pkg/nvhpc/26.1/Linux_x86_64/26.1/comm_libs/mpi/bin/mpirun
+Bin dir = /orcd/data/orcd/022/benchmarks/nccl-tests/build-nvhpc-26.1
+num_cpu = num_mpi_tasks = 2
+num_gpu_per_task = 1
+%%%%%%%%% sendrecv_perf %%%%%%%%%%
+# nThread 1 nGpus 1 minBytes 1048576 maxBytes 17179869184 step: 4(factor) warmup iters: 5 iters: 20 agg iters: 1 validation: 1 graph: 0
+#
+# Using devices
+#  Rank  0 Group  0 Pid 255106 on   node5500 device  0 [0x1b] NVIDIA B200
+#  Rank  1 Group  0 Pid 1339353 on   node5502 device  0 [0x1b] NVIDIA B200
+#
+#                                                              out-of-place                       in-place          
+#       size         count      type   redop    root     time   algbw   busbw #wrong     time   algbw   busbw #wrong
+#        (B)    (elements)                               (us)  (GB/s)  (GB/s)            (us)  (GB/s)  (GB/s)       
+     1048576        262144     float     sum      -1    117.3    8.94    8.94      0    117.2    8.95    8.95    N/A
+     4194304       1048576     float     sum      -1    368.3   11.39   11.39      0    362.9   11.56   11.56    N/A
+    16777216       4194304     float     sum      -1   1348.8   12.44   12.44      0   1351.3   12.42   12.42    N/A
+    67108864      16777216     float     sum      -1   5292.8   12.68   12.68      0   5296.7   12.67   12.67    N/A
+   268435456      67108864     float     sum      -1    21124   12.71   12.71      0    21138   12.70   12.70    N/A
+  1073741824     268435456     float     sum      -1    84488   12.71   12.71      0    84574   12.70   12.70    N/A
+  4294967296    1073741824     float     sum      -1   337911   12.71   12.71      0   338091   12.70   12.70    N/A
+ 17179869184    4294967296     float     sum      -1  1351795   12.71   12.71      0  1351935   12.71   12.71    N/A
+# Out of bounds values : 0 OK
+# Avg bus bandwidth    : 12.0423 
+#
+
