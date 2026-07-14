@@ -1,5 +1,5 @@
 # for all nodes
-nodes="3625 3626 3627 3628" 
+nodes="3624" 
 partition=mit_testing
 reservation=none #orcd_testing  #none #orcd_testing  #  WareWulf_testing
 qos=normal  # normal   # unlimited
@@ -9,10 +9,10 @@ cpus=32  # 48  # 40  #96  # 40  # 88  # all cores on a CPU  node, substract rese
 gpu_type=none #l40s # l40s  # a100 #h100 # h200 # l40s
 gpus=none # 4  #2  #8  #4
 
-#all_bench="openmp"
+all_bench="openmp"
 #all_bench="openmp mpi-calc-pi"  # single CPU node
 #all_bench="mpi-calc-pi"  # single CPU node
-all_bench="openmp mpi-calc-pi mpi-p2p"  # two or more CPU nodes
+#all_bench="openmp mpi-calc-pi mpi-p2p"  # two or more CPU nodes
 #all_bench="mpi-p2p" 
 
 root_dir=/orcd/data/orcd/022/benchmarks
