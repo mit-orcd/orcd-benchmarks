@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="470" font-family="sans-serif" font-size="13">
+<rect width="760" height="470" fill="white"/>
+<text x="78" y="24" font-size="16" font-weight="bold">Megatron-LM ~7B GPT: aggregate throughput scaling (node5500, B200)</text>
+<line x1="78" y1="414.0" x2="610" y2="414.0" stroke="#e0e0e0"/>
+<text x="70" y="418.0" text-anchor="end" fill="#555">0</text>
+<line x1="78" y1="368.0" x2="610" y2="368.0" stroke="#e0e0e0"/>
+<text x="70" y="372.0" text-anchor="end" fill="#555">1000</text>
+<line x1="78" y1="322.0" x2="610" y2="322.0" stroke="#e0e0e0"/>
+<text x="70" y="326.0" text-anchor="end" fill="#555">2000</text>
+<line x1="78" y1="276.0" x2="610" y2="276.0" stroke="#e0e0e0"/>
+<text x="70" y="280.0" text-anchor="end" fill="#555">3000</text>
+<line x1="78" y1="230.0" x2="610" y2="230.0" stroke="#e0e0e0"/>
+<text x="70" y="234.0" text-anchor="end" fill="#555">4000</text>
+<line x1="78" y1="184.0" x2="610" y2="184.0" stroke="#e0e0e0"/>
+<text x="70" y="188.0" text-anchor="end" fill="#555">5000</text>
+<line x1="78" y1="138.0" x2="610" y2="138.0" stroke="#e0e0e0"/>
+<text x="70" y="142.0" text-anchor="end" fill="#555">6000</text>
+<line x1="78" y1="92.0" x2="610" y2="92.0" stroke="#e0e0e0"/>
+<text x="70" y="96.0" text-anchor="end" fill="#555">7000</text>
+<line x1="78" y1="46.0" x2="610" y2="46.0" stroke="#e0e0e0"/>
+<text x="70" y="50.0" text-anchor="end" fill="#555">8000</text>
+<line x1="78.0" y1="414" x2="78.0" y2="419" stroke="#555"/>
+<text x="78.0" y="434" text-anchor="middle" fill="#555">1</text>
+<line x1="154.0" y1="414" x2="154.0" y2="419" stroke="#555"/>
+<text x="154.0" y="434" text-anchor="middle" fill="#555">2</text>
+<line x1="230.0" y1="414" x2="230.0" y2="419" stroke="#555"/>
+<text x="230.0" y="434" text-anchor="middle" fill="#555">3</text>
+<line x1="306.0" y1="414" x2="306.0" y2="419" stroke="#555"/>
+<text x="306.0" y="434" text-anchor="middle" fill="#555">4</text>
+<line x1="382.0" y1="414" x2="382.0" y2="419" stroke="#555"/>
+<text x="382.0" y="434" text-anchor="middle" fill="#555">5</text>
+<line x1="458.0" y1="414" x2="458.0" y2="419" stroke="#555"/>
+<text x="458.0" y="434" text-anchor="middle" fill="#555">6</text>
+<line x1="534.0" y1="414" x2="534.0" y2="419" stroke="#555"/>
+<text x="534.0" y="434" text-anchor="middle" fill="#555">7</text>
+<line x1="610.0" y1="414" x2="610.0" y2="419" stroke="#555"/>
+<text x="610.0" y="434" text-anchor="middle" fill="#555">8</text>
+<line x1="78" y1="46" x2="78" y2="414" stroke="#555"/>
+<line x1="78" y1="414" x2="610" y2="414" stroke="#555"/>
+<text x="344.0" y="456" text-anchor="middle">number of GPUs</text>
+<text x="20" y="230.0" text-anchor="middle" transform="rotate(-90 20 230.0)">aggregate TFLOP/s</text>
+<line x1="78.0" y1="368.5" x2="610.0" y2="50.0" stroke="#bbb" stroke-width="2" stroke-dasharray="6 5"/>
+<polyline points="78.0,368.5 154.0,323.6 230.0,280.2 306.0,236.1 382.0,191.7 458.0,146.5 534.0,102.1 610.0,57.6" fill="none" stroke="#1f6feb" stroke-width="2.5"/>
+<circle cx="78.0" cy="368.5" r="4.5" fill="#1f6feb"/>
+<circle cx="154.0" cy="323.6" r="4.5" fill="#1f6feb"/>
+<circle cx="230.0" cy="280.2" r="4.5" fill="#1f6feb"/>
+<circle cx="306.0" cy="236.1" r="4.5" fill="#1f6feb"/>
+<circle cx="382.0" cy="191.7" r="4.5" fill="#1f6feb"/>
+<circle cx="458.0" cy="146.5" r="4.5" fill="#1f6feb"/>
+<circle cx="534.0" cy="102.1" r="4.5" fill="#1f6feb"/>
+<circle cx="610.0" cy="57.6" r="4.5" fill="#1f6feb"/>
+<rect x="74.0" y="362.9" width="8" height="8" fill="#e3742f"/>
+<rect x="150.0" y="317.3" width="8" height="8" fill="#e3742f"/>
+<rect x="302.0" y="228.7" width="8" height="8" fill="#e3742f"/>
+<rect x="606.0" y="44.5" width="8" height="8" fill="#e3742f"/>
+<line x1="626" y1="52" x2="648" y2="52" stroke="#1f6feb" stroke-width="2.5"/>
+<circle cx="637" cy="52" r="4" fill="#1f6feb"/>
+<text x="654" y="56" fill="#333">measured (ours)</text>
+<line x1="626" y1="74" x2="648" y2="74" stroke="#bbb" stroke-width="2" stroke-dasharray="6 5"/>
+<text x="654" y="78" fill="#333">ideal linear</text>
+<rect x="633" y="92" width="8" height="8" fill="#e3742f"/>
+<text x="654" y="100" fill="#333">reference B200</text>
+</svg>
