@@ -30,6 +30,24 @@ REFERENCE_FILE = (
     "/home/shaohao/data022/aicr-benchmarks/Benchmark_WG/nccl-tests/results_b200.md"
 )
 
+# ---- hardware ceiling for THIS cluster (measured from ibstat on node5500-5502) --
+# Each B200 has one NDR rail: 400 Gb/s = 50 GB/s per direction. PCIe Gen5 x16 is
+# full-duplex (~63 GB/s each way), so the NIC — not the PCIe DMA path — is the
+# binding constraint in both directions. 8 rails per node.
+NIC_GBPS = 50.0                       # per GPU-NIC pair, per direction
+NICS_PER_NODE = 8
+AGG_GBPS = NIC_GBPS * NICS_PER_NODE   # 400 GB/s per node, per direction
+# sendrecv's busbw is a single pair's rate; every other collective here is
+# ring/symmetric or root-anchored and drives all 8 rails concurrently.
+PER_PAIR_COLLECTIVES = {"sendrecv"}
+
+
+def hw_ceiling(collective):
+    """(ceiling GB/s, basis) for this cluster's NDR fabric."""
+    if collective in PER_PAIR_COLLECTIVES:
+        return NIC_GBPS, "per-pair"
+    return AGG_GBPS, "node aggregate"
+
 CONFIG_RE = re.compile(
     r"nThread\s+(\d+)\s+nGpus\s+(\d+)\s+minBytes\s+(\d+)\s+maxBytes\s+(\d+).*"
     r"warmup iters:\s*(\d+)\s+iters:\s*(\d+)"
@@ -218,10 +236,10 @@ def build(runs, reference):
     pair_sep = "-----------|" if multi else ""
     L.append(f"| {pair_col}Collective | GPUs | converged busbw (GB/s) "
              "| peak busbw (GB/s) | reference busbw (GB/s) | ours / ref "
-             "| correctness |")
+             "| HW max (GB/s) | ours / HW max | correctness |")
     L.append(f"|{pair_sep}------------|-----:|-----------------------:"
              "|------------------:|-----------------------:|-----------:"
-             "|:-----------:|")
+             "|--------------:|--------------:|:-----------:|")
     caveats = []
     for r in runs:
         for seg in r["collectives"]:
@@ -238,13 +256,34 @@ def build(runs, reference):
                     f"sendrecv here uses {g} GPUs (ring), but the reference "
                     f"{rf['busbw']:.1f} GB/s is a per-pair (2-GPU) bidir figure, so the "
                     "two are not directly comparable and `ours / ref` is left blank.")
+            hwmax, _basis = hw_ceiling(name)
+            hw_pct = f"{100*seg['converged']/hwmax:.0f}%"
             pair_cell = f"{r['pair']} | " if multi else ""
             L.append(f"| {pair_cell}{name} | {g} | {seg['converged']:.1f} "
                      f"| {seg['peak']:.1f} | {refbw} | {ratio} "
+                     f"| {hwmax:.0f} | {hw_pct} "
                      f"| {'PASS' if seg['ok'] else 'FAIL'} |")
     L.append("")
     L.append("Converged = busbw at the largest message size, best of out-of-place / "
              "in-place (matches the reference methodology).")
+    L.append("")
+    L.append(f"`HW max` is the hardware ceiling of **this** cluster's fabric, not a "
+             f"figure taken from any paper. Each B200 owns one NDR rail at 400 Gb/s "
+             f"= **{NIC_GBPS:.0f} GB/s per direction**, and each node has "
+             f"**{NICS_PER_NODE} rails** (mlx5_4/7/8/9/10/13/14/15, confirmed by "
+             f"`ibstat`), so:")
+    L.append("")
+    L.append(f"- **sendrecv** — busbw is one pair's rate => ceiling "
+             f"**{NIC_GBPS:.0f} GB/s**.")
+    L.append(f"- **all other collectives** — ring/symmetric or root-anchored, "
+             f"driving all {NICS_PER_NODE} rails concurrently => ceiling "
+             f"{NICS_PER_NODE} x {NIC_GBPS:.0f} = **{AGG_GBPS:.0f} GB/s** per node "
+             f"per direction.")
+    L.append("")
+    L.append("The NIC is the binding constraint in both directions because PCIe "
+             "Gen5 x16 is full-duplex (~63 GB/s *each* way), comfortably above the "
+             f"{NIC_GBPS:.0f} GB/s rail. A collective well below its ceiling is "
+             "limited by the NCCL algorithm, not by this hardware.")
     if caveats:
         L.append("")
         for c in dict.fromkeys(caveats):   # de-dup, preserve order
