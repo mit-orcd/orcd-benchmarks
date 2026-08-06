@@ -116,8 +116,109 @@ def mean(vals):
     return sum(vals) / len(vals)
 
 
-def build(nodes, reference):
+# node curve colors, in the order nodes are encountered
+NODE_COLORS = ["#1f6feb", "#2ea043", "#8957e5", "#d29922"]
+
+
+def svg_speedup(nodes, path, prec_pref=("BF16", "FP32", "FP8")):
+    """Speed-up vs number of GPUs, one curve per node, written as dependency-free SVG.
+
+    gpu-fryer stresses all 8 GPUs concurrently and reports one converged figure per
+    GPU; it does not run separate 1/2/.../8-GPU jobs. The curve is therefore derived
+    from that single run as the cumulative aggregate over GPUs 0..N-1, normalised by
+    GPU 0. It is linear by construction — its value is that any *departure* from the
+    ideal line marks a slow or throttling GPU.
+    """
+    W, H = 760, 470
+    ml, mr, mt, mb = 70, 160, 46, 56
+    pw, ph = W - ml - mr, H - mt - mb
+    curves = {}
+    for n in nodes:
+        prec = next((p for p in prec_pref if p in n["data"] and n["data"][p]), None)
+        if prec is None:
+            continue
+        vals = [n["data"][prec][g] for g in sorted(n["data"][prec])]
+        if not vals:
+            continue
+        base, run = vals[0], 0.0
+        pts = []
+        for i, v in enumerate(vals, start=1):
+            run += v
+            pts.append((i, run / base))
+        curves[n["node"]] = {"prec": prec, "pts": pts}
+    if not curves:
+        return None
+    names = sorted(curves)
+    xmax = max(p[0] for c in curves.values() for p in c["pts"])
+    ymax = max([p[1] for c in curves.values() for p in c["pts"]] + [xmax])
+    ymax = float(int(ymax) + 1)
+
+    def X(g):
+        return ml + (g - 1) / max(xmax - 1, 1) * pw
+
+    def Y(v):
+        return mt + ph - (v / ymax) * ph
+
+    s = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" '
+         f'font-family="sans-serif" font-size="13">',
+         f'<rect width="{W}" height="{H}" fill="white"/>',
+         f'<text x="{ml}" y="24" font-size="16" font-weight="bold">'
+         f'gpu-fryer: speed-up vs number of GPUs (B200)</text>']
+    v = 0
+    while v <= ymax:
+        y = Y(v)
+        s.append(f'<line x1="{ml}" y1="{y:.1f}" x2="{ml+pw}" y2="{y:.1f}" '
+                 f'stroke="#e0e0e0"/>')
+        s.append(f'<text x="{ml-8}" y="{y+4:.1f}" text-anchor="end" fill="#555">'
+                 f'{v}</text>')
+        v += 1
+    for g in range(1, int(xmax) + 1):
+        x = X(g)
+        s.append(f'<line x1="{x:.1f}" y1="{mt+ph}" x2="{x:.1f}" y2="{mt+ph+5}" '
+                 f'stroke="#555"/>')
+        s.append(f'<text x="{x:.1f}" y="{mt+ph+20}" text-anchor="middle" '
+                 f'fill="#555">{g}</text>')
+    s.append(f'<line x1="{ml}" y1="{mt}" x2="{ml}" y2="{mt+ph}" stroke="#555"/>')
+    s.append(f'<line x1="{ml}" y1="{mt+ph}" x2="{ml+pw}" y2="{mt+ph}" stroke="#555"/>')
+    s.append(f'<text x="{ml+pw/2}" y="{H-14}" text-anchor="middle">'
+             f'number of GPUs</text>')
+    s.append(f'<text x="18" y="{mt+ph/2}" text-anchor="middle" '
+             f'transform="rotate(-90 18 {mt+ph/2})">speed-up (x single GPU)</text>')
+    # ideal linear
+    s.append(f'<line x1="{X(1):.1f}" y1="{Y(1):.1f}" x2="{X(xmax):.1f}" '
+             f'y2="{Y(xmax):.1f}" stroke="#bbb" stroke-width="2" '
+             f'stroke-dasharray="6 5"/>')
+    for i, name in enumerate(names):
+        c = NODE_COLORS[i % len(NODE_COLORS)]
+        pts = curves[name]["pts"]
+        poly = " ".join(f"{X(g):.1f},{Y(v):.1f}" for g, v in pts)
+        s.append(f'<polyline points="{poly}" fill="none" stroke="{c}" '
+                 f'stroke-width="2.5"/>')
+        for g, v in pts:
+            s.append(f'<circle cx="{X(g):.1f}" cy="{Y(v):.1f}" r="4" fill="{c}"/>')
+    lx, ly = ml + pw + 16, mt + 6
+    items = [(NODE_COLORS[i % len(NODE_COLORS)],
+              f'{n} ({curves[n]["prec"]})', "line") for i, n in enumerate(names)]
+    items.append(("#bbb", "ideal linear", "dash"))
+    for i, (c, lbl, kind) in enumerate(items):
+        yy = ly + i * 22
+        if kind == "line":
+            s.append(f'<line x1="{lx}" y1="{yy}" x2="{lx+22}" y2="{yy}" '
+                     f'stroke="{c}" stroke-width="2.5"/>')
+            s.append(f'<circle cx="{lx+11}" cy="{yy}" r="4" fill="{c}"/>')
+        else:
+            s.append(f'<line x1="{lx}" y1="{yy}" x2="{lx+22}" y2="{yy}" '
+                     f'stroke="{c}" stroke-width="2" stroke-dasharray="6 5"/>')
+        s.append(f'<text x="{lx+28}" y="{yy+4}" fill="#333">{lbl}</text>')
+    s.append("</svg>")
+    with open(path, "w") as fh:
+        fh.write("\n".join(s))
+    return {n: curves[n] for n in names}
+
+
+def build(nodes, reference, speedup=None, svg_name="gpu-fryer-speedup.svg"):
     L = []
+    names_su = sorted(speedup) if speedup else []
     # union of precisions in first-seen order
     order = []
     for n in nodes:
@@ -175,6 +276,34 @@ def build(nodes, reference):
                 L.append(f"| {n['node']} | " + " | ".join(cells) + " |")
     L.append("")
 
+    # Speed-up figure (all nodes in one plot)
+    if speedup:
+        L.append("## Speed-up vs number of GPUs")
+        L.append("")
+        L.append(f"![Speed-up vs number of GPUs]({svg_name})")
+        L.append("")
+        L.append("| #GPUs | " + " | ".join(names_su) + " | ideal |")
+        L.append("|------:|" + "|".join(["------:"] * len(names_su)) + "|------:|")
+        npts = max(len(speedup[n]["pts"]) for n in names_su)
+        for i in range(npts):
+            cells = []
+            for n in names_su:
+                pts = speedup[n]["pts"]
+                cells.append(f"{pts[i][1]:.2f}" if i < len(pts) else "—")
+            L.append(f"| {i+1} | " + " | ".join(cells) + f" | {i+1}.00 |")
+        L.append("")
+        L.append("> **How to read this.** gpu-fryer stresses all 8 GPUs "
+                 "*concurrently* and reports one converged figure per GPU — it does "
+                 "not run separate 1, 2, ... 8-GPU jobs. The curve above is therefore "
+                 "**derived** from that single run: speed-up(N) = (sum of GPUs 0..N-1) "
+                 "/ GPU 0. It is linear by construction and is **not** a measured "
+                 "scaling study; what it shows is per-GPU *uniformity* — a curve that "
+                 "tracks the dashed ideal line means every GPU sustains the same "
+                 "throughput, while a curve bending below it marks a slow or "
+                 "throttling GPU. For real scaling behaviour see the Megatron-LM "
+                 "weak-scaling results in `output-megatron/summary.md`.")
+        L.append("")
+
     # Per-GPU detail per node
     L.append("## Per-GPU converged throughput (TFLOP/s)")
     L.append("")
@@ -225,7 +354,9 @@ def main():
     if not nodes:
         sys.exit(f"No gpu-fryer results parsed from {OUT_DIR}")
     reference = parse_reference(REFERENCE_FILE)
-    md = build(nodes, reference)
+    svg_name = "gpu-fryer-speedup.svg"
+    speedup = svg_speedup(nodes, os.path.join(OUT_DIR, svg_name))
+    md = build(nodes, reference, speedup, svg_name)
     summary = os.path.join(OUT_DIR, "summary.md")
     with open(summary, "w") as fh:
         fh.write(md)

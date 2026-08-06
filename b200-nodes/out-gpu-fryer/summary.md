@@ -1,6 +1,6 @@
 # gpu-fryer summary
 
-- Generated: 2026-08-06 16:58:43
+- Generated: 2026-08-06 17:13:07
 - Nodes: node5500 (8 x B200), node5501 (8 x B200), node5502 (8 x B200)
 - Precisions: FP32, BF16, FP8
 - Reference (MIT aicr-benchmarks, `gpu-fryer/summary.md`, b0025, **B200**): per-GPU mean TFLOP/s — FP32 772, BF16 1500, FP8 4115
@@ -21,6 +21,23 @@
 | node5500 | 96% | 97% | 97% |
 | node5501 | 97% | 97% | 97% |
 | node5502 | 98% | 96% | 99% |
+
+## Speed-up vs number of GPUs
+
+![Speed-up vs number of GPUs](gpu-fryer-speedup.svg)
+
+| #GPUs | node5500 | node5501 | node5502 | ideal |
+|------:|------:|------:|------:|------:|
+| 1 | 1.00 | 1.00 | 1.00 | 1.00 |
+| 2 | 1.99 | 1.98 | 2.00 | 2.00 |
+| 3 | 2.97 | 2.96 | 2.99 | 3.00 |
+| 4 | 3.94 | 3.96 | 3.99 | 4.00 |
+| 5 | 4.93 | 4.93 | 4.99 | 5.00 |
+| 6 | 5.92 | 5.92 | 5.98 | 6.00 |
+| 7 | 6.90 | 6.91 | 6.97 | 7.00 |
+| 8 | 7.87 | 7.89 | 7.95 | 8.00 |
+
+> **How to read this.** gpu-fryer stresses all 8 GPUs *concurrently* and reports one converged figure per GPU — it does not run separate 1, 2, ... 8-GPU jobs. The curve above is therefore **derived** from that single run: speed-up(N) = (sum of GPUs 0..N-1) / GPU 0. It is linear by construction and is **not** a measured scaling study; what it shows is per-GPU *uniformity* — a curve that tracks the dashed ideal line means every GPU sustains the same throughput, while a curve bending below it marks a slow or throttling GPU. For real scaling behaviour see the Megatron-LM weak-scaling results in `output-megatron/summary.md`.
 
 ## Per-GPU converged throughput (TFLOP/s)
 
