@@ -65,6 +65,12 @@ rate** (400 Gb/s = 50 GB/s per direction) — a hard physical bound we approach 
 never exceed. AICR's 26.6 GB/s is **53%** of it. That factor of ~2 is the whole
 story.
 
+For the full per-collective analysis of our results against this cluster's
+hardware ceiling — effective rails engaged, and which collectives are
+fabric-limited versus NCCL-algorithm-limited — see the *Interpreting
+`ours / HW max`* section of `out-nccl-2node/summary.md`. It is not repeated here;
+this document covers only the AICR comparison.
+
 ## 3. What is likely misconfigured on AICR
 
 26.6 GB/s is close to **PCIe Gen5 x8** effective throughput (32 GB/s theoretical,

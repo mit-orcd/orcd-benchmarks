@@ -310,6 +310,83 @@ def build(runs, reference):
              "Gen5 x16 is full-duplex (~63 GB/s *each* way), comfortably above the "
              f"{NIC_GBPS:.0f} GB/s rail. A collective well below its ceiling is "
              "limited by the NCCL algorithm, not by this hardware.")
+    L.append("")
+
+    # ---- Interpretation: is each percentage expected? ----------------------
+    L.append("## Interpreting `ours / HW max`")
+    L.append("")
+    L.append(f"Dividing each result by one rail's line rate ({NIC_GBPS:.0f} GB/s) "
+             f"gives the most useful view: **how many of the {NICS_PER_NODE} rails "
+             f"the collective actually engages**.")
+    L.append("")
+    L.append(f"| Collective | ours / HW max | effective rails (of {NICS_PER_NODE}) "
+             f"| verdict |")
+    L.append("|------------|--------------:|----------------:|---------|")
+    VERDICT = {
+        "sendrecv": "at line rate",
+        "reduce_scatter": "at fabric limit",
+        "reduce": "at fabric limit",
+        "broadcast": "at fabric limit",
+        "all_gather": "at fabric limit",
+        "scatter": "expected (root-anchored)",
+        "all_reduce": "expected Ring two-pass penalty",
+        "gather": "NCCL algorithm limit",
+        "alltoall": "NCCL algorithm limit",
+    }
+    rows_i = []
+    for seg in main_run["collectives"]:
+        nm = coll_name(seg["program"])
+        hwmax, _b = hw_ceiling(nm)
+        rows_i.append((nm, 100 * seg["converged"] / hwmax,
+                       seg["converged"] / NIC_GBPS))
+    for nm, pct, rails in sorted(rows_i, key=lambda x: -x[1]):
+        note = "(per pair)" if nm in PER_PAIR_COLLECTIVES else ""
+        L.append(f"| {nm} | {pct:.0f}% | {rails:.2f} {note} "
+                 f"| {VERDICT.get(nm, '—')} |")
+    L.append("")
+    L.append("**At the hardware limit (92-99%).** `sendrecv` is the cleanest "
+             "validation in the table: each GPU saturates its own rail, so ~99% of "
+             f"{NIC_GBPS:.0f} GB/s means nothing is left on the table. It is the "
+             "single number that certifies the fabric is healthy. The ring "
+             "collectives sit at 7.3-7.5 effective rails because NCCL runs 8 "
+             "parallel ring channels, each crossing the node boundary on a "
+             "different rail; the missing few percent is ring fill/drain and "
+             "protocol overhead, which cannot be recovered.")
+    L.append("")
+    L.append("**Expected shortfalls.** `all_reduce` at ~60% is the Ring two-pass "
+             "penalty: it runs reduce_scatter then all_gather, and the busbw "
+             "formula already divides out the doubled traffic (factor 2(N-1)/N), so "
+             "a perfectly pipelined all_reduce would score the *same* as "
+             "all_gather. It does not, because the ring fills and drains twice and "
+             "pays the phase-transition latency. That fixed latency does not shrink "
+             "when bandwidth grows, which is why our all_reduce is a *smaller* "
+             "fraction of our all_gather (~65%) than the reference's was (~78%) — "
+             "and why SHARP, which collapses the two passes into one in-switch "
+             "reduction, has more to gain here (see `out-nccl-2node-sharp/`). "
+             "`scatter` is root-anchored and unidirectional, limited by the root's "
+             "own outbound capacity.")
+    L.append("")
+    L.append("**Algorithm-limited, and the numbers say so precisely.** `alltoall` "
+             f"at ~12% is exactly 1/{NICS_PER_NODE} — it engages roughly **one "
+             f"rail's worth** of bandwidth out of {NICS_PER_NODE}, a literal "
+             "quantification of NCCL's N^2 point-to-point transfers not being "
+             "pipelined across NICs. `gather` at ~24% is about two rails, the same "
+             "story for fan-in to a single root. The decisive evidence that these "
+             "are algorithmic rather than physical: this fabric is ~1.9x faster "
+             "than the reference on sendrecv, yet gather improved only 1.05x and "
+             "alltoall 1.19x. A faster fabric barely helps a collective that is not "
+             "using it.")
+    L.append("")
+    L.append(f"> **Caveat on the denominators.** The {AGG_GBPS:.0f} GB/s ceiling is "
+             "exact for the ring collectives, whose traffic streams around a ring "
+             "bottlenecked by its inter-node links. It is an *approximation* for "
+             "the root-anchored and all-to-all patterns, where only a fraction of "
+             "traffic crosses the node boundary (for alltoall, 8 of each GPU's 15 "
+             "peers are remote; the rest go over NVLink). A per-collective ceiling "
+             "would shift those percentages — most likely lowering `scatter`'s "
+             "apparent figure. It does not change any conclusion: gather and "
+             "alltoall are 4-8x below any reasonable ceiling and are algorithm-"
+             "bound under every accounting.")
     if caveats:
         L.append("")
         for c in dict.fromkeys(caveats):   # de-dup, preserve order
