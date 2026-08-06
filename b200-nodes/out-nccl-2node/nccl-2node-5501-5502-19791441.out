@@ -322,3 +322,67 @@ NCCL version 2.29.2+cuda13.1
 #  Rank 14 Group  0 Pid  21008 on   node5502 device  6 [0xd1] NVIDIA B200
 #  Rank 15 Group  0 Pid  21008 on   node5502 device  7 [0xdf] NVIDIA B200
 NCCL version 2.29.2+cuda13.1
+#
+#                                                              out-of-place                       in-place          
+#       size         count      type   redop    root     time   algbw   busbw #wrong     time   algbw   busbw #wrong
+#        (B)    (elements)                               (us)  (GB/s)  (GB/s)            (us)  (GB/s)  (GB/s)       
+     1048576         16384     float    none       0    392.8    2.67    2.50      0    315.5    3.32    3.12      0
+     4194304         65536     float    none       0    340.1   12.33   11.56      0    238.1   17.62   16.52      0
+    16777216        262144     float    none       0    202.1   83.00   77.81      0    207.0   81.05   75.98      0
+    67108864       1048576     float    none       0    327.9  204.68  191.89      0    336.9  199.17  186.72      0
+   268435456       4194304     float    none       0    977.6  274.58  257.42      0    971.4  276.34  259.07      0
+  1073741824      16777216     float    none       0   3518.0  305.21  286.14      0   3530.3  304.15  285.14      0
+  4294967296      67108864     float    none       0    12775  336.21  315.20      0    12944  331.80  311.06      0
+ 17179869184     268435456     float    none       0    47758  359.72  337.24      0    47562  361.21  338.63      0
+# Out of bounds values : 0 OK
+# Avg bus bandwidth    : 184.75 
+#
+
+%%%%%%%%% hypercube_perf %%%%%%%%%%
+# nThread 1 nGpus 8 minBytes 1048576 maxBytes 17179869184 step: 4(factor) warmup iters: 5 iters: 20 agg iters: 1 validation: 1 graph: 0
+#
+# Using devices
+#  Rank  0 Group  0 Pid  18311 on   node5501 device  0 [0x1b] NVIDIA B200
+#  Rank  1 Group  0 Pid  18311 on   node5501 device  1 [0x43] NVIDIA B200
+#  Rank  2 Group  0 Pid  18311 on   node5501 device  2 [0x52] NVIDIA B200
+#  Rank  3 Group  0 Pid  18311 on   node5501 device  3 [0x61] NVIDIA B200
+#  Rank  4 Group  0 Pid  18311 on   node5501 device  4 [0x9d] NVIDIA B200
+#  Rank  5 Group  0 Pid  18311 on   node5501 device  5 [0xc3] NVIDIA B200
+#  Rank  6 Group  0 Pid  18311 on   node5501 device  6 [0xd1] NVIDIA B200
+#  Rank  7 Group  0 Pid  18311 on   node5501 device  7 [0xdf] NVIDIA B200
+#  Rank  8 Group  0 Pid  21559 on   node5502 device  0 [0x1b] NVIDIA B200
+#  Rank  9 Group  0 Pid  21559 on   node5502 device  1 [0x43] NVIDIA B200
+#  Rank 10 Group  0 Pid  21559 on   node5502 device  2 [0x52] NVIDIA B200
+#  Rank 11 Group  0 Pid  21559 on   node5502 device  3 [0x61] NVIDIA B200
+#  Rank 12 Group  0 Pid  21559 on   node5502 device  4 [0x9d] NVIDIA B200
+#  Rank 13 Group  0 Pid  21559 on   node5502 device  5 [0xc3] NVIDIA B200
+#  Rank 14 Group  0 Pid  21559 on   node5502 device  6 [0xd1] NVIDIA B200
+#  Rank 15 Group  0 Pid  21559 on   node5502 device  7 [0xdf] NVIDIA B200
+NCCL version 2.29.2+cuda13.1
+#
+#                                                              out-of-place                       in-place          
+#       size         count      type   redop    root     time   algbw   busbw #wrong     time   algbw   busbw #wrong
+#        (B)    (elements)                               (us)  (GB/s)  (GB/s)            (us)  (GB/s)  (GB/s)       
+     1048576         16384     float              -1    800.1    1.23    1.23  2.12966e+06    452.4    2.17    2.17  2.35635e+06
+     4194304         65536     float              -1    651.5    6.04    6.04  8.68102e+06    399.9    9.83    9.83  8.72672e+06
+    16777216        262144     float              -1   1061.9   14.81   14.81  2.06857e+07   1054.6   14.91   14.91  2.16878e+07
+    67108864       1048576     float              -1   3985.0   15.79   15.79  3.87381e+07   3726.6   16.88   16.88  4.79595e+07
+   268435456       4194304     float              -1    12558   20.04   20.04  9.67327e+07    12164   20.69   20.69  1.36025e+08
+  1073741824      16777216     float              -1    35958   27.99   27.99  4.03471e+08    35335   28.49   28.49  4.11036e+08
+  4294967296      67108864     float              -1   135268   29.77   29.77  1.64408e+09   138738   29.02   29.02  1.54059e+09
+ 17179869184     268435456     float              -1   539030   29.88   29.88  6.0289e+09   543045   29.66   29.66  6.17316e+09
+# Out of bounds values : 32 FAILED
+# Avg bus bandwidth    : 18.5753 
+#
+
+--------------------------------------------------------------------------
+Primary job  terminated normally, but 1 process returned
+a non-zero exit code. Per user-direction, the job has been aborted.
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+mpirun detected that one or more processes exited with non-zero status, thus causing
+the job to be terminated. The first process to do so was:
+
+  Process name: [[18044,1],0]
+  Exit code:    1
+--------------------------------------------------------------------------
