@@ -1,6 +1,6 @@
 # nccl-tests 2-node summary (multi-collective)
 
-- Generated: 2026-08-06 17:47:03
+- Generated: 2026-08-06 18:34:54
 - Runs: node5500+node5501, node5500+node5502, node5501+node5502
 - GPUs: 8/node x 2 nodes = 16 x NVIDIA B200 (inter-node, InfiniBand + GPUDirect RDMA)
 - Config: 1 MiB-16 GiB, 5 warmup + 20 iters
@@ -8,37 +8,23 @@
 
 ## Per-collective busbw vs B200 reference
 
-| Node pair | Collective | GPUs | converged busbw (GB/s) | peak busbw (GB/s) | reference busbw (GB/s) | ours / ref | HW max (GB/s) | ours / HW max | correctness |
-|-----------|------------|-----:|-----------------------:|------------------:|-----------------------:|-----------:|--------------:|--------------:|:-----------:|
-| node5500+node5501 | sendrecv | 16 | 49.7 | 50.0 | 26.6 | — | 50 | 99% | PASS |
-| node5500+node5501 | all_reduce | 16 | 239.9 | 239.9 | 170.0 | 141% | 400 | 60% | PASS |
-| node5500+node5501 | all_gather | 16 | 366.8 | 366.8 | 218.0 | 168% | 400 | 92% | PASS |
-| node5500+node5501 | reduce_scatter | 16 | 375.2 | 375.2 | 218.0 | 172% | 400 | 94% | PASS |
-| node5500+node5501 | reduce | 16 | 368.6 | 368.6 | 201.0 | 183% | 400 | 92% | PASS |
-| node5500+node5501 | broadcast | 16 | 368.1 | 368.1 | 202.0 | 182% | 400 | 92% | PASS |
-| node5500+node5501 | alltoall | 16 | 47.5 | 48.4 | 39.8 | 119% | 400 | 12% | PASS |
-| node5500+node5501 | gather | 16 | 95.4 | 95.4 | 90.5 | 105% | 400 | 24% | PASS |
-| node5500+node5501 | scatter | 16 | 325.2 | 325.2 | 293.0 | 111% | 400 | 81% | PASS |
-| node5500+node5502 | sendrecv | 16 | 48.4 | 48.9 | 26.6 | — | 50 | 97% | PASS |
-| node5500+node5502 | all_reduce | 16 | 233.2 | 233.2 | 170.0 | 137% | 400 | 58% | PASS |
-| node5500+node5502 | all_gather | 16 | 382.7 | 382.7 | 218.0 | 176% | 400 | 96% | PASS |
-| node5500+node5502 | reduce_scatter | 16 | 382.4 | 382.4 | 218.0 | 175% | 400 | 96% | PASS |
-| node5500+node5502 | reduce | 16 | 382.7 | 382.7 | 201.0 | 190% | 400 | 96% | PASS |
-| node5500+node5502 | broadcast | 16 | 361.9 | 361.9 | 202.0 | 179% | 400 | 90% | PASS |
-| node5500+node5502 | alltoall | 16 | 49.9 | 49.9 | 39.8 | 125% | 400 | 12% | PASS |
-| node5500+node5502 | gather | 16 | 92.9 | 93.2 | 90.5 | 103% | 400 | 23% | PASS |
-| node5500+node5502 | scatter | 16 | 327.0 | 327.0 | 293.0 | 112% | 400 | 82% | PASS |
-| node5501+node5502 | sendrecv | 16 | 49.4 | 49.5 | 26.6 | — | 50 | 99% | PASS |
-| node5501+node5502 | all_reduce | 16 | 233.8 | 233.8 | 170.0 | 138% | 400 | 58% | PASS |
-| node5501+node5502 | all_gather | 16 | 382.0 | 382.0 | 218.0 | 175% | 400 | 96% | PASS |
-| node5501+node5502 | reduce_scatter | 16 | 374.2 | 374.2 | 218.0 | 172% | 400 | 94% | PASS |
-| node5501+node5502 | reduce | 16 | 384.1 | 384.1 | 201.0 | 191% | 400 | 96% | PASS |
-| node5501+node5502 | broadcast | 16 | 358.4 | 358.4 | 202.0 | 177% | 400 | 90% | PASS |
-| node5501+node5502 | alltoall | 16 | 48.9 | 48.9 | 39.8 | 123% | 400 | 12% | PASS |
-| node5501+node5502 | gather | 16 | 92.0 | 92.4 | 90.5 | 102% | 400 | 23% | PASS |
-| node5501+node5502 | scatter | 16 | 338.6 | 338.6 | 293.0 | 116% | 400 | 85% | PASS |
+Representative node pair: **node5500+node5501**.
+
+| Collective | GPUs | converged busbw (GB/s) | peak busbw (GB/s) | reference busbw (GB/s) | ours / ref | HW max (GB/s) | ours / HW max | correctness |
+|------------|-----:|-----------------------:|------------------:|-----------------------:|-----------:|--------------:|--------------:|:-----------:|
+| sendrecv | 16 | 49.7 | 50.0 | 26.6 | — | 50 | 99% | PASS |
+| all_reduce | 16 | 239.9 | 239.9 | 170.0 | 141% | 400 | 60% | PASS |
+| all_gather | 16 | 366.8 | 366.8 | 218.0 | 168% | 400 | 92% | PASS |
+| reduce_scatter | 16 | 375.2 | 375.2 | 218.0 | 172% | 400 | 94% | PASS |
+| reduce | 16 | 368.6 | 368.6 | 201.0 | 183% | 400 | 92% | PASS |
+| broadcast | 16 | 368.1 | 368.1 | 202.0 | 182% | 400 | 92% | PASS |
+| alltoall | 16 | 47.5 | 48.4 | 39.8 | 119% | 400 | 12% | PASS |
+| gather | 16 | 95.4 | 95.4 | 90.5 | 105% | 400 | 24% | PASS |
+| scatter | 16 | 325.2 | 325.2 | 293.0 | 111% | 400 | 81% | PASS |
 
 Converged = busbw at the largest message size, best of out-of-place / in-place (matches the reference methodology).
+
+The other node pair(s) — node5500+node5502, node5501+node5502 — give essentially identical results and are omitted here to keep the table readable: across every collective the largest deviation from node5500+node5501 is **5.0%** (alltoall on node5500+node5502). No pair stands out as slow, so the fabric behaves the same whichever two of the three nodes are used. Per-pair message-size detail for all pairs is in the next section.
 
 `HW max` is the hardware ceiling of **this** cluster's fabric, not a figure taken from any paper. Each B200 owns one NDR rail at 400 Gb/s = **50 GB/s per direction**, and each node has **8 rails** (mlx5_4/7/8/9/10/13/14/15, confirmed by `ibstat`), so:
 

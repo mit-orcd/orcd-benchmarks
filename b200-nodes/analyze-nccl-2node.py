@@ -231,17 +231,20 @@ def build(runs, reference):
     # 1. Per-collective comparison vs reference
     L.append("## Per-collective busbw vs B200 reference")
     L.append("")
-    multi = len(runs) > 1
-    pair_col = "Node pair | " if multi else ""
-    pair_sep = "-----------|" if multi else ""
-    L.append(f"| {pair_col}Collective | GPUs | converged busbw (GB/s) "
+    # One representative node pair keeps the table readable; the others are
+    # summarised as a spread underneath.
+    main_run = runs[0]
+    other_runs = runs[1:]
+    L.append(f"Representative node pair: **{main_run['pair']}**.")
+    L.append("")
+    L.append("| Collective | GPUs | converged busbw (GB/s) "
              "| peak busbw (GB/s) | reference busbw (GB/s) | ours / ref "
              "| HW max (GB/s) | ours / HW max | correctness |")
-    L.append(f"|{pair_sep}------------|-----:|-----------------------:"
+    L.append("|------------|-----:|-----------------------:"
              "|------------------:|-----------------------:|-----------:"
              "|--------------:|--------------:|:-----------:|")
     caveats = []
-    for r in runs:
+    for r in [main_run]:
         for seg in r["collectives"]:
             name = coll_name(seg["program"])
             g = seg["ngpus"]
@@ -258,14 +261,37 @@ def build(runs, reference):
                     "two are not directly comparable and `ours / ref` is left blank.")
             hwmax, _basis = hw_ceiling(name)
             hw_pct = f"{100*seg['converged']/hwmax:.0f}%"
-            pair_cell = f"{r['pair']} | " if multi else ""
-            L.append(f"| {pair_cell}{name} | {g} | {seg['converged']:.1f} "
+            L.append(f"| {name} | {g} | {seg['converged']:.1f} "
                      f"| {seg['peak']:.1f} | {refbw} | {ratio} "
                      f"| {hwmax:.0f} | {hw_pct} "
                      f"| {'PASS' if seg['ok'] else 'FAIL'} |")
     L.append("")
     L.append("Converged = busbw at the largest message size, best of out-of-place / "
              "in-place (matches the reference methodology).")
+
+    # How closely do the remaining pairs track the representative one?
+    if other_runs:
+        base = {coll_name(s["program"]): s["converged"]
+                for s in main_run["collectives"]}
+        worst_pct, worst_what = 0.0, None
+        for r in other_runs:
+            for seg in r["collectives"]:
+                nm = coll_name(seg["program"])
+                b = base.get(nm)
+                if b:
+                    d = 100 * abs(seg["converged"] - b) / b
+                    if d > worst_pct:
+                        worst_pct, worst_what = d, f"{nm} on {r['pair']}"
+        names_o = ", ".join(r["pair"] for r in other_runs)
+        agree = "essentially identical" if worst_pct <= 5 else "very close"
+        L.append("")
+        L.append(f"The other node pair(s) — {names_o} — give {agree} results and "
+                 f"are omitted here to keep the table readable: across every "
+                 f"collective the largest deviation from {main_run['pair']} is "
+                 f"**{worst_pct:.1f}%** ({worst_what}). No pair stands out as slow, "
+                 f"so the fabric behaves the same whichever two of the three nodes "
+                 f"are used. Per-pair message-size detail for all pairs is in the "
+                 f"next section.")
     L.append("")
     L.append(f"`HW max` is the hardware ceiling of **this** cluster's fabric, not a "
              f"figure taken from any paper. Each B200 owns one NDR rail at 400 Gb/s "

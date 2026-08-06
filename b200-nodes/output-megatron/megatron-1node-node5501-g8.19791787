@@ -2511,3 +2511,102 @@ Evaluating iter 20/100
 Evaluating iter 21/100
 Evaluating iter 22/100
 Evaluating iter 23/100
+Evaluating iter 24/100
+Evaluating iter 25/100
+Evaluating iter 26/100
+Evaluating iter 27/100
+Evaluating iter 28/100
+Evaluating iter 29/100
+Evaluating iter 30/100
+Evaluating iter 31/100
+Evaluating iter 32/100
+Evaluating iter 33/100
+Evaluating iter 34/100
+Evaluating iter 35/100
+Evaluating iter 36/100
+Evaluating iter 37/100
+Evaluating iter 38/100
+Evaluating iter 39/100
+Evaluating iter 40/100
+Evaluating iter 41/100
+Evaluating iter 42/100
+Evaluating iter 43/100
+Evaluating iter 44/100
+Evaluating iter 45/100
+Evaluating iter 46/100
+Evaluating iter 47/100
+Evaluating iter 48/100
+Evaluating iter 49/100
+Evaluating iter 50/100
+Evaluating iter 51/100
+Evaluating iter 52/100
+Evaluating iter 53/100
+Evaluating iter 54/100
+Evaluating iter 55/100
+Evaluating iter 56/100
+Evaluating iter 57/100
+Evaluating iter 58/100
+Evaluating iter 59/100
+Evaluating iter 60/100
+Evaluating iter 61/100
+Evaluating iter 62/100
+Evaluating iter 63/100
+Evaluating iter 64/100
+Evaluating iter 65/100
+Evaluating iter 66/100
+Evaluating iter 67/100
+Evaluating iter 68/100
+Evaluating iter 69/100
+Evaluating iter 70/100
+Evaluating iter 71/100
+Evaluating iter 72/100
+Evaluating iter 73/100
+Evaluating iter 74/100
+Evaluating iter 75/100
+Evaluating iter 76/100
+Evaluating iter 77/100
+Evaluating iter 78/100
+Evaluating iter 79/100
+Evaluating iter 80/100
+Evaluating iter 81/100
+Evaluating iter 82/100
+Evaluating iter 83/100
+Evaluating iter 84/100
+Evaluating iter 85/100
+Evaluating iter 86/100
+Evaluating iter 87/100
+Evaluating iter 88/100
+Evaluating iter 89/100
+Evaluating iter 90/100
+Evaluating iter 91/100
+Evaluating iter 92/100
+Evaluating iter 93/100
+Evaluating iter 94/100
+Evaluating iter 95/100
+Evaluating iter 96/100
+Evaluating iter 97/100
+Evaluating iter 98/100
+Evaluating iter 99/100
+Evaluating iter 100/100
+INFO:megatron.core.timers:times across ranks (ms):
+  evaluate:
+     rank  0: 334253.69
+     rank  1: 334253.69
+     rank  2: 334253.69
+     rank  3: 334253.69
+     rank  4: 334255.06
+     rank  5: 334253.69
+     rank  6: 334253.69
+     rank  7: 334253.69
+WARNING:megatron.core.rerun_state_machine:Setting RerunStateMachine mode RerunMode.VALIDATE_RESULTS
+-----------------------------------------------------------------------------------------------------------
+ validation loss at iteration 100 on test set | lm loss value: 5.853862E-02 | lm loss PPL: 1.060286E+00 | 
+-----------------------------------------------------------------------------------------------------------
+[rank0]:[W806 17:53:14.413675674 ProcessGroupNCCL.cpp:1569] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+[rank3]:[W806 17:53:14.595306559 ProcessGroupNCCL.cpp:1569] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+[rank6]:[W806 17:53:14.716356363 ProcessGroupNCCL.cpp:1569] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+[rank4]:[W806 17:53:14.757268877 ProcessGroupNCCL.cpp:1569] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+[rank2]:[W806 17:53:14.767477741 ProcessGroupNCCL.cpp:1569] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+[rank7]:[W806 17:53:15.999662403 ProcessGroupNCCL.cpp:1569] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+[rank1]:[W806 17:53:15.030327345 ProcessGroupNCCL.cpp:1569] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+[rank5]:[W806 17:53:15.080844158 ProcessGroupNCCL.cpp:1569] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
