@@ -91,9 +91,17 @@ echo "num_cpu = num_mpi_tasks = $SLURM_NTASKS"
 echo "num_gpu_per_task = $GPUS_PER_TASK"
 echo "collectives = ${PROGRAMS[*]}"
 
-#export NCCL_DEBUG=INFO
-#export NCCL_SOCKET_IFNAME=ib5
-#export NCCL_IB_HCA=mlx5_5
+# Inter-node NCCL over the 8 B200 NDR (400 Gb/s) GPU rails. Leaving NIC selection
+# to NCCL works at 1 GPU/node but fails to connect at 8 GPU/node (16 ranks); pin
+# the rails explicitly, matching the working megatron 2-node config. WARN (not
+# INFO) keeps output bounded while still printing the reason on any failure.
+export NCCL_IB_DISABLE=0
+export NCCL_NET_GDR_LEVEL=2
+export NCCL_IB_HCA=mlx5_4,mlx5_7,mlx5_8,mlx5_9,mlx5_10,mlx5_13,mlx5_14,mlx5_15
+export NCCL_SOCKET_IFNAME=^lo,docker
+export NCCL_DEBUG=WARN
+NCCL_XENV="-x NCCL_IB_DISABLE -x NCCL_NET_GDR_LEVEL -x NCCL_IB_HCA \
+   -x NCCL_SOCKET_IFNAME -x NCCL_DEBUG"
 
 # MPI is used only to exchange the small NCCL unique-id at startup; the GPU data
 # path is NCCL, not MPI. The HPC-X UCC/UCX collective components crash in
@@ -106,7 +114,7 @@ MPI_FLAGS="--mca pml ob1 --mca btl tcp,self \
 for program in "${PROGRAMS[@]}"
 do
    echo "%%%%%%%%% $program %%%%%%%%%%"
-   mpirun -np $SLURM_NTASKS $MPI_FLAGS \
+   mpirun -np $SLURM_NTASKS $MPI_FLAGS $NCCL_XENV \
       $BUILD_DIR/$program -b $MIN_SIZE -e $MAX_SIZE -f $FACTOR -g $GPUS_PER_TASK
 done
 

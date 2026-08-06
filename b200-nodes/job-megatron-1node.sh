@@ -20,8 +20,8 @@
 
 MEG=/orcd/data/orcd/022/benchmarks/megatron-lm
 DIR=$(cd "$(dirname "$0")" && pwd)     # this script's own dir (b200-nodes)
-cd "$DIR"                              # so sbatch -o output/... and cwd resolve here
-mkdir -p output
+cd "$DIR"                              # so sbatch -o output-megatron/... and cwd resolve here
+mkdir -p output-megatron
 
 NODE="${1:-node5500}"
 if [ -n "$2" ]; then GPUS=("$2"); else GPUS=(1 2 3 4 5 6 7 8); fi
@@ -31,7 +31,7 @@ for N in "${GPUS[@]}"; do
       -p mit_testing -w "$NODE" -N 1 -n 1 --exclusive \
       --gpus-per-node=b200:$N --mem=200GB -t 05:00:00 \
       -J "megatron-1node-$NODE-g$N" \
-      -o "output/megatron-1node-$NODE-g$N.%J" \
+      -o "output-megatron/megatron-1node-$NODE-g$N.%J" \
       --export=ALL,NG=$N,DIR=$DIR <<'EOF'
 #!/bin/bash
 module load apptainer/1.4.2

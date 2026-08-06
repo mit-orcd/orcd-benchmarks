@@ -30,6 +30,8 @@ REFERENCE_FILE = (
 NODE_RE = re.compile(r"Node\s*=\s*(\S+)")
 SECTION_RE = re.compile(r"=+\s*Run with\s+(\w+)\s*=+", re.IGNORECASE)
 GPU_RE = re.compile(r"GPU #(\d+):\s+([\d.]+)\s+Gflops/s")
+# nvidia-smi -L line: "GPU 0: NVIDIA B200 (UUID: GPU-...)"
+GPU_MODEL_RE = re.compile(r"GPU\s+\d+:\s+NVIDIA\s+([A-Za-z0-9 ]+?)\s*\(UUID")
 THROTTLE_RE = re.compile(
     r"Throttling HW:\s*(\w+),\s*Thermal SW:\s*(\w+),\s*Thermal HW:\s*(\w+)"
 )
@@ -72,6 +74,7 @@ def parse_reference(path):
 
 def parse_file(path):
     node = None
+    gpu_model = None
     order, data = [], {}
     throttled = False
     cur = None
@@ -80,6 +83,10 @@ def parse_file(path):
             m = NODE_RE.search(line)
             if m and node is None:
                 node = m.group(1)
+            if gpu_model is None and cur is None:
+                gm = GPU_MODEL_RE.search(line)
+                if gm:
+                    gpu_model = gm.group(1).strip()
             m = SECTION_RE.search(line)
             if m:
                 cur = m.group(1).upper()
@@ -100,7 +107,8 @@ def parse_file(path):
         return None
     return {
         "path": path, "node": node or os.path.basename(path),
-        "order": order, "data": data, "throttled": throttled,
+        "gpu": gpu_model or "unknown", "order": order, "data": data,
+        "throttled": throttled,
     }
 
 
@@ -117,44 +125,54 @@ def build(nodes, reference):
             if p not in order:
                 order.append(p)
 
+    def is_b200(n):
+        return "B200" in n["gpu"].upper()
+
     L.append("# gpu-fryer summary")
     L.append("")
     L.append(f"- Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    L.append(f"- Nodes: {', '.join(n['node'] for n in nodes)} (8 x NVIDIA B200 each)")
+    L.append("- Nodes: " + ", ".join(f"{n['node']} (8 x {n['gpu']})" for n in nodes))
     L.append(f"- Precisions: {', '.join(order)}")
     if reference:
         ref_str = ", ".join(f"{p} {reference[p]:.0f}" for p in order if p in reference)
-        L.append(f"- Reference (MIT aicr-benchmarks, `gpu-fryer/summary.md`, b0025): "
-                 f"per-GPU mean TFLOP/s — {ref_str}")
+        L.append(f"- Reference (MIT aicr-benchmarks, `gpu-fryer/summary.md`, b0025, "
+                 f"**B200**): per-GPU mean TFLOP/s — {ref_str}")
+        if not all(is_b200(n) for n in nodes):
+            L.append("- Note: the reference is a B200 node; the `% of B200 reference` "
+                     "comparison is only meaningful for B200 nodes and is shown as `—` "
+                     "for other GPU types.")
     L.append("")
 
     # Per-node mean overview
     L.append("## Per-node mean converged throughput (TFLOP/s)")
     L.append("")
-    L.append("| Node | " + " | ".join(order) + " | Health |")
-    L.append("|------|" + "|".join(["------:"] * len(order)) + "|---|")
+    L.append("| Node | GPU | " + " | ".join(order) + " | Health |")
+    L.append("|------|-----|" + "|".join(["------:"] * len(order)) + "|---|")
     for n in nodes:
         cells = [f"{mean(list(n['data'][p].values())):.0f}" if p in n["data"] else "—"
                  for p in order]
         health = "THROTTLING" if n["throttled"] else "ok"
-        L.append(f"| {n['node']} | " + " | ".join(cells) + f" | {health} |")
+        L.append(f"| {n['node']} | {n['gpu']} | " + " | ".join(cells) + f" | {health} |")
     if reference:
         refc = [f"{reference[p]:.0f}" if p in reference else "—" for p in order]
-        L.append("| **reference (b0025)** | " + " | ".join(f"**{c}**" for c in refc) + " | — |")
-        # % of reference per node
-        L.append("")
-        L.append("### % of B200 reference (mean)")
-        L.append("")
-        L.append("| Node | " + " | ".join(order) + " |")
-        L.append("|------|" + "|".join(["------:"] * len(order)) + "|")
-        for n in nodes:
-            cells = []
-            for p in order:
-                if p in n["data"] and p in reference:
-                    cells.append(f"{100*mean(list(n['data'][p].values()))/reference[p]:.0f}%")
-                else:
-                    cells.append("—")
-            L.append(f"| {n['node']} | " + " | ".join(cells) + " |")
+        L.append("| **reference (b0025)** | **B200** | "
+                 + " | ".join(f"**{c}**" for c in refc) + " | — |")
+        # % of reference per node (B200 nodes only)
+        b200_nodes = [n for n in nodes if is_b200(n)]
+        if b200_nodes:
+            L.append("")
+            L.append("### % of B200 reference (mean, B200 nodes only)")
+            L.append("")
+            L.append("| Node | " + " | ".join(order) + " |")
+            L.append("|------|" + "|".join(["------:"] * len(order)) + "|")
+            for n in b200_nodes:
+                cells = []
+                for p in order:
+                    if p in n["data"] and p in reference:
+                        cells.append(f"{100*mean(list(n['data'][p].values()))/reference[p]:.0f}%")
+                    else:
+                        cells.append("—")
+                L.append(f"| {n['node']} | " + " | ".join(cells) + " |")
     L.append("")
 
     # Per-GPU detail per node
@@ -162,7 +180,7 @@ def build(nodes, reference):
     L.append("")
     for n in nodes:
         gpus = sorted({g for p in n["order"] for g in n["data"][p]})
-        L.append(f"### {n['node']}")
+        L.append(f"### {n['node']} (8 x {n['gpu']})")
         L.append("")
         L.append("| GPU | " + " | ".join(n["order"]) + " |")
         L.append("|-----|" + "|".join(["------:"] * len(n["order"])) + "|")

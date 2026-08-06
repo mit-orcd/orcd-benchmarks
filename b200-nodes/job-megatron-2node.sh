@@ -20,18 +20,22 @@
 
 MEG=/orcd/data/orcd/022/benchmarks/megatron-lm
 DIR=$(cd "$(dirname "$0")" && pwd)     # this script's own dir (b200-nodes)
-cd "$DIR"                              # so sbatch -o output/... and cwd resolve here
-mkdir -p output
+cd "$DIR"                              # so sbatch -o output-megatron/... and cwd resolve here
+mkdir -p output-megatron
 
 NODES="${1:-node5500,node5502}"
 if [ -n "$2" ]; then GPUS=("$2"); else GPUS=(1 2 3 4 5 6 7 8); fi
+
+# short tag identifying the node pair, e.g. node5500,node5501 -> 5500-5501, so
+# concurrent pairs write distinguishable output files
+TAG=$(echo "$NODES" | tr -d ' ' | sed 's/node//g; s/,/-/g')
 
 for N in "${GPUS[@]}"; do
    jid=$(sbatch --parsable \
       -p mit_testing -w "$NODES" -N 2 -n 2 --exclusive \
       --gpus-per-node=b200:$N --mem=200GB -t 05:00:00 \
-      -J "megatron-2node-g$N" \
-      -o "output/megatron-2node-g$N.%J" \
+      -J "megatron-2node-$TAG-g$N" \
+      -o "output-megatron/megatron-2node-$TAG-g$N.%J" \
       --export=ALL,NG=$N,DIR=$DIR <<'EOF'
 #!/bin/bash
 module load apptainer/1.4.2

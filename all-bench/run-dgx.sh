@@ -1,5 +1,5 @@
 # for all nodes
-nodes="1701"  
+nodes="1700 1701"  
 partition=mit_testing   # pi_mshoulde # pi_qmqi # pi_mshoulde pg_tata #ou_sloan_gpu  # mit_normal # mit_normal_gpu
 reservation=none  # none #none #orcd_testing  #  WareWulf_testing
 qos=normal  #unlimited  # normal   # unlimited
@@ -15,8 +15,8 @@ gpus=8  #2  #8  #4
 #all_bench="openmp mpi-calc-pi mpi-p2p"  # two or more CPU nodes
 #all_bench="mpi-p2p"
 #all_bench="openmp mpi-calc-pi gpu-burn-r8 nvidia-hpc-benchmarks nccl-test"  # single GPU node
-all_bench="gpu-burn-r8 nccl-tests"   # L40S GPU nodes
-#all_bench="gpu-burn-r8 nvidia-hpc-benchmarks nccl-tests openmp mpi-calc-pi"   # H200 GPU nodes
+#all_bench="gpu-burn-r8 nccl-tests"   # L40S GPU nodes
+all_bench="gpu-burn-r8 nvidia-hpc-benchmarks nccl-tests openmp mpi-calc-pi"   # H200 GPU nodes
 #all_bench="mpi-p2p nccl-tests gpu-burn-r8 nvidia-hpc-benchmarks openmp mpi-calc-pi"   # >1 H200 GPU nodes
 #all_bench="nccl-tests nvidia-hpc-benchmarks"
 #all_bench="nccl-tests"

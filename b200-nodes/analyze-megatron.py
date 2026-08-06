@@ -1,23 +1,23 @@
 #!/usr/bin/env python3
 """Analyze the Megatron-LM 1-node GPU sweeps and write a Markdown summary + SVG.
 
-Parses the per-GPU-count job outputs in output/ (megatron-1node-<node>-g<N>.<jobid>),
+Parses the per-GPU-count job outputs in output-megatron/ (megatron-1node-<node>-g<N>.<jobid>),
 extracts the last-iteration throughput (TFLOP/s/GPU) and iteration time — the same
-metric the reference uses — and writes output/summary.md with:
+metric the reference uses — and writes output-megatron/summary.md with:
 
   1. an apples-to-apple comparison against the B200 reference in
      ~/data022/aicr-benchmarks/Benchmark_WG/megatron-lm/output/summary.md, at the
      GPU counts the reference measured (1, 2, 4, 8), and
   2. a scaling table (per-GPU + aggregate TFLOP/s, weak-scaling efficiency) for
-     every GPU count, plus a scaling figure (output/megatron-scaling.svg).
+     every GPU count, plus a scaling figure (output-megatron/megatron-scaling.svg).
 
-Every node found in output/ gets its own column in the comparison table, its own
+Every node found in output-megatron/ gets its own column in the comparison table, its own
 scaling table, and its own curve in the figure.
 
 Config is apples-to-apple: ~7B GPT (36L/4096H/ffn14336/32heads/seq2048), micro-batch
 4, GBS = 128 x total_GPUs, bf16, 100 iters, no activation recompute.
 
-Usage:  ./analyze-megatron.py [output_dir]     # default: ./output
+Usage:  ./analyze-megatron.py [output_dir]     # default: ./output-megatron
 """
 import glob
 import os
@@ -26,7 +26,7 @@ import sys
 from datetime import datetime
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-OUT_DIR = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, "output")
+OUT_DIR = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, "output-megatron")
 REF_SUMMARY = os.path.expanduser(
     "~/data022/aicr-benchmarks/Benchmark_WG/megatron-lm/output/summary.md"
 )
@@ -37,6 +37,9 @@ ITER_RE = re.compile(
     r".*?throughput per GPU \(TFLOP/s/GPU\):\s*([\d.]+)"
 )
 FNAME_RE = re.compile(r"megatron-1node-(\S+?)-g(\d+)\.(\d+)$")
+# multi-node: megatron-<N>node-<tag>-g<gpus per node>.<jobid>
+# e.g. megatron-2node-5500-5501-g8.123, megatron-3node-5500-5501-5502-g8.456
+FNAME_MN_RE = re.compile(r"megatron-(\d+)node-(\S+?)-g(\d+)\.(\d+)$")
 # reference B200 group table row: | 1 | 1 | b0004 | 128 | 996.1 | ...
 REF_ROW_RE = re.compile(
     r"^\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*[^|]+\|\s*(\d+)\s*\|\s*([\d.]+)\s*\|"
@@ -45,10 +48,23 @@ REF_ROW_RE = re.compile(
 
 def parse_output(path):
     """Return dict for one run: gpus, tflops (last iter), iter_ms, last_iter,
-    total_iters, ok. ok = reached the final iteration with a throughput value."""
-    m = FNAME_RE.search(os.path.basename(path))
-    gpus = int(m.group(2)) if m else None
-    node = m.group(1) if m else "?"
+    total_iters, ok. ok = reached the final iteration with a throughput value.
+
+    Handles 1-node files (gpus = GPUs on that node) and multi-node files
+    (gpus = GPUs *per node*, so total GPUs = nnodes x gpus)."""
+    base = os.path.basename(path)
+    m = FNAME_RE.search(base)
+    if m:
+        kind, nnodes = "1node", 1
+        gpus, node = int(m.group(2)), m.group(1)
+    else:
+        m = FNAME_MN_RE.search(base)
+        if m:
+            nnodes = int(m.group(1))
+            kind = f"{nnodes}node"
+            gpus, node = int(m.group(3)), m.group(2)
+        else:
+            kind, nnodes, gpus, node = "1node", 1, None, "?"
     last = None
     total = None
     with open(path, errors="replace") as fh:
@@ -58,12 +74,13 @@ def parse_output(path):
                 it, tot, ims, tf = mm.groups()
                 last = {"iter": int(it), "iter_ms": float(ims), "tflops": float(tf)}
                 total = int(tot)
+    common = {"gpus": gpus, "node": node, "kind": kind, "nnodes": nnodes,
+              "total_gpus": (gpus or 0) * nnodes, "path": path}
     if last is None:
-        return {"gpus": gpus, "node": node, "ok": False, "tflops": None,
-                "iter_ms": None, "last_iter": 0, "total_iters": total, "path": path}
-    return {"gpus": gpus, "node": node, "ok": (last["iter"] == total),
-            "tflops": last["tflops"], "iter_ms": last["iter_ms"],
-            "last_iter": last["iter"], "total_iters": total, "path": path}
+        return dict(common, ok=False, tflops=None, iter_ms=None,
+                    last_iter=0, total_iters=total)
+    return dict(common, ok=(last["iter"] == total), tflops=last["tflops"],
+                iter_ms=last["iter_ms"], last_iter=last["iter"], total_iters=total)
 
 
 def parse_reference(path):
@@ -193,7 +210,7 @@ def svg_scaling(by_node, ref, path):
         fh.write("\n".join(s))
 
 
-def build(by_node_all, ref, svg_name):
+def build(by_node_all, ref, svg_name, twonode=()):
     nodes = sorted(by_node_all)
     L = []
     L.append("# Megatron-LM 1-node GPU sweep — B200")
@@ -265,6 +282,46 @@ def build(by_node_all, ref, svg_name):
              "with #GPUs).")
     L.append("")
 
+    # 2b. Multi-node runs (over InfiniBand rather than NVLink)
+    if twonode:
+        L.append("## Multi-node runs")
+        L.append("")
+        L.append("| Node set | nodes | GPUs/node | total GPUs | GBS | "
+                 "per-GPU TFLOP/s | aggregate TFLOP/s | iter (ms) | "
+                 "vs best 1-node per-GPU | status |")
+        L.append("|----------|------:|----------:|-----------:|----:|"
+                 "----------------:|------------------:|----------:|"
+                 "----------------------:|--------|")
+        # best single-node per-GPU rate at the same GPUs-per-node, for scaling context
+        best_1n = {}
+        for n in nodes:
+            for r in by_node_all[n]:
+                if r["ok"] and r["tflops"] is not None:
+                    best_1n[r["gpus"]] = max(best_1n.get(r["gpus"], 0.0), r["tflops"])
+        for r in sorted(twonode, key=lambda r: (r["nnodes"], r["node"],
+                                                r["gpus"] or 0)):
+            g, tot, nn = r["gpus"], r["total_gpus"], r["nnodes"]
+            if r["ok"] and r["tflops"] is not None:
+                base1 = best_1n.get(g)
+                rel = f"{100*r['tflops']/base1:.1f}%" if base1 else "—"
+                L.append(f"| {r['node']} | {nn} | {g} | {tot} | {128*tot} | "
+                         f"{r['tflops']:.1f} | {r['tflops']*tot:.0f} | "
+                         f"{r['iter_ms']:.0f} | {rel} | ok |")
+            else:
+                st = (f"incomplete (iter {r['last_iter']}/{r['total_iters']})"
+                      if r["last_iter"] else "no data / failed")
+                L.append(f"| {r['node']} | {nn} | {g} | {tot} | {128*tot} "
+                         f"| — | — | — | — | {st} |")
+        L.append("")
+        L.append("Multi-node runs cross the InfiniBand fabric for gradient all-reduce "
+                 "instead of staying on NVLink, so per-GPU throughput below the "
+                 "1-node rate is the cost of inter-node gradient sync. Weak scaling "
+                 "is preserved: GBS = 128 x total GPUs, so per-GPU work (and the 32 "
+                 "gradient-accumulation steps) is identical across every run. "
+                 "`vs best 1-node per-GPU` compares against the best single-node "
+                 "result at the same GPUs-per-node.")
+        L.append("")
+
     # 3. Figure
     L.append("## Scaling figure")
     L.append("")
@@ -292,6 +349,20 @@ def main():
         by_node_all.setdefault(node, []).append(r)
     for node in by_node_all:
         by_node_all[node].sort(key=lambda r: r["gpus"])
+
+    # multi-node runs (2-node, 3-node, ...): newest job per (nodes, tag, GPUs/node)
+    t_files = [f for f in sorted(glob.glob(os.path.join(OUT_DIR, "megatron-*node-*-g*")),
+                                 key=os.path.getmtime)
+               if FNAME_MN_RE.search(os.path.basename(f))]
+    t_seen = {}
+    for f in t_files:
+        r = parse_output(f)
+        # the glob also matches megatron-1node-*; those belong to the per-node
+        # scaling tables above, not the multi-node section
+        if r["gpus"] is not None and r["nnodes"] > 1:
+            t_seen[(r["nnodes"], r["node"], r["gpus"])] = r
+    twonode = list(t_seen.values())
+
     ref = parse_reference(REF_SUMMARY)
 
     svg_name = "megatron-scaling.svg"
@@ -301,15 +372,16 @@ def main():
     if by_node_ok:
         svg_scaling(by_node_ok, ref, os.path.join(OUT_DIR, svg_name))
 
-    md = build(by_node_all, ref, svg_name)
+    md = build(by_node_all, ref, svg_name, twonode)
     summary = os.path.join(OUT_DIR, "summary.md")
     with open(summary, "w") as fh:
         fh.write(md)
     print(md)
     n_ok = sum(len(rs) for rs in by_node_ok.values())
     n_all = sum(len(rs) for rs in by_node_all.values())
-    print(f"Written {summary} and {svg_name} ({n_ok}/{n_all} runs ok, "
-          f"{len(by_node_all)} node(s))")
+    t_ok = sum(1 for r in twonode if r["ok"])
+    print(f"Written {summary} and {svg_name} ({n_ok}/{n_all} 1-node runs ok, "
+          f"{len(by_node_all)} node(s); {t_ok}/{len(twonode)} multi-node run(s) ok)")
 
 
 if __name__ == "__main__":
