@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="760" height="470" font-family="sans-serif" font-size="13">
 <rect width="760" height="470" fill="white"/>
-<text x="70" y="24" font-size="16" font-weight="bold">gpu-fryer: speed-up vs number of GPUs (B200)</text>
+<text x="70" y="24" font-size="16" font-weight="bold">gpu-fryer: speed-up vs number of GPUs — node5500 (B200)</text>
 <line x1="70" y1="414.0" x2="600" y2="414.0" stroke="#e0e0e0"/>
 <text x="62" y="418.0" text-anchor="end" fill="#555">0</text>
 <line x1="70" y1="373.1" x2="600" y2="373.1" stroke="#e0e0e0"/>
@@ -51,33 +51,33 @@
 <circle cx="448.6" cy="172.0" r="4" fill="#1f6feb"/>
 <circle cx="524.3" cy="132.0" r="4" fill="#1f6feb"/>
 <circle cx="600.0" cy="92.1" r="4" fill="#1f6feb"/>
-<polyline points="70.0,373.1 145.7,332.9 221.4,292.8 297.1,252.1 372.9,212.6 448.6,172.1 524.3,131.4 600.0,91.3" fill="none" stroke="#2ea043" stroke-width="2.5"/>
+<polyline points="70.0,373.1 145.7,331.4 221.4,290.7 297.1,250.1 372.9,208.5 448.6,167.2 524.3,126.4 600.0,85.5" fill="none" stroke="#2ea043" stroke-width="2.5"/>
 <circle cx="70.0" cy="373.1" r="4" fill="#2ea043"/>
-<circle cx="145.7" cy="332.9" r="4" fill="#2ea043"/>
-<circle cx="221.4" cy="292.8" r="4" fill="#2ea043"/>
-<circle cx="297.1" cy="252.1" r="4" fill="#2ea043"/>
-<circle cx="372.9" cy="212.6" r="4" fill="#2ea043"/>
-<circle cx="448.6" cy="172.1" r="4" fill="#2ea043"/>
-<circle cx="524.3" cy="131.4" r="4" fill="#2ea043"/>
-<circle cx="600.0" cy="91.3" r="4" fill="#2ea043"/>
-<polyline points="70.0,373.1 145.7,332.3 221.4,291.7 297.1,250.8 372.9,209.9 448.6,169.4 524.3,129.1 600.0,88.7" fill="none" stroke="#8957e5" stroke-width="2.5"/>
+<circle cx="145.7" cy="331.4" r="4" fill="#2ea043"/>
+<circle cx="221.4" cy="290.7" r="4" fill="#2ea043"/>
+<circle cx="297.1" cy="250.1" r="4" fill="#2ea043"/>
+<circle cx="372.9" cy="208.5" r="4" fill="#2ea043"/>
+<circle cx="448.6" cy="167.2" r="4" fill="#2ea043"/>
+<circle cx="524.3" cy="126.4" r="4" fill="#2ea043"/>
+<circle cx="600.0" cy="85.5" r="4" fill="#2ea043"/>
+<polyline points="70.0,373.1 145.7,332.1 221.4,292.5 297.1,252.7 372.9,212.3 448.6,171.5 524.3,131.9 600.0,91.6" fill="none" stroke="#8957e5" stroke-width="2.5"/>
 <circle cx="70.0" cy="373.1" r="4" fill="#8957e5"/>
-<circle cx="145.7" cy="332.3" r="4" fill="#8957e5"/>
-<circle cx="221.4" cy="291.7" r="4" fill="#8957e5"/>
-<circle cx="297.1" cy="250.8" r="4" fill="#8957e5"/>
-<circle cx="372.9" cy="209.9" r="4" fill="#8957e5"/>
-<circle cx="448.6" cy="169.4" r="4" fill="#8957e5"/>
-<circle cx="524.3" cy="129.1" r="4" fill="#8957e5"/>
-<circle cx="600.0" cy="88.7" r="4" fill="#8957e5"/>
+<circle cx="145.7" cy="332.1" r="4" fill="#8957e5"/>
+<circle cx="221.4" cy="292.5" r="4" fill="#8957e5"/>
+<circle cx="297.1" cy="252.7" r="4" fill="#8957e5"/>
+<circle cx="372.9" cy="212.3" r="4" fill="#8957e5"/>
+<circle cx="448.6" cy="171.5" r="4" fill="#8957e5"/>
+<circle cx="524.3" cy="131.9" r="4" fill="#8957e5"/>
+<circle cx="600.0" cy="91.6" r="4" fill="#8957e5"/>
 <line x1="616" y1="52" x2="638" y2="52" stroke="#1f6feb" stroke-width="2.5"/>
 <circle cx="627" cy="52" r="4" fill="#1f6feb"/>
-<text x="644" y="56" fill="#333">node5500 (BF16)</text>
+<text x="644" y="56" fill="#333">BF16</text>
 <line x1="616" y1="74" x2="638" y2="74" stroke="#2ea043" stroke-width="2.5"/>
 <circle cx="627" cy="74" r="4" fill="#2ea043"/>
-<text x="644" y="78" fill="#333">node5501 (BF16)</text>
+<text x="644" y="78" fill="#333">FP32</text>
 <line x1="616" y1="96" x2="638" y2="96" stroke="#8957e5" stroke-width="2.5"/>
 <circle cx="627" cy="96" r="4" fill="#8957e5"/>
-<text x="644" y="100" fill="#333">node5502 (BF16)</text>
+<text x="644" y="100" fill="#333">FP8</text>
 <line x1="616" y1="118" x2="638" y2="118" stroke="#bbb" stroke-width="2" stroke-dasharray="6 5"/>
 <text x="644" y="122" fill="#333">ideal linear</text>
 </svg>
