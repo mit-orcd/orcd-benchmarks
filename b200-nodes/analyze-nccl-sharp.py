@@ -221,13 +221,50 @@ def build(runs):
                  "are allocated, and the SHARP client library runs. The fabric "
                  "simply has no Aggregation Manager to register a SHARP job with.")
         L.append("")
-        L.append("**Nothing further can be done from the job side.** Getting SHARP "
-                 "results requires the InfiniBand admins to run `sharp_am` on the "
-                 "subnet manager / UFM host and provision aggregation trees for "
-                 "these nodes — see `sharp.md` for the full diagnosis, the hardware "
-                 "assessment, and the questions to ask. Once that is done, "
+        L.append("**Nothing further can be done from the job side.** The fix is "
+                 "fabric-side; see the checklist below. Once it is in place, "
                  "`job-nccl-2node-sharp-aicr.sh` runs unchanged and this table will "
                  "populate itself.")
+        L.append("")
+
+        # ---- Explicit admin actions -------------------------------------
+        L.append("## What the InfiniBand admins need to do")
+        L.append("")
+        L.append("1. **Run `sharp_am` (the Aggregation Manager)** on the subnet "
+                 "manager / UFM host. This is the immediate blocker: the SHARP "
+                 "client queries the subnet administrator for an AM service record "
+                 "and finds none registered, so no SHARP job can be created.")
+        L.append("2. **Enable SHARP in the subnet manager configuration** and "
+                 "provision aggregation trees covering the `mit_testing` B200 nodes "
+                 "(node5500 / node5501 / node5502).")
+        L.append("3. **Confirm `sharpd` runs on the compute nodes** and that jobs "
+                 "there are permitted to reserve a SHARP tree.")
+        L.append("")
+        L.append("**The hardware is capable — this is a configuration gap, not a "
+                 "limitation.** The HCAs report `CA type: MT4129` (ConnectX-7) at "
+                 "`Rate: 400` (NDR). NDR is implemented only by NVIDIA Quantum-2 "
+                 "switch silicon, which carries SHARPv3 aggregation engines in the "
+                 "ASIC as standard. The MIT aicr-benchmarks reference cluster "
+                 "measured SHARP working on this same hardware generation. (Switch "
+                 "firmware and its SHARP configuration could not be verified from a "
+                 "compute node — unprivileged subnet-management queries are "
+                 "blocked: `smpquery: Can't open SMI UMAD port`. That check needs "
+                 "root or the SM/UFM host.)")
+        L.append("")
+        L.append("**How to verify the fix** — one command, no NCCL involved, on any "
+                 "of these nodes:")
+        L.append("")
+        L.append("```bash")
+        L.append("$SHARP_HOME/bin/sharp_hello -d mlx5_4:1")
+        L.append("```")
+        L.append("")
+        L.append("It currently fails with `No Aggregation Manager (sharp_am) "
+                 "detected`. When it succeeds, rerun "
+                 "`job-nccl-2node-sharp-aicr.sh` and this summary regenerates with "
+                 "real SHARP numbers.")
+        L.append("")
+        L.append("Full diagnosis, evidence chain, and hardware assessment: "
+                 "`sharp.md`.")
     else:
         L.append("SHARP produced measurements on "
                  f"{len(got_sharp)}/{len(runs)} node pair(s). Compare the speed-up "

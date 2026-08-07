@@ -1,6 +1,6 @@
 # NCCL all_reduce — SHARP vs Ring (2-node A/B)
 
-- Generated: 2026-08-07 13:42:20
+- Generated: 2026-08-07 13:44:25
 - Runs: node5500+node5501, node5500+node5502, node5501+node5502
 - 8 GPUs/node x 2 nodes, all_reduce, 1 MiB - 16 GiB
 - Both legs run back-to-back in ONE allocation (same nodes, same NICs)
@@ -32,7 +32,25 @@ NCCL falls back to Ring **silently** when the CollNet/SHARP path cannot be set u
 
 **Why we cannot get it:** `No Aggregation Manager (sharp_am) detected`. Confirmed three independent ways — through NCCL with a plain CollNet setup, through NCCL with the AICR environment recipe (`job-nccl-2node-sharp-aicr.sh`), and through `sharp_hello` standalone with NCCL entirely out of the picture. The node-side stack is complete and correct: the plugin loads, CollNet channels are allocated, and the SHARP client library runs. The fabric simply has no Aggregation Manager to register a SHARP job with.
 
-**Nothing further can be done from the job side.** Getting SHARP results requires the InfiniBand admins to run `sharp_am` on the subnet manager / UFM host and provision aggregation trees for these nodes — see `sharp.md` for the full diagnosis, the hardware assessment, and the questions to ask. Once that is done, `job-nccl-2node-sharp-aicr.sh` runs unchanged and this table will populate itself.
+**Nothing further can be done from the job side.** The fix is fabric-side; see the checklist below. Once it is in place, `job-nccl-2node-sharp-aicr.sh` runs unchanged and this table will populate itself.
+
+## What the InfiniBand admins need to do
+
+1. **Run `sharp_am` (the Aggregation Manager)** on the subnet manager / UFM host. This is the immediate blocker: the SHARP client queries the subnet administrator for an AM service record and finds none registered, so no SHARP job can be created.
+2. **Enable SHARP in the subnet manager configuration** and provision aggregation trees covering the `mit_testing` B200 nodes (node5500 / node5501 / node5502).
+3. **Confirm `sharpd` runs on the compute nodes** and that jobs there are permitted to reserve a SHARP tree.
+
+**The hardware is capable — this is a configuration gap, not a limitation.** The HCAs report `CA type: MT4129` (ConnectX-7) at `Rate: 400` (NDR). NDR is implemented only by NVIDIA Quantum-2 switch silicon, which carries SHARPv3 aggregation engines in the ASIC as standard. The MIT aicr-benchmarks reference cluster measured SHARP working on this same hardware generation. (Switch firmware and its SHARP configuration could not be verified from a compute node — unprivileged subnet-management queries are blocked: `smpquery: Can't open SMI UMAD port`. That check needs root or the SM/UFM host.)
+
+**How to verify the fix** — one command, no NCCL involved, on any of these nodes:
+
+```bash
+$SHARP_HOME/bin/sharp_hello -d mlx5_4:1
+```
+
+It currently fails with `No Aggregation Manager (sharp_am) detected`. When it succeeds, rerun `job-nccl-2node-sharp-aicr.sh` and this summary regenerates with real SHARP numbers.
+
+Full diagnosis, evidence chain, and hardware assessment: `sharp.md`.
 
 ## Bus bandwidth vs message size (GB/s)
 
