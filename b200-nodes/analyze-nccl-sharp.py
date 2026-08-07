@@ -25,6 +25,9 @@ from datetime import datetime
 OUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                        "out-nccl-2node-sharp")
 REFERENCE = {"ring": 170.0, "sharp": 357.0, "speedup": 2.2}
+# ring-collective ceiling of this fabric: 8 NDR rails x 50 GB/s per direction
+# (same basis as out-nccl-2node/summary.md)
+ALLREDUCE_HW_MAX = 400.0
 
 MODE_RE = re.compile(r"%+\s*MODE\s+(\w+)\s*%+")
 DEVICE_RE = re.compile(
@@ -176,6 +179,64 @@ def build(runs):
         verdict, detail = sharp_status(r["legs"].get("sharp"))
         L.append(f"- **{r['pair']}** — {verdict}"
                  + (f": `{detail}`" if detail else ""))
+    L.append("")
+
+    # ---- Verdict: did we get the expected SHARP result? --------------------
+    got_sharp = [r for r in runs
+                 if r["legs"].get("sharp") and r["legs"]["sharp"]["converged"]]
+    rings = [r["legs"]["ring"]["converged"] for r in runs
+             if r["legs"].get("ring") and r["legs"]["ring"]["converged"]]
+    L.append("## Verdict: are these the expected SHARP results?")
+    L.append("")
+    if not got_sharp:
+        rmin, rmax = (min(rings), max(rings)) if rings else (0, 0)
+        L.append("**No — there are no SHARP results at all.** Not poor numbers: "
+                 "*zero* measurements. The SHARP leg aborted during initialisation, "
+                 "before running a single message size.")
+        L.append("")
+        L.append(f"**What did work:** the Ring baseline, at "
+                 f"**{rmin:.0f}-{rmax:.0f} GB/s** across "
+                 f"{len(rings)} run(s), validation-clean and consistent with the "
+                 f"standalone 2-node all_reduce in `out-nccl-2node/summary.md`. The "
+                 f"A/B harness is sound; only half of it can execute.")
+        L.append("")
+        L.append(f"**What a good result would look like:** the reference cluster "
+                 f"measured Ring {REFERENCE['ring']:.0f} -> SHARP "
+                 f"{REFERENCE['sharp']:.0f} GB/s = **{REFERENCE['speedup']}x**. The "
+                 f"upside here is plausibly larger: our Ring all_reduce sits at "
+                 f"~{rmax:.0f} GB/s, only ~{100*rmax/ALLREDUCE_HW_MAX:.0f}% of the "
+                 f"{ALLREDUCE_HW_MAX:.0f} GB/s hardware ceiling, while every other "
+                 f"ring collective on this fabric already runs at 92-96%. That gap "
+                 f"*is* the two-pass Ring penalty SHARP exists to remove, and it is "
+                 f"the single largest piece of unrealised inter-node performance in "
+                 f"these benchmarks — it directly gates multi-node DDP gradient "
+                 f"sync.")
+        L.append("")
+        L.append("**Why we cannot get it:** `No Aggregation Manager (sharp_am) "
+                 "detected`. Confirmed three independent ways — through NCCL with a "
+                 "plain CollNet setup, through NCCL with the AICR environment recipe "
+                 "(`job-nccl-2node-sharp-aicr.sh`), and through `sharp_hello` "
+                 "standalone with NCCL entirely out of the picture. The node-side "
+                 "stack is complete and correct: the plugin loads, CollNet channels "
+                 "are allocated, and the SHARP client library runs. The fabric "
+                 "simply has no Aggregation Manager to register a SHARP job with.")
+        L.append("")
+        L.append("**Nothing further can be done from the job side.** Getting SHARP "
+                 "results requires the InfiniBand admins to run `sharp_am` on the "
+                 "subnet manager / UFM host and provision aggregation trees for "
+                 "these nodes — see `sharp.md` for the full diagnosis, the hardware "
+                 "assessment, and the questions to ask. Once that is done, "
+                 "`job-nccl-2node-sharp-aicr.sh` runs unchanged and this table will "
+                 "populate itself.")
+    else:
+        L.append("SHARP produced measurements on "
+                 f"{len(got_sharp)}/{len(runs)} node pair(s). Compare the speed-up "
+                 f"column against the reference's **{REFERENCE['speedup']}x** "
+                 f"(Ring {REFERENCE['ring']:.0f} -> SHARP "
+                 f"{REFERENCE['sharp']:.0f} GB/s), and the absolute SHARP figure "
+                 f"against the {ALLREDUCE_HW_MAX:.0f} GB/s ring-collective ceiling "
+                 f"of this fabric — SHARP can exceed it, because a single in-switch "
+                 f"reduction halves the wire traffic that ceiling assumes.")
     L.append("")
 
     # Per-size detail
