@@ -40,7 +40,7 @@
 <text x="344.0" y="456" text-anchor="middle">number of GPUs</text>
 <text x="20" y="230.0" text-anchor="middle" transform="rotate(-90 20 230.0)">aggregate TFLOP/s</text>
 <line x1="78.0" y1="368.5" x2="610.0" y2="50.0" stroke="#bbb" stroke-width="2" stroke-dasharray="6 5"/>
-<polyline points="78.0,368.5 154.0,323.6 230.0,280.2 306.0,236.1 382.0,191.7 458.0,146.5 534.0,102.1 610.0,57.6" fill="none" stroke="#1f6feb" stroke-width="2.5"/>
+<polyline points="78.0,368.5 154.0,323.6 230.0,280.2 306.0,236.1 382.0,191.7 458.0,146.5 534.0,102.1 610.0,58.0" fill="none" stroke="#1f6feb" stroke-width="2.5"/>
 <circle cx="78.0" cy="368.5" r="4.5" fill="#1f6feb"/>
 <circle cx="154.0" cy="323.6" r="4.5" fill="#1f6feb"/>
 <circle cx="230.0" cy="280.2" r="4.5" fill="#1f6feb"/>
@@ -48,7 +48,11 @@
 <circle cx="382.0" cy="191.7" r="4.5" fill="#1f6feb"/>
 <circle cx="458.0" cy="146.5" r="4.5" fill="#1f6feb"/>
 <circle cx="534.0" cy="102.1" r="4.5" fill="#1f6feb"/>
-<circle cx="610.0" cy="57.6" r="4.5" fill="#1f6feb"/>
+<circle cx="610.0" cy="58.0" r="4.5" fill="#1f6feb"/>
+<polyline points="610.0,59.3" fill="none" stroke="#2ea043" stroke-width="2.5"/>
+<circle cx="610.0" cy="59.3" r="4.5" fill="#2ea043"/>
+<polyline points="610.0,55.2" fill="none" stroke="#8957e5" stroke-width="2.5"/>
+<circle cx="610.0" cy="55.2" r="4.5" fill="#8957e5"/>
 <rect x="74.0" y="362.9" width="8" height="8" fill="#e3742f"/>
 <rect x="150.0" y="317.3" width="8" height="8" fill="#e3742f"/>
 <rect x="302.0" y="228.7" width="8" height="8" fill="#e3742f"/>
@@ -56,8 +60,14 @@
 <line x1="626" y1="52" x2="648" y2="52" stroke="#1f6feb" stroke-width="2.5"/>
 <circle cx="637" cy="52" r="4" fill="#1f6feb"/>
 <text x="654" y="56" fill="#333">node5500</text>
-<line x1="626" y1="74" x2="648" y2="74" stroke="#bbb" stroke-width="2" stroke-dasharray="6 5"/>
-<text x="654" y="78" fill="#333">ideal linear</text>
-<rect x="633" y="92" width="8" height="8" fill="#e3742f"/>
-<text x="654" y="100" fill="#333">reference B200</text>
+<line x1="626" y1="74" x2="648" y2="74" stroke="#2ea043" stroke-width="2.5"/>
+<circle cx="637" cy="74" r="4" fill="#2ea043"/>
+<text x="654" y="78" fill="#333">node5501</text>
+<line x1="626" y1="96" x2="648" y2="96" stroke="#8957e5" stroke-width="2.5"/>
+<circle cx="637" cy="96" r="4" fill="#8957e5"/>
+<text x="654" y="100" fill="#333">node5502</text>
+<line x1="626" y1="118" x2="648" y2="118" stroke="#bbb" stroke-width="2" stroke-dasharray="6 5"/>
+<text x="654" y="122" fill="#333">ideal linear</text>
+<rect x="633" y="136" width="8" height="8" fill="#e3742f"/>
+<text x="654" y="144" fill="#333">reference B200</text>
 </svg>

@@ -40,12 +40,15 @@ CONFIG_RE = re.compile(r"nThread\s+(\d+)\s+nGpus\s+(\d+)")
 # Evidence that the SHARP/CollNet path was actually set up.
 OK_RE = re.compile(
     r"(Connected\s+CollNet|CollNet\s+(?:enabled|support)|collNetSupport\s*[:=]?\s*1"
-    r"|Using\s+CollNet|sharp\s+coll|SHARP\s+(?:enabled|initialized))", re.I)
-# Evidence it could not be set up (NCCL then silently falls back to Ring).
+    r"|Using\s+CollNet|SHARP\s+(?:enabled|initialized))", re.I)
+# Evidence it could not be set up. NCCL may then fall back to Ring silently, or
+# the run may abort outright. The SHARPD_/AM lines come from the SHARP runtime
+# itself: the fabric's Aggregation Manager is what actually builds SHARP trees.
 BAD_RE = re.compile(
     r"(CollNet\s+(?:not|un)\s*support|collNetSupport\s*[:=]?\s*0|failed to open"
     r"|Cannot open libnccl-net|sharp.*(?:fail|error|not available)"
-    r"|No\s+CollNet|disabling\s+CollNet)", re.I)
+    r"|SHARPD_OP_\w+\s+failed|unable to connect to AM|Could not query AM"
+    r"|no AM service record|No\s+CollNet|disabling\s+CollNet)", re.I)
 
 
 def fmt_size(n):
@@ -97,10 +100,16 @@ def parse_file(path):
             elif BAD_RE.search(s) and len(cur["bad_ev"]) < 3:
                 cur["bad_ev"].append(s[:160])
 
-    legs = {k: v for k, v in legs.items() if v["rows"]}
-    if not legs:
+    # keep a leg that produced no data if it left diagnostic evidence — a leg that
+    # aborted is the informative case, not something to drop silently
+    legs = {k: v for k, v in legs.items() if v["rows"] or v["bad_ev"] or v["ok_ev"]}
+    if not any(v["rows"] for v in legs.values()):
         return None
     for v in legs.values():
+        if not v["rows"]:
+            v["converged"] = v["peak"] = None
+            v["ok"] = None
+            continue
         big = max(v["rows"], key=lambda r: r["size"])
         v["converged"] = max(big["oop_busbw"], big["ip_busbw"])
         v["peak"] = max(max(r["oop_busbw"], r["ip_busbw"]) for r in v["rows"])
@@ -114,10 +123,12 @@ def sharp_status(leg):
     """-> (verdict, detail) for the SHARP leg."""
     if leg is None:
         return "no data", ""
-    if leg["ok_ev"] and not leg["bad_ev"]:
-        return "engaged", leg["ok_ev"][0]
+    if leg["bad_ev"] and not leg["rows"]:
+        return "UNAVAILABLE (run aborted)", leg["bad_ev"][0]
     if leg["bad_ev"]:
         return "FELL BACK to Ring", leg["bad_ev"][0]
+    if leg["ok_ev"]:
+        return "engaged", leg["ok_ev"][0]
     return "unconfirmed", "no CollNet/SHARP setup lines found in the NCCL debug output"
 
 
@@ -145,11 +156,12 @@ def build(runs):
         ring = r["legs"].get("ring")
         sharp = r["legs"].get("sharp")
         verdict, _ = sharp_status(sharp)
-        rv = f"{ring['converged']:.1f}" if ring else "—"
-        sv = f"{sharp['converged']:.1f}" if sharp else "—"
+        rv = f"{ring['converged']:.1f}" if ring and ring["converged"] else "—"
+        sv = f"{sharp['converged']:.1f}" if sharp and sharp["converged"] else "—"
         sp = (f"{sharp['converged']/ring['converged']:.2f}x"
-              if ring and sharp and ring["converged"] else "—")
-        okc = "PASS" if all(v["ok"] for v in r["legs"].values()) else "FAIL"
+              if ring and sharp and ring["converged"] and sharp["converged"] else "—")
+        oks = [v["ok"] for v in r["legs"].values() if v["ok"] is not None]
+        okc = "PASS" if all(oks) else "FAIL"
         L.append(f"| {r['pair']} | {rv} | {sv} | {sp} | {verdict} | {okc} |")
     L.append("")
 
