@@ -1,0 +1,155 @@
+################ ENGAGING GDRDMA COUNTER-TEST ################
+date    : Fri Aug  7 16:54:41 EDT 2026
+job     : 19884807
+nodes   : node[5501-5502]
+
+loaded module: cuda
+nvcc    : /orcd/software/core/001/pkg/cuda/13.1.0/bin/nvcc
+perftest: Version: 6.29
+
+rail    : mlx5_4 (forced)
+
+=================== PART A: PCIe full duplex (no IB) ===================
+AICR reference: H2D 57.6 / D2H 57.3 / concurrent 49.1 each way = 98.3 GB/s total
+
+pcie_duplex.cu(43): warning #550-D: variable "widCur" was set but never used
+GPU: NVIDIA B200  (asyncEngineCount=4)
+PCI bus id: 0000:1B:00.0
+chunk = 256 MiB, iters = 16, total per direction = 4096 MiB
+
+1. H2D alone            :   55.63 GB/s
+2. D2H alone            :   55.86 GB/s
+3. H2D + D2H concurrent :   50.75 GB/s each way,  101.49 GB/s total
+
+--- verdict ---
+concurrent per-direction / best single-direction = 0.91
+FULL DUPLEX: both directions hold up concurrently.
+   -> the GPU PCIe endpoint is healthy; the defect is specific to the
+      P2P/GDRDMA path (switch, ACS, peermem), not the GPU link itself.
+
+=================== PART B: node configuration ===================
+--- host: node5501
+--- B1. NVIDIA driver relaxed-ordering params (THE key comparison) ---
+EnablePCIERelaxedOrderingMode: 0
+--- B2. nvidia-smi relaxed ordering / BAR1 ---
+        Relaxed Ordering Mode                          : N/A
+    BAR1 Memory Usage
+--- B3. kernel cmdline ---
+BOOT_IMAGE=(md/md0)/boot/vmlinuz-6.12.0-211.42.1.el10_2.x86_64 root=UUID=7fd567ea-916b-473d-9be4-a5f07b911316 ro crashkernel=2G-64G:256M,64G-:512M resume=UUID=be9e6b92-0d32-4079-b35f-792b15a1cfac rd.md.uuid=e71a385e:a8c55ed4:054126ed:649f178a rd.md.uuid=1fd401a8:01fe085e:ff76ba2c:145f6096 console=ttyS0,115200 selinux=0 iommu=off
+--- B4. IOMMU ---
+iommu dirs: 
+--- B5. peermem ---
+nvidia_peermem         20480  0
+nvidia              16289792  89 nvidia_uvm,nvidia_peermem,nvidia_modeset
+ib_uverbs             233472  3 nvidia_peermem,rdma_ucm,mlx5_ib
+--- B6. GPU/NIC PCIe link state ---
+BDF            cur_w  max_w  cur_spd  max_spd  device
+0000:04:00.0                                   VGA compatible controller: ASPEED Technolo
+0000:05:00.0   2      2      8.0      16.0     Infiniband controller: Mellanox Technologi
+0000:05:00.1   2      2      8.0      16.0     Infiniband controller: Mellanox Technologi
+0000:05:00.2   2      2      8.0      16.0     Infiniband controller: Mellanox Technologi
+0000:05:00.3   2      2      8.0      16.0     Infiniband controller: Mellanox Technologi
+0000:18:00.0   16     16     32.0     32.0     Infiniband controller: Mellanox Technologi
+0000:1b:00.0   16     16     32.0     32.0     3D controller: NVIDIA Corporation Device 2
+0000:29:00.0   16     16     32.0     32.0     Infiniband controller: Mellanox Technologi
+0000:29:00.1   16     16     32.0     32.0     Infiniband controller: Mellanox Technologi
+0000:40:00.0   16     16     32.0     32.0     Infiniband controller: Mellanox Technologi
+0000:43:00.0   16     16     32.0     32.0     3D controller: NVIDIA Corporation Device 2
+0000:4f:00.0   16     16     32.0     32.0     Infiniband controller: Mellanox Technologi
+0000:52:00.0   16     16     32.0     32.0     3D controller: NVIDIA Corporation Device 2
+0000:5e:00.0   16     16     32.0     32.0     Infiniband controller: Mellanox Technologi
+0000:61:00.0   16     16     32.0     32.0     3D controller: NVIDIA Corporation Device 2
+0000:9a:00.0   16     16     32.0     32.0     Infiniband controller: Mellanox Technologi
+0000:9d:00.0   16     16     32.0     32.0     3D controller: NVIDIA Corporation Device 2
+0000:aa:00.0   16     16     32.0     32.0     Infiniband controller: Mellanox Technologi
+0000:aa:00.1   16     16     32.0     32.0     Infiniband controller: Mellanox Technologi
+0000:c0:00.0   16     16     32.0     32.0     Infiniband controller: Mellanox Technologi
+0000:c3:00.0   16     16     32.0     32.0     3D controller: NVIDIA Corporation Device 2
+0000:ce:00.0   16     16     32.0     32.0     Infiniband controller: Mellanox Technologi
+0000:d1:00.0   16     16     32.0     32.0     3D controller: NVIDIA Corporation Device 2
+0000:dc:00.0   16     16     32.0     32.0     Infiniband controller: Mellanox Technologi
+0000:df:00.0   16     16     32.0     32.0     3D controller: NVIDIA Corporation Device 2
+--- B7. PCIe bridges above the GPU ---
+  L1: 0000:1a:00.0  PCI bridge: Mellanox Technologies MT2910 Family [ConnectX-
+  L2: 0000:19:00.0  PCI bridge: Mellanox Technologies MT2910 Family [ConnectX-
+  L3: 0000:17:02.0  PCI bridge: Mellanox Technologies MT2910 Family [ConnectX-
+--- B8. rail rates ---
+  CA 'mlx5_0'			Rate: 100
+  CA 'mlx5_1'			Rate: 100
+  CA 'mlx5_10'			Rate: 400
+  CA 'mlx5_11'			Rate: 10
+  CA 'mlx5_12'			Rate: 10
+  CA 'mlx5_13'			Rate: 400
+  CA 'mlx5_14'			Rate: 400
+  CA 'mlx5_15'			Rate: 400
+  CA 'mlx5_2'			Rate: 100
+  CA 'mlx5_3'			Rate: 100
+  CA 'mlx5_4'			Rate: 400
+  CA 'mlx5_5'			Rate: 10
+  CA 'mlx5_6'			Rate: 10
+  CA 'mlx5_7'			Rate: 400
+  CA 'mlx5_8'			Rate: 400
+  CA 'mlx5_9'			Rate: 400
+
+=================== PART C: RDMA matrix (THE decisive test) ===================
+server=node5501 client=node5502 rail=mlx5_4 size=8388608 iters=2000
+NOTE: perftest prints bidirectional rows as the SUM of both directions -- divide by 2.
+NOTE: perftest requests MR-level relaxed ordering BY DEFAULT;
+      --disable_pcie_relaxed turns it OFF.
+
+AICR reference (per direction, GB/s):
+   host uni 46.3 | host bidir 47.3 | GPU uni 47.5 | GPU bidir 27.2  <-- the defect
+   GPU bidir RO-on 32.0 vs RO-off 31.5  (toggling RO changes nothing on AICR)
+
+########## C1. HOST unidirectional ##########
+ 8388608    2000             382.33             382.33 		     0.005697
+########## C2. HOST bidirectional ##########
+ 8388608    2000             760.85             760.85 		     0.011338
+########## C3. GPU  unidirectional ##########
+ 8388608    2000             395.53             395.52 		     0.005894
+########## C4. GPU  bidirectional  (RO on, default) ##########
+ 8388608    2000             778.73             778.73 		     0.011604
+########## C5. GPU  bidirectional  (RO DISABLED) ##########
+ 8388608    2000             778.73             778.73 		     0.011604
+########## C6. HOST bidirectional  (RO DISABLED) ##########
+ 8388608    2000             761.74             761.74 		     0.011351
+
+################ CONVERTED RESULTS (GB/s per direction) ################
+ID   TEST                                       raw Gb/s   GB/s per dir       AICR
+C1   HOST unidirectional                          382.33           47.8       46.3
+C2   HOST bidirectional                           760.85           47.6       47.3
+C3   GPU  unidirectional                          395.52           49.4       47.5
+C4   GPU  bidir (RO on)                           778.73           48.7       27.2
+C5   GPU  bidir (RO OFF)                          778.73           48.7       31.5
+C6   HOST bidir (RO OFF)                          761.74           47.6       44.0
+
+################ AUTOMATIC VERDICT ################
+C4 (GPU bidirectional, RO on) = 48.7 GB/s per direction   [AICR: 27.2]
+C5 (GPU bidirectional, RO off) = 48.7 GB/s per direction   [AICR: 31.5]
+
+VERDICT 1: Engaging is HEALTHY (C4 >= 42).
+  => AICR's 27.2 GB/s/dir is a genuine cluster defect, confirmed by direct contrast.
+VERDICT 2: relaxed ordering is NOT the lever (C5 ~= C4, both healthy).
+  => AICR's difference lies elsewhere. The PART B config diff is now the lead.
+
+Also record PART B1 (EnablePCIERelaxedOrderingMode). If it is 0 here AND C4 is healthy,
+that NVIDIA driver parameter is exonerated permanently -- it is the vendor default.
+
+################ WHAT THE ANSWER MEANS ################
+Convert: Gb/s / 8 = GB/s.  Bidirectional rows are the SUM -> divide by 2 again.
+
+C4 (GPU bidir, RO on) is the number that matters:
+  ~47 GB/s/dir  -> Engaging is HEALTHY. AICR's 27.2 is a defect, confirmed by contrast.
+  ~27 GB/s/dir  -> Engaging shows it too => NOT an AICR misconfiguration. That would
+                   overturn the whole diagnosis, and the paper's model deserves a second look.
+
+C5 vs C4 is the fingerprint test:
+  C5 collapses to ~27 while C4 is ~47 -> relaxed ordering IS the lever, and it works on
+     Engaging but not on AICR. The AICR bug is then "RO never reaches the wire":
+     look at NIC DevCtl.RlxdOrd / ConnectX PCI_WR_ORDERING / the PCIe switch.
+  C5 == C4 (both healthy) -> RO is not the lever anywhere; the AICR difference is
+     elsewhere (switch config, BIOS, firmware). Compare PART B against the AICR dumps.
+
+PART B1 is the other key line: if Engaging also shows
+  EnablePCIERelaxedOrderingMode: 0  and is healthy, that NVIDIA driver parameter is
+  exonerated for good (it is the vendor default and discriminates nothing).
