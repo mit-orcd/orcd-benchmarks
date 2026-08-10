@@ -23,6 +23,8 @@ import sys
 from datetime import datetime
 
 OUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "out-gpu-fryer")
+# Rocky 8 results (node5500-5502), pulled in automatically as the reference set
+ROCKY_DIR = "/orcd/data/orcd/022/benchmarks/b200-nodes/out-gpu-fryer"
 REFERENCE_FILE = (
     "/home/shaohao/data022/aicr-benchmarks/Benchmark_WG/gpu-fryer/summary.md"
 )
@@ -470,7 +472,11 @@ def collect(args):
             else:
                 files += glob.glob(os.path.join(OUT_DIR, f"*{a}*.out"))
     else:
+        # every Ubuntu run in this dir, plus the Rocky 8 runs as a reference.
+        # Globbing both (rather than naming files on the command line) is what
+        # keeps a newly-added node — e.g. node5701 — from being left out.
         files = glob.glob(os.path.join(OUT_DIR, "*.out"))
+        files += glob.glob(os.path.join(ROCKY_DIR, "*.out"))
     parsed = {}
     for f in sorted(files, key=os.path.getmtime):  # newest wins per node
         r = parse_file(f)
