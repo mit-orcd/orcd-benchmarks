@@ -1,6 +1,6 @@
 # nccl-tests 2-node summary — Ubuntu B200 nodes
 
-- Generated: 2026-08-10 17:55:43
+- Generated: 2026-08-10 18:08:26
 - Runs: node5700+node5701
 - GPUs: 8/node x 2 nodes = 16 x NVIDIA B200 (inter-node, InfiniBand + GPUDirect RDMA)
 - Config: 1 MiB-16 GiB, 5 warmup + 20 iters
@@ -48,7 +48,7 @@ Two caveats on that last point. The **mechanism is not established** — confirm
 
 Note the contrast with **gather**, root-anchored like scatter: both clusters plateau at exactly 92.9 GB/s (0.0% difference). Where a structural limit binds, the two are identical — which is what makes scatter's asymmetry worth a closer look rather than dismissing it as OS noise.
 
-**Suspected cause of the latency advantage.** See *Why small messages favour the Ubuntu nodes* in section 4 for the systematic version. In short: the cost is paid **per network operation**, not per byte. `sendrecv` and `gather` — the two collectives NCCL does not split across its 8 channels — are identical on both clusters at every size, which rules out a bulk GPUDirect or bandwidth cap as the explanation. The remaining candidates are IOTLB pressure from many small descriptors under the IOMMU the Rocky 8 nodes boot with, and per-operation CPU cost in NCCL's proxy thread. The builds (CUDA 13.1 vs 12.9) and drivers (590.48.01 vs 570.211.01) also differ, so this data alone cannot single one out.
+**Suspected cause of the latency advantage.** See *Why small messages favour the Ubuntu nodes* in section 4 for the systematic version and a configuration comparison. In short: the cost is paid **per network operation**, not per byte. `sendrecv` and `gather` — the two collectives NCCL does not split across its 8 channels — are identical on both clusters at every size, which rules out a bulk GPUDirect or bandwidth cap. The IOMMU is **not** the differentiator either: both clusters boot the same `iommu=pt intel_iommu=on` with 540 groups. What does differ is the InfiniBand stack (MOFED 25.10 here vs 26.04 there), the GPU driver (570.211.01 vs 590.48.01), the kernel (6.8 here, 4.18/6.12 there) and the CUDA build (12.9 vs 13.1).
 
 ## 3. How close each collective gets to the hardware limit
 
@@ -232,9 +232,29 @@ The gap decays steadily with size, which is the signature of a **fixed per-opera
 - *A single bad node pair* — all three Rocky 8 pairs (5500+5501, 5500+5502, 5501+5502) show the same slow small-message times, so this is systematic, not one degraded node.
 - *A bulk GPUDirect/bandwidth cap* — this is the important one. `sendrecv` moves its 1 MiB as one contiguous chunk per pair over the same NIC and GPU-memory path, and it is **identical** on both clusters (52 us vs 50 us) and at line rate at large sizes. A degraded bulk GDR path would slow `sendrecv` too. It does not.
 
-**What remains.** The collectives that differ are exactly those that split their payload across NCCL's 8 parallel channels and run multiple phases: a 1 MiB all_gather becomes 8 chunks of 128 KiB plus cross-phase synchronisation, where a 1 MiB sendrecv is one chunk. So the extra cost on Rocky 8 is paid **per network operation and per synchronisation**, not per byte — consistent with IOTLB pressure from many small scattered descriptors under the IOMMU those nodes boot with, and/or with per-operation CPU cost in NCCL's proxy thread, which posts each RDMA operation. `gather` fits the same rule from the other side: it is a fan-in to a single root that NCCL does not spread across channels, and it shows no gap.
+**What remains.** The collectives that differ are exactly those that split their payload across NCCL's 8 parallel channels and run multiple phases: a 1 MiB all_gather becomes 8 chunks of 128 KiB plus cross-phase synchronisation, where a 1 MiB sendrecv is one chunk. So the extra cost on Rocky 8 is paid **per network operation and per synchronisation**, not per byte. `gather` fits the same rule from the other side: it is a fan-in to a single root that NCCL does not spread across channels, and it shows no gap.
 
-Distinguishing IOTLB pressure from proxy-thread CPU cost needs a test this data cannot provide: an `ib_write_bw` sweep at small message sizes (many small ops vs one large op) between two Rocky nodes and between node5700/node5701, or a boot with `iommu=off` on one Rocky node. Both are outside what these benchmark runs measure.
+#### What is actually different between the two clusters
+
+| Item | Ubuntu (node5700/5701) | Rocky 8 (node5500-5502) | same? |
+|------|------------------------|-------------------------|-------|
+| IOMMU (kernel cmdline) | `iommu=pt intel_iommu=on`, 540 groups | `iommu=pt intel_iommu=on`, 540 groups | **same** |
+| NCCL | 2.29.2 | 2.29.2 | **same** |
+| GPUDirect RDMA | `nvidia_peermem` loaded, DMABUF path | `nvidia_peermem` loaded, DMABUF path | **same** |
+| IB rails | 8 x 400 Gb/s NDR, MTU 4096 | 8 x 400 Gb/s NDR | **same** |
+| **MOFED / rdma-core** | OFED-internal-**25.10**-1.7.1.413 | OFED-internal-**26.04**-0.8.6 | **differs** |
+| **NVIDIA driver** | **570.211.01** | **590.48.01** | **differs** |
+| **Kernel** | 6.8.0-124 on both nodes | **4.18** (5500) / **6.12** (5502) — heterogeneous | **differs** |
+| **CUDA (build)** | 12.9 | 13.1 | **differs** |
+| PCI cmdline | `pci=realloc=off` | `pci=disable_acs_redir=...` on 5502 only | differs |
+| CPU / governor | Xeon Platinum 8570, `performance` | not verifiable from here | unknown |
+| HCA firmware | 28.47.2526 | not verifiable from here | unknown |
+
+**This retires the IOMMU hypothesis.** Both clusters boot the identical `iommu=pt intel_iommu=on` with the same 540 groups, so IOTLB pressure cannot be what separates them. (The `iommu=off` advice in `../b200-nodes/notes.md` concerned a different problem — the bulk GPU-read bandwidth cap — and is unrelated to this per-operation gap.)
+
+The live candidates are therefore the **InfiniBand stack** (MOFED 25.10 vs 26.04 — a different verbs provider is exactly what would change per-operation posting cost while leaving bulk streaming untouched), the **GPU driver / CUDA pair**, and **host CPU cost in NCCL's proxy thread**, which posts each RDMA operation and so scales with operation count rather than bytes. Note the counter-intuitive direction: Rocky 8 runs the *newer* MOFED and the *newer* driver, yet is slower per operation.
+
+Two caveats on this table. The Rocky 8 rows come from `../b200-nodes/notes.md` and its run logs — those nodes are Slurm-managed and not reachable from node5700, so CPU model, frequency governor and HCA firmware could not be compared, and any of the three could matter for a per-operation cost. Deciding between the remaining candidates needs a controlled test: an `ib_write_bw` small-message sweep (many small ops vs one large op) on both clusters would separate the IB stack from everything above it.
 
 ## 5. Network fabric
 
