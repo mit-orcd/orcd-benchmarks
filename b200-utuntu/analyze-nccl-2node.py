@@ -268,12 +268,17 @@ def why_section(L, rocky):
              "plateau reproduces exactly (289.9 GB/s in the sweep, 290.1 GB/s "
              "on a repeat run), so it is not run-to-run noise on this side.")
     L.append("")
-    L.append("Two caveats on that last point. The **mechanism is not "
-             "established** — confirming it needs `NCCL_DEBUG=INFO` "
-             "channel/protocol inspection on both clusters. And the Rocky 8 "
-             "figure rests on a **single run** whose curve jumps oddly from "
-             "236 GB/s at 1 GiB to 318 at 4 GiB, so part of the gap may be "
-             "variance in that measurement.")
+    L.append("**This is confirmed on both sides.** The Ubuntu plateau "
+             "reproduces exactly (289.9 then 290.1 GB/s on a repeat run), and all "
+             "three Rocky 8 pairs reach 325-339 GB/s at 16 GiB "
+             "(5500+5501 325.2, 5500+5502 327.0, 5501+5502 338.6) — so the "
+             "~12% deficit is systematic, not run-to-run variance on either "
+             "cluster. The two clusters track each other up to 1 GiB (283-286 "
+             "GB/s) and separate only above it, where Rocky 8 keeps scaling and "
+             "Ubuntu does not. What is **not** established is the mechanism; "
+             "that needs `NCCL_DEBUG=INFO` channel/protocol inspection, and "
+             "scatter is rarely the bottleneck in training workloads, so it is a "
+             "low-priority thread.")
     L.append("")
     L.append("Note the contrast with **gather**, root-anchored like scatter: "
              "both clusters plateau at exactly 92.9 GB/s (0.0% difference) and "
@@ -397,6 +402,12 @@ def small_message_section(L, main_run, rocky):
              "`nvidia_peermem` loaded, DMABUF path | **same** |")
     L.append("| IB rails | 8 x 400 Gb/s NDR, MTU 4096 | 8 x 400 Gb/s NDR | "
              "**same** |")
+    L.append("| host-mem IB bandwidth (`ib_write_bw`, 64 MiB) | 378.5 Gb/s | "
+             "379.5 Gb/s | **same** |")
+    L.append("| **GPUDirect: NIC reads from GPU** | **395.5 Gb/s** (line rate) | "
+             "**147.6 Gb/s** (capped) | **differs 2.7x** |")
+    L.append("| **GPUDirect: NIC writes into GPU** | **379.6 Gb/s** (line rate) | "
+             "**286.6 Gb/s** | **differs 1.3x** |")
     L.append("| **MOFED / rdma-core** | OFED-internal-**25.10**-1.7.1.413 | "
              "OFED-internal-**26.04**-0.8.6 | **differs** |")
     L.append("| **NVIDIA driver** | **570.211.01** | **590.48.01** | "
@@ -410,12 +421,16 @@ def small_message_section(L, main_run, rocky):
              "verifiable from here | unknown |")
     L.append("| HCA firmware | 28.47.2526 | not verifiable from here | unknown |")
     L.append("")
-    L.append("**This retires the IOMMU hypothesis.** Both clusters boot the "
-             "identical `iommu=pt intel_iommu=on` with the same 540 groups, so "
-             "IOTLB pressure cannot be what separates them. (The `iommu=off` "
-             "advice in `../b200-nodes/notes.md` concerned a different problem — "
-             "the bulk GPU-read bandwidth cap — and is unrelated to this "
-             "per-operation gap.)")
+    L.append("**This retires the IOMMU hypothesis, by direct measurement.** "
+             "Both clusters boot the identical `iommu=pt intel_iommu=on` with the "
+             "same 540 groups, and `ib_write_bw` (2026-08-10) shows the Ubuntu "
+             "pair running GPUDirect at **full line rate in both directions** "
+             "under that configuration — 395.5 Gb/s reading from GPU where Rocky "
+             "8 measured 147.6. IOTLB pressure therefore cannot be what separates "
+             "them, and the `iommu=off` recommendation in "
+             "`../b200-nodes/notes.md` (suspect #1 for the GPU-read cap) is "
+             "excluded by this control. See `ubuntu-nccl.md` for the full "
+             "perftest comparison and the admin follow-ups.")
     L.append("")
     L.append("The live candidates are therefore the **InfiniBand stack** (MOFED "
              "25.10 vs 26.04 — a different verbs provider is exactly what would "

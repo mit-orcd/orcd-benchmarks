@@ -1,6 +1,6 @@
 # nccl-tests 2-node summary — Ubuntu B200 nodes
 
-- Generated: 2026-08-10 18:42:04
+- Generated: 2026-08-10 18:52:16
 - Runs: node5700+node5701
 - GPUs: 8/node x 2 nodes = 16 x NVIDIA B200 (inter-node, InfiniBand + GPUDirect RDMA)
 - Config: 1 MiB-16 GiB, 5 warmup + 20 iters
@@ -44,7 +44,7 @@ The NIC is the binding constraint in both directions because PCIe Gen5 x16 is fu
 
 **scatter is the one real large-message regression.** Ubuntu leads it at small sizes (+277% at 1 MiB, +23% at 256 MiB), then **plateaus at ~290 GB/s** from 1 GiB onward while Rocky 8 climbs to 327. scatter is root-anchored — one GPU feeds all 15 peers, 8 of them remote — so it is bound by that root node's outbound aggregate, and the Ubuntu pair hits a lower ceiling there. The plateau reproduces exactly (289.9 GB/s in the sweep, 290.1 GB/s on a repeat run), so it is not run-to-run noise on this side.
 
-Two caveats on that last point. The **mechanism is not established** — confirming it needs `NCCL_DEBUG=INFO` channel/protocol inspection on both clusters. And the Rocky 8 figure rests on a **single run** whose curve jumps oddly from 236 GB/s at 1 GiB to 318 at 4 GiB, so part of the gap may be variance in that measurement.
+**This is confirmed on both sides.** The Ubuntu plateau reproduces exactly (289.9 then 290.1 GB/s on a repeat run), and all three Rocky 8 pairs reach 325-339 GB/s at 16 GiB (5500+5501 325.2, 5500+5502 327.0, 5501+5502 338.6) — so the ~12% deficit is systematic, not run-to-run variance on either cluster. The two clusters track each other up to 1 GiB (283-286 GB/s) and separate only above it, where Rocky 8 keeps scaling and Ubuntu does not. What is **not** established is the mechanism; that needs `NCCL_DEBUG=INFO` channel/protocol inspection, and scatter is rarely the bottleneck in training workloads, so it is a low-priority thread.
 
 Note the contrast with **gather**, root-anchored like scatter: both clusters plateau at exactly 92.9 GB/s (0.0% difference) and match at every smaller size too. gather is a fan-in that NCCL keeps on a single path rather than splitting across channels, so it never pays the per-operation cost that separates the two clusters elsewhere. That `scatter` — root-anchored like gather, but channel-split — diverges at *both* ends of the size range (Ubuntu far ahead when small, behind when large) is what makes it worth a closer look rather than dismissing it as noise.
 
@@ -242,6 +242,9 @@ The gap decays steadily with size, which is the signature of a **fixed per-opera
 | NCCL | 2.29.2 | 2.29.2 | **same** |
 | GPUDirect RDMA | `nvidia_peermem` loaded, DMABUF path | `nvidia_peermem` loaded, DMABUF path | **same** |
 | IB rails | 8 x 400 Gb/s NDR, MTU 4096 | 8 x 400 Gb/s NDR | **same** |
+| host-mem IB bandwidth (`ib_write_bw`, 64 MiB) | 378.5 Gb/s | 379.5 Gb/s | **same** |
+| **GPUDirect: NIC reads from GPU** | **395.5 Gb/s** (line rate) | **147.6 Gb/s** (capped) | **differs 2.7x** |
+| **GPUDirect: NIC writes into GPU** | **379.6 Gb/s** (line rate) | **286.6 Gb/s** | **differs 1.3x** |
 | **MOFED / rdma-core** | OFED-internal-**25.10**-1.7.1.413 | OFED-internal-**26.04**-0.8.6 | **differs** |
 | **NVIDIA driver** | **570.211.01** | **590.48.01** | **differs** |
 | **Kernel** | 6.8.0-124 on both nodes | **4.18** (5500) / **6.12** (5502) — heterogeneous | **differs** |
@@ -250,7 +253,7 @@ The gap decays steadily with size, which is the signature of a **fixed per-opera
 | CPU / governor | Xeon Platinum 8570, `performance` | not verifiable from here | unknown |
 | HCA firmware | 28.47.2526 | not verifiable from here | unknown |
 
-**This retires the IOMMU hypothesis.** Both clusters boot the identical `iommu=pt intel_iommu=on` with the same 540 groups, so IOTLB pressure cannot be what separates them. (The `iommu=off` advice in `../b200-nodes/notes.md` concerned a different problem — the bulk GPU-read bandwidth cap — and is unrelated to this per-operation gap.)
+**This retires the IOMMU hypothesis, by direct measurement.** Both clusters boot the identical `iommu=pt intel_iommu=on` with the same 540 groups, and `ib_write_bw` (2026-08-10) shows the Ubuntu pair running GPUDirect at **full line rate in both directions** under that configuration — 395.5 Gb/s reading from GPU where Rocky 8 measured 147.6. IOTLB pressure therefore cannot be what separates them, and the `iommu=off` recommendation in `../b200-nodes/notes.md` (suspect #1 for the GPU-read cap) is excluded by this control. See `ubuntu-nccl.md` for the full perftest comparison and the admin follow-ups.
 
 The live candidates are therefore the **InfiniBand stack** (MOFED 25.10 vs 26.04 — a different verbs provider is exactly what would change per-operation posting cost while leaving bulk streaming untouched), the **GPU driver / CUDA pair**, and **host CPU cost in NCCL's proxy thread**, which posts each RDMA operation and so scales with operation count rather than bytes. Note the counter-intuitive direction: Rocky 8 runs the *newer* MOFED and the *newer* driver, yet is slower per operation.
 

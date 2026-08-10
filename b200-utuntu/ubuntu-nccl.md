@@ -154,6 +154,87 @@ Note the counter-intuitive direction: **Rocky 8 runs the newer MOFED and the
 newer driver, yet is slower per operation** — consistent with a regression in the
 newer IB stack, though not proven by this data.
 
+## GPUDirect RDMA measured directly (2026-08-10)
+
+`ib_write_bw` on mlx5_4, 64 MiB RDMA writes, 200 iterations, node5700 <-> node5701.
+The Rocky 8 column is the same test from `../b200-nodes/notes.md` (2026-07-13).
+
+| Test | **Ubuntu 5700<->5701** | Rocky 8 5500<->5502 | ratio |
+|------|----------------------:|--------------------:|------:|
+| host mem -> host mem | 378.5 Gb/s | 379.5 Gb/s | 1.00x |
+| **NIC reads from GPU** | **395.5 Gb/s** | 147.6 Gb/s | **2.68x** |
+| **NIC writes into GPU** | **379.6 Gb/s** | 286.6 Gb/s | **1.32x** |
+
+Reproduce:
+
+```bash
+# server (node5701); add --use_cuda=0 to test NIC *writes into* GPU
+ssh node5701 'ib_write_bw -d mlx5_4 --report_gbits -s 67108864 -n 200'
+# client (node5700); --use_cuda=0 makes the NIC *read from* GPU memory
+ib_write_bw -d mlx5_4 --use_cuda=0 --report_gbits -s 67108864 -n 200 node5701
+```
+
+**The Ubuntu nodes run GPUDirect at full line rate in both directions**, while
+booting the *identical* `iommu=pt intel_iommu=on` with the same 540 IOMMU groups
+as the Rocky 8 nodes.
+
+**This excludes IOMMU as the cause of the Rocky 8 GPU-read cap.** Suspect #1 in
+`../b200-nodes/notes.md` was that IOMMU forced the 18.5 GB/s cap and that
+`iommu=off` would fix it. That was a fair reading of the evidence at the time,
+but a direct control now contradicts it: same IOMMU settings, full speed. The
+admins should not spend a reboot on `iommu=off`.
+
+# Suggestions for the admins
+
+There are **two separate deficits** on the Rocky 8 nodes; they need different
+fixes. node5700/node5701 now serve as a known-good reference to diff against.
+
+## Problem 1 — the GPUDirect bulk cap (largest, 2.7x)
+
+This is what holds Rocky 8 to 12.7 GB/s on 1-GPU/node NCCL where the Ubuntu pair
+reaches 48.7 GB/s.
+
+1. **Re-run the perftest triplet above on Rocky 8** to confirm the cap still
+   exists — those numbers date from 2026-07-13 and the stack has moved since.
+2. **Diff the PCIe configuration against node5700** (root needed): `lspci -vvv`
+   **ACS control bits** on the Broadcom switches, **PCIe Relaxed Ordering**, and
+   **Max Payload Size**. Relaxed Ordering is the first thing to check — it is an
+   NVIDIA-recommended BIOS setting for GPUDirect and disabling it degrades
+   NIC-reads-from-GPU specifically, matching the read/write asymmetry above.
+   Note node5700 does **not** carry `pci=disable_acs_redir` and is still at full
+   speed, so the kernel ACS workaround is not the differentiator either; this
+   points at BIOS/firmware level.
+3. **A/B the software stack on one Rocky node**: install MOFED 25.10 and driver
+   570.211.01 to match the Ubuntu nodes, then re-run perftest. Cheap, reversible,
+   and separates software stack from platform configuration.
+
+## Problem 2 — the per-operation small-message cost (2-3x)
+
+Affects every collective NCCL splits across its 8 channels; `sendrecv` and
+`gather` are unaffected. Cheapest checks first, all read-only or reversible:
+
+1. **CPU frequency governor and C-states** on node5500-5502. NCCL's proxy thread
+   posts every RDMA operation on the host CPU, so `powersave` or deep C-states
+   produce exactly this signature. The Ubuntu nodes run `performance`. Zero risk
+   to set.
+2. **`NCCL_DEBUG=INFO` on both clusters**, comparing channel count, protocol
+   (LL / LL128 / Simple) and algorithm. If Rocky 8 selects a different protocol
+   this is a tuning issue fixable with environment variables, not a
+   reconfiguration.
+3. **Align node5500's kernel** (EL8 / 4.18) with node5502 (EL10 / 6.12). Not the
+   sole cause — all three Rocky pairs are slow — but running a 4.18 kernel under
+   MOFED 26.04 is worth removing as a variable.
+
+## What is established, and what is not
+
+Established by measurement: the cause is **not** IOMMU, **not** the NCCL version
+(2.29.2 on both), **not** node heterogeneity (all three Rocky pairs behave the
+same), and **not** bulk fabric health (host-to-host is 378-380 Gb/s on both).
+
+Not established: the actual root cause of either deficit. Step 2 of Problem 1 —
+the PCIe/BIOS diff against node5700 — is where the effort is best spent, since it
+is the largest deficit and now has a working reference to compare against.
+
 ## Unverified, and how to settle it
 
 CPU model, frequency governor and HCA firmware could **not** be compared: the
