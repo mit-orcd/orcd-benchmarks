@@ -233,12 +233,18 @@ def why_section(L, rocky):
         return
     L.append("## 2. Why three collectives differ between Ubuntu and Rocky 8")
     L.append("")
-    L.append("**The dominant pattern is a latency advantage on the Ubuntu "
+    L.append("**The dominant pattern is a per-operation advantage on the Ubuntu "
              "nodes that decays with message size.** At 1 MiB the Ubuntu pair "
-             "leads on every collective (alltoall +203%, scatter +277%, "
-             "reduce +121%, all_reduce +109%, broadcast +103%), and the gap "
-             "shrinks monotonically as messages grow. That is the signature "
-             "of a lower fixed per-transfer cost, not of more bandwidth.")
+             "leads by 1.9-3.0x in time on every collective NCCL splits across "
+             "its 8 channels (alltoall +203%, scatter +277%, reduce +121%, "
+             "all_reduce +109%, broadcast +103% in bandwidth terms), and the gap "
+             "shrinks monotonically as messages grow. **The two exceptions — "
+             "`sendrecv` and `gather` — are the finding:** they are the "
+             "collectives NCCL does *not* split across channels, and they are "
+             "identical on both clusters at every size. So the cost is fixed per "
+             "network *operation*, not per byte and not per transfer path. "
+             "Section 4 works this through, with the cluster configuration "
+             "differences that remain as candidates.")
     L.append("")
     L.append("**Collectives that reach the fabric ceiling converge.** reduce, "
              "broadcast, all_gather, reduce_scatter and sendrecv all run at "
@@ -270,10 +276,14 @@ def why_section(L, rocky):
              "variance in that measurement.")
     L.append("")
     L.append("Note the contrast with **gather**, root-anchored like scatter: "
-             "both clusters plateau at exactly 92.9 GB/s (0.0% difference). "
-             "Where a structural limit binds, the two are identical — which is "
-             "what makes scatter\'s asymmetry worth a closer look rather than "
-             "dismissing it as OS noise.")
+             "both clusters plateau at exactly 92.9 GB/s (0.0% difference) and "
+             "match at every smaller size too. gather is a fan-in that NCCL keeps "
+             "on a single path rather than splitting across channels, so it never "
+             "pays the per-operation cost that separates the two clusters "
+             "elsewhere. That `scatter` — root-anchored like gather, but "
+             "channel-split — diverges at *both* ends of the size range (Ubuntu "
+             "far ahead when small, behind when large) is what makes it worth a "
+             "closer look rather than dismissing it as noise.")
     L.append("")
     L.append("**Suspected cause of the latency advantage.** See "
              "*Why small messages favour the Ubuntu nodes* in section 4 for the "

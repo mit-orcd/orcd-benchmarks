@@ -1,6 +1,6 @@
 # nccl-tests 2-node summary — Ubuntu B200 nodes
 
-- Generated: 2026-08-10 18:08:26
+- Generated: 2026-08-10 18:42:04
 - Runs: node5700+node5701
 - GPUs: 8/node x 2 nodes = 16 x NVIDIA B200 (inter-node, InfiniBand + GPUDirect RDMA)
 - Config: 1 MiB-16 GiB, 5 warmup + 20 iters
@@ -36,7 +36,7 @@ The NIC is the binding constraint in both directions because PCIe Gen5 x16 is fu
 
 ## 2. Why three collectives differ between Ubuntu and Rocky 8
 
-**The dominant pattern is a latency advantage on the Ubuntu nodes that decays with message size.** At 1 MiB the Ubuntu pair leads on every collective (alltoall +203%, scatter +277%, reduce +121%, all_reduce +109%, broadcast +103%), and the gap shrinks monotonically as messages grow. That is the signature of a lower fixed per-transfer cost, not of more bandwidth.
+**The dominant pattern is a per-operation advantage on the Ubuntu nodes that decays with message size.** At 1 MiB the Ubuntu pair leads by 1.9-3.0x in time on every collective NCCL splits across its 8 channels (alltoall +203%, scatter +277%, reduce +121%, all_reduce +109%, broadcast +103% in bandwidth terms), and the gap shrinks monotonically as messages grow. **The two exceptions — `sendrecv` and `gather` — are the finding:** they are the collectives NCCL does *not* split across channels, and they are identical on both clusters at every size. So the cost is fixed per network *operation*, not per byte and not per transfer path. Section 4 works this through, with the cluster configuration differences that remain as candidates.
 
 **Collectives that reach the fabric ceiling converge.** reduce, broadcast, all_gather, reduce_scatter and sendrecv all run at 89-98% of `HW max` at 16 GiB, and there they land within +-2% of Rocky 8. Once the wire is the constraint, the OS and driver stack cannot help.
 
@@ -46,7 +46,7 @@ The NIC is the binding constraint in both directions because PCIe Gen5 x16 is fu
 
 Two caveats on that last point. The **mechanism is not established** — confirming it needs `NCCL_DEBUG=INFO` channel/protocol inspection on both clusters. And the Rocky 8 figure rests on a **single run** whose curve jumps oddly from 236 GB/s at 1 GiB to 318 at 4 GiB, so part of the gap may be variance in that measurement.
 
-Note the contrast with **gather**, root-anchored like scatter: both clusters plateau at exactly 92.9 GB/s (0.0% difference). Where a structural limit binds, the two are identical — which is what makes scatter's asymmetry worth a closer look rather than dismissing it as OS noise.
+Note the contrast with **gather**, root-anchored like scatter: both clusters plateau at exactly 92.9 GB/s (0.0% difference) and match at every smaller size too. gather is a fan-in that NCCL keeps on a single path rather than splitting across channels, so it never pays the per-operation cost that separates the two clusters elsewhere. That `scatter` — root-anchored like gather, but channel-split — diverges at *both* ends of the size range (Ubuntu far ahead when small, behind when large) is what makes it worth a closer look rather than dismissing it as noise.
 
 **Suspected cause of the latency advantage.** See *Why small messages favour the Ubuntu nodes* in section 4 for the systematic version and a configuration comparison. In short: the cost is paid **per network operation**, not per byte. `sendrecv` and `gather` — the two collectives NCCL does not split across its 8 channels — are identical on both clusters at every size, which rules out a bulk GPUDirect or bandwidth cap. The IOMMU is **not** the differentiator either: both clusters boot the same `iommu=pt intel_iommu=on` with 540 groups. What does differ is the InfiniBand stack (MOFED 25.10 here vs 26.04 there), the GPU driver (570.211.01 vs 590.48.01), the kernel (6.8 here, 4.18/6.12 there) and the CUDA build (12.9 vs 13.1).
 
