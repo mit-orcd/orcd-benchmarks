@@ -131,6 +131,12 @@ def is_ubuntu(node):
     return node_os(node["node"]) == "Ubuntu 24.04"
 
 
+def pct_diff(ubuntu, rocky):
+    """Signed % difference of an Ubuntu value vs the Rocky 8 mean.
+    '+' means the Ubuntu node is faster, '-' means slower."""
+    return f"{(ubuntu - rocky) / rocky * 100:+.1f}%"
+
+
 # node curve colors, in the order nodes are encountered
 NODE_COLORS = ["#1f6feb", "#2ea043", "#8957e5", "#d29922"]
 
@@ -300,14 +306,36 @@ def build(nodes, reference, speedup=None, svg_name="gpu-fryer-speedup.svg",
     # Per-node mean overview
     L.append("## Per-node mean converged throughput (TFLOP/s)")
     L.append("")
-    L.append("| Node | OS | GPU | " + " | ".join(order) + " | Health |")
-    L.append("|------|----|-----|" + "|".join(["------:"] * len(order)) + "|---|")
+    # Rocky 8 mean per precision, used as the baseline for the signed diffs
+    rocky = [n for n in nodes if node_os(n["node"]) == "Rocky 8"]
+    rocky_mean = {}
+    for p in order:
+        vals = [mean(list(n["data"][p].values())) for n in rocky if p in n["data"]]
+        if vals:
+            rocky_mean[p] = mean(vals)
+
+    dhdr = " | ".join(f"{p} vs Rocky 8" for p in order) if rocky_mean else ""
+    L.append("| Node | OS | GPU | " + " | ".join(order)
+             + (f" | {dhdr}" if rocky_mean else "") + " | Health |")
+    L.append("|------|----|-----|" + "|".join(["------:"] * len(order)) + "|"
+             + ("|".join(["------:"] * len(order)) + "|" if rocky_mean else "")
+             + "---|")
     for n in nodes:
         cells = [f"{mean(list(n['data'][p].values())):.0f}" if p in n["data"] else "—"
                  for p in order]
         health = "THROTTLING" if n["throttled"] else "ok"
-        L.append(f"| {n['node']} | {node_os(n['node'])} | {n['gpu']} | "
-                 + " | ".join(cells) + f" | {health} |")
+        row = (f"| {n['node']} | {node_os(n['node'])} | {n['gpu']} | "
+               + " | ".join(cells))
+        if rocky_mean:
+            # only the Ubuntu nodes are compared; Rocky nodes are the baseline
+            if is_ubuntu(n):
+                dcells = [pct_diff(mean(list(n["data"][p].values())), rocky_mean[p])
+                          if p in n["data"] and p in rocky_mean else "—"
+                          for p in order]
+            else:
+                dcells = ["baseline"] * len(order)
+            row += " | " + " | ".join(dcells)
+        L.append(row + f" | {health} |")
     if reference:
         refc = [f"{reference[p]:.0f}" if p in reference else "—" for p in order]
         L.append("| **reference (b0025)** | **B200** | "
@@ -395,6 +423,11 @@ def build(nodes, reference, speedup=None, svg_name="gpu-fryer-speedup.svg",
         L.append("| **min** | " + " | ".join(f"**{v:.1f}**" for v in mins) + " |")
         L.append("| **mean** | " + " | ".join(f"**{v:.1f}**" for v in means) + " |")
         L.append("| **max** | " + " | ".join(f"**{v:.1f}**" for v in maxs) + " |")
+        if rocky_mean:
+            dcells = [pct_diff(mean(list(n["data"][p].values())), rocky_mean[p])
+                      if p in rocky_mean else "—" for p in n["order"]]
+            L.append("| **vs Rocky 8** | " + " | ".join(f"**{c}**" for c in dcells)
+                     + " |")
         L.append("")
 
     # how closely the omitted (Rocky 8) nodes track the Ubuntu ones

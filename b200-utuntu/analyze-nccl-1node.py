@@ -196,8 +196,39 @@ def coll_sort_key(name):
     return (COLL_ORDER.index(name), name) if name in COLL_ORDER else (len(COLL_ORDER), name)
 
 
-def build(nodes, reference):
+# One Rocky 8 node (node5500-5502 all run Rocky 8) carried as a reference
+# column, so the Ubuntu results can be read against the older nodes without
+# repeating all three — the three Rocky nodes agree to within a few percent
+# (see ../b200-nodes/out-nccl-1node/summary.md for the full set).
+ROCKY_DIR = "/orcd/data/orcd/022/benchmarks/b200-nodes/out-nccl-1node"
+ROCKY_NODE = "node5502"
+
+
+def parse_rocky_ref():
+    """Newest run of ROCKY_NODE, parsed with the same parser. None if absent."""
+    files = sorted(glob.glob(os.path.join(ROCKY_DIR, f"*{ROCKY_NODE}*.out")),
+                   key=os.path.getmtime)
+    if not files:
+        return None
+    r = parse_file(files[-1])
+    if r:
+        r["src"] = files[-1]
+    return r
+
+
+def pct_diff(ubuntu, rocky):
+    """Signed % difference of an Ubuntu value vs the Rocky 8 reference.
+    '+' means the Ubuntu node is faster, '-' means slower."""
+    if not rocky:
+        return "—"
+    return f"{(ubuntu - rocky) / rocky * 100:+.1f}%"
+
+
+def build(nodes, reference, rocky=None):
     L = []
+    # collective -> entry for the Rocky 8 reference node
+    ridx = {c["coll"]: c for c in rocky["collectives"]} if rocky else {}
+    rlabel = f"{rocky['node']} (Rocky 8)" if rocky else None
     cfg = nodes[0]["cfg"]
     ngpu = nodes[0]["ngpu"]
     gpu = nodes[0]["gpu_name"]
@@ -218,6 +249,13 @@ def build(nodes, reference):
                  f"{fmt_size(cfg['minBytes'])}-{fmt_size(cfg['maxBytes'])}, "
                  f"{cfg['warmup']} warmup + {cfg['iters']} iters")
     L.append(f"- Collectives: {', '.join(coll_names)}")
+    if rocky:
+        L.append(f"- **node5700/node5701 run Ubuntu 24.04; node5500-5502 run "
+                 f"Rocky 8.** One Rocky 8 node (**{rocky['node']}**, newest run) "
+                 f"is carried below as a reference column — the three Rocky "
+                 f"nodes agree to within a few percent, so one stands in for "
+                 f"them all. Full Rocky 8 set: "
+                 f"`../b200-nodes/out-nccl-1node/summary.md`.")
     if reference:
         L.append("- Reference: MIT aicr-benchmarks `results_b200.md`, Table 1 "
                  "(b0027, 8x B200, NVLink 5.0 / NVSwitch), busbw at 900 GB/s NVLink max")
@@ -235,6 +273,12 @@ def build(nodes, reference):
     for n in nodes:
         hdr += f" {n['node']} |"
         sep += "---:|"
+    if rocky:
+        hdr += f" {rlabel} |"
+        sep += "---:|"
+        for n in nodes:
+            hdr += f" {n['node']} vs Rocky 8 |"
+            sep += "---:|"
     if reference:
         hdr += " Reference (b0027) |"
         sep += "---:|"
@@ -258,6 +302,22 @@ def build(nodes, reference):
                 oks.append(False)
             else:
                 row += " — |"
+        if rocky:
+            re_ = ridx.get(cn)
+            rval = re_["converged"] if re_ else None
+            if rval is not None:
+                row += f" {rval:.1f} |"
+            elif re_:
+                row += " FAILED |"
+            else:
+                row += " — |"
+            # signed difference of each Ubuntu node against that reference
+            for n in nodes:
+                e = idx[n["node"]].get(cn)
+                if e and e["converged"] is not None and rval:
+                    row += f" {pct_diff(e['converged'], rval)} |"
+                else:
+                    row += " — |"
         ref = reference.get(cn) if reference else None
         if reference:
             row += f" {ref['busbw']:.0f} |" if ref else " — |"
@@ -281,6 +341,8 @@ def build(nodes, reference):
     L.append("")
     for cn in coll_names:
         entries = [(n["node"], idx[n["node"]].get(cn)) for n in nodes]
+        if rocky:
+            entries.append((rlabel, ridx.get(cn)))
         entries = [(nm, e) for nm, e in entries if e and e["rows"]]
         if not entries:
             L.append(f"### {cn}")
@@ -291,14 +353,35 @@ def build(nodes, reference):
         L.append(f"### {cn}")
         L.append("")
         sizes = sorted({r["size"] for _, e in entries for r in e["rows"]})
-        L.append("| Message size | " + " | ".join(nm for nm, _ in entries) + " |")
-        L.append("|-------------:|" + "|".join(["------:"] * len(entries)) + "|")
+        # the Rocky 8 reference is the last entry when present; the Ubuntu mean
+        # is compared against it per message size
+        rk_entry = entries[-1][1] if (rocky and entries[-1][0] == rlabel) else None
+        ub_entries = entries[:-1] if rk_entry else entries
+        head = "| Message size | " + " | ".join(nm for nm, _ in entries) + " |"
+        seps = "|-------------:|" + "|".join(["------:"] * len(entries)) + "|"
+        if rk_entry and ub_entries:
+            head += " Ubuntu vs Rocky 8 |"
+            seps += "------:|"
+        L.append(head)
+        L.append(seps)
+
+        def busbw_at(e, sz):
+            r = next((r for r in e["rows"] if r["size"] == sz), None)
+            return r["oop_busbw"] if r else None
+
         for sz in sizes:
             cells = []
             for _, e in entries:
-                r = next((r for r in e["rows"] if r["size"] == sz), None)
-                cells.append(f"{r['oop_busbw']:.1f}" if r else "—")
-            L.append(f"| {fmt_size(sz)} | " + " | ".join(cells) + " |")
+                v = busbw_at(e, sz)
+                cells.append(f"{v:.1f}" if v is not None else "—")
+            line = f"| {fmt_size(sz)} | " + " | ".join(cells) + " |"
+            if rk_entry and ub_entries:
+                rv = busbw_at(rk_entry, sz)
+                uvs = [busbw_at(e, sz) for _, e in ub_entries]
+                uvs = [v for v in uvs if v is not None]
+                line += (f" {pct_diff(sum(uvs)/len(uvs), rv)} |"
+                         if uvs and rv else " — |")
+            L.append(line)
         L.append("")
     return "\n".join(L) + "\n"
 
@@ -327,7 +410,8 @@ def main():
     if not nodes:
         sys.exit(f"No nccl-tests results parsed from {OUT_DIR}")
     reference = parse_reference(REFERENCE_FILE)
-    md = build(nodes, reference)
+    rocky = parse_rocky_ref()          # one Rocky 8 node, as a reference column
+    md = build(nodes, reference, rocky)
     summary = os.path.join(OUT_DIR, "summary.md")
     with open(summary, "w") as fh:
         fh.write(md)
