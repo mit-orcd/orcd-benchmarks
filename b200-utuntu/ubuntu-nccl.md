@@ -81,19 +81,49 @@ Measured on node5700/node5701 on 2026-08-10, alongside the 2-node NCCL runs.
 The question this answers: *are the IB driver and system configuration the same
 on the two clusters?* **No.**
 
-| Item | Ubuntu (node5700/5701) | Rocky 8 (node5500-5502) | same? |
-|------|------------------------|-------------------------|-------|
-| IOMMU (kernel cmdline) | `iommu=pt intel_iommu=on`, 540 groups | `iommu=pt intel_iommu=on`, 540 groups | **same** |
-| NCCL | 2.29.2 | 2.29.2 | **same** |
-| GPUDirect RDMA | `nvidia_peermem` loaded, DMABUF path | `nvidia_peermem` loaded, DMABUF path | **same** |
-| IB rails | 8 x 400 Gb/s NDR, MTU 4096 | 8 x 400 Gb/s NDR | **same** |
-| **MOFED / rdma-core** | OFED-internal-**25.10**-1.7.1.413 | OFED-internal-**26.04**-0.8.6 | **differs** |
-| **NVIDIA driver** | **570.211.01** | **590.48.01** | **differs** |
-| **Kernel** | 6.8.0-124 on both nodes | **4.18** (5500) / **6.12** (5502) — heterogeneous | **differs** |
-| **CUDA (build)** | 12.9 | 13.1 | **differs** |
-| PCI cmdline | `pci=realloc=off` | `pci=disable_acs_redir=...` on 5502 only | differs |
-| CPU / governor | Xeon Platinum 8570, `performance` | not verifiable from here | unknown |
-| HCA firmware | 28.47.2526 | not verifiable from here | unknown |
+**Nothing in this table needs to be changed for the 2-node NCCL test to be valid
+or for the results already collected to stand.** The last column says what, if
+anything, to ask for.
+
+| Item | Ubuntu (node5700/5701) | Rocky 8 (node5500-5502) | same? | Reconfigure? |
+|------|------------------------|-------------------------|-------|--------------|
+| IOMMU (kernel cmdline) | `iommu=pt intel_iommu=on`, 540 groups | `iommu=pt intel_iommu=on`, 540 groups | **same** | **No.** Already identical, and the Ubuntu pair reaches full inter-node bandwidth *with* IOMMU on. Do **not** ask for `iommu=off` here. |
+| NCCL | 2.29.2 | 2.29.2 | **same** | No. |
+| GPUDirect RDMA | `nvidia_peermem` loaded, DMABUF path | `nvidia_peermem` loaded, DMABUF path | **same** | No. |
+| IB rails | 8 x 400 Gb/s NDR, MTU 4096 | 8 x 400 Gb/s NDR | **same** | No. |
+| **MOFED / rdma-core** | OFED-internal-**25.10**-1.7.1.413 | OFED-internal-**26.04**-0.8.6 | **differs** | **Not required.** Only if you want to test the leading hypothesis for the small-message gap, or for fleet consistency later. Change one cluster at a time or the experiment tells you nothing. |
+| **NVIDIA driver** | **570.211.01** | **590.48.01** | **differs** | **Not required — and disruptive.** An upgrade to r580+ would invalidate every result collected so far and force a rebuild against CUDA 13. Only worth it if these nodes must match the production fleet. |
+| **Kernel** | 6.8.0-124 on both nodes | **4.18** (5500) / **6.12** (5502) — heterogeneous | **differs** | **No.** The Rocky pair is itself heterogeneous and NCCL runs fine across it, so this class of difference is demonstrably tolerable. |
+| **CUDA (build)** | 12.9 | 13.1 | **differs** | **No — and not possible** without the driver upgrade above (CUDA 13 needs r580+). |
+| PCI cmdline | `pci=realloc=off` | `pci=disable_acs_redir=...` on 5502 only | differs | No. Not on the NCCL data path here. |
+| CPU / governor | Xeon Platinum 8570, `performance` | not verifiable from here | unknown | **Ask them to report it, not change it.** NCCL's proxy thread posts every RDMA operation on the host CPU, so a `powersave` governor on the Rocky side would explain the per-operation gap. Read-only check. |
+| HCA firmware | 28.47.2526 | not verifiable from here | unknown | **Ask them to report it, not change it.** |
+
+## What to actually ask the admins for
+
+**Required — none.** Both Ubuntu nodes are already internally consistent (same
+driver, MOFED, kernel, firmware, CPU, governor), which is the only consistency
+NCCL needs: the two nodes *within a job* must agree, and they do. `memlock` is
+already unlimited and passwordless ssh is in place.
+
+**Worth asking for (cheap, read-only):**
+
+1. CPU model + `scaling_governor` on node5500-5502.
+2. HCA firmware (`ibv_devinfo | grep fw_ver`) on node5500-5502.
+3. Shell access to one Rocky node, or a Slurm job slot, so the `ib_write_bw`
+   small-message sweep can be run there — the one test that would settle the
+   cause.
+
+**Optional cleanup (not a blocker):** remove the Debian/Ubuntu default line
+`127.0.1.1 node57xx` from `/etc/hosts` on node5700/node5701, or point it at the
+real inband address. It makes each node resolve its own name to loopback, which
+hangs Open MPI in `MPI_Init`. `run-nccl-2node.sh` already works around it by
+pinning `--mca btl_tcp_if_include eno3`, so this only spares the next person the
+debugging.
+
+**Do not ask for:** `iommu=off`, driver/MOFED/kernel alignment, or CUDA 13 on
+these nodes — none of it is needed for this benchmark, and the driver change
+would cost you the current results.
 
 ## Why this matters
 
