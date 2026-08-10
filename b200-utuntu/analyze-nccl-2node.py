@@ -226,6 +226,70 @@ def pct_diff(ubuntu, rocky):
     return f"{(ubuntu - rocky) / rocky * 100:+.1f}%"
 
 
+def why_section(L, rocky):
+    """Static narrative explaining the Ubuntu vs Rocky 8 differences.
+    Numbers cited come from the tables above and a repeat scatter run."""
+    if not rocky:
+        return
+    L.append("## 2. Why three collectives differ between Ubuntu and Rocky 8")
+    L.append("")
+    L.append("**The dominant pattern is a latency advantage on the Ubuntu "
+             "nodes that decays with message size.** At 1 MiB the Ubuntu pair "
+             "leads on every collective (alltoall +203%, scatter +277%, "
+             "reduce +121%, all_reduce +109%, broadcast +103%), and the gap "
+             "shrinks monotonically as messages grow. That is the signature "
+             "of a lower fixed per-transfer cost, not of more bandwidth.")
+    L.append("")
+    L.append("**Collectives that reach the fabric ceiling converge.** reduce, "
+             "broadcast, all_gather, reduce_scatter and sendrecv all run at "
+             "89-98% of `HW max` at 16 GiB, and there they land within +-2% of "
+             "Rocky 8. Once the wire is the constraint, the OS and driver "
+             "stack cannot help.")
+    L.append("")
+    L.append("**all_reduce and alltoall are not special cases** — they are "
+             "simply the only collectives that never reach the ceiling (67% "
+             "and 14% of `HW max`). all_reduce is bound by its ring/tree "
+             "schedule; alltoall is 15 separate peer transfers per GPU and is "
+             "latency-bound throughout. With headroom left, the per-transfer "
+             "advantage still shows at 16 GiB: **+15.5%** and **+11.1%**.")
+    L.append("")
+    L.append("**scatter is the one real large-message regression.** Ubuntu "
+             "leads it at small sizes (+277% at 1 MiB, +23% at 256 MiB), then "
+             "**plateaus at ~290 GB/s** from 1 GiB onward while Rocky 8 climbs "
+             "to 327. scatter is root-anchored — one GPU feeds all 15 peers, 8 "
+             "of them remote — so it is bound by that root node\'s outbound "
+             "aggregate, and the Ubuntu pair hits a lower ceiling there. The "
+             "plateau reproduces exactly (289.9 GB/s in the sweep, 290.1 GB/s "
+             "on a repeat run), so it is not run-to-run noise on this side.")
+    L.append("")
+    L.append("Two caveats on that last point. The **mechanism is not "
+             "established** — confirming it needs `NCCL_DEBUG=INFO` "
+             "channel/protocol inspection on both clusters. And the Rocky 8 "
+             "figure rests on a **single run** whose curve jumps oddly from "
+             "236 GB/s at 1 GiB to 318 at 4 GiB, so part of the gap may be "
+             "variance in that measurement.")
+    L.append("")
+    L.append("Note the contrast with **gather**, root-anchored like scatter: "
+             "both clusters plateau at exactly 92.9 GB/s (0.0% difference). "
+             "Where a structural limit binds, the two are identical — which is "
+             "what makes scatter\'s asymmetry worth a closer look rather than "
+             "dismissing it as OS noise.")
+    L.append("")
+    L.append("**Suspected cause of the latency advantage.** The leading "
+             "suspect is the platform difference documented in "
+             "`../b200-nodes/notes.md`: the Rocky 8 nodes run with IOMMU "
+             "enabled and have a degraded NIC-reads-from-GPU path (18.5 GB/s "
+             "vs 35.8 GB/s for writes). Per-transfer address-translation "
+             "overhead penalises small messages most, which matches the "
+             "decaying gap. But the builds also differ (CUDA 13.1 vs 12.9) and "
+             "so do the drivers (590.48.01 vs 570.211.01), so this data alone "
+             "cannot attribute it to IOMMU. The clean experiment is "
+             "`ib_write_bw --use_cuda` between node5700 and node5701: if these "
+             "nodes show the full ~35 GB/s read path where Rocky showed 18.5, "
+             "that confirms it.")
+    L.append("")
+
+
 def build(runs, reference, rocky=None):
     L = []
     run = runs[0]
@@ -241,7 +305,7 @@ def build(runs, reference, rocky=None):
     tot = seg0["ngpus"]
     gpn = tot // nnodes if nnodes else tot
 
-    L.append("# nccl-tests 2-node summary (multi-collective)")
+    L.append("# nccl-tests 2-node summary — Ubuntu B200 nodes")
     L.append("")
     L.append(f"- Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     L.append(f"- Runs: {', '.join(r['pair'] for r in runs)}")
@@ -262,7 +326,13 @@ def build(runs, reference, rocky=None):
     L.append("")
 
     # 1. Per-collective comparison vs reference
-    L.append("## Per-collective busbw vs B200 reference")
+    L.append("## 1. Results — bandwidth for every collective")
+    L.append("")
+    L.append("A *collective* is one communication pattern that all 16 GPUs take "
+             "part in together (e.g. `all_reduce` sums a buffer across every GPU; "
+             "`broadcast` sends one GPU's buffer to all). Each row is one such "
+             "pattern, measured at 1 MiB-16 GiB; the figure of merit is **busbw** "
+             "(bus bandwidth, GB/s) at the largest message size.")
     L.append("")
     # One representative node pair keeps the table readable; the others are
     # summarised as a spread underneath.
@@ -270,14 +340,15 @@ def build(runs, reference, rocky=None):
     other_runs = runs[1:]
     L.append(f"Representative node pair: **{main_run['pair']}**.")
     L.append("")
-    rcols = f" {rlabel} busbw (GB/s) | vs Rocky 8 |" if rocky else ""
+    rcols = f" {rlabel} (GB/s) | vs Rocky 8 |" if rocky else ""
     rseps = "---------------:|-----------:|" if rocky else ""
-    L.append("| Collective | GPUs | converged busbw (GB/s) "
-             "| peak busbw (GB/s) |" + rcols + " reference busbw (GB/s) | ours / ref "
-             "| HW max (GB/s) | ours / HW max | correctness |")
-    L.append("|------------|-----:|-----------------------:"
-             "|------------------:|" + rseps + "-----------------------:|-----------:"
-             "|--------------:|--------------:|:-----------:|")
+    # the aicr reference columns are only useful when that file was found
+    fcols = " reference busbw (GB/s) | ours / ref |" if reference else ""
+    fseps = "-----------------------:|-----------:|" if reference else ""
+    L.append("| Collective | GPUs | Ubuntu busbw (GB/s) |" + rcols + fcols
+             + " HW max (GB/s) | % of HW max | correctness |")
+    L.append("|------------|-----:|-----------------------:|" + rseps + fseps
+             + "--------------:|--------------:|:-----------:|")
     caveats = []
     for r in [main_run]:
         for seg in r["collectives"]:
@@ -301,9 +372,9 @@ def build(runs, reference, rocky=None):
                 rv = rbw.get(name)
                 rcell = (f" {rv:.1f} | {pct_diff(seg['converged'], rv)} |"
                          if rv else " — | — |")
-            L.append(f"| {name} | {g} | {seg['converged']:.1f} "
-                     f"| {seg['peak']:.1f} |" + rcell + f" {refbw} | {ratio} "
-                     f"| {hwmax:.0f} | {hw_pct} "
+            fcell = f" {refbw} | {ratio} |" if reference else ""
+            L.append(f"| {name} | {g} | {seg['converged']:.1f} |" + rcell + fcell
+                     + f" {hwmax:.0f} | {hw_pct} "
                      f"| {'PASS' if seg['ok'] else 'FAIL'} |")
     L.append("")
     L.append("Converged = busbw at the largest message size, best of out-of-place / "
@@ -353,7 +424,9 @@ def build(runs, reference, rocky=None):
     L.append("")
 
     # ---- Interpretation: is each percentage expected? ----------------------
-    L.append("## Interpreting `ours / HW max`")
+    why_section(L, rocky)
+
+    L.append("## 3. How close each collective gets to the hardware limit")
     L.append("")
     L.append(f"Dividing each result by one rail's line rate ({NIC_GBPS:.0f} GB/s) "
              f"gives the most useful view: **how many of the {NICS_PER_NODE} rails "
@@ -384,39 +457,57 @@ def build(runs, reference, rocky=None):
         L.append(f"| {nm} | {pct:.0f}% | {rails:.2f} {note} "
                  f"| {VERDICT.get(nm, '—')} |")
     L.append("")
-    L.append("**At the hardware limit (92-99%).** `sendrecv` is the cleanest "
-             "validation in the table: each GPU saturates its own rail, so ~99% of "
-             f"{NIC_GBPS:.0f} GB/s means nothing is left on the table. It is the "
-             "single number that certifies the fabric is healthy. The ring "
-             "collectives sit at 7.3-7.5 effective rails because NCCL runs 8 "
-             "parallel ring channels, each crossing the node boundary on a "
-             "different rail; the missing few percent is ring fill/drain and "
-             "protocol overhead, which cannot be recovered.")
-    L.append("")
-    L.append("**Expected shortfalls.** `all_reduce` at ~60% is the Ring two-pass "
-             "penalty: it runs reduce_scatter then all_gather, and the busbw "
-             "formula already divides out the doubled traffic (factor 2(N-1)/N), so "
-             "a perfectly pipelined all_reduce would score the *same* as "
-             "all_gather. It does not, because the ring fills and drains twice and "
-             "pays the phase-transition latency. That fixed latency does not shrink "
-             "when bandwidth grows, which is why our all_reduce is a *smaller* "
-             "fraction of our all_gather (~65%) than the reference's was (~78%) — "
-             "and why SHARP, which collapses the two passes into one in-switch "
-             "reduction, has more to gain here (see `out-nccl-2node-sharp/`). "
-             "`scatter` is root-anchored and unidirectional, limited by the root's "
-             "own outbound capacity.")
-    L.append("")
-    L.append("**Algorithm-limited, and the numbers say so precisely.** `alltoall` "
-             f"at ~12% is exactly 1/{NICS_PER_NODE} — it engages roughly **one "
-             f"rail's worth** of bandwidth out of {NICS_PER_NODE}, a literal "
-             "quantification of NCCL's N^2 point-to-point transfers not being "
-             "pipelined across NICs. `gather` at ~24% is about two rails, the same "
-             "story for fan-in to a single root. The decisive evidence that these "
-             "are algorithmic rather than physical: this fabric is ~1.9x faster "
-             "than the reference on sendrecv, yet gather improved only 1.05x and "
-             "alltoall 1.19x. A faster fabric barely helps a collective that is not "
-             "using it.")
-    L.append("")
+    # Computed from this run's own numbers, so the prose cannot drift from the
+    # table above (the Rocky-8 version of this script hard-coded them).
+    def _pct(nm):
+        seg = next((s for s in main_run["collectives"]
+                    if coll_name(s["program"]) == nm), None)
+        if not seg:
+            return None
+        return 100 * seg["converged"] / hw_ceiling(nm)[0]
+
+    at_limit = [(nm, _pct(nm)) for nm in
+                ("reduce_scatter", "reduce", "all_gather", "broadcast")]
+    at_limit = [(nm, v) for nm, v in at_limit if v is not None]
+    sr, ar = _pct("sendrecv"), _pct("all_reduce")
+    a2a, gat, sca = _pct("alltoall"), _pct("gather"), _pct("scatter")
+
+    if sr and at_limit:
+        lo = min(v for _, v in at_limit)
+        hi = max(v for _, v in at_limit)
+        L.append(f"**At the fabric limit ({lo:.0f}-{hi:.0f}%).** `sendrecv` is the "
+                 f"cleanest validation in the table: each GPU saturates its own "
+                 f"rail, so {sr:.0f}% of {NIC_GBPS:.0f} GB/s means nothing is left "
+                 f"on the table — it is the single number that certifies the "
+                 f"fabric is healthy. The ring collectives "
+                 f"({', '.join('`%s`' % nm for nm, _ in at_limit)}) sit at "
+                 f"{lo*NICS_PER_NODE/100:.1f}-{hi*NICS_PER_NODE/100:.1f} effective "
+                 f"rails because NCCL runs {NICS_PER_NODE} parallel ring channels, "
+                 f"each crossing the node boundary on a different rail; the "
+                 f"missing few percent is ring fill/drain and protocol overhead, "
+                 f"which cannot be recovered.")
+        L.append("")
+    if ar and sca:
+        L.append(f"**Expected shortfalls.** `all_reduce` at {ar:.0f}% is the Ring "
+                 f"two-pass penalty: it runs reduce_scatter then all_gather, and "
+                 f"the busbw formula already divides out the doubled traffic "
+                 f"(factor 2(N-1)/N), so a perfectly pipelined all_reduce would "
+                 f"score the *same* as all_gather. It does not, because the ring "
+                 f"fills and drains twice and pays the phase-transition latency — "
+                 f"a fixed cost that does not shrink as bandwidth grows. "
+                 f"`scatter` at {sca:.0f}% is root-anchored and unidirectional, "
+                 f"limited by the root GPU's own outbound capacity.")
+        L.append("")
+    if a2a and gat:
+        L.append(f"**Algorithm-limited, and the numbers say so precisely.** "
+                 f"`alltoall` at {a2a:.0f}% engages roughly "
+                 f"**{a2a*NICS_PER_NODE/100:.1f} of the {NICS_PER_NODE} rails** — a "
+                 f"literal quantification of NCCL's N^2 point-to-point transfers "
+                 f"not being pipelined across NICs. `gather` at {gat:.0f}% is about "
+                 f"{gat*NICS_PER_NODE/100:.1f} rails, the same story for fan-in to "
+                 f"a single root. Neither is a fabric problem: a faster network "
+                 f"barely helps a collective that does not use it.")
+        L.append("")
     L.append(f"> **Caveat on the denominators.** The {AGG_GBPS:.0f} GB/s ceiling is "
              "exact for the ring collectives, whose traffic streams around a ring "
              "bottlenecked by its inter-node links. It is an *approximation* for "
@@ -434,7 +525,7 @@ def build(runs, reference, rocky=None):
     L.append("")
 
     # 2. Per-collective bandwidth vs message size
-    L.append("## Bus bandwidth vs message size (GB/s)")
+    L.append("## 4. Bandwidth vs message size (GB/s)")
     L.append("")
     for r in runs:
         multi_pair = len(runs) > 1
@@ -474,69 +565,8 @@ def build(runs, reference, rocky=None):
     L.append("OOP = out-of-place, IP = in-place.")
     L.append("")
 
-    # 2b. Ubuntu vs Rocky 8 interpretation (static narrative; the numbers it
-    # cites come from the tables above and from a repeat scatter run)
-    if rocky:
-        L.append("## Why the Ubuntu and Rocky 8 results differ")
-        L.append("")
-        L.append("**The dominant pattern is a latency advantage on the Ubuntu "
-                 "nodes that decays with message size.** At 1 MiB the Ubuntu pair "
-                 "leads on every collective (alltoall +203%, scatter +277%, "
-                 "reduce +121%, all_reduce +109%, broadcast +103%), and the gap "
-                 "shrinks monotonically as messages grow. That is the signature "
-                 "of a lower fixed per-transfer cost, not of more bandwidth.")
-        L.append("")
-        L.append("**Collectives that reach the fabric ceiling converge.** reduce, "
-                 "broadcast, all_gather, reduce_scatter and sendrecv all run at "
-                 "89-98% of `HW max` at 16 GiB, and there they land within +-2% of "
-                 "Rocky 8. Once the wire is the constraint, the OS and driver "
-                 "stack cannot help.")
-        L.append("")
-        L.append("**all_reduce and alltoall are not special cases** — they are "
-                 "simply the only collectives that never reach the ceiling (67% "
-                 "and 14% of `HW max`). all_reduce is bound by its ring/tree "
-                 "schedule; alltoall is 15 separate peer transfers per GPU and is "
-                 "latency-bound throughout. With headroom left, the per-transfer "
-                 "advantage still shows at 16 GiB: **+15.5%** and **+11.1%**.")
-        L.append("")
-        L.append("**scatter is the one real large-message regression.** Ubuntu "
-                 "leads it at small sizes (+277% at 1 MiB, +23% at 256 MiB), then "
-                 "**plateaus at ~290 GB/s** from 1 GiB onward while Rocky 8 climbs "
-                 "to 327. scatter is root-anchored — one GPU feeds all 15 peers, 8 "
-                 "of them remote — so it is bound by that root node\'s outbound "
-                 "aggregate, and the Ubuntu pair hits a lower ceiling there. The "
-                 "plateau reproduces exactly (289.9 GB/s in the sweep, 290.1 GB/s "
-                 "on a repeat run), so it is not run-to-run noise on this side.")
-        L.append("")
-        L.append("Two caveats on that last point. The **mechanism is not "
-                 "established** — confirming it needs `NCCL_DEBUG=INFO` "
-                 "channel/protocol inspection on both clusters. And the Rocky 8 "
-                 "figure rests on a **single run** whose curve jumps oddly from "
-                 "236 GB/s at 1 GiB to 318 at 4 GiB, so part of the gap may be "
-                 "variance in that measurement.")
-        L.append("")
-        L.append("Note the contrast with **gather**, root-anchored like scatter: "
-                 "both clusters plateau at exactly 92.9 GB/s (0.0% difference). "
-                 "Where a structural limit binds, the two are identical — which is "
-                 "what makes scatter\'s asymmetry worth a closer look rather than "
-                 "dismissing it as OS noise.")
-        L.append("")
-        L.append("**Suspected cause of the latency advantage.** The leading "
-                 "suspect is the platform difference documented in "
-                 "`../b200-nodes/notes.md`: the Rocky 8 nodes run with IOMMU "
-                 "enabled and have a degraded NIC-reads-from-GPU path (18.5 GB/s "
-                 "vs 35.8 GB/s for writes). Per-transfer address-translation "
-                 "overhead penalises small messages most, which matches the "
-                 "decaying gap. But the builds also differ (CUDA 13.1 vs 12.9) and "
-                 "so do the drivers (590.48.01 vs 570.211.01), so this data alone "
-                 "cannot attribute it to IOMMU. The clean experiment is "
-                 "`ib_write_bw --use_cuda` between node5700 and node5701: if these "
-                 "nodes show the full ~35 GB/s read path where Rocky showed 18.5, "
-                 "that confirms it.")
-        L.append("")
-
     # 3. Network fabric (static: measured on the B200 nodes 2026-07-13)
-    L.append("## Network fabric")
+    L.append("## 5. Network fabric")
     L.append("")
     L.append("The inter-node data path on the B200 nodes is **NDR (400 Gb/s)**:")
     L.append("")
@@ -554,12 +584,26 @@ def build(runs, reference, rocky=None):
 
 
 def collect(args):
+    """Newest result *per collective* per node pair.
+
+    Merging per collective (rather than keeping only the newest file) means a
+    targeted re-run of a single collective updates just that collective instead
+    of wiping the rest of the sweep from the summary.
+    """
     files = args if args else glob.glob(os.path.join(OUT_DIR, "*.out"))
     parsed = {}
-    for f in sorted(files, key=os.path.getmtime):  # newest wins per pair
+    for f in sorted(files, key=os.path.getmtime):   # oldest first, newest wins
         r = parse_file(f)
-        if r:
+        if not r:
+            continue
+        prev = parsed.get(r["pair"])
+        if prev is None:
             parsed[r["pair"]] = r
+            continue
+        by_name = {coll_name(s["program"]): s for s in prev["collectives"]}
+        by_name.update({coll_name(s["program"]): s for s in r["collectives"]})
+        prev["collectives"] = sorted(by_name.values(),
+                                     key=lambda s: coll_name(s["program"]))
     return [parsed[k] for k in sorted(parsed)]
 
 
