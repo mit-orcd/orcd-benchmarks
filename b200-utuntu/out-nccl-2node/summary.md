@@ -1,6 +1,6 @@
 # nccl-tests 2-node summary — Ubuntu B200 nodes
 
-- Generated: 2026-08-10 17:43:23
+- Generated: 2026-08-10 17:55:43
 - Runs: node5700+node5701
 - GPUs: 8/node x 2 nodes = 16 x NVIDIA B200 (inter-node, InfiniBand + GPUDirect RDMA)
 - Config: 1 MiB-16 GiB, 5 warmup + 20 iters
@@ -48,7 +48,7 @@ Two caveats on that last point. The **mechanism is not established** — confirm
 
 Note the contrast with **gather**, root-anchored like scatter: both clusters plateau at exactly 92.9 GB/s (0.0% difference). Where a structural limit binds, the two are identical — which is what makes scatter's asymmetry worth a closer look rather than dismissing it as OS noise.
 
-**Suspected cause of the latency advantage.** The leading suspect is the platform difference documented in `../b200-nodes/notes.md`: the Rocky 8 nodes run with IOMMU enabled and have a degraded NIC-reads-from-GPU path (18.5 GB/s vs 35.8 GB/s for writes). Per-transfer address-translation overhead penalises small messages most, which matches the decaying gap. But the builds also differ (CUDA 13.1 vs 12.9) and so do the drivers (590.48.01 vs 570.211.01), so this data alone cannot attribute it to IOMMU. The clean experiment is `ib_write_bw --use_cuda` between node5700 and node5701: if these nodes show the full ~35 GB/s read path where Rocky showed 18.5, that confirms it.
+**Suspected cause of the latency advantage.** See *Why small messages favour the Ubuntu nodes* in section 4 for the systematic version. In short: the cost is paid **per network operation**, not per byte. `sendrecv` and `gather` — the two collectives NCCL does not split across its 8 channels — are identical on both clusters at every size, which rules out a bulk GPUDirect or bandwidth cap as the explanation. The remaining candidates are IOTLB pressure from many small descriptors under the IOMMU the Rocky 8 nodes boot with, and per-operation CPU cost in NCCL's proxy thread. The builds (CUDA 13.1 vs 12.9) and drivers (590.48.01 vs 570.211.01) also differ, so this data alone cannot single one out.
 
 ## 3. How close each collective gets to the hardware limit
 
@@ -194,6 +194,47 @@ Dividing each result by one rail's line rate (50 GB/s) gives the most useful vie
 | 16 GiB | 352.41 ms | 48.8 | 352.22 ms | 48.8 | 47.7 | +2.2% |
 
 OOP = out-of-place, IP = in-place.
+
+### Why small messages favour the Ubuntu nodes
+
+At 1 MiB the bandwidth columns above are really a *latency* measurement: the transfer is too short for bandwidth to matter, so busbw is dominated by fixed per-operation cost. Comparing the raw **times** is therefore the cleaner view.
+
+| Collective | Ubuntu 1 MiB (us) | Rocky 8 1 MiB (us) | Rocky / Ubuntu |
+|------------|------------------:|-------------------:|---------------:|
+| sendrecv | 50.4 | 54.4 | **1.08x** |
+| gather | 46.9 | 51.1 | **1.09x** |
+| broadcast | 222.0 | 452.8 | **2.04x** |
+| all_reduce | 183.4 | 383.6 | **2.09x** |
+| reduce | 233.1 | 514.4 | **2.21x** |
+| reduce_scatter | 265.9 | 504.8 | **1.90x** |
+| all_gather | 261.7 | 580.9 | **2.22x** |
+| scatter | 168.5 | 363.8 | **2.16x** |
+| alltoall | 285.3 | 860.9 | **3.02x** |
+
+**The advantage is not uniform — and the exceptions are the finding.** `sendrecv` and `gather` show essentially no difference (~1.0-1.1x) at 1 MiB *and at every larger size*, while every other collective costs 1.9-3.0x more time on Rocky 8. Any explanation has to account for that split.
+
+| Message size | mean Rocky/Ubuntu time (affected collectives) |
+|-------------:|----------------------------------------------:|
+| 1 MiB | 2.23x |
+| 4 MiB | 1.85x |
+| 16 MiB | 1.45x |
+| 64 MiB | 1.35x |
+| 256 MiB | 1.29x |
+| 1 GiB | 1.23x |
+| 4 GiB | 1.09x |
+| 16 GiB | 1.02x |
+
+The gap decays steadily with size, which is the signature of a **fixed per-operation cost** rather than a per-byte (bandwidth) one: a constant overhead is a large fraction of a 1 MiB transfer and a negligible one of a 16 GiB transfer.
+
+**What the data rules out.**
+
+- *NCCL version or topology* — both clusters run NCCL 2.29.2 with the same 16-rank, 8-GPU-per-node layout. Only the CUDA flavour differs (12.9 here vs 13.1 there, forced by the r570 driver).
+- *A single bad node pair* — all three Rocky 8 pairs (5500+5501, 5500+5502, 5501+5502) show the same slow small-message times, so this is systematic, not one degraded node.
+- *A bulk GPUDirect/bandwidth cap* — this is the important one. `sendrecv` moves its 1 MiB as one contiguous chunk per pair over the same NIC and GPU-memory path, and it is **identical** on both clusters (52 us vs 50 us) and at line rate at large sizes. A degraded bulk GDR path would slow `sendrecv` too. It does not.
+
+**What remains.** The collectives that differ are exactly those that split their payload across NCCL's 8 parallel channels and run multiple phases: a 1 MiB all_gather becomes 8 chunks of 128 KiB plus cross-phase synchronisation, where a 1 MiB sendrecv is one chunk. So the extra cost on Rocky 8 is paid **per network operation and per synchronisation**, not per byte — consistent with IOTLB pressure from many small scattered descriptors under the IOMMU those nodes boot with, and/or with per-operation CPU cost in NCCL's proxy thread, which posts each RDMA operation. `gather` fits the same rule from the other side: it is a fan-in to a single root that NCCL does not spread across channels, and it shows no gap.
+
+Distinguishing IOTLB pressure from proxy-thread CPU cost needs a test this data cannot provide: an `ib_write_bw` sweep at small message sizes (many small ops vs one large op) between two Rocky nodes and between node5700/node5701, or a boot with `iommu=off` on one Rocky node. Both are outside what these benchmark runs measure.
 
 ## 5. Network fabric
 

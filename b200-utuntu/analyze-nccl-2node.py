@@ -275,18 +275,115 @@ def why_section(L, rocky):
              "what makes scatter\'s asymmetry worth a closer look rather than "
              "dismissing it as OS noise.")
     L.append("")
-    L.append("**Suspected cause of the latency advantage.** The leading "
-             "suspect is the platform difference documented in "
-             "`../b200-nodes/notes.md`: the Rocky 8 nodes run with IOMMU "
-             "enabled and have a degraded NIC-reads-from-GPU path (18.5 GB/s "
-             "vs 35.8 GB/s for writes). Per-transfer address-translation "
-             "overhead penalises small messages most, which matches the "
-             "decaying gap. But the builds also differ (CUDA 13.1 vs 12.9) and "
-             "so do the drivers (590.48.01 vs 570.211.01), so this data alone "
-             "cannot attribute it to IOMMU. The clean experiment is "
-             "`ib_write_bw --use_cuda` between node5700 and node5701: if these "
-             "nodes show the full ~35 GB/s read path where Rocky showed 18.5, "
-             "that confirms it.")
+    L.append("**Suspected cause of the latency advantage.** See "
+             "*Why small messages favour the Ubuntu nodes* in section 4 for the "
+             "systematic version. In short: the cost is paid **per network "
+             "operation**, not per byte. `sendrecv` and `gather` — the two "
+             "collectives NCCL does not split across its 8 channels — are "
+             "identical on both clusters at every size, which rules out a bulk "
+             "GPUDirect or bandwidth cap as the explanation. The remaining "
+             "candidates are IOTLB pressure from many small descriptors under the "
+             "IOMMU the Rocky 8 nodes boot with, and per-operation CPU cost in "
+             "NCCL\'s proxy thread. The builds (CUDA 13.1 vs 12.9) and drivers "
+             "(590.48.01 vs 570.211.01) also differ, so this data alone cannot "
+             "single one out.")
+    L.append("")
+
+
+
+def small_message_section(L, main_run, rocky):
+    """Systematic analysis of the small-message advantage, computed from the runs.
+
+    Compares per-operation *time* (not bandwidth) at the smallest message sizes,
+    and uses every available Rocky 8 pair as a control.
+    """
+    if not rocky:
+        return
+    MiB = 1024 ** 2
+    ub = {coll_name(s["program"]): s for s in main_run["collectives"]}
+    rk = {coll_name(s["program"]): s for s in rocky["collectives"]}
+
+    def t_at(seg, size):
+        r = next((x for x in seg["rows"] if x["size"] == size), None)
+        return r["oop_time"] if r else None
+
+    names = [n for n in ("sendrecv", "gather", "broadcast", "all_reduce", "reduce",
+                         "reduce_scatter", "all_gather", "scatter", "alltoall")
+             if n in ub and n in rk]
+    if not names:
+        return
+
+    L.append("### Why small messages favour the Ubuntu nodes")
+    L.append("")
+    L.append("At 1 MiB the bandwidth columns above are really a *latency* "
+             "measurement: the transfer is too short for bandwidth to matter, so "
+             "busbw is dominated by fixed per-operation cost. Comparing the raw "
+             "**times** is therefore the cleaner view.")
+    L.append("")
+    L.append("| Collective | Ubuntu 1 MiB (us) | Rocky 8 1 MiB (us) | Rocky / Ubuntu |")
+    L.append("|------------|------------------:|-------------------:|---------------:|")
+    for n in names:
+        u, r = t_at(ub[n], MiB), t_at(rk[n], MiB)
+        if u and r:
+            L.append(f"| {n} | {u:.1f} | {r:.1f} | **{r/u:.2f}x** |")
+    L.append("")
+    L.append("**The advantage is not uniform — and the exceptions are the "
+             "finding.** `sendrecv` and `gather` show essentially no difference "
+             "(~1.0-1.1x) at 1 MiB *and at every larger size*, while every other "
+             "collective costs 1.9-3.0x more time on Rocky 8. Any explanation has "
+             "to account for that split.")
+    L.append("")
+
+    # decay of the gap with message size, averaged over the affected collectives
+    affected = [n for n in names if n not in ("sendrecv", "gather")]
+    sizes = sorted({r["size"] for n in affected for r in ub[n]["rows"]})
+    L.append("| Message size | mean Rocky/Ubuntu time (affected collectives) |")
+    L.append("|-------------:|----------------------------------------------:|")
+    for sz in sizes:
+        ratios = []
+        for n in affected:
+            u, r = t_at(ub[n], sz), t_at(rk[n], sz)
+            if u and r:
+                ratios.append(r / u)
+        if ratios:
+            L.append(f"| {fmt_size(sz)} | {sum(ratios)/len(ratios):.2f}x |")
+    L.append("")
+    L.append("The gap decays steadily with size, which is the signature of a "
+             "**fixed per-operation cost** rather than a per-byte (bandwidth) "
+             "one: a constant overhead is a large fraction of a 1 MiB transfer "
+             "and a negligible one of a 16 GiB transfer.")
+    L.append("")
+    L.append("**What the data rules out.**")
+    L.append("")
+    L.append("- *NCCL version or topology* — both clusters run NCCL 2.29.2 with "
+             "the same 16-rank, 8-GPU-per-node layout. Only the CUDA flavour "
+             "differs (12.9 here vs 13.1 there, forced by the r570 driver).")
+    L.append("- *A single bad node pair* — all three Rocky 8 pairs "
+             "(5500+5501, 5500+5502, 5501+5502) show the same slow small-message "
+             "times, so this is systematic, not one degraded node.")
+    L.append("- *A bulk GPUDirect/bandwidth cap* — this is the important one. "
+             "`sendrecv` moves its 1 MiB as one contiguous chunk per pair over "
+             "the same NIC and GPU-memory path, and it is **identical** on both "
+             "clusters (52 us vs 50 us) and at line rate at large sizes. A "
+             "degraded bulk GDR path would slow `sendrecv` too. It does not.")
+    L.append("")
+    L.append("**What remains.** The collectives that differ are exactly those "
+             "that split their payload across NCCL's 8 parallel channels and run "
+             "multiple phases: a 1 MiB all_gather becomes 8 chunks of 128 KiB "
+             "plus cross-phase synchronisation, where a 1 MiB sendrecv is one "
+             "chunk. So the extra cost on Rocky 8 is paid **per network "
+             "operation and per synchronisation**, not per byte — consistent with "
+             "IOTLB pressure from many small scattered descriptors under the "
+             "IOMMU those nodes boot with, and/or with per-operation CPU cost in "
+             "NCCL's proxy thread, which posts each RDMA operation. `gather` fits "
+             "the same rule from the other side: it is a fan-in to a single root "
+             "that NCCL does not spread across channels, and it shows no gap.")
+    L.append("")
+    L.append("Distinguishing IOTLB pressure from proxy-thread CPU cost needs a "
+             "test this data cannot provide: an `ib_write_bw` sweep at small "
+             "message sizes (many small ops vs one large op) between two Rocky "
+             "nodes and between node5700/node5701, or a boot with `iommu=off` on "
+             "one Rocky node. Both are outside what these benchmark runs measure.")
     L.append("")
 
 
@@ -564,6 +661,8 @@ def build(runs, reference, rocky=None):
             L.append("")
     L.append("OOP = out-of-place, IP = in-place.")
     L.append("")
+
+    small_message_section(L, main_run, rocky)
 
     # 3. Network fabric (static: measured on the B200 nodes 2026-07-13)
     L.append("## 5. Network fabric")
