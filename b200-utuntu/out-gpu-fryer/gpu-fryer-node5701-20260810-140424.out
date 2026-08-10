@@ -1,0 +1,35 @@
+Node        = node5701
+Date        = Mon Aug 10 14:04:24 EDT 2026
+OS          = Ubuntu 24.04.4 LTS / 6.8.0-124-generic
+Container   = /orcd/data/orcd/022/benchmarks/gpu-fryer/gpu-fryer_1.1.0.sif
+apptainer   = /usr/bin/apptainer (apptainer version 1.5.2)
+Duration    = 300 s per precision
+GPU 0: NVIDIA B200 (UUID: GPU-ae79c15a-644a-cd0d-22fc-121ef97ec91a)
+GPU 1: NVIDIA B200 (UUID: GPU-1b78a482-f505-db75-ad26-8f79750a6ea1)
+GPU 2: NVIDIA B200 (UUID: GPU-63357e21-0d9a-691c-03e5-990cdde462a2)
+GPU 3: NVIDIA B200 (UUID: GPU-a0199d2c-bf23-479b-015b-9d9852c18854)
+GPU 4: NVIDIA B200 (UUID: GPU-9ed39068-e1f4-39d0-2f4c-6275af2ccddc)
+GPU 5: NVIDIA B200 (UUID: GPU-fc2e4ed0-f2dd-307d-cc02-ccd55b05d458)
+GPU 6: NVIDIA B200 (UUID: GPU-fd374ba1-aa2b-d025-1606-72b23956e1a3)
+GPU 7: NVIDIA B200 (UUID: GPU-348b8233-f7c6-e1f2-8dd7-4fb0f0ed0610)
+NVIDIA B200, 570.211.01, 183359 MiB
+======== Run with fp32 ==========
+Detected GPU #0: "NVIDIA B200" (ae79c15a-644a-cd0d-22fc-121ef97ec91a)
+Detected GPU #1: "NVIDIA B200" (1b78a482-f505-db75-ad26-8f79750a6ea1)
+Detected GPU #2: "NVIDIA B200" (63357e21-0d9a-691c-03e5-990cdde462a2)
+Detected GPU #3: "NVIDIA B200" (a0199d2c-bf23-479b-015b-9d9852c18854)
+Detected GPU #4: "NVIDIA B200" (9ed39068-e1f4-39d0-2f4c-6275af2ccddc)
+Detected GPU #5: "NVIDIA B200" (fc2e4ed0-f2dd-307d-cc02-ccd55b05d458)
+Detected GPU #6: "NVIDIA B200" (fd374ba1-aa2b-d025-1606-72b23956e1a3)
+Detected GPU #7: "NVIDIA B200" (348b8233-f7c6-e1f2-8dd7-4fb0f0ed0610)
+Using precision(s): FP32  
+Creating random matrices
+Matrices created
+GPU #0: Using 163814 MB
+GPU #1: Using 163814 MB
+GPU #2: Using 163814 MB
+GPU #3: Using 163814 MB
+GPU #4: Using 163814 MB
+GPU #5: Using 163814 MB
+GPU #6: Using 163814 MB
+GPU #7: Using 163814 MB

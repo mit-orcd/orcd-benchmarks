@@ -116,6 +116,21 @@ def mean(vals):
     return sum(vals) / len(vals)
 
 
+# node5500-5502 run Rocky 8, node5700-5701 run Ubuntu 24.04. The detailed
+# sections (speed-up plot, per-GPU tables) cover the Ubuntu nodes only; the
+# Rocky 8 nodes stay in the per-node overview as a cross-OS reference.
+def node_os(name):
+    if re.match(r"node55\d\d$", name):
+        return "Rocky 8"
+    if re.match(r"node57\d\d$", name):
+        return "Ubuntu 24.04"
+    return "unknown"
+
+
+def is_ubuntu(node):
+    return node_os(node["node"]) == "Ubuntu 24.04"
+
+
 # node curve colors, in the order nodes are encountered
 NODE_COLORS = ["#1f6feb", "#2ea043", "#8957e5", "#d29922"]
 
@@ -242,8 +257,14 @@ def svg_speedup(nodes, path):
             "xmax": xmax}
 
 
-def build(nodes, reference, speedup=None, svg_name="gpu-fryer-speedup.svg"):
+def build(nodes, reference, speedup=None, svg_name="gpu-fryer-speedup.svg",
+          detail_nodes=None):
+    """detail_nodes: nodes to show the per-GPU tables for (default: all)."""
     L = []
+    if detail_nodes is None:
+        detail_nodes = nodes
+    detail_names = {n["node"] for n in detail_nodes}
+    others = [n for n in nodes if n["node"] not in detail_names]
 
     # union of precisions in first-seen order
     order = []
@@ -258,8 +279,14 @@ def build(nodes, reference, speedup=None, svg_name="gpu-fryer-speedup.svg"):
     L.append("# gpu-fryer summary")
     L.append("")
     L.append(f"- Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    L.append("- Nodes: " + ", ".join(f"{n['node']} (8 x {n['gpu']})" for n in nodes))
+    L.append("- Nodes: " + ", ".join(
+        f"{n['node']} (8 x {n['gpu']}, {node_os(n['node'])})" for n in nodes))
     L.append(f"- Precisions: {', '.join(order)}")
+    L.append("- **node5500-5502 run Rocky 8; node5700-5701 run Ubuntu 24.04.** "
+             "The speed-up plot and the per-GPU tables below cover the Ubuntu "
+             "nodes; the Rocky 8 nodes appear in the per-node overview only, "
+             "since their results are very close (see below). Full Rocky 8 "
+             "detail: `../b200-nodes/out-gpu-fryer/summary.md`.")
     if reference:
         ref_str = ", ".join(f"{p} {reference[p]:.0f}" for p in order if p in reference)
         L.append(f"- Reference (MIT aicr-benchmarks, `gpu-fryer/summary.md`, b0025, "
@@ -273,13 +300,14 @@ def build(nodes, reference, speedup=None, svg_name="gpu-fryer-speedup.svg"):
     # Per-node mean overview
     L.append("## Per-node mean converged throughput (TFLOP/s)")
     L.append("")
-    L.append("| Node | GPU | " + " | ".join(order) + " | Health |")
-    L.append("|------|-----|" + "|".join(["------:"] * len(order)) + "|---|")
+    L.append("| Node | OS | GPU | " + " | ".join(order) + " | Health |")
+    L.append("|------|----|-----|" + "|".join(["------:"] * len(order)) + "|---|")
     for n in nodes:
         cells = [f"{mean(list(n['data'][p].values())):.0f}" if p in n["data"] else "—"
                  for p in order]
         health = "THROTTLING" if n["throttled"] else "ok"
-        L.append(f"| {n['node']} | {n['gpu']} | " + " | ".join(cells) + f" | {health} |")
+        L.append(f"| {n['node']} | {node_os(n['node'])} | {n['gpu']} | "
+                 + " | ".join(cells) + f" | {health} |")
     if reference:
         refc = [f"{reference[p]:.0f}" if p in reference else "—" for p in order]
         L.append("| **reference (b0025)** | **B200** | "
@@ -344,10 +372,15 @@ def build(nodes, reference, speedup=None, svg_name="gpu-fryer-speedup.svg"):
                  "weak-scaling results in `output-megatron/summary.md`.")
         L.append("")
 
-    # Per-GPU detail per node
+    # Per-GPU detail — Ubuntu nodes only
     L.append("## Per-GPU converged throughput (TFLOP/s)")
     L.append("")
-    for n in nodes:
+    if others:
+        L.append("Ubuntu nodes (" + ", ".join(n["node"] for n in detail_nodes)
+                 + "). Per-GPU detail for the Rocky 8 nodes is omitted — "
+                 "they are very close, as quantified after the tables.")
+        L.append("")
+    for n in detail_nodes:
         gpus = sorted({g for p in n["order"] for g in n["data"][p]})
         L.append(f"### {n['node']} (8 x {n['gpu']})")
         L.append("")
@@ -363,6 +396,30 @@ def build(nodes, reference, speedup=None, svg_name="gpu-fryer-speedup.svg"):
         L.append("| **mean** | " + " | ".join(f"**{v:.1f}**" for v in means) + " |")
         L.append("| **max** | " + " | ".join(f"**{v:.1f}**" for v in maxs) + " |")
         L.append("")
+
+    # how closely the omitted (Rocky 8) nodes track the Ubuntu ones
+    if others and detail_nodes:
+        worst, worst_p, worst_node = 0.0, None, None
+        for p in order:
+            base = [mean(list(n["data"][p].values())) for n in detail_nodes
+                    if p in n["data"]]
+            if not base:
+                continue
+            ref = mean(base)
+            for o in others:
+                if p not in o["data"]:
+                    continue
+                d = abs(mean(list(o["data"][p].values())) - ref) / ref * 100
+                if d > worst:
+                    worst, worst_p, worst_node = d, p, o["node"]
+        if worst_p:
+            names = ", ".join(o["node"] for o in others)
+            L.append(f"**The Rocky 8 nodes ({names}) are very close.** Their per-node "
+                     f"mean throughput sits within **{worst:.1f}%** of the Ubuntu "
+                     f"node(s) on every precision (largest gap: {worst_node}, "
+                     f"{worst_p}). Per-GPU tables and the speed-up plot for those "
+                     f"nodes are in `../b200-nodes/out-gpu-fryer/summary.md`.")
+            L.append("")
 
     L.append("Converged = the final sustained-average throughput gpu-fryer reports per "
              "GPU at the end of each precision run. Higher is better; large spread across "
@@ -395,8 +452,11 @@ def main():
         sys.exit(f"No gpu-fryer results parsed from {OUT_DIR}")
     reference = parse_reference(REFERENCE_FILE)
     svg_name = "gpu-fryer-speedup.svg"
-    speedup = svg_speedup(nodes, os.path.join(OUT_DIR, svg_name))
-    md = build(nodes, reference, speedup, svg_name)
+    # plot + per-GPU tables: Ubuntu nodes only (node5700/5701); the Rocky 8
+    # nodes stay in the overview table as a cross-OS reference
+    ubuntu = [n for n in nodes if is_ubuntu(n)] or nodes
+    speedup = svg_speedup(ubuntu, os.path.join(OUT_DIR, svg_name))
+    md = build(nodes, reference, speedup, svg_name, detail_nodes=ubuntu)
     summary = os.path.join(OUT_DIR, "summary.md")
     with open(summary, "w") as fh:
         fh.write(md)
