@@ -1,6 +1,6 @@
 # nccl-tests 2-node summary — Ubuntu B200 nodes
 
-- Generated: 2026-08-11 22:14:12
+- Generated: 2026-08-11 22:14:12 — comparison restructured 2026-08-12 (derived from `summary.md`, which is left unchanged)
 - Runs: node5700+node5701
 - GPUs: 8/node x 2 nodes = 16 x NVIDIA B200 (inter-node, InfiniBand + GPUDirect RDMA)
 - Config: 1 MiB-16 GiB, 5 warmup + 20 iters
@@ -317,12 +317,12 @@ Both clusters are the same B200 platform with the same fabric, so the explanatio
 
 ## 6. Suggestions for the admins — closing the gap on Rocky 8
 
-Two independent deficits separate the clusters. **node5700 / node5701 now serve as a known-good reference to diff against.** Nothing below needs doing on the Ubuntu nodes.
+**Section 5 is the evidence; this section is the action list derived from it.** Two independent deficits separate the clusters. **node5700 / node5701 now serve as a known-good reference to diff against.** Nothing below needs doing on the Ubuntu nodes — with one exception, the `scatter` plateau in 6.3, which is the single collective where Rocky 8 is ahead (5.2).
 
-| # | Deficit | Size | Where it shows | Rocky 8 data from |
-|---|---------|------|----------------|-------------------|
-| 1 | GPUDirect bulk cap on Rocky 8 | **2.7x** on NIC-reads-from-GPU (147.6 vs 395.5 Gb/s) | 1 GPU/node NCCL: 12.7 vs 48.7 GB/s | **2026-07-13 — may be stale, verify first** |
-| 2 | Per-operation cost on Rocky 8 | **1.9-3.0x** in time at 1 MiB | every collective NCCL splits across its 8 channels | 2026-08-06 |
+| # | Deficit | Size | Where it shows | Evidence | Rocky 8 data from |
+|---|---------|------|----------------|----------|-------------------|
+| 1 | GPUDirect bulk cap on Rocky 8 | **2.7x** on NIC-reads-from-GPU (147.6 vs 395.5 Gb/s) | 1 GPU/node NCCL: 12.7 vs 48.7 GB/s | `ib_write_bw` table in 5.1; platform-level candidates in 5.3 | **2026-07-13 — may be stale, verify first** |
+| 2 | Per-operation cost on Rocky 8 | **1.9-3.0x** in time at 1 MiB | every collective NCCL splits across its 8 channels | 1 MiB time table + decay table in 5.1; ranked candidates in 5.3 | 2026-08-06 |
 
 ### 6.0 Before anything else: confirm the current state
 
@@ -344,13 +344,13 @@ sbatch job-nccl-2node.sh sendrecv 1    # ~12.7 GB/s => cap persists;
                                        # ~48 GB/s  => deficit 1 is gone
 ```
 
-If that last run comes back near 48 GB/s, **stop: deficit 1 no longer exists** and only section 6.3's deficit-2 items are worth pursuing.
+If that last run comes back near 48 GB/s, **stop: deficit 1 no longer exists** and only the deficit-2 items are worth pursuing: the governor and C-state check in 6.2, the MOFED downgrade in 6.1, and the `NCCL_DEBUG=INFO` comparison in 6.3.
 
 ### 6.1 Libraries and drivers to install (on the Rocky 8 nodes)
 
 Change **one thing at a time on one node pair**, re-running the perftest triplet and `run-nccl-2node.sh all 8` after each, so every result stays attributable to a single change.
 
-1. **MOFED / rdma-core -> 25.10** (`OFED-internal-25.10-1.7.1.413`, as on the Ubuntu nodes; Rocky 8 currently runs 26.04-0.8.6). This is the **first thing to try** for deficit 2: the verbs provider sets per-operation posting cost while leaving bulk streaming untouched, which is exactly the measured shape. Note this is a downgrade: the *newer* stack is the one showing the higher per-operation cost, so the aim is to test for a regression.
+1. **MOFED / rdma-core -> 25.10** (`OFED-internal-25.10-1.7.1.413`, as on the Ubuntu nodes; Rocky 8 currently runs 26.04-0.8.6). This is the **leading hypothesis** for deficit 2 (5.3, candidate 1): the verbs provider sets per-operation posting cost while leaving bulk streaming untouched, which is exactly the measured shape. It is not the first thing to *do* — the governor check in 6.2 is free and read-only, so run that first — but it is the first thing to *change*. Note this is a downgrade: the *newer* stack is the one showing the higher per-operation cost, so the aim is to test for a regression.
 2. **NVIDIA driver -> 570.211.01** (Rocky 8 runs 590.48.01), only if MOFED alone does not close the gap. Caveat: r570 caps CUDA at 12.8, so anything built against CUDA 13 must be rebuilt.
 3. **Align node5500's kernel** (EL8 / 4.18) with node5502 (EL10 / 6.12). Not a suspected cause — all three Rocky pairs measure the same — but aligning them removes one variable from the comparison.
 
@@ -362,7 +362,7 @@ Nothing needs installing for the benchmark itself: `perftest`, `rdma-core` and t
 
 The Ubuntu measurement makes a narrower point than "IOMMU does not matter": **IOMMU-on is compatible with full line rate on this hardware.** node5700 boots `iommu=pt intel_iommu=on`, puts the HCA (`0000:18:00.0`, group 62) and GPU0 (`0000:1b:00.0`, group 65) in separate IOMMU groups — so ACS isolation is active — and still reads from GPU at 395.5 Gb/s, i.e. NDR line rate with nothing left to recover. `nvidia-smi topo -m` reports **PXB** for each GPU<->rail pair (across PCIe bridges, *not* via the host bridge), and `lspci -t` confirms the HCA and GPU hang off the same switch.
 
-So `iommu=off` is still worth testing on the **Rocky 8** nodes. Suggested order:
+So `iommu=off` is still worth testing on the **Rocky 8** nodes. This does not contradict 5.3, which retires the IOMMU: what 5.3 excludes is IOMMU-*on* as the explanation of the **per-operation** gap, since both clusters boot the identical setting and only one is slow. `iommu=off` stays live as a diagnostic for the **bulk** cap, where the mechanism would be ACS redirect on that platform's PCIe switches rather than IOTLB pressure. Suggested order:
 
 - **Do run `iommu=off` on one Rocky node as a diagnostic.** It is one cmdline edit plus a reboot, reversible, and decisive: if the GPU-read bandwidth jumps from 147.6 Gb/s toward ~395, the cause is the IOMMU/ACS interaction on that platform.
 - **Then prefer a targeted fix in production.** If `iommu=off` proves the point, disabling ACS redirect on the relevant ports (BIOS ACS setting, or `pci=disable_acs_redir=` with the specific device IDs) restores P2P while keeping IOMMU isolation. node5502 already carries `pci=disable_acs_redir=pci:1000:c030` and still measures below line rate, so widening that mask to cover the Broadcom switch ports in its GPU<->NIC path is worth trying.
@@ -393,7 +393,7 @@ Application settings **do not move deficit 1** — the GPUDirect bulk path is se
 For diagnosis rather than tuning:
 
 - `NCCL_DEBUG=INFO` on **both** clusters, comparing channel count, protocol (LL / LL128 / Simple) and algorithm. If Rocky 8 selects a different protocol, deficit 2 is a tuning problem fixable with environment variables rather than a reinstall — worth checking before touching MOFED.
-- `NCCL_MIN_NCHANNELS` / `NCCL_PROTO` sweeps on the Ubuntu side for the large-`scatter` plateau (290 vs 325-339 GB/s). Low priority: scatter rarely bottlenecks training.
+- `NCCL_MIN_NCHANNELS` / `NCCL_PROTO` sweeps **on the Ubuntu side** for the large-`scatter` plateau (290 vs 325-339 GB/s) — the one deficit that runs the other way, see 5.2 and the last paragraph of 5.3. Low priority: scatter rarely bottlenecks training.
 
 ### 6.4 How to verify
 
