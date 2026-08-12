@@ -5,7 +5,7 @@
 - GPUs: 8 x NVIDIA B200 in one node (intra-node, NVLink 5 / NVSwitch — no InfiniBand on this path)
 - Config: 1 thread, 1 MiB-16 GiB, 5 warmup + 20 iters
 - **busbw** (bus bandwidth) is the figure of merit throughout; results are judged against this platform's own hardware ceiling (`HW max`), not against an external reference.
-- **node5700/node5701 run Ubuntu 24.04; node5500-5502 run Rocky 8.** Sections 1-3 report the Ubuntu nodes on their own. The entire Ubuntu-vs-Rocky 8 comparison — what differs, which is better, and why — is consolidated in **section 4**. Full Rocky 8 set: `../b200-nodes/out-nccl-1node/summary.md`.
+- **node5700/node5701 run Ubuntu 24.04; node5500-5502 run Rocky 8.** The entire Ubuntu-vs-Rocky 8 comparison — what differs, which is better, and why — is consolidated in **section 2**; sections 1, 3 and 4 report the Ubuntu nodes on their own. Full Rocky 8 set: `../b200-nodes/out-nccl-1node/summary.md`.
 
 ## 1. Results — bandwidth, and how close it gets to the hardware limit
 
@@ -33,7 +33,76 @@ busbw at 16 GiB, best of out-of-place / in-place, in GB/s. `% of HW max` and eff
 
 **`all_reduce` at 93% is the one number worth a second look** — it beats `all_gather` (76%), the pattern a Ring all_reduce is built from and therefore its ceiling. The likely explanation is **NVLS (NVLink SHARP)**, which reduces inside the NVSwitch so fewer bytes cross the wire per user byte. Unconfirmed; `NCCL_DEBUG=INFO` would settle it by naming the algorithm.
 
-## 2. Bandwidth vs message size (GB/s)
+## 2. Ubuntu 24.04 vs Rocky 8
+
+Same hardware on both sides: 8x B200 per node on NVSwitch, NCCL 2.29.2. The Ubuntu column is the mean of node5700 and node5701 (2026-08-10); the Rocky 8 column is the mean of node5500, node5501 and node5502 (2026-08-06), all five nodes running the identical sweep. Rocky 8 data: `../b200-nodes/out-nccl-1node/summary.md`.
+
+### 2.1 What differs, and which is better
+
+**On the intra-node path the two clusters are equivalent, with a small Ubuntu edge on small messages.** A workload confined to one node will run the same on either cluster.
+
+**Large messages (16 GiB, converged busbw) — a tie.** Signed difference: **+** means Ubuntu is faster.
+
+| Collective | Ubuntu busbw (GB/s) | Rocky 8 busbw (GB/s) | difference | Rocky 8 node-to-node spread |
+|------------|--------------------:|---------------------:|-----------:|----------------------------:|
+| reduce | 691.9 | 677.1 | +2.2% | 2.1% |
+| scatter | 739.8 | 729.8 | +1.4% | 6.2% |
+| all_reduce | 840.2 | 833.0 | +0.9% | 8.4% |
+| reduce_scatter | 695.7 | 691.3 | +0.6% | 7.2% |
+| alltoall | 660.6 | 662.4 | -0.3% | 4.7% |
+| gather | 718.0 | 724.7 | -0.9% | 7.8% |
+| all_gather | 680.2 | 687.1 | -1.0% | 8.1% |
+| broadcast | 683.1 | 695.9 | -1.8% | 4.4% |
+| sendrecv | 655.9 | 674.8 | -2.8% | 4.6% |
+
+**Every difference is smaller than the spread between nodes of the same cluster.** The largest gap is 2.8%, while the three Rocky 8 nodes differ from each other by up to 8.4% on the same collective. Four collectives favour Ubuntu, five favour Rocky 8, and the signs alternate with no pattern. This is a tie, not a narrow win. Correctness is identical too: every collective PASSes on all five nodes.
+
+**Small messages (time — lower is better) — a small Ubuntu advantage that decays away.** The last three columns are Rocky/Ubuntu at 1 MiB, 16 MiB and 256 MiB; above 1.00x means Ubuntu is faster.
+
+| Collective | Ubuntu 1 MiB (us) | Rocky 8 1 MiB (us) | 1 MiB | 16 MiB | 256 MiB |
+|------------|------------------:|-------------------:|------:|-------:|--------:|
+| all_reduce | 44.7 | 51.7 | 1.16x | 1.02x | 1.02x |
+| gather | 33.6 | 38.6 | 1.15x | 1.16x | 0.99x |
+| all_gather | 48.4 | 55.7 | 1.15x | 1.02x | 1.01x |
+| sendrecv | 34.6 | 38.4 | 1.11x | 0.99x | 0.98x |
+| reduce | 38.6 | 43.0 | 1.11x | 1.02x | 0.97x |
+| scatter | 34.4 | 37.1 | 1.08x | 0.99x | 0.98x |
+| alltoall | 56.9 | 60.6 | 1.07x | 1.01x | 0.99x |
+| reduce_scatter | 44.4 | 47.3 | 1.06x | 0.97x | 0.98x |
+| broadcast | 40.3 | 41.0 | 1.02x | 0.98x | 0.98x |
+| **mean** | | | **1.10x** | **1.02x** | **0.99x** |
+
+**Two points.** First, at 1 MiB Ubuntu is ahead on 9 of 9 collectives, mean 1.10x — roughly 4-7 us per operation. No single row is conclusive on its own (each sits inside the 5.8-15.1% Rocky node-to-node spread), but the sign is the same in all nine while the two Ubuntu nodes agree to within 7.5%, so the effect is real, if modest. Second, it is **gone by 16 MiB and slightly reversed by 256 MiB** — the signature of a fixed cost per operation, not a bandwidth difference. `gather` is the one collective still showing 1.16x at 16 MiB, which is where it is still latency-bound (35 us).
+
+### 2.2 Possible reasons — differences in system configuration
+
+The clusters differ in several ways at once. What matters for reading this run is which of those differences the measurement can actually see: on one node the data path is GPU-NVSwitch-GPU, so anything belonging to the network stack is excluded by construction. Items in the 1-node data path are marked accordingly.
+
+| Item | Ubuntu (node5700/5701) | Rocky 8 (node5500-5502) | same? | in the 1-node path? |
+|------|------------------------|-------------------------|-------|---------------------|
+| GPU / NVLink hardware | 8x B200, NVLink 5 / NVSwitch | 8x B200, NVLink 5 / NVSwitch | **same** | **yes** |
+| NCCL | 2.29.2 | 2.29.2 | **same** | **yes** |
+| **NVIDIA driver** | **570.211.01** | **590.48.01** | **differs** | **yes** |
+| **CUDA (build)** | 12.9 | 13.1 | **differs** | **yes** |
+| **Kernel** | 6.8.0-124 on both nodes | **4.18** (5500) / **6.12** (5502) | **differs** | **yes** (host side) |
+| CPU / governor | Xeon Platinum 8570, `performance` | not verifiable from here | **unknown** | **yes** (host side) |
+| **MOFED / rdma-core** | OFED-internal-25.10-1.7.1.413 | OFED-internal-26.04-0.8.6 | differs | **no** |
+| GPUDirect RDMA / `nvidia_peermem` | loaded, DMABUF path | loaded, DMABUF path | same | **no** |
+| IB rails | 8 x 400 Gb/s NDR | 8 x 400 Gb/s NDR | same | **no** |
+| PCIe ACS / IOMMU state | `iommu=pt intel_iommu=on`, 540 groups | `iommu=pt intel_iommu=on`, 540 groups | same | **no** (NVSwitch bypasses PCIe) |
+
+**What the measurement rules out.** The GPUs, NVLink and NVSwitch are healthy on both clusters — nine collectives within 2.8%, all in the same 73-93% band of `HW max` — and bulk GPU-to-GPU transfer is unaffected by the OS: every collective converges to the same band at 16 GiB. Neither the accelerators nor the intra-node fabric separates the two.
+
+**What is left is the 1.10x at 1 MiB**, a fixed cost per operation on the host side. In decreasing order of plausibility:
+
+1. **CPU frequency governor and C-states.** The most economical explanation: launch and completion handling run on the host CPU, so `powersave` or deep C-states add microseconds per operation and nothing to a streaming transfer. Ubuntu runs `performance`; the Rocky governor has not been read, so this run can neither confirm nor exclude it.
+2. **Driver and CUDA — 570.211.01 + 12.9 vs 590.48.01 + 13.1.** Launch and stream-management cost differ across major CUDA versions, and ~4-7 us per operation is the right order of magnitude.
+3. **Kernel — uniform 6.8 vs a heterogeneous 4.18 / 6.12 pair.** The weakest of the three: node5500 (4.18) and node5502 (6.12) show the same small-message times, so the kernel does not separate them.
+4. **Ordinary variation.** Each row is one sweep of 20 iterations and the Rocky nodes vary among themselves by 5.8-15.1% at 1 MiB. The 9-of-9 sign consistency argues against pure noise, but a repeat sweep would settle it cheaply.
+
+**Caveat.** The Rocky runs are from 2026-08-06 and the Ubuntu runs from 2026-08-10; nothing here depends on a same-day comparison, since the effects are either ties or stable across three nodes. CPU model, governor and BIOS settings could not be read on node5500-5502, so candidate 1 remains untested.
+
+## 3. Bandwidth vs message size (GB/s)
 
 Representative node: **node5700** (node5701 agrees to within 2.8% at every converged point; see section 1).
 
@@ -158,7 +227,7 @@ OOP = out-of-place, IP = in-place.
 
 `sendrecv` is worth a second look: it is nearly flat from 16 MiB to 64 MiB (77 -> 84 GB/s) and then jumps 4x to 330 GB/s at 256 MiB. That step is NCCL switching protocol and channel count as the per-channel chunk grows past its thresholds, not a fabric effect; the same shape appears on all five nodes across both clusters.
 
-## 3. Intra-node fabric
+## 4. Intra-node fabric
 
 The data path here is entirely **NVLink 5 / NVSwitch**. All 8 B200s in a node are fully connected through the switch, so any GPU pair communicates at the full per-GPU link rate without traversing PCIe or the host.
 
@@ -169,78 +238,9 @@ The data path here is entirely **NVLink 5 / NVSwitch**. All 8 B200s in a node ar
 | Topology | 8 GPUs, all-to-all via NVSwitch (non-blocking) |
 | GPUs seen by the run | 8 x NVIDIA B200, PCI 0x1b, 0x43, 0x52, 0x61, 0x9d, 0xc3, 0xd1, 0xdf |
 
-Neither InfiniBand, `nvidia_peermem` nor GPUDirect RDMA is involved on this path, so nothing measured here depends on the network stack or its configuration (section 4.2).
+Neither InfiniBand, `nvidia_peermem` nor GPUDirect RDMA is involved on this path, so nothing measured here depends on the network stack or its configuration (section 2.2).
 
 The 900 GB/s figure and the 18-link structure are the B200 platform specification, the same basis the AICR reference (`results_b200.md`, Table 1) uses for its NVLink ceiling. They were not read back from these nodes: `nvidia-smi nvlink --status` is not captured by `run-nccl-1node.sh`. Adding it to the run script would make the ceiling self-documenting, and would also catch a node running with degraded links.
-
-## 4. Ubuntu 24.04 vs Rocky 8
-
-Same hardware on both sides: 8x B200 per node on NVSwitch, NCCL 2.29.2. The Ubuntu column is the mean of node5700 and node5701 (2026-08-10); the Rocky 8 column is the mean of node5500, node5501 and node5502 (2026-08-06), all five nodes running the identical sweep. Rocky 8 data: `../b200-nodes/out-nccl-1node/summary.md`.
-
-### 4.1 What differs, and which is better
-
-**On the intra-node path the two clusters are equivalent, with a small Ubuntu edge on small messages.** A workload confined to one node will run the same on either cluster.
-
-**Large messages (16 GiB, converged busbw) — a tie.** Signed difference: **+** means Ubuntu is faster.
-
-| Collective | Ubuntu busbw (GB/s) | Rocky 8 busbw (GB/s) | difference | Rocky 8 node-to-node spread |
-|------------|--------------------:|---------------------:|-----------:|----------------------------:|
-| reduce | 691.9 | 677.1 | +2.2% | 2.1% |
-| scatter | 739.8 | 729.8 | +1.4% | 6.2% |
-| all_reduce | 840.2 | 833.0 | +0.9% | 8.4% |
-| reduce_scatter | 695.7 | 691.3 | +0.6% | 7.2% |
-| alltoall | 660.6 | 662.4 | -0.3% | 4.7% |
-| gather | 718.0 | 724.7 | -0.9% | 7.8% |
-| all_gather | 680.2 | 687.1 | -1.0% | 8.1% |
-| broadcast | 683.1 | 695.9 | -1.8% | 4.4% |
-| sendrecv | 655.9 | 674.8 | -2.8% | 4.6% |
-
-**Every difference is smaller than the spread between nodes of the same cluster.** The largest gap is 2.8%, while the three Rocky 8 nodes differ from each other by up to 8.4% on the same collective. Four collectives favour Ubuntu, five favour Rocky 8, and the signs alternate with no pattern. This is a tie, not a narrow win. Correctness is identical too: every collective PASSes on all five nodes.
-
-**Small messages (time — lower is better) — a small Ubuntu advantage that decays away.** The last three columns are Rocky/Ubuntu at 1 MiB, 16 MiB and 256 MiB; above 1.00x means Ubuntu is faster.
-
-| Collective | Ubuntu 1 MiB (us) | Rocky 8 1 MiB (us) | 1 MiB | 16 MiB | 256 MiB |
-|------------|------------------:|-------------------:|------:|-------:|--------:|
-| all_reduce | 44.7 | 51.7 | 1.16x | 1.02x | 1.02x |
-| gather | 33.6 | 38.6 | 1.15x | 1.16x | 0.99x |
-| all_gather | 48.4 | 55.7 | 1.15x | 1.02x | 1.01x |
-| sendrecv | 34.6 | 38.4 | 1.11x | 0.99x | 0.98x |
-| reduce | 38.6 | 43.0 | 1.11x | 1.02x | 0.97x |
-| scatter | 34.4 | 37.1 | 1.08x | 0.99x | 0.98x |
-| alltoall | 56.9 | 60.6 | 1.07x | 1.01x | 0.99x |
-| reduce_scatter | 44.4 | 47.3 | 1.06x | 0.97x | 0.98x |
-| broadcast | 40.3 | 41.0 | 1.02x | 0.98x | 0.98x |
-| **mean** | | | **1.10x** | **1.02x** | **0.99x** |
-
-**Two points.** First, at 1 MiB Ubuntu is ahead on 9 of 9 collectives, mean 1.10x — roughly 4-7 us per operation. No single row is conclusive on its own (each sits inside the 5.8-15.1% Rocky node-to-node spread), but the sign is the same in all nine while the two Ubuntu nodes agree to within 7.5%, so the effect is real, if modest. Second, it is **gone by 16 MiB and slightly reversed by 256 MiB** — the signature of a fixed cost per operation, not a bandwidth difference. `gather` is the one collective still showing 1.16x at 16 MiB, which is where it is still latency-bound (35 us).
-
-### 4.2 Possible reasons — differences in system configuration
-
-The clusters differ in several ways at once. What matters for reading this run is which of those differences the measurement can actually see: on one node the data path is GPU-NVSwitch-GPU, so anything belonging to the network stack is excluded by construction. Items in the 1-node data path are marked accordingly.
-
-| Item | Ubuntu (node5700/5701) | Rocky 8 (node5500-5502) | same? | in the 1-node path? |
-|------|------------------------|-------------------------|-------|---------------------|
-| GPU / NVLink hardware | 8x B200, NVLink 5 / NVSwitch | 8x B200, NVLink 5 / NVSwitch | **same** | **yes** |
-| NCCL | 2.29.2 | 2.29.2 | **same** | **yes** |
-| **NVIDIA driver** | **570.211.01** | **590.48.01** | **differs** | **yes** |
-| **CUDA (build)** | 12.9 | 13.1 | **differs** | **yes** |
-| **Kernel** | 6.8.0-124 on both nodes | **4.18** (5500) / **6.12** (5502) | **differs** | **yes** (host side) |
-| CPU / governor | Xeon Platinum 8570, `performance` | not verifiable from here | **unknown** | **yes** (host side) |
-| **MOFED / rdma-core** | OFED-internal-25.10-1.7.1.413 | OFED-internal-26.04-0.8.6 | differs | **no** |
-| GPUDirect RDMA / `nvidia_peermem` | loaded, DMABUF path | loaded, DMABUF path | same | **no** |
-| IB rails | 8 x 400 Gb/s NDR | 8 x 400 Gb/s NDR | same | **no** |
-| PCIe ACS / IOMMU state | `iommu=pt intel_iommu=on`, 540 groups | `iommu=pt intel_iommu=on`, 540 groups | same | **no** (NVSwitch bypasses PCIe) |
-
-**What the measurement rules out.** The GPUs, NVLink and NVSwitch are healthy on both clusters — nine collectives within 2.8%, all in the same 73-93% band of `HW max` — and bulk GPU-to-GPU transfer is unaffected by the OS: every collective converges to the same band at 16 GiB. Neither the accelerators nor the intra-node fabric separates the two.
-
-**What is left is the 1.10x at 1 MiB**, a fixed cost per operation on the host side. In decreasing order of plausibility:
-
-1. **CPU frequency governor and C-states.** The most economical explanation: launch and completion handling run on the host CPU, so `powersave` or deep C-states add microseconds per operation and nothing to a streaming transfer. Ubuntu runs `performance`; the Rocky governor has not been read, so this run can neither confirm nor exclude it.
-2. **Driver and CUDA — 570.211.01 + 12.9 vs 590.48.01 + 13.1.** Launch and stream-management cost differ across major CUDA versions, and ~4-7 us per operation is the right order of magnitude.
-3. **Kernel — uniform 6.8 vs a heterogeneous 4.18 / 6.12 pair.** The weakest of the three: node5500 (4.18) and node5502 (6.12) show the same small-message times, so the kernel does not separate them.
-4. **Ordinary variation.** Each row is one sweep of 20 iterations and the Rocky nodes vary among themselves by 5.8-15.1% at 1 MiB. The 9-of-9 sign consistency argues against pure noise, but a repeat sweep would settle it cheaply.
-
-**Caveat.** The Rocky runs are from 2026-08-06 and the Ubuntu runs from 2026-08-10; nothing here depends on a same-day comparison, since the effects are either ties or stable across three nodes. CPU model, governor and BIOS settings could not be read on node5500-5502, so candidate 1 remains untested.
 
 ## 5. Suggested actions
 

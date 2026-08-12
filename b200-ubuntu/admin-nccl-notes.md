@@ -16,7 +16,7 @@ One thing separates Rocky 8 from Ubuntu, and only across the network. It is name
 
 | What | Size | Read the evidence in |
 |------|------|----------------------|
-| **Small messages** — time at 1 MiB, per-operation cost | **1.9-3.0x** | `out-nccl-2node/summary.md` § 4.1, *"Small messages"* — and § 4.2, *"The shape of the gap constrains the explanation"* for the candidates. Rocky 8 data is 2026-08-06. |
+| **Small messages** — time at 1 MiB, per-operation cost | **1.9-3.0x** | `out-nccl-2node/summary.md` § 2.1, *"Small messages"* — and § 2.2, *"The shape of the gap constrains the explanation"* for the candidates. Rocky 8 data is 2026-08-06. |
 
 Bulk transfer is **not** a difference: NCCL `sendrecv` at 16 GPUs converges to 48.4 GB/s per pair on Rocky 8 against 48.8 on Ubuntu, at 98% of one rail on both.
 
@@ -34,7 +34,7 @@ At 1 MiB, where nothing is fabric-limited, seven of the nine collectives exceed 
 
 **Use `all_reduce` and `alltoall` as the metrics for every test below.** They carry the largest signal, they are the two that matter for training, and both should move together if a change addresses the real cause. `sendrecv` and `gather` are the controls: they should stay flat whatever is changed.
 
-**Within a single node the difference does not appear either.** `out-nccl-1node/summary.md` § 4.1 puts every collective in the same 73-93% band of the NVLink ceiling on both clusters, with large messages within 2.8%; its § 4.2 spells out what that rules out. Since the single-node path exercises the GPUs, driver, CUDA and NCCL host setup but *not* the verbs stack or the proxy thread, that tie is what localises the small-message cost to the network stack rather than the launch path (1.10x within a node against 2.23x across two).
+**Within a single node the difference does not appear either.** `out-nccl-1node/summary.md` § 2.1 puts every collective in the same 73-93% band of the NVLink ceiling on both clusters, with large messages within 2.8%; its § 2.2 spells out what that rules out. Since the single-node path exercises the GPUs, driver, CUDA and NCCL host setup but *not* the verbs stack or the proxy thread, that tie is what localises the small-message cost to the network stack rather than the launch path (1.10x within a node against 2.23x across two).
 
 **Ground rule for everything below:** change one item on one node pair, then re-run the checks in "How to verify" before the next change, so every result stays attributable.
 
