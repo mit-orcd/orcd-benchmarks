@@ -1,10 +1,10 @@
 # nccl-tests 2-node summary — Ubuntu B200 nodes
 
-- Generated: 2026-08-11 22:14:12 — comparison restructured 2026-08-12 (derived from `summary.md`, which is left unchanged)
+- Generated: 2026-08-11 22:14:12 — comparison restructured 2026-08-12
 - Runs: node5700+node5701
 - GPUs: 8/node x 2 nodes = 16 x NVIDIA B200 (inter-node, InfiniBand + GPUDirect RDMA)
 - Config: 1 MiB-16 GiB, 5 warmup + 20 iters
-- Reference: MIT aicr-benchmarks `results_b200.md` Table 2 (b0029+b0030, 16x B200 / NDR IB). busbw is the figure of merit.
+- **busbw** (bus bandwidth) is the figure of merit throughout; results are judged against this cluster's own hardware ceiling (`HW max`), not against an external reference.
 - **node5700+node5701 run Ubuntu 24.04; node5500-5502 run Rocky 8.** Sections 1-4 report the Ubuntu nodes on their own. The entire Ubuntu-vs-Rocky 8 comparison — what differs, which is better, and why — is consolidated in **section 5**. Full Rocky 8 set: `../b200-nodes/out-nccl-2node/summary.md`.
 
 ## 1. Results — bandwidth for every collective
@@ -13,19 +13,19 @@ A *collective* is one communication pattern that all 16 GPUs take part in togeth
 
 Representative node pair: **node5700+node5701**.
 
-| Collective | GPUs | busbw (GB/s) | reference busbw (GB/s) | ours / ref | HW max (GB/s) | % of HW max | correctness |
-|------------|-----:|-------------:|-----------------------:|-----------:|--------------:|------------:|:-----------:|
-| all_gather | 16 | 379.1 | 218.0 | 174% | 400 | 95% | PASS |
-| all_reduce | 16 | 268.4 | 170.0 | 158% | 400 | 67% | PASS |
-| alltoall | 16 | 55.4 | 39.8 | 139% | 400 | 14% | PASS |
-| broadcast | 16 | 355.4 | 202.0 | 176% | 400 | 89% | PASS |
-| gather | 16 | 92.9 | 90.5 | 103% | 400 | 23% | PASS |
-| reduce | 16 | 380.0 | 201.0 | 189% | 400 | 95% | PASS |
-| reduce_scatter | 16 | 380.1 | 218.0 | 174% | 400 | 95% | PASS |
-| scatter | 16 | 290.5 | 293.0 | 99% | 400 | 73% | PASS |
-| sendrecv | 16 | 48.8 | 26.6 | — | 50 | 98% | PASS |
+| Collective | GPUs | busbw (GB/s) | HW max (GB/s) | % of HW max | correctness |
+|------------|-----:|-------------:|--------------:|------------:|:-----------:|
+| all_gather | 16 | 379.1 | 400 | 95% | PASS |
+| all_reduce | 16 | 268.4 | 400 | 67% | PASS |
+| alltoall | 16 | 55.4 | 400 | 14% | PASS |
+| broadcast | 16 | 355.4 | 400 | 89% | PASS |
+| gather | 16 | 92.9 | 400 | 23% | PASS |
+| reduce | 16 | 380.0 | 400 | 95% | PASS |
+| reduce_scatter | 16 | 380.1 | 400 | 95% | PASS |
+| scatter | 16 | 290.5 | 400 | 73% | PASS |
+| sendrecv | 16 | 48.8 | 50 | 98% | PASS |
 
-Converged = busbw at the largest message size, best of out-of-place / in-place (matches the reference methodology).
+Converged = busbw at the largest message size, best of out-of-place / in-place.
 
 `HW max` is the hardware ceiling of **this** cluster's fabric, not a figure taken from any paper. Each B200 owns one NDR rail at 400 Gb/s = **50 GB/s per direction**, and each node has **8 rails** (mlx5_4/7/8/9/10/13/14/15, confirmed by `ibstat`), so:
 
@@ -58,7 +58,7 @@ Dividing each result by one rail's line rate (50 GB/s) gives the most useful vie
 
 > **Caveat on the denominators.** The 400 GB/s ceiling is exact for the ring collectives, whose traffic streams around a ring bottlenecked by its inter-node links. It is an *approximation* for the root-anchored and all-to-all patterns, where only a fraction of traffic crosses the node boundary (for alltoall, 8 of each GPU's 15 peers are remote; the rest go over NVLink). A per-collective ceiling would shift those percentages — most likely lowering `scatter`'s apparent figure. It does not change any conclusion: gather and alltoall are 4-8x below any reasonable ceiling and are algorithm-bound under every accounting.
 
-> Note: sendrecv here uses 16 GPUs (ring), but the reference 26.6 GB/s is a per-pair (2-GPU) bidir figure, so the two are not directly comparable and `ours / ref` is left blank.
+> Note: `sendrecv` here uses 16 GPUs in a ring, and its busbw is one pair's rate — hence the 50 GB/s ceiling in the table above rather than 400.
 
 ## 3. Bandwidth vs message size (GB/s)
 
