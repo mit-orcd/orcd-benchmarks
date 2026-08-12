@@ -244,4 +244,4 @@ The clusters differ in several ways at once. What matters for reading this run i
 
 ## 5. Suggested actions
 
-The action list derived from sections 1-4 — what to check, what to change, and in what order — is in **`../admin-nccl-notes.md`**, written as an ordered sequence of steps. Nothing in it needs doing on node5700/node5701: this run's role there is as the control that localises the two inter-node deficits.
+The action list derived from sections 1-4 — what to check, what to change, and in what order — is in **`../admin-nccl-notes.md`**, written as an ordered sequence of steps. Nothing in it needs doing on node5700/node5701: this run's role there is as the control that localises the two inter-node differences — the bulk GPUDirect path and small messages, both in `../out-nccl-2node/summary.md`.

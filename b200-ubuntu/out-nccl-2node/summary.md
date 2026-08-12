@@ -218,7 +218,7 @@ Same hardware on both sides: 8x B200 per node, 8 NDR rails per node, 16 ranks, N
 | **NIC reads from GPU** | **395.5 Gb/s** | 147.6 Gb/s | **2.68x** |
 | **NIC writes into GPU** | **379.6 Gb/s** | 286.6 Gb/s | **1.32x** |
 
-The host-to-host row matching to within 0.3% is what makes the other two meaningful: the fabric itself is equally healthy on both clusters, and the difference is confined to the GPU-memory leg. Caveat: the Rocky 8 figure dates from 2026-07-13, and the 2026-08-06 8-GPU/node runs show no bulk deficit (sendrecv 47.7-49.7 GB/s across the three pairs, matching Ubuntu's 48.8), so this one needs re-measuring before it is acted on.
+The host-to-host row matching to within 0.3% is what makes the other two meaningful: the fabric itself is equally healthy on both clusters, and the difference is confined to the GPU-memory leg. Caveat: the Rocky 8 figure dates from 2026-07-13, and the 2026-08-06 8-GPU/node runs show no cap on this path (sendrecv 47.7-49.7 GB/s across the three pairs, matching Ubuntu's 48.8), so this one needs re-measuring before it is acted on.
 
 **Net:** for any realistic NCCL workload the Ubuntu configuration is the better of the two, and the single regression is in a collective that rarely bottlenecks training.
 
@@ -268,4 +268,4 @@ Both clusters are the same B200 platform with the same fabric, so the explanatio
 
 ## 5. Suggested actions
 
-The action list derived from sections 1-4 — what to check, what to change, and in what order — is in **`../admin-nccl-notes.md`**, written as an ordered sequence of steps: the free read-only checks first (governor, whether the bulk deficit still exists, NCCL's algorithm selection), then the PCIe/BIOS diff, then the MOFED downgrade as the first change.
+The action list derived from sections 1-4 — what to check, what to change, and in what order — is in **`../admin-nccl-notes.md`**, written as an ordered sequence of steps: the free read-only checks first (governor, whether the bulk GPUDirect path is still capped, NCCL's algorithm selection), then the PCIe/BIOS diff, then the MOFED downgrade as the first change.

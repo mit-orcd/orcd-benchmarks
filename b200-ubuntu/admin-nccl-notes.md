@@ -12,14 +12,14 @@ Action list drawn from the two NCCL summaries on the Ubuntu B200 nodes. **The ev
 
 ## What there is to explain
 
-Two independent deficits separate Rocky 8 from Ubuntu, and only across the network:
+Two things separate Rocky 8 from Ubuntu, and only across the network. Both are named here exactly as the summary sections they come from, so each row can be looked up:
 
-| # | Deficit | Size | Where it shows | Rocky 8 data from |
-|---|---------|------|----------------|-------------------|
-| 1 | GPUDirect bulk cap | **2.7x** on NIC-reads-from-GPU (147.6 vs 395.5 Gb/s) | 1 GPU/node NCCL: 12.7 vs 48.7 GB/s | **2026-07-13 — may be stale, step 2 checks** |
-| 2 | Per-operation cost | **1.9-3.0x** in time at 1 MiB | every collective NCCL splits across its 8 channels | 2026-08-06 |
+| What | Size | Read the evidence in |
+|------|------|----------------------|
+| **Bulk GPUDirect path** — NIC reads from GPU, 147.6 vs 395.5 Gb/s | **2.7x** | `out-nccl-2node/summary.md` § 4.1, *"Bulk GPUDirect path, measured directly"* — and § 4.2, *"For the bulk GPUDirect difference…"* for the candidates. **Rocky 8 data is 2026-07-13 and may be stale; step 2 checks.** |
+| **Small messages** — time at 1 MiB, per-operation cost | **1.9-3.0x** | `out-nccl-2node/summary.md` § 4.1, *"Small messages"* — and § 4.2, *"The shape of the gap constrains the explanation"* for the candidates. Rocky 8 data is 2026-08-06. |
 
-**Within a single node the two clusters are indistinguishable** — every collective in the same 73-93% band of the NVLink ceiling, large messages within 2.8%. That tie is what localises both deficits: the single-node path exercises the GPUs, driver, CUDA and NCCL host setup but *not* the verbs stack or the proxy thread. So deficit 1 is confined to the NIC-to-GPU PCIe leg rather than the GPUs, and deficit 2 is mostly network-stack rather than launch-path (1.10x within a node against 2.23x across two).
+**Within a single node neither one appears.** `out-nccl-1node/summary.md` § 4.1 puts every collective in the same 73-93% band of the NVLink ceiling on both clusters, with large messages within 2.8%; its § 4.2 spells out what that rules out. Since the single-node path exercises the GPUs, driver, CUDA and NCCL host setup but *not* the verbs stack or the proxy thread, that tie is what localises both rows above: the bulk GPUDirect path is confined to the NIC-to-GPU PCIe leg rather than the GPUs, and the small-message cost is mostly network-stack rather than launch-path (1.10x within a node against 2.23x across two).
 
 **Ground rule for everything below:** change one item on one node pair, then re-run the checks in "How to verify" before the next change, so every result stays attributable.
 
@@ -38,9 +38,9 @@ cpupower idle-info | head -20                                # deep C-states ena
 
 **Why first.** It is the only candidate sitting in *both* data paths, and it costs nothing to check. Launch and completion handling run on the host CPU, and NCCL's proxy thread posts every RDMA operation there too. A `powersave` governor or deep C-states add a fixed cost per operation and nothing to a streaming transfer — precisely the measured shape (small messages penalised, large untouched). The Ubuntu nodes run `performance`; the Rocky governor has never been read.
 
-**If it is not `performance`,** set it. Low-risk, helps every latency-sensitive workload independent of anything here, and it may explain deficit 2 outright.
+**If it is not `performance`,** set it. Low-risk, helps every latency-sensitive workload independent of anything here, and it may explain the small-message gap outright.
 
-## Step 2 — Confirm deficit 1 still exists
+## Step 2 — Confirm the bulk GPUDirect path is still capped
 
 *Three commands. If it is gone, most of this list falls away.*
 
@@ -48,35 +48,35 @@ cpupower idle-info | head -20                                # deep C-states ena
 cat /proc/cmdline                      # iommu=off ? iommu=pt ?
 ls /sys/kernel/iommu_groups | wc -l    # 0 => IOMMU off; ~540 => on
 sbatch job-nccl-2node.sh sendrecv 1    # ~12.7 GB/s => cap persists
-                                       # ~48 GB/s  => deficit 1 is gone
+                                       # ~48 GB/s  => the cap is gone
 ```
 
-**Why.** Every Rocky 8 figure for deficit 1 dates from 2026-07-13. The runs used everywhere else are from 2026-08-06, are all 8 GPUs/node, and show **no** bulk deficit (sendrecv 47.7-49.7 GB/s across the three pairs, matching Ubuntu's 48.8). Nothing in between was recorded. Deficit 2, by contrast, is measured on the 2026-08-06 data and stands regardless.
+**Why.** Every Rocky 8 figure for the bulk GPUDirect path dates from 2026-07-13. The runs used everywhere else are from 2026-08-06, are all 8 GPUs/node, and show **no** cap (sendrecv 47.7-49.7 GB/s across the three pairs, matching Ubuntu's 48.8). Nothing in between was recorded. The small-message gap, by contrast, is measured on the 2026-08-06 data and stands regardless.
 
 **The IOMMU line matters too.** `../b200-nodes/notes.md` records `iommu=pt intel_iommu=on` with 540 groups; it has since been suggested the nodes now run `iommu=off`. The two cases lead to opposite advice in step 4. For reference, the Ubuntu nodes run `iommu=pt intel_iommu=on` (540 groups, HCA and GPU in separate groups) and still reach line rate — IOMMU-on is compatible with full GPUDirect bandwidth on this hardware.
 
 **Read the result:**
 
-- **~48 GB/s** → stop pursuing deficit 1. Skip step 4; go to step 3, then 5.
-- **~12.7 GB/s** → deficit 1 is live. Continue through all steps.
+- **~48 GB/s** → stop pursuing the bulk GPUDirect path. Skip step 4; go to step 3, then 5.
+- **~12.7 GB/s** → the cap is live. Continue through all steps.
 
 ## Step 3 — Compare NCCL's algorithm selection
 
-*One command per cluster. Could turn deficit 2 into an environment-variable fix.*
+*One command per cluster. Could turn the small-message gap into an environment-variable fix.*
 
 ```bash
 NCCL_DEBUG=INFO <run script> 2>&1 | grep -iE 'algo|proto|NVLS|channels'
 ```
 
-Run on **both** clusters and compare channel count, protocol (LL / LL128 / Simple) and algorithm. If Rocky 8 selects differently, deficit 2 is a tuning problem, not a reinstall — worth knowing before touching MOFED in step 5.
+Run on **both** clusters and compare channel count, protocol (LL / LL128 / Simple) and algorithm. If Rocky 8 selects differently, the small-message gap is a tuning problem, not a reinstall — worth knowing before touching MOFED in step 5.
 
 The same command on one node also confirms whether `all_reduce` is using **NVLS** (in-NVSwitch reduction), the likely reason it reaches 93% of the NVLink ceiling while the collectives it is built from sit at 76-77%. A cluster *not* selecting NVLS has a real and recoverable difference.
 
 ## Step 4 — Diff PCIe and BIOS state against node5700
 
-*Only if step 2 showed the cap persists. This is where deficit 1 lives.*
+*Only if step 2 showed the cap persists. This is where the bulk GPUDirect path is lost.*
 
-Deficit 1 is set at the platform level, so these are the items that move it. Compare each against node5700:
+The bulk GPUDirect path is set at the platform level, so these are the items that move it. Compare each against node5700:
 
 - **PCIe topology** — `nvidia-smi topo -m`. node5700 reports **PXB** for every GPU↔rail pair. If a Rocky node reports `NODE`/`SYS`, its GPU and rail are not under a common switch and peer-to-peer goes through the host bridge, which alone explains the cap.
 - **ACS state** — root `lspci -vvv` ACSCtl bits on the GPU↔NIC path. node5700 does *not* carry `pci=disable_acs_redir`, so the kernel workaround is not the differentiator and the BIOS/firmware state is what to inspect. node5502 already carries `pci=disable_acs_redir=pci:1000:c030` and was still capped, which suggests that mask missed the switch ports actually in its path.
@@ -89,7 +89,7 @@ Do not leave `iommu=off` in production — see "Keeping IOMMU on while disabling
 
 ## Step 5 — Downgrade MOFED to 25.10
 
-*The leading hypothesis for deficit 2, and the first item that changes anything.*
+*The leading hypothesis for the small-message gap, and the first item that changes anything.*
 
 Target `OFED-internal-25.10-1.7.1.413`, as on the Ubuntu nodes; Rocky 8 currently runs 26.04-0.8.6.
 
@@ -111,18 +111,18 @@ Nothing needs installing for the benchmark itself: `perftest`, `rdma-core` and t
 
 ## How to verify
 
-After each change on Rocky 8, re-run the two tests that isolate the deficits and compare against the Ubuntu targets:
+After each change on Rocky 8, re-run the two tests that isolate the two rows above and compare against the Ubuntu targets:
 
 ```bash
-# deficit 1 — GPUDirect bulk path (target: ~395 Gb/s read, ~380 Gb/s write)
+# bulk GPUDirect path (target: ~395 Gb/s read, ~380 Gb/s write)
 ssh <nodeB> 'ib_write_bw -d mlx5_4 --report_gbits -s 67108864 -n 200'
 ib_write_bw -d mlx5_4 --use_cuda=0 --report_gbits -s 67108864 -n 200 <nodeB>
 
-# deficit 2 — per-operation cost (target: all_reduce ~183 us at 1 MiB, 16 GPUs)
+# small messages (target: all_reduce ~183 us at 1 MiB, 16 GPUs)
 ./run-nccl-2node.sh allreduce 8
 ```
 
-A controlled test would separate the remaining deficit-2 candidates outright: an `ib_write_bw` small-message sweep (many small ops vs one large op) on both clusters isolates the IB stack from everything above it.
+A controlled test would separate the remaining small-message candidates outright: an `ib_write_bw` small-message sweep (many small ops vs one large op) on both clusters isolates the IB stack from everything above it.
 
 ## Keeping IOMMU on while disabling ACS redirect
 
