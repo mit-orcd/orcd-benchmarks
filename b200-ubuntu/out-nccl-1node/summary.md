@@ -210,7 +210,7 @@ The data path here is entirely **NVLink 5 / NVSwitch**. All 8 B200s in a node ar
 | Topology | 8 GPUs, all-to-all via NVSwitch (non-blocking) |
 | GPUs seen by the run | 8 x NVIDIA B200, PCI 0x1b, 0x43, 0x52, 0x61, 0x9d, 0xc3, 0xd1, 0xdf |
 
-Neither InfiniBand, `nvidia_peermem` nor GPUDirect RDMA is involved on this path — they matter only in the 2-node case, and that is precisely why this run is useful as a control (section 5.3).
+Neither InfiniBand, `nvidia_peermem` nor GPUDirect RDMA is involved on this path — they matter only in the 2-node case, and that is precisely why this run is useful as a control (section 5.2).
 
 The 900 GB/s figure and the 18-link structure are the B200 platform specification, the same basis the AICR reference (`results_b200.md`, Table 1) uses for its NVLink ceiling. They were not read back from these nodes: `nvidia-smi nvlink --status` is not captured by `run-nccl-1node.sh`. Adding it to the run script would make the ceiling self-documenting, and would also catch a node running with degraded links.
 
@@ -218,9 +218,11 @@ The 900 GB/s figure and the 18-link structure are the B200 platform specificatio
 
 Same hardware on both sides: 8x B200 per node on NVSwitch, NCCL 2.29.2. The Ubuntu column is the mean of node5700 and node5701 (2026-08-10); the Rocky 8 column is the mean of node5500, node5501 and node5502 (2026-08-06), all five nodes running the identical sweep. Rocky 8 data: `../b200-nodes/out-nccl-1node/summary.md`.
 
-### 5.1 What the difference is
+### 5.1 What differs, and which is better
 
-**Large messages (16 GiB, converged busbw).** Signed difference: **+** means Ubuntu is faster.
+**On the intra-node path the two clusters are equivalent, with a small Ubuntu edge on small messages.** A workload confined to one node will run the same on either cluster.
+
+**Large messages (16 GiB, converged busbw) — a tie.** Signed difference: **+** means Ubuntu is faster.
 
 | Collective | Ubuntu busbw (GB/s) | Rocky 8 busbw (GB/s) | difference | Rocky 8 node-to-node spread |
 |------------|--------------------:|---------------------:|-----------:|----------------------------:|
@@ -234,9 +236,9 @@ Same hardware on both sides: 8x B200 per node on NVSwitch, NCCL 2.29.2. The Ubun
 | broadcast | 683.1 | 695.9 | -1.8% | 4.4% |
 | sendrecv | 655.9 | 674.8 | -2.8% | 4.6% |
 
-**Every difference is smaller than the spread between nodes of the same cluster.** The largest gap in the table is 2.8%, while the three Rocky 8 nodes differ from each other by up to 8.4% on the same collective, and the two Ubuntu nodes by up to 2.8%. Four collectives favour Ubuntu, five favour Rocky 8, and the signs alternate with no pattern. At large messages on one node the two clusters are **indistinguishable** — this is a tie, not a narrow win.
+**Every difference is smaller than the spread between nodes of the same cluster.** The largest gap is 2.8%, while the three Rocky 8 nodes differ from each other by up to 8.4% on the same collective. Four collectives favour Ubuntu, five favour Rocky 8, and the signs alternate with no pattern. This is a tie, not a narrow win. Correctness is identical too: eight collectives PASS on all five nodes, `hypercube` fails on all five.
 
-**Small messages (1 MiB, time — lower is better).** At this size busbw is really a latency measurement, so raw times are the cleaner view.
+**Small messages (1 MiB, time — lower is better) — a small, consistent Ubuntu advantage.**
 
 | Collective | Ubuntu (us) | Rocky 8 (us) | Rocky / Ubuntu |
 |------------|------------:|-------------:|---------------:|
@@ -250,9 +252,7 @@ Same hardware on both sides: 8x B200 per node on NVSwitch, NCCL 2.29.2. The Ubun
 | reduce_scatter | 44.4 | 47.3 | 1.06x |
 | broadcast | 40.3 | 41.0 | 1.02x |
 
-Here there **is** a small effect. Ubuntu is ahead on all nine collectives, mean **1.10x**. Any single row sits inside the Rocky node-to-node spread at 1 MiB (5.8-15.1%), so no individual number is conclusive; what makes it credible is that the sign is the same in 9 of 9 cases while the two Ubuntu nodes agree with each other to within 7.5% and usually within 2%. Read it as a real but modest per-launch advantage of roughly 4-7 us, not as the kind of gap the 2-node data shows.
-
-**The advantage decays with message size**, averaged over all nine collectives:
+Ubuntu is ahead on all nine collectives, mean **1.10x** — roughly 4-7 us per operation. Any single row sits inside the Rocky node-to-node spread at 1 MiB (5.8-15.1%), so no individual number is conclusive; what makes it credible is that the sign is the same in 9 of 9 cases while the two Ubuntu nodes agree with each other to within 7.5%, usually within 2%. It is a real but modest effect, small enough that it will not be visible above run-to-run variation in an application. It decays with message size and is gone by 64 MiB — the signature of a fixed per-operation cost, not a bandwidth difference:
 
 | Message size | mean Rocky/Ubuntu time |
 |-------------:|-----------------------:|
@@ -264,8 +264,6 @@ Here there **is** a small effect. Ubuntu is ahead on all nine collectives, mean 
 | 1 GiB | 0.99x |
 | 4 GiB | 1.00x |
 | 16 GiB | 1.00x |
-
-It is gone by 64 MiB and stays gone — the signature of a fixed per-operation cost, not a bandwidth difference.
 
 **The comparison that matters is against the 2-node result.** The same two clusters, the same collectives, the same NCCL, measured across the network instead of within a node:
 
@@ -280,20 +278,9 @@ It is gone by 64 MiB and stays gone — the signature of a fixed per-operation c
 | 4 GiB | 1.00x | 1.09x |
 | 16 GiB | 1.00x | 1.02x |
 
-At 1 MiB the 2-node gap is **2.23x and reaches 3.02x on alltoall**; on one node the same measurement is 1.10x with a maximum of 1.16x. The per-operation gap the 2-node summary calls *deficit 2* is roughly an order of magnitude smaller once the network is removed from the path.
+At 1 MiB the 2-node gap is **2.23x and reaches 3.02x on alltoall**; here the same measurement is 1.10x with a maximum of 1.16x. The per-operation gap the 2-node summary calls *deficit 2* is roughly an order of magnitude smaller once the network is removed from the path — which is what section 5.2 turns into an explanation.
 
-### 5.2 Which is better
-
-**On the intra-node path the two clusters are equivalent, with a small Ubuntu edge on small messages.**
-
-1. **Large messages — a tie.** Nine collectives, all within 2.8%, every difference inside the node-to-node spread, signs alternating. Once a collective is streaming over NVLink, neither OS configuration is measurably better.
-2. **Small messages — Ubuntu, slightly.** 1.10x mean at 1 MiB (1.02-1.16x), consistent in direction across all nine collectives, worth about 4-7 us per operation. It decays to nothing by 64 MiB.
-3. **Correctness — identical.** Eight collectives PASS on all five nodes; `hypercube` fails validation on all five.
-4. **Node-to-node consistency — Ubuntu, marginally.** The two Ubuntu nodes agree to within 2.8% (usually 0.5%); the three Rocky 8 nodes spread up to 8.4%. With only two nodes on the Ubuntu side this is suggestive rather than established.
-
-**Net: for single-node work there is nothing to choose between them.** A workload confined to one node will run the same on either cluster. The 1.10x small-message edge is real but small enough that it will not be visible above run-to-run variation in an application.
-
-### 5.3 Possible reasons — differences in system configuration
+### 5.2 Possible reasons — differences in system configuration
 
 The configuration differences are the same ones tabulated in the 2-node summary; what changes here is which of them the measurement can actually see. Items in the data path on one node are marked accordingly.
 
@@ -325,46 +312,6 @@ The configuration differences are the same ones tabulated in the 2-node summary;
 
 **One caveat on the comparison.** The Rocky 8 runs are from 2026-08-06 and the Ubuntu runs from 2026-08-10, so the clusters were not measured on the same day; nothing here depends on a same-day comparison, since the effects are either ties or stable across three nodes. CPU model, governor and any BIOS differences could not be read on node5500-5502 from node5700, so the first candidate above remains untested.
 
-## 6. Suggestions for the admins
+## 6. Suggested actions
 
-**There is no intra-node deficit to close on either cluster.** Sections 1-5 find the GPUs, NVLink and NVSwitch performing to specification on all five nodes, every collective in the same 73-93% band, and the two clusters within 2.8% of each other at large messages. Nothing in this section is remedial — the useful output of this run is that it **narrows the 2-node investigation** described in `../out-nccl-2node/summary.md` §6, and the items below follow from that.
-
-### 6.1 What this run changes about the 2-node action list
-
-| 2-node item | Status after the 1-node control |
-|-------------|----------------------------------|
-| Deficit 1 — GPUDirect bulk cap | **Narrowed to the NIC-to-GPU PCIe leg.** Intra-node bandwidth is a tie (655.9 vs 674.8 GB/s), so GPU memory streams at full rate on Rocky 8. The PCIe/BIOS items — ACS state, Relaxed Ordering, Max Payload Size, topology — remain the ones to check; nothing about the GPUs needs investigating. |
-| Deficit 2 — per-operation cost | **Mostly network-stack, not launch-path.** 1.10x here against 2.23x across two nodes. Raises the priority of the MOFED / verbs candidate and lowers that of the driver/CUDA candidate. |
-| CPU governor check | **Still worth doing, and now doubly so.** It is the one candidate present in *both* paths, so it could account for the residual 1.10x here as well as contributing to the 2-node gap. Free and read-only. |
-| Driver / CUDA downgrade | **Lower priority.** Its main hypothesised effect — per-operation cost — is largely absent on the intra-node path. |
-
-### 6.2 Suggested checks
-
-Ordered by cost, cheapest first. All are read-only except where noted.
-
-1. **Read the CPU frequency governor and C-state configuration on node5500-5502.** The single highest value-per-effort item, and the only untested candidate for the residual small-message difference:
-
-   ```bash
-   cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor    # performance ?
-   cpupower idle-info | head -20                                 # deep C-states enabled ?
-   ```
-
-   Setting `performance` where it is not already set is low-risk and benefits every latency-sensitive workload, independent of anything in this comparison.
-
-2. **Confirm the NVLS hypothesis for `all_reduce`** (section 2), on either cluster:
-
-   ```bash
-   NCCL_DEBUG=INFO ./run-nccl-1node.sh allreduce 8 2>&1 | grep -i 'algo\|NVLS\|channels'
-   ```
-
-   Worth knowing because NVLS is what puts all_reduce at 93% of `HW max` while its constituent collectives sit at 76-77%. If a cluster is *not* selecting it, that is a real and recoverable difference.
-
-3. **Repeat the 1 MiB sweep on both clusters** to put an error bar on the 1.10x. One `run-nccl-1node.sh` invocation per node, a few minutes each. This is the difference between "a small consistent effect" and "within variation", and it is the cheapest way to close the last open question in 5.3.
-
-### 6.3 Improvements to the benchmark itself
-
-Neither affects results; both make future comparisons easier to interpret.
-
-- **Record NVLink status and the driver version in the run output.** `run-nccl-1node.sh` writes the hostname, date, OS and kernel, and the CUDA build flavour — but neither the NVIDIA driver version nor any fabric state. Adding `nvidia-smi --query-gpu=driver_version --format=csv`, `nvidia-smi nvlink --status` and `nvidia-smi topo -m` to the header would make the 900 GB/s ceiling self-documenting and would immediately expose a node running with degraded or inactive links — currently that would show only as an unexplained low busbw. The driver versions in 5.3 had to be sourced from the 2-node notes rather than from these runs.
-- **Record `/proc/cmdline` and the CPU governor.** Both are one line each, and the absence of the governor is exactly what leaves candidate 1 above untested. Their absence in the Rocky 8 output is why several questions in this summary and in the 2-node one cannot be settled from the archived runs alone.
-- **Consider dropping `hypercube` from the default collective list**, or marking it expected-to-fail. It fails validation on all five nodes across both clusters with large `#wrong` counts, and its non-zero exit terminates the mpirun job after the useful collectives have already run. Keeping it costs a confusing failure at the end of every sweep; its bandwidth numbers cannot be used while validation fails.
+The action list derived from sections 1-5 — what to check, what to change, and in what order — is in **`../admin-nccl-notes.md`**. Items common to the 1-node and 2-node cases are in its section 1; those specific to this case are in its section 2.

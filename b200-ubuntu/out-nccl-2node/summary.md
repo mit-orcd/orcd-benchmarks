@@ -197,7 +197,9 @@ The inter-node data path on the B200 nodes is **NDR (400 Gb/s)**:
 
 Same hardware on both sides: 8x B200 per node, 8 NDR rails per node, 16 ranks, NCCL 2.29.2. The Rocky 8 column throughout is the newest run of node5500+node5502; the other two Rocky pairs (5500+5501, 5501+5502) agree with it, so nothing below rests on a single node pair. Rocky 8 data: `../b200-nodes/out-nccl-2node/summary.md` and `../b200-nodes/notes.md`.
 
-### 5.1 What the difference is
+### 5.1 What differs, and which is better
+
+**The Ubuntu nodes are better overall for any realistic NCCL workload, with one exception.** The differences fall into three groups, and only two of them matter.
 
 **Large messages (16 GiB, converged busbw).** Signed difference: **+** means Ubuntu is faster.
 
@@ -213,13 +215,11 @@ Same hardware on both sides: 8x B200 per node, 8 NDR rails per node, 16 ranks, N
 | broadcast | 355.4 | 361.9 | -1.8% | 89% |
 | scatter | 290.5 | 327.0 | **-11.1%** | 73% |
 
-Three groups fall out of that table:
+**Everything at the fabric ceiling is a tie**, and necessarily so: once a collective saturates the 8 rails the OS and driver stack cannot help. That covers reduce, reduce_scatter, all_gather and broadcast at 89-95% of `HW max`, sendrecv at 98%, and gather at its algorithmic plateau of 92.9 GB/s on both clusters — all within ±2%. **Ubuntu leads exactly where headroom remains**: all_reduce (+15.1%) and alltoall (+11.1%) are the only two collectives still short of the wire at 16 GiB, at 67% and 14% of `HW max`. all_reduce dominates data-parallel training, so this is not an academic win.
 
-- **Ties (within ±2%)** — every collective that reaches the fabric ceiling: reduce, reduce_scatter, all_gather, broadcast at 89-95% of `HW max`, plus sendrecv at 98% and gather at its algorithmic plateau of 92.9 GB/s on both clusters.
-- **Ubuntu ahead** — all_reduce (+15.1%) and alltoall (+11.1%), the only two collectives with headroom left at 16 GiB (67% and 14% of `HW max`).
-- **Rocky 8 ahead** — scatter alone (-11.1%).
+**The exception is large-message `scatter`, where Rocky 8 is better by 11%.** Ubuntu leads scatter at every size up to 1 GiB (+116% at 1 MiB, +19% at 1 GiB), then **plateaus at ~290 GB/s** while Rocky 8 climbs to 327. The plateau is real, not noise: it reproduces on the Ubuntu side (289.9 GB/s in the sweep, 290.1 GB/s on a repeat) and all three Rocky pairs land at 325-339 GB/s. scatter is root-anchored — one GPU feeds all 15 peers, 8 of them remote — so it is bound by that root node's outbound aggregate, and the Ubuntu pair hits a lower ceiling there. Note the contrast with `gather`, root-anchored *but not* channel-split, which is identical on both clusters at every size.
 
-**Small messages (1 MiB, time — lower is better).** At this size busbw is really a latency measurement, so raw times are the cleaner view.
+**Small messages (1 MiB, time — lower is better), and this is the difference that matters most.** Training steps issue many modest collectives, not a handful of 16 GiB ones, so per-operation cost dominates real workloads. It is also the largest and most reproducible difference in the comparison.
 
 | Collective | Ubuntu (us) | Rocky 8 (us) | Rocky / Ubuntu |
 |------------|------------:|-------------:|---------------:|
@@ -232,6 +232,8 @@ Three groups fall out of that table:
 | reduce_scatter | 265.9 | 504.8 | **1.90x** |
 | gather | 46.9 | 51.1 | 1.09x |
 | sendrecv | 50.4 | 54.4 | 1.08x |
+
+**Two collectives are exempt at every size**, and they identify the mechanism. `sendrecv` and `gather` sit within ~1.1x from 1 MiB to 16 GiB — exactly the two collectives NCCL does **not** split across its 8 channels (sendrecv is one contiguous chunk per pair, gather a fan-in kept on a single path). Everything that *is* channel-split shows the gap.
 
 **The advantage decays with message size**, averaged over the seven affected collectives:
 
@@ -246,8 +248,6 @@ Three groups fall out of that table:
 | 4 GiB | 1.09x |
 | 16 GiB | 1.02x |
 
-**Two collectives are exempt at every size.** `sendrecv` and `gather` sit within ~1.1x from 1 MiB to 16 GiB. These are exactly the two collectives NCCL does **not** split across its 8 channels — sendrecv is one contiguous chunk per pair, gather is a fan-in kept on a single path. Everything that *is* channel-split shows the gap.
-
 **Bulk GPUDirect path, measured directly** (`ib_write_bw`, mlx5_4, 64 MiB writes, 200 iters; Ubuntu 2026-08-10, Rocky 8 2026-07-13):
 
 | Test | Ubuntu 5700<->5701 | Rocky 8 5500<->5502 | ratio |
@@ -256,22 +256,11 @@ Three groups fall out of that table:
 | **NIC reads from GPU** | **395.5 Gb/s** | 147.6 Gb/s | **2.68x** |
 | **NIC writes into GPU** | **379.6 Gb/s** | 286.6 Gb/s | **1.32x** |
 
-The host-to-host row matching to within 0.3% is what makes the other two rows meaningful: the fabric itself is equally healthy on both clusters, and the difference is confined to the GPU-memory leg of the path.
-
-### 5.2 Which is better
-
-**The Ubuntu nodes are better overall**, on three counts, with one exception.
-
-1. **Per-operation cost — Ubuntu, decisively.** 1.9-3.0x less time at 1 MiB on every channel-split collective. This is the largest and most reproducible difference in the comparison, and it is the one that matters for real workloads: training steps issue many modest collectives, not a handful of 16 GiB ones.
-2. **Collectives with headroom — Ubuntu.** Where the wire is not yet the limit, the advantage survives to the largest size: all_reduce **+15.1%** and alltoall **+11.1%** at 16 GiB. all_reduce is the collective that dominates data-parallel training, so this is not an academic win.
-3. **Bulk GPUDirect path — Ubuntu, by 2.7x** on NIC-reads-from-GPU. Caveat: the Rocky 8 figure dates from 2026-07-13 and the 2026-08-06 8-GPU/node runs show no bulk deficit (sendrecv 47.7-49.7 GB/s across the three pairs, matching Ubuntu's 48.8), so this one needs re-measuring before it is acted on.
-4. **Everything at the fabric ceiling — a tie.** Once a collective saturates the 8 rails, the OS and driver stack cannot help: reduce, reduce_scatter, all_gather, broadcast, sendrecv and gather all land within ±2%.
-
-**The exception is large-message `scatter`, where Rocky 8 is better by 11%.** Ubuntu leads scatter at every size up to 1 GiB (+116% at 1 MiB, +18% at 256 MiB, +19% at 1 GiB), then **plateaus at ~290 GB/s** while Rocky 8 keeps climbing to 327. The plateau is real, not noise: it reproduces exactly on the Ubuntu side (289.9 GB/s in the sweep, 290.1 GB/s on a repeat run) and all three Rocky pairs land at 325-339 GB/s. scatter is root-anchored — one GPU feeds all 15 peers, 8 of them remote — so it is bound by that root node's outbound aggregate, and the Ubuntu pair hits a lower ceiling there. Note the contrast with `gather`, root-anchored *but not* channel-split, which is identical on both clusters at every size.
+The host-to-host row matching to within 0.3% is what makes the other two meaningful: the fabric itself is equally healthy on both clusters, and the difference is confined to the GPU-memory leg. Caveat: the Rocky 8 figure dates from 2026-07-13, and the 2026-08-06 8-GPU/node runs show no bulk deficit (sendrecv 47.7-49.7 GB/s across the three pairs, matching Ubuntu's 48.8), so this one needs re-measuring before it is acted on.
 
 **Net:** for any realistic NCCL workload the Ubuntu configuration is the better of the two, and the single regression is in a collective that rarely bottlenecks training.
 
-### 5.3 Possible reasons — differences in system configuration
+### 5.2 Possible reasons — differences in system configuration
 
 Both clusters are the same B200 platform with the same fabric, so the explanation has to lie in the software and platform configuration. What is actually different:
 
@@ -315,135 +304,6 @@ Both clusters are the same B200 platform with the same fabric, so the explanatio
 
 **Two caveats on the comparison table.** The Rocky 8 rows come from `../b200-nodes/notes.md` and its run logs; those nodes are Slurm-managed and not reachable from node5700, so CPU model, frequency governor and HCA firmware could not be compared — and any of the three could matter for a per-operation cost. Deciding between the remaining candidates needs a controlled test: an `ib_write_bw` small-message sweep (many small ops vs one large op) on both clusters would separate the IB stack from everything above it.
 
-## 6. Suggestions for the admins — closing the gap on Rocky 8
+## 6. Suggested actions
 
-**Section 5 is the evidence; this section is the action list derived from it.** Two independent deficits separate the clusters. **node5700 / node5701 now serve as a known-good reference to diff against.** Nothing below needs doing on the Ubuntu nodes — with one exception, the `scatter` plateau in 6.3, which is the single collective where Rocky 8 is ahead (5.2).
-
-| # | Deficit | Size | Where it shows | Evidence | Rocky 8 data from |
-|---|---------|------|----------------|----------|-------------------|
-| 1 | GPUDirect bulk cap on Rocky 8 | **2.7x** on NIC-reads-from-GPU (147.6 vs 395.5 Gb/s) | 1 GPU/node NCCL: 12.7 vs 48.7 GB/s | `ib_write_bw` table in 5.1; platform-level candidates in 5.3 | **2026-07-13 — may be stale, verify first** |
-| 2 | Per-operation cost on Rocky 8 | **1.9-3.0x** in time at 1 MiB | every collective NCCL splits across its 8 channels | 1 MiB time table + decay table in 5.1; ranked candidates in 5.3 | 2026-08-06 |
-
-### 6.0 Before anything else: confirm the current state
-
-**Deficit 1 rests on 2026-07-13 measurements and may no longer exist.** Every Rocky 8 figure for it — the 147.6 Gb/s perftest cap and the 12.7 GB/s 1-GPU/node NCCL result — dates from that day. The Rocky 8 runs used everywhere else in this summary are from **2026-08-06** and are all 8 GPUs/node, a configuration that shows **no** bulk deficit (sendrecv 47.7-49.7 GB/s across the three pairs, matching Ubuntu's 48.8). Nothing in between was recorded, so a fix or a stack change on those nodes would not be visible here. Deficit 2, by contrast, is measured on the 2026-08-06 data and stands.
-
-There is also an **open question about the IOMMU state on the Rocky 8 nodes.** `../b200-nodes/notes.md` (2026-07-13) records `iommu=pt intel_iommu=on` with 540 groups, and it is the *AICR reference cluster* (b0029+b0030), not node5500-5502, that `results_b200.md` documents as needing `iommu=off`. It has since been suggested that the Rocky 8 nodes now run `iommu=off`; that could not be verified from node5700 (no ssh access, and no run output records `/proc/cmdline`). **The two cases lead to opposite advice, so settle this before acting:**
-
-- If Rocky 8 still runs **`iommu=pt intel_iommu=on`** — the `iommu=off` diagnostic in 6.2 is worth doing.
-- If Rocky 8 already runs **`iommu=off`** and still measures below line rate — IOMMU is ruled out on both clusters, that diagnostic can be skipped, and the search narrows immediately to MOFED, BIOS/ACS state and PCIe topology (6.1 and the topology check in 6.2).
-
-For reference, **the Ubuntu nodes run `iommu=pt intel_iommu=on`** (540 groups, HCA and GPU in separate IOMMU groups) — IOMMU is **on**, not off, and they still reach line rate.
-
-Three commands settle all of it, on any Rocky 8 node:
-
-```bash
-cat /proc/cmdline                      # iommu=off ? iommu=pt ?
-ls /sys/kernel/iommu_groups | wc -l    # 0 => IOMMU off; ~540 => on
-sbatch job-nccl-2node.sh sendrecv 1    # ~12.7 GB/s => cap persists;
-                                       # ~48 GB/s  => deficit 1 is gone
-```
-
-If that last run comes back near 48 GB/s, **stop: deficit 1 no longer exists** and only the deficit-2 items are worth pursuing: the governor and C-state check in 6.2, the MOFED downgrade in 6.1, and the `NCCL_DEBUG=INFO` comparison in 6.3.
-
-### 6.1 Libraries and drivers to install (on the Rocky 8 nodes)
-
-Change **one thing at a time on one node pair**, re-running the perftest triplet and `run-nccl-2node.sh all 8` after each, so every result stays attributable to a single change.
-
-1. **MOFED / rdma-core -> 25.10** (`OFED-internal-25.10-1.7.1.413`, as on the Ubuntu nodes; Rocky 8 currently runs 26.04-0.8.6). This is the **leading hypothesis** for deficit 2 (5.3, candidate 1): the verbs provider sets per-operation posting cost while leaving bulk streaming untouched, which is exactly the measured shape. It is not the first thing to *do* — the governor check in 6.2 is free and read-only, so run that first — but it is the first thing to *change*. Note this is a downgrade: the *newer* stack is the one showing the higher per-operation cost, so the aim is to test for a regression.
-2. **NVIDIA driver -> 570.211.01** (Rocky 8 runs 590.48.01), only if MOFED alone does not close the gap. Caveat: r570 caps CUDA at 12.8, so anything built against CUDA 13 must be rebuilt.
-3. **Align node5500's kernel** (EL8 / 4.18) with node5502 (EL10 / 6.12). Not a suspected cause — all three Rocky pairs measure the same — but aligning them removes one variable from the comparison.
-
-Nothing needs installing for the benchmark itself: `perftest`, `rdma-core` and the NCCL stack are already present on both clusters.
-
-### 6.2 System configuration
-
-**On `iommu=off` and ACS.** The classic mechanism is real: Linux enables ACS on downstream ports when the IOMMU is on, ACS redirect sends peer-to-peer TLPs up to the root complex instead of straight across the switch, and that can reduce GPUDirect bandwidth. `iommu=off` is the broadest way to take ACS out of the picture, and it is what the reference cluster used.
-
-The Ubuntu measurement makes a narrower point than "IOMMU does not matter": **IOMMU-on is compatible with full line rate on this hardware.** node5700 boots `iommu=pt intel_iommu=on`, puts the HCA (`0000:18:00.0`, group 62) and GPU0 (`0000:1b:00.0`, group 65) in separate IOMMU groups — so ACS isolation is active — and still reads from GPU at 395.5 Gb/s, i.e. NDR line rate with nothing left to recover. `nvidia-smi topo -m` reports **PXB** for each GPU<->rail pair (across PCIe bridges, *not* via the host bridge), and `lspci -t` confirms the HCA and GPU hang off the same switch.
-
-So `iommu=off` is still worth testing on the **Rocky 8** nodes. This does not contradict 5.3, which retires the IOMMU: what 5.3 excludes is IOMMU-*on* as the explanation of the **per-operation** gap, since both clusters boot the identical setting and only one is slow. `iommu=off` stays live as a diagnostic for the **bulk** cap, where the mechanism would be ACS redirect on that platform's PCIe switches rather than IOTLB pressure. Suggested order:
-
-- **Do run `iommu=off` on one Rocky node as a diagnostic.** It is one cmdline edit plus a reboot, reversible, and decisive: if the GPU-read bandwidth jumps from 147.6 Gb/s toward ~395, the cause is the IOMMU/ACS interaction on that platform.
-- **Then prefer a targeted fix in production.** If `iommu=off` proves the point, disabling ACS redirect on the relevant ports (BIOS ACS setting, or `pci=disable_acs_redir=` with the specific device IDs) restores P2P while keeping IOMMU isolation. node5502 already carries `pci=disable_acs_redir=pci:1000:c030` and still measures below line rate, so widening that mask to cover the Broadcom switch ports in its GPU<->NIC path is worth trying.
-- **Compare the two platforms directly**: root `lspci -vvv` **ACSCtl** bits on the GPU<->NIC path, and `nvidia-smi topo -m`. If a Rocky node reports `NODE`/`SYS` where node5700 reports `PXB`, the GPU and its rail are not under a common switch there, and pairing each GPU with a rail under its own switch would be the fix. ACSCtl could not be read here — it needs root.
-
-For **deficit 1 (the GPUDirect bulk path)** — this is set at the platform level, so the items below are the ones that move it:
-
-- **PCIe Relaxed Ordering** — check it is enabled in BIOS. It is an NVIDIA-recommended setting for GPUDirect, and disabling it degrades NIC-reads-from-GPU specifically, matching the measured read/write asymmetry (147.6 read vs 286.6 write).
-- **ACS on the Broadcom PCIe switches** — compare `lspci -vvv` ACSCtl bits (root required) against node5700. node5700 does *not* carry `pci=disable_acs_redir` and is still at full speed, so the kernel workaround is not the differentiator; the BIOS/firmware state is what to inspect.
-- **PCIe Max Payload Size / Max Read Request** on the HCA and GPU bridges — again, diff against node5700.
-
-For **deficit 2 (per-operation cost)**:
-
-- **CPU frequency governor -> `performance`** and **disable deep C-states**. NCCL's proxy thread posts every RDMA operation on the host CPU, so `powersave` or deep C-states produce precisely this signature. The Ubuntu nodes run `performance`. This is the cheapest, lowest-risk item on the whole list and should be checked first.
-- Report (do not change) the **CPU model** and **HCA firmware** on node5500-5502 — neither is verifiable from node5700, and both could matter for a per-operation cost.
-
-If the Rocky 8 nodes are ever run **without Slurm** like these ones, they will also need passwordless ssh both ways and `memlock unlimited` in non-interactive ssh sessions (`/etc/security/limits.conf` + `UsePAM yes`).
-
-### 6.3 What to do in the application
-
-Application settings **do not move deficit 1** — the GPUDirect bulk path is set by platform configuration. They matter for getting the most out of whatever the platform provides, and for diagnosing deficit 2. These are already in `run-nccl-2node.sh`:
-
-- `NCCL_IB_HCA=mlx5_4,mlx5_7,mlx5_8,mlx5_9,mlx5_10,mlx5_13,mlx5_14,mlx5_15` — pin the 8 NDR rails explicitly. Letting NCCL choose works at 1 GPU/node but **fails to connect at 8 GPUs/node**.
-- `NCCL_NET_GDR_LEVEL=2` — keep GPUDirect on the data path.
-- Bootstrap MPI over TCP on a pinned interface (`--mca pml ob1 --mca btl tcp,self`, `--mca btl_tcp_if_include <iface>`, `--mca oob_tcp_if_include <iface>`) and disable UCC/hcoll. MPI only exchanges the NCCL unique-id; the data path is NCCL.
-- Build nccl-tests against the CUDA flavour the **driver** supports (12.9 here, since r570 caps at CUDA 12.8).
-
-For diagnosis rather than tuning:
-
-- `NCCL_DEBUG=INFO` on **both** clusters, comparing channel count, protocol (LL / LL128 / Simple) and algorithm. If Rocky 8 selects a different protocol, deficit 2 is a tuning problem fixable with environment variables rather than a reinstall — worth checking before touching MOFED.
-- `NCCL_MIN_NCHANNELS` / `NCCL_PROTO` sweeps **on the Ubuntu side** for the large-`scatter` plateau (290 vs 325-339 GB/s) — the one deficit that runs the other way, see 5.2 and the last paragraph of 5.3. Low priority: scatter rarely bottlenecks training.
-
-### 6.4 How to verify
-
-After each change on Rocky 8, re-run the two tests that isolate the deficits, and compare against the Ubuntu targets:
-
-```bash
-# deficit 1 — GPUDirect bulk path (target: ~395 Gb/s read, ~380 Gb/s write)
-ssh <nodeB> 'ib_write_bw -d mlx5_4 --report_gbits -s 67108864 -n 200'
-ib_write_bw -d mlx5_4 --use_cuda=0 --report_gbits -s 67108864 -n 200 <nodeB>
-
-# deficit 2 — per-operation cost (target: all_reduce ~183 us at 1 MiB, 16 GPUs)
-./run-nccl-2node.sh allreduce 8
-```
-
-### 6.5 Keeping IOMMU on while disabling ACS redirect
-
-`iommu=off` is the broadest lever, and it is **not** the only way to stop ACS redirect from routing peer-to-peer traffic through the root complex. All three options below leave the IOMMU fully on.
-
-**1. Kernel command line (persistent, targeted).**
-
-```
-pci=disable_acs_redir=pci:1000:c030      # by vendor:device
-pci=disable_acs_redir=0000:17:02.0       # or by BDF, ';'-separated
-```
-
-Clears the P2P Request Redirect / Completion Redirect / Upstream Forwarding bits on the named devices. **The devices to name are the downstream ports of the switch between the GPU and its HCA — not the GPU or the NIC.** node5502 already carries exactly this for `pci:1000:c030` and still measures below line rate, so extending the mask to the bridges actually in its GPU<->NIC path is the next step; on node5700 that path is the switch at `[17-1b]` (HCA `0000:18:00.0`, GPU0 `0000:1b:00.0`).
-
-**2. BIOS.** Most server BIOSes expose "PCIe ACS" / "ACS Enable". Disabling it there means the capability is never enabled at boot, so the kernel has nothing to enforce, and the IOMMU stays on. Cleanest production option where it exists.
-
-**3. `setpci` at runtime (no reboot, for A/B testing).**
-
-```bash
-setpci -s <bridge_BDF> ECAP_ACS+6.w=0000   # clear ACS control reg
-```
-
-Per bridge, as root, and it does **not** survive reboot or PCIe hotplug — but it is ideal for a quick test on one node: measure `ib_write_bw --use_cuda`, clear the bits, measure again.
-
-**Verify what is actually set** (root required):
-
-```bash
-lspci -vvv -s <bridge_BDF> | grep -A2 'Access Control Services'
-```
-
-`ACSCap:` shows what the hardware supports, `ACSCtl:` what is enabled. For P2P you want **`RR-` and `CR-`** (Request and Completion Redirect off). This is the one measurement that could not be taken on node5700 — `lspci -vvv` needs root — so whether ACS redirect is actually active there remains unknown, even though the bandwidth shows it is not costing anything.
-
-Two things to weigh when choosing among them:
-
-- Disabling ACS redirect **merges the affected devices into one IOMMU group**, trading some device isolation for P2P bandwidth. Not a concern for bare-metal HPC; worth weighing if those nodes ever host VMs or VFIO passthrough.
-- Prefer the three in-tree options above; the out-of-tree `pcie_acs_override=` patch is aimed at VFIO passthrough rather than production HPC nodes.
-
-Note that **`iommu=pt` is a different knob**: it makes host DMA use identity mapping to cut translation cost, but it does *not* clear ACS redirect. Both clusters already run `iommu=pt`, so it is not a substitute for any of the above.
-
-**Priority.** If only one thing gets done: check the CPU governor (free, and it may explain deficit 2 outright). If only one *investigation* gets done: the PCIe/BIOS diff against node5700, since deficit 1 is the larger gap and now has a working reference. Neither root cause is established — this list is ordered by evidence and cost, not by certainty.
+The action list derived from sections 1-5 — what to check, what to change, and in what order — is in **`../admin-nccl-notes.md`**. Items common to the 1-node and 2-node cases are in its section 1; those specific to this case are in its section 3.
