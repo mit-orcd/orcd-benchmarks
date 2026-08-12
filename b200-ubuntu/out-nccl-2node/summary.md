@@ -1,6 +1,6 @@
 # nccl-tests 2-node summary — Ubuntu B200 nodes
 
-- Generated: 2026-08-11 22:08:54
+- Generated: 2026-08-11 22:14:12
 - Runs: node5700+node5701
 - GPUs: 8/node x 2 nodes = 16 x NVIDIA B200 (inter-node, InfiniBand + GPUDirect RDMA)
 - Config: 1 MiB-16 GiB, 5 warmup + 20 iters
@@ -13,17 +13,17 @@ A *collective* is one communication pattern that all 16 GPUs take part in togeth
 
 Representative node pair: **node5700+node5701**.
 
-| Collective | GPUs | Ubuntu busbw (GB/s) | Rocky 8 (node5500+node5502) (GB/s) | vs Rocky 8 | HW max (GB/s) | % of HW max | correctness |
-|------------|-----:|-----------------------:|---------------:|-----------:|--------------:|--------------:|:-----------:|
-| all_gather | 16 | 379.1 | 382.7 | -0.9% | 400 | 95% | PASS |
-| all_reduce | 16 | 268.4 | 233.2 | +15.1% | 400 | 67% | PASS |
-| alltoall | 16 | 55.4 | 49.9 | +11.1% | 400 | 14% | PASS |
-| broadcast | 16 | 355.4 | 361.9 | -1.8% | 400 | 89% | PASS |
-| gather | 16 | 92.9 | 92.9 | +0.0% | 400 | 23% | PASS |
-| reduce | 16 | 380.0 | 382.7 | -0.7% | 400 | 95% | PASS |
-| reduce_scatter | 16 | 380.1 | 382.4 | -0.6% | 400 | 95% | PASS |
-| scatter | 16 | 290.5 | 327.0 | -11.1% | 400 | 73% | PASS |
-| sendrecv | 16 | 48.8 | 48.4 | +0.8% | 50 | 98% | PASS |
+| Collective | GPUs | Ubuntu busbw (GB/s) | Rocky 8 (node5500+node5502) (GB/s) | vs Rocky 8 | reference busbw (GB/s) | ours / ref | HW max (GB/s) | % of HW max | correctness |
+|------------|-----:|-----------------------:|---------------:|-----------:|-----------------------:|-----------:|--------------:|--------------:|:-----------:|
+| all_gather | 16 | 379.1 | 382.7 | -0.9% | 218.0 | 174% | 400 | 95% | PASS |
+| all_reduce | 16 | 268.4 | 233.2 | +15.1% | 170.0 | 158% | 400 | 67% | PASS |
+| alltoall | 16 | 55.4 | 49.9 | +11.1% | 39.8 | 139% | 400 | 14% | PASS |
+| broadcast | 16 | 355.4 | 361.9 | -1.8% | 202.0 | 176% | 400 | 89% | PASS |
+| gather | 16 | 92.9 | 92.9 | +0.0% | 90.5 | 103% | 400 | 23% | PASS |
+| reduce | 16 | 380.0 | 382.7 | -0.7% | 201.0 | 189% | 400 | 95% | PASS |
+| reduce_scatter | 16 | 380.1 | 382.4 | -0.6% | 218.0 | 174% | 400 | 95% | PASS |
+| scatter | 16 | 290.5 | 327.0 | -11.1% | 293.0 | 99% | 400 | 73% | PASS |
+| sendrecv | 16 | 48.8 | 48.4 | +0.8% | 26.6 | — | 50 | 98% | PASS |
 
 Converged = busbw at the largest message size, best of out-of-place / in-place (matches the reference methodology).
 
@@ -73,6 +73,8 @@ Dividing each result by one rail's line rate (50 GB/s) gives the most useful vie
 **Algorithm-limited, and the numbers say so precisely.** `alltoall` at 14% engages roughly **1.1 of the 8 rails** — a literal quantification of NCCL's N^2 point-to-point transfers not being pipelined across NICs. `gather` at 23% is about 1.9 rails, the same story for fan-in to a single root. Neither is a fabric problem: a faster network barely helps a collective that does not use it.
 
 > **Caveat on the denominators.** The 400 GB/s ceiling is exact for the ring collectives, whose traffic streams around a ring bottlenecked by its inter-node links. It is an *approximation* for the root-anchored and all-to-all patterns, where only a fraction of traffic crosses the node boundary (for alltoall, 8 of each GPU's 15 peers are remote; the rest go over NVLink). A per-collective ceiling would shift those percentages — most likely lowering `scatter`'s apparent figure. It does not change any conclusion: gather and alltoall are 4-8x below any reasonable ceiling and are algorithm-bound under every accounting.
+
+> Note: sendrecv here uses 16 GPUs (ring), but the reference 26.6 GB/s is a per-pair (2-GPU) bidir figure, so the two are not directly comparable and `ours / ref` is left blank.
 
 ## 4. Bandwidth vs message size (GB/s)
 
@@ -287,7 +289,7 @@ Two independent deficits separate the clusters. **node5700 / node5701 now serve 
 There is also an **open question about the IOMMU state on the Rocky 8 nodes.** `../b200-nodes/notes.md` (2026-07-13) records `iommu=pt intel_iommu=on` with 540 groups, and it is the *AICR reference cluster* (b0029+b0030), not node5500-5502, that `results_b200.md` documents as needing `iommu=off`. It has since been suggested that the Rocky 8 nodes now run `iommu=off`; that could not be verified from node5700 (no ssh access, and no run output records `/proc/cmdline`). **The two cases lead to opposite advice, so settle this before acting:**
 
 - If Rocky 8 still runs **`iommu=pt intel_iommu=on`** — the `iommu=off` diagnostic in 6.2 is worth doing.
-- If Rocky 8 already runs **`iommu=off`** and is still capped — IOMMU is exonerated on both clusters, that diagnostic is pointless, and the search narrows immediately to MOFED, BIOS/ACS state and PCIe topology (6.1 and the topology check in 6.2).
+- If Rocky 8 already runs **`iommu=off`** and still measures below line rate — IOMMU is ruled out on both clusters, that diagnostic can be skipped, and the search narrows immediately to MOFED, BIOS/ACS state and PCIe topology (6.1 and the topology check in 6.2).
 
 For reference, **the Ubuntu nodes run `iommu=pt intel_iommu=on`** (540 groups, HCA and GPU in separate IOMMU groups) — IOMMU is **on**, not off, and they still reach line rate.
 
@@ -304,27 +306,27 @@ If that last run comes back near 48 GB/s, **stop: deficit 1 no longer exists** a
 
 ### 6.1 Libraries and drivers to install (on the Rocky 8 nodes)
 
-Change **one thing at a time on one node pair**, re-running the perftest triplet and `run-nccl-2node.sh all 8` after each — changing several at once cannot identify the cause.
+Change **one thing at a time on one node pair**, re-running the perftest triplet and `run-nccl-2node.sh all 8` after each, so every result stays attributable to a single change.
 
-1. **MOFED / rdma-core -> 25.10** (`OFED-internal-25.10-1.7.1.413`, as on the Ubuntu nodes; Rocky 8 currently runs 26.04-0.8.6). This is the **first thing to try** for deficit 2: the verbs provider sets per-operation posting cost while leaving bulk streaming untouched, which is exactly the measured shape. Note the direction is counter-intuitive — the *newer* stack is the slower one — so this is a downgrade to test a suspected regression.
+1. **MOFED / rdma-core -> 25.10** (`OFED-internal-25.10-1.7.1.413`, as on the Ubuntu nodes; Rocky 8 currently runs 26.04-0.8.6). This is the **first thing to try** for deficit 2: the verbs provider sets per-operation posting cost while leaving bulk streaming untouched, which is exactly the measured shape. Note this is a downgrade: the *newer* stack is the one showing the higher per-operation cost, so the aim is to test for a regression.
 2. **NVIDIA driver -> 570.211.01** (Rocky 8 runs 590.48.01), only if MOFED alone does not close the gap. Caveat: r570 caps CUDA at 12.8, so anything built against CUDA 13 must be rebuilt.
-3. **Align node5500's kernel** (EL8 / 4.18) with node5502 (EL10 / 6.12). Not a suspected cause — all three Rocky pairs are equally slow — but a 4.18 kernel under MOFED 26.04 is an odd pairing and worth removing as a variable.
+3. **Align node5500's kernel** (EL8 / 4.18) with node5502 (EL10 / 6.12). Not a suspected cause — all three Rocky pairs measure the same — but aligning them removes one variable from the comparison.
 
 Nothing needs installing for the benchmark itself: `perftest`, `rdma-core` and the NCCL stack are already present on both clusters.
 
 ### 6.2 System configuration
 
-**On `iommu=off` and ACS.** The classic mechanism is real: Linux enables ACS on downstream ports when the IOMMU is on, ACS redirect sends peer-to-peer TLPs up to the root complex instead of straight across the switch, and that can throttle GPUDirect. `iommu=off` is the blunt way to take ACS out of the picture, and it is what the reference cluster needed.
+**On `iommu=off` and ACS.** The classic mechanism is real: Linux enables ACS on downstream ports when the IOMMU is on, ACS redirect sends peer-to-peer TLPs up to the root complex instead of straight across the switch, and that can reduce GPUDirect bandwidth. `iommu=off` is the broadest way to take ACS out of the picture, and it is what the reference cluster used.
 
-What the Ubuntu measurement shows is narrower than "IOMMU does not matter": **IOMMU-on is not *inherently* fatal on this hardware.** node5700 boots `iommu=pt intel_iommu=on`, puts the HCA (`0000:18:00.0`, group 62) and GPU0 (`0000:1b:00.0`, group 65) in separate IOMMU groups — so ACS isolation is active — and still reads from GPU at 395.5 Gb/s, i.e. NDR line rate with nothing left to recover. `nvidia-smi topo -m` reports **PXB** for each GPU<->rail pair (across PCIe bridges, *not* via the host bridge), and `lspci -t` confirms the HCA and GPU hang off the same switch.
+The Ubuntu measurement makes a narrower point than "IOMMU does not matter": **IOMMU-on is compatible with full line rate on this hardware.** node5700 boots `iommu=pt intel_iommu=on`, puts the HCA (`0000:18:00.0`, group 62) and GPU0 (`0000:1b:00.0`, group 65) in separate IOMMU groups — so ACS isolation is active — and still reads from GPU at 395.5 Gb/s, i.e. NDR line rate with nothing left to recover. `nvidia-smi topo -m` reports **PXB** for each GPU<->rail pair (across PCIe bridges, *not* via the host bridge), and `lspci -t` confirms the HCA and GPU hang off the same switch.
 
-So for the **Rocky 8** nodes the right conclusion is not "skip `iommu=off`" but:
+So `iommu=off` is still worth testing on the **Rocky 8** nodes. Suggested order:
 
 - **Do run `iommu=off` on one Rocky node as a diagnostic.** It is one cmdline edit plus a reboot, reversible, and decisive: if the GPU-read bandwidth jumps from 147.6 Gb/s toward ~395, the cause is the IOMMU/ACS interaction on that platform.
-- **But prefer a targeted fix in production.** If `iommu=off` proves the point, disabling ACS redirect on the relevant ports (BIOS ACS setting, or `pci=disable_acs_redir=` with the *correct* device IDs) restores P2P while keeping IOMMU isolation. Note node5502 already carries `pci=disable_acs_redir=pci:1000:c030` and was still capped — which more likely means that mask did not cover the Broadcom switch ports in its path than that ACS is innocent.
-- **Compare the two platforms directly**: root `lspci -vvv` **ACSCtl** bits on the GPU<->NIC path, and `nvidia-smi topo -m`. If a Rocky node reports `NODE`/`SYS` where node5700 reports `PXB`, the GPU and its rail are not under a common switch there, and that topology difference alone could explain the cap. ACSCtl could not be read here — it needs root.
+- **Then prefer a targeted fix in production.** If `iommu=off` proves the point, disabling ACS redirect on the relevant ports (BIOS ACS setting, or `pci=disable_acs_redir=` with the specific device IDs) restores P2P while keeping IOMMU isolation. node5502 already carries `pci=disable_acs_redir=pci:1000:c030` and still measures below line rate, so widening that mask to cover the Broadcom switch ports in its GPU<->NIC path is worth trying.
+- **Compare the two platforms directly**: root `lspci -vvv` **ACSCtl** bits on the GPU<->NIC path, and `nvidia-smi topo -m`. If a Rocky node reports `NODE`/`SYS` where node5700 reports `PXB`, the GPU and its rail are not under a common switch there, and pairing each GPU with a rail under its own switch would be the fix. ACSCtl could not be read here — it needs root.
 
-For **deficit 1 (the GPUDirect cap)** — this is platform-level and cannot be fixed in software:
+For **deficit 1 (the GPUDirect bulk path)** — this is set at the platform level, so the items below are the ones that move it:
 
 - **PCIe Relaxed Ordering** — check it is enabled in BIOS. It is an NVIDIA-recommended setting for GPUDirect, and disabling it degrades NIC-reads-from-GPU specifically, matching the measured read/write asymmetry (147.6 read vs 286.6 write).
 - **ACS on the Broadcom PCIe switches** — compare `lspci -vvv` ACSCtl bits (root required) against node5700. node5700 does *not* carry `pci=disable_acs_redir` and is still at full speed, so the kernel workaround is not the differentiator; the BIOS/firmware state is what to inspect.
@@ -339,7 +341,7 @@ If the Rocky 8 nodes are ever run **without Slurm** like these ones, they will a
 
 ### 6.3 What to do in the application
 
-Application settings **cannot recover deficit 1** — a capped GPUDirect path is platform configuration. They matter for getting the most out of whatever the platform provides, and for diagnosing deficit 2. These are already in `run-nccl-2node.sh`:
+Application settings **do not move deficit 1** — the GPUDirect bulk path is set by platform configuration. They matter for getting the most out of whatever the platform provides, and for diagnosing deficit 2. These are already in `run-nccl-2node.sh`:
 
 - `NCCL_IB_HCA=mlx5_4,mlx5_7,mlx5_8,mlx5_9,mlx5_10,mlx5_13,mlx5_14,mlx5_15` — pin the 8 NDR rails explicitly. Letting NCCL choose works at 1 GPU/node but **fails to connect at 8 GPUs/node**.
 - `NCCL_NET_GDR_LEVEL=2` — keep GPUDirect on the data path.
@@ -366,7 +368,7 @@ ib_write_bw -d mlx5_4 --use_cuda=0 --report_gbits -s 67108864 -n 200 <nodeB>
 
 ### 6.5 Keeping IOMMU on while disabling ACS redirect
 
-`iommu=off` is the blunt instrument; it is **not** the only way to stop ACS redirect from routing peer-to-peer traffic through the root complex. All three options below leave the IOMMU fully on.
+`iommu=off` is the broadest lever, and it is **not** the only way to stop ACS redirect from routing peer-to-peer traffic through the root complex. All three options below leave the IOMMU fully on.
 
 **1. Kernel command line (persistent, targeted).**
 
@@ -375,7 +377,7 @@ pci=disable_acs_redir=pci:1000:c030      # by vendor:device
 pci=disable_acs_redir=0000:17:02.0       # or by BDF, ';'-separated
 ```
 
-Clears the P2P Request Redirect / Completion Redirect / Upstream Forwarding bits on the named devices. **The devices to name are the downstream ports of the switch between the GPU and its HCA — not the GPU or the NIC.** node5502 already carries exactly this for `pci:1000:c030` and was still capped, which suggests that mask did not cover the bridges actually in its GPU<->NIC path; on node5700 that path is the switch at `[17-1b]` (HCA `0000:18:00.0`, GPU0 `0000:1b:00.0`).
+Clears the P2P Request Redirect / Completion Redirect / Upstream Forwarding bits on the named devices. **The devices to name are the downstream ports of the switch between the GPU and its HCA — not the GPU or the NIC.** node5502 already carries exactly this for `pci:1000:c030` and still measures below line rate, so extending the mask to the bridges actually in its GPU<->NIC path is the next step; on node5700 that path is the switch at `[17-1b]` (HCA `0000:18:00.0`, GPU0 `0000:1b:00.0`).
 
 **2. BIOS.** Most server BIOSes expose "PCIe ACS" / "ACS Enable". Disabling it there means the capability is never enabled at boot, so the kernel has nothing to enforce, and the IOMMU stays on. Cleanest production option where it exists.
 
@@ -395,10 +397,10 @@ lspci -vvv -s <bridge_BDF> | grep -A2 'Access Control Services'
 
 `ACSCap:` shows what the hardware supports, `ACSCtl:` what is enabled. For P2P you want **`RR-` and `CR-`** (Request and Completion Redirect off). This is the one measurement that could not be taken on node5700 — `lspci -vvv` needs root — so whether ACS redirect is actually active there remains unknown, even though the bandwidth shows it is not costing anything.
 
-Two caveats for the admins:
+Two things to weigh when choosing among them:
 
-- Disabling ACS redirect **merges the affected devices into one IOMMU group**, weakening isolation. Irrelevant for bare-metal HPC; it matters if those nodes ever host VMs or VFIO passthrough.
-- Avoid the out-of-tree `pcie_acs_override=` patch — a VFIO community hack, not appropriate for production HPC nodes.
+- Disabling ACS redirect **merges the affected devices into one IOMMU group**, trading some device isolation for P2P bandwidth. Not a concern for bare-metal HPC; worth weighing if those nodes ever host VMs or VFIO passthrough.
+- Prefer the three in-tree options above; the out-of-tree `pcie_acs_override=` patch is aimed at VFIO passthrough rather than production HPC nodes.
 
 Note that **`iommu=pt` is a different knob**: it makes host DMA use identity mapping to cut translation cost, but it does *not* clear ACS redirect. Both clusters already run `iommu=pt`, so it is not a substitute for any of the above.
 
