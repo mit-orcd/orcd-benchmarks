@@ -56,7 +56,7 @@ REF_ROW_RE = re.compile(
 
 # preferred display order (matches reference Table 1)
 COLL_ORDER = ["sendrecv", "reduce", "broadcast", "gather", "scatter",
-              "reduce_scatter", "all_gather", "all_reduce", "alltoall", "hypercube"]
+              "reduce_scatter", "all_gather", "all_reduce", "alltoall"]
 
 
 def fmt_size(n):

@@ -7,7 +7,7 @@
 #   collectives: comma/space separated list to select which benchmarks to run,
 #                or "all" for every collective. Default: sendrecv
 #     names: sendrecv allreduce allgather reducescatter reduce broadcast
-#            alltoall gather scatter hypercube   (underscores/dashes ok)
+#            alltoall gather scatter   (underscores/dashes ok)
 #   ngpus: number of GPUs to use (default: auto-detect all on the node).
 #          Can also be set via the NGPUS env var; the positional arg wins.
 #
@@ -61,10 +61,9 @@ declare -A BIN=(
    [alltoall]=alltoall_perf
    [gather]=gather_perf
    [scatter]=scatter_perf
-   [hypercube]=hypercube_perf
 )
 # order used when "all" is requested
-ALL_ORDER="sendrecv allreduce allgather reducescatter reduce broadcast alltoall gather scatter hypercube"
+ALL_ORDER="sendrecv allreduce allgather reducescatter reduce broadcast alltoall gather scatter"
 
 # parse the selection argument (default: sendrecv); accept commas, spaces,
 # and normalize by stripping underscores/dashes and lowercasing

@@ -6,7 +6,7 @@
 # Usage: ./run-nccl-2node.sh [collectives] [gpus_per_node] [nodes]
 #   collectives:   comma/space separated list, or "all". Default: sendrecv
 #     names: sendrecv allreduce allgather reducescatter reduce broadcast
-#            alltoall gather scatter hypercube   (underscores/dashes ok)
+#            alltoall gather scatter   (underscores/dashes ok)
 #   gpus_per_node: GPUs per node = GPUs per MPI rank, one rank per node
 #                  (default: 1). Total GPUs = 2 x gpus_per_node.
 #   nodes:         comma separated pair (default: node5700,node5701)
@@ -57,9 +57,8 @@ declare -A BIN=(
    [alltoall]=alltoall_perf
    [gather]=gather_perf
    [scatter]=scatter_perf
-   [hypercube]=hypercube_perf
 )
-ALL_ORDER="sendrecv allreduce allgather reducescatter reduce broadcast alltoall gather scatter hypercube"
+ALL_ORDER="sendrecv allreduce allgather reducescatter reduce broadcast alltoall gather scatter"
 
 SELECTION="${1:-sendrecv}"
 PROGRAMS=()

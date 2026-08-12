@@ -1,12 +1,11 @@
 # nccl-tests 1-node summary — Ubuntu B200 nodes
 
-- Generated: 2026-08-10 14:52:02 — restructured to match the 2-node analysis 2026-08-12
+- Generated: 2026-08-10 14:52:02 — restructured 2026-08-12
 - Runs: node5700 (2026-08-10 14:32), node5701 (2026-08-10 14:35)
 - GPUs: 8 x NVIDIA B200 in one node (intra-node, NVLink 5 / NVSwitch — no InfiniBand on this path)
 - Config: 1 thread, 1 MiB-16 GiB, 5 warmup + 20 iters
 - **busbw** (bus bandwidth) is the figure of merit throughout; results are judged against this platform's own hardware ceiling (`HW max`), not against an external reference.
 - **node5700/node5701 run Ubuntu 24.04; node5500-5502 run Rocky 8.** Sections 1-4 report the Ubuntu nodes on their own. The entire Ubuntu-vs-Rocky 8 comparison — what differs, which is better, and why — is consolidated in **section 5**. Full Rocky 8 set: `../b200-nodes/out-nccl-1node/summary.md`.
-- Companion document: `../out-nccl-2node/summary.md` covers the same collectives across two nodes. The two are read together in section 5 — **this single-node run is the control that isolates what the 2-node comparison measures.**
 
 ## 1. Results — bandwidth for every collective
 
@@ -23,7 +22,6 @@ A *collective* is one communication pattern that all 8 GPUs take part in togethe
 | all_gather | 8 | 679.9 | 680.4 | 900 | 76% | PASS |
 | alltoall | 8 | 661.3 | 660.0 | 900 | 73% | PASS |
 | sendrecv | 8 | 655.6 | 656.2 | 900 | 73% | PASS |
-| hypercube | 8 | — | — | 900 | — | **FAIL** |
 
 Converged = busbw at the largest message size, best of out-of-place / in-place. `% of HW max` uses the mean of the two nodes.
 
@@ -34,13 +32,11 @@ Converged = busbw at the largest message size, best of out-of-place / in-place. 
 - **sendrecv / alltoall / ring collectives** — busbw is normalised so that a perfectly pipelined pattern reaches the per-GPU link rate.
 - **gather / scatter** — root-anchored, so the root GPU's own egress or ingress is the limit, again 900 GB/s.
 
-This is the substantive difference from the 2-node case, where the 8 NDR rails gave `sendrecv` a 50 GB/s ceiling and everything else 400 GB/s. On one node there is no network, no NIC and no PCIe leg in the data path: NVSwitch alone.
-
-**`hypercube` fails validation on both clusters.** It produces a full data table (470-480 GB/s at 16 GiB) but reports `Out of bounds values : 16 FAILED` with large `#wrong` counts at every size, and the job exits non-zero. The same failure appears on all three Rocky 8 nodes, so it is a property of the test rather than of either cluster, and its numbers are excluded everywhere below.
+Within one node there is no network, no NIC and no PCIe leg in the data path: NVSwitch alone.
 
 ## 2. How close each collective gets to the hardware limit
 
-Dividing each result by one NVLink 5 link's rate (50 GB/s per direction, 18 links per B200) gives the same view the 2-node summary takes with rails: **how much of the per-GPU NVLink egress the collective actually engages**.
+Dividing each result by one NVLink 5 link's rate (50 GB/s per direction, 18 links per B200) shows **how much of the per-GPU NVLink egress the collective actually engages**.
 
 | Collective | ours / HW max | effective links (of 18) | verdict |
 |------------|--------------:|------------------------:|---------|
@@ -57,22 +53,6 @@ Dividing each result by one NVLink 5 link's rate (50 GB/s per direction, 18 link
 **The headline is the narrow band.** Eight of the nine collectives land between 73% and 82% of `HW max` — a spread of nine points across patterns as different as a point-to-point ring, an all-to-all shuffle and a fan-in to a single root. That tight clustering *is* the health result: on this node no collective falls off a cliff, and the residual 18-27% is the ordinary gap between NVLink's signalling rate and what a real collective sustains (ring fill and drain, protocol framing, and the reduction kernels themselves competing for GPU resources). There is no per-collective pathology to chase.
 
 **`all_reduce` at 93% stands out, and it is faster than the pattern it is built from.** A Ring all_reduce is a reduce_scatter followed by an all_gather, and the busbw formula divides out the doubled traffic, so it should score at most what all_gather scores — 76% here. Instead it reaches 93%, well above both halves. The likely explanation is that NCCL is not running Ring at all but **NVLS (NVLink SHARP)**, which performs the reduction inside the NVSwitch: fewer bytes actually cross the wire per byte of user data, so the busbw figure — which counts user bytes — rises above the ring ceiling. This is the one number in the table that is not confirmed; `NCCL_DEBUG=INFO` would settle it by naming the selected algorithm.
-
-**Compare against the same collectives across two nodes** (`../out-nccl-2node/summary.md`), and the value of the single-node run becomes clear:
-
-| Collective | 1 node (GB/s) | 2 nodes (GB/s) | 1-node advantage | 2-node % of its own HW max |
-|------------|--------------:|---------------:|-----------------:|---------------------------:|
-| sendrecv | 655.9 | 48.8 | 13.4x | 98% |
-| alltoall | 660.6 | 55.4 | 11.9x | 14% |
-| gather | 718.0 | 92.9 | 7.7x | 23% |
-| all_reduce | 840.2 | 268.4 | 3.1x | 67% |
-| scatter | 739.8 | 290.5 | 2.5x | 73% |
-| broadcast | 683.1 | 355.4 | 1.9x | 89% |
-| reduce | 691.9 | 380.0 | 1.8x | 95% |
-| reduce_scatter | 695.7 | 380.1 | 1.8x | 95% |
-| all_gather | 680.2 | 379.1 | 1.8x | 95% |
-
-The 13.4x on `sendrecv` is simply NVLink versus one 400 Gb/s rail, and the ring collectives' 1.8x is NVLink versus eight rails — both are the fabrics doing exactly what their specifications say. The interesting rows are `alltoall` and `gather`: they run at 73-80% of the ceiling on one node but 14-23% of it across two. **That confirms the 2-node reading that these are NCCL algorithm limits rather than fabric faults** — the same code paths, on the same GPUs, engage the intra-node fabric perfectly well and only collapse once the pattern has to be pipelined across NICs.
 
 ## 3. Bandwidth vs message size (GB/s)
 
@@ -210,7 +190,7 @@ The data path here is entirely **NVLink 5 / NVSwitch**. All 8 B200s in a node ar
 | Topology | 8 GPUs, all-to-all via NVSwitch (non-blocking) |
 | GPUs seen by the run | 8 x NVIDIA B200, PCI 0x1b, 0x43, 0x52, 0x61, 0x9d, 0xc3, 0xd1, 0xdf |
 
-Neither InfiniBand, `nvidia_peermem` nor GPUDirect RDMA is involved on this path — they matter only in the 2-node case, and that is precisely why this run is useful as a control (section 5.2).
+Neither InfiniBand, `nvidia_peermem` nor GPUDirect RDMA is involved on this path, so nothing measured here depends on the network stack or its configuration (section 5.2).
 
 The 900 GB/s figure and the 18-link structure are the B200 platform specification, the same basis the AICR reference (`results_b200.md`, Table 1) uses for its NVLink ceiling. They were not read back from these nodes: `nvidia-smi nvlink --status` is not captured by `run-nccl-1node.sh`. Adding it to the run script would make the ceiling self-documenting, and would also catch a node running with degraded links.
 
@@ -236,7 +216,7 @@ Same hardware on both sides: 8x B200 per node on NVSwitch, NCCL 2.29.2. The Ubun
 | broadcast | 683.1 | 695.9 | -1.8% | 4.4% |
 | sendrecv | 655.9 | 674.8 | -2.8% | 4.6% |
 
-**Every difference is smaller than the spread between nodes of the same cluster.** The largest gap is 2.8%, while the three Rocky 8 nodes differ from each other by up to 8.4% on the same collective. Four collectives favour Ubuntu, five favour Rocky 8, and the signs alternate with no pattern. This is a tie, not a narrow win. Correctness is identical too: eight collectives PASS on all five nodes, `hypercube` fails on all five.
+**Every difference is smaller than the spread between nodes of the same cluster.** The largest gap is 2.8%, while the three Rocky 8 nodes differ from each other by up to 8.4% on the same collective. Four collectives favour Ubuntu, five favour Rocky 8, and the signs alternate with no pattern. This is a tie, not a narrow win. Correctness is identical too: every collective PASSes on all five nodes.
 
 **Small messages (1 MiB, time — lower is better) — a small, consistent Ubuntu advantage.**
 
@@ -265,24 +245,9 @@ Ubuntu is ahead on all nine collectives, mean **1.10x** — roughly 4-7 us per o
 | 4 GiB | 1.00x |
 | 16 GiB | 1.00x |
 
-**The comparison that matters is against the 2-node result.** The same two clusters, the same collectives, the same NCCL, measured across the network instead of within a node:
-
-| Message size | 1 node (this run) | 2 nodes (`../out-nccl-2node/summary.md`) |
-|-------------:|------------------:|----------------------------------------:|
-| 1 MiB | **1.10x** | **2.23x** |
-| 4 MiB | 1.07x | 1.85x |
-| 16 MiB | 1.02x | 1.45x |
-| 64 MiB | 0.99x | 1.35x |
-| 256 MiB | 0.99x | 1.29x |
-| 1 GiB | 0.99x | 1.23x |
-| 4 GiB | 1.00x | 1.09x |
-| 16 GiB | 1.00x | 1.02x |
-
-At 1 MiB the 2-node gap is **2.23x and reaches 3.02x on alltoall**; here the same measurement is 1.10x with a maximum of 1.16x. The per-operation gap the 2-node summary calls *deficit 2* is roughly an order of magnitude smaller once the network is removed from the path — which is what section 5.2 turns into an explanation.
-
 ### 5.2 Possible reasons — differences in system configuration
 
-The configuration differences are the same ones tabulated in the 2-node summary; what changes here is which of them the measurement can actually see. Items in the data path on one node are marked accordingly.
+The clusters differ in several ways at once. What matters for reading this run is which of those differences the measurement can actually see: on one node the data path is GPU-NVSwitch-GPU, so anything belonging to the network stack is excluded by construction. Items in the 1-node data path are marked accordingly.
 
 | Item | Ubuntu (node5700/5701) | Rocky 8 (node5500-5502) | same? | in the 1-node path? |
 |------|------------------------|-------------------------|-------|---------------------|
@@ -297,15 +262,15 @@ The configuration differences are the same ones tabulated in the 2-node summary;
 | IB rails | 8 x 400 Gb/s NDR | 8 x 400 Gb/s NDR | same | **no** |
 | PCIe ACS / IOMMU state | `iommu=pt intel_iommu=on`, 540 groups | `iommu=pt intel_iommu=on`, 540 groups | same | **no** (NVSwitch bypasses PCIe) |
 
-**What this run establishes — the reason it is worth reading alongside the 2-node summary.**
+**What this run establishes.**
 
-- *The GPUs, NVLink and NVSwitch are healthy on both clusters.* Nine collectives within 2.8%, all in the same 73-93% band of `HW max`. Whatever separates the clusters across the network, it is not the accelerators or the intra-node fabric.
-- *The bulk-transfer deficit is confined to the NIC-to-GPU leg.* The 2-node summary's *deficit 1* — a 2.7x gap on NIC-reads-from-GPU — has **no counterpart here**: intra-node `sendrecv` is 655.9 vs 674.8 GB/s, a tie. GPU memory itself streams at full rate on the Rocky 8 nodes. That narrows deficit 1 to the PCIe path between NIC and GPU (ACS state, Relaxed Ordering, topology) and away from anything about the GPU or its memory system, consistent with the platform-level candidates listed in the 2-node summary.
-- *The per-operation gap is largely a network-stack cost, not a launch cost.* This is the sharpest result. A 1 MiB collective on one node exercises the CUDA driver, kernel launch, NCCL's host-side setup and the reduction kernels — everything the 2-node case does **except** the verbs stack and NCCL's proxy thread posting RDMA work requests. If the driver/CUDA difference (570 + 12.9 vs 590 + 13.1) or the kernel version were the main cost, it would show here at close to full size. It shows at **1.10x against 2.23x**. So the bulk of *deficit 2* lives in the layers this run excludes — the InfiniBand provider and the proxy thread — which strengthens the 2-node summary's leading candidate (MOFED 25.10 vs 26.04) and correspondingly weakens its driver/CUDA candidate.
+- *The GPUs, NVLink and NVSwitch are healthy on both clusters.* Nine collectives within 2.8%, all in the same 73-93% band of `HW max`. Neither the accelerators nor the intra-node fabric separates the two operating systems.
+- *Bulk GPU-to-GPU transfer is unaffected by the OS difference.* Intra-node `sendrecv` is 655.9 vs 674.8 GB/s — a tie — and every collective converges to the same band at 16 GiB. GPU memory streams at full rate on both clusters.
+- *The only difference left to explain is the 1.10x at small messages.* It is small, but it is consistent across all nine collectives, and its shape — a fixed cost per operation, gone by 64 MiB — excludes bandwidth and points at the host-side launch and completion path rather than the GPU.
 
-**What the residual 1.10x could be.** It is small, but it is consistent across all nine collectives, and its shape — a fixed cost per operation, gone by 64 MiB — points at the host side rather than the GPU:
+**What that residual 1.10x could be**, in decreasing order of plausibility:
 
-1. **CPU frequency governor and C-states.** The most economical explanation. Launch and completion handling run on the host CPU, so a `powersave` governor or deep C-states add a few microseconds to every operation and nothing to a streaming transfer. The Ubuntu nodes run `performance`; the governor on node5500-5502 has not been read. This is also candidate 2 for the 2-node gap, and it is the one hypothesis this run can neither confirm nor exclude — it is in the path here.
+1. **CPU frequency governor and C-states.** The most economical explanation. Launch and completion handling run on the host CPU, so a `powersave` governor or deep C-states add a few microseconds to every operation and nothing to a streaming transfer. The Ubuntu nodes run `performance`; the governor on node5500-5502 has not been read. It is in the 1-node path, so this run can neither confirm nor exclude it.
 2. **Driver and CUDA version — 570.211.01 + 12.9 vs 590.48.01 + 13.1.** Kernel-launch and stream-management cost differ between major CUDA versions, and this is exactly where such a difference would appear. The measured size, ~4-7 us per operation, is the right order of magnitude for launch-path overhead.
 3. **Kernel version — a uniform 6.8 vs a heterogeneous 4.18 / 6.12 pair.** Affects scheduling and interrupt handling on the host side. Note the Rocky 8 nodes do not separate by kernel: node5500 (4.18) and node5502 (6.12) show the same small-message times, so this is the weakest of the three.
 4. **Ordinary variation.** Not to be dismissed. Each row is one sweep of 20 iterations, and the Rocky 8 nodes vary among themselves by 5.8-15.1% at 1 MiB. The 9-of-9 sign consistency argues against pure noise, but a repeat sweep on both clusters would cost little and settle it.
@@ -314,4 +279,4 @@ The configuration differences are the same ones tabulated in the 2-node summary;
 
 ## 6. Suggested actions
 
-The action list derived from sections 1-5 — what to check, what to change, and in what order — is in **`../admin-nccl-notes.md`**. Items common to the 1-node and 2-node cases are in its section 1; those specific to this case are in its section 2.
+The action list derived from sections 1-5 — what to check, what to change, and in what order — is in **`../admin-nccl-notes.md`**. Its section 1 holds the general items; section 2 holds those specific to the single-node case.

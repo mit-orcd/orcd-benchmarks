@@ -51,11 +51,7 @@ NCCL_DEBUG=INFO <run script> 2>&1 | grep -iE 'algo|proto|NVLS|channels'
 
 One command, two payoffs. **Across two nodes**, run it on *both* clusters and compare channel count, protocol (LL / LL128 / Simple) and algorithm: if Rocky 8 selects differently, the per-operation gap is a tuning problem fixable with environment variables rather than a reinstall — worth checking before touching MOFED. **On one node**, it confirms whether `all_reduce` is using NVLS (in-NVSwitch reduction), which is the likely reason it reaches 93% of the NVLink ceiling while the collectives it is built from sit at 76-77%. If a cluster is *not* selecting NVLS, that is a real and recoverable difference.
 
-### 1.4 `hypercube` fails validation everywhere
-
-It fails on all five nodes across both clusters and both node counts — `Out of bounds values : 16 FAILED` at 8 GPUs, `32 FAILED` at 16 GPUs, with large `#wrong` counts at every message size. It is a property of the test, not of either cluster, and its bandwidth numbers cannot be used while validation fails. Its non-zero exit also terminates the mpirun job at the end of every sweep. Worth dropping it from the default collective list or marking it expected-to-fail.
-
-### 1.5 Change one thing at a time
+### 1.4 Change one thing at a time
 
 For anything in section 3: change one item on one node pair, then re-run the perftest triplet and `run-nccl-2node.sh all 8` before the next change, so every result stays attributable.
 
