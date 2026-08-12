@@ -15,14 +15,14 @@ A *collective* is one communication pattern that all 8 GPUs take part in togethe
 
 | Collective | GPUs | node5700 | node5701 | % of HW max | effective links (of 18) | correctness |
 |------------|-----:|---------:|---------:|------------:|------------------------:|:-----------:|
-| all_reduce | 8 | 841.3 | 839.1 | 93% | 16.8 | PASS |
-| scatter | 8 | 746.0 | 733.5 | 82% | 14.8 | PASS |
-| gather | 8 | 718.1 | 718.0 | 80% | 14.4 | PASS |
-| reduce_scatter | 8 | 696.1 | 695.3 | 77% | 13.9 | PASS |
 | reduce | 8 | 682.2 | 701.6 | 77% | 13.8 | PASS |
-| broadcast | 8 | 681.3 | 684.9 | 76% | 13.7 | PASS |
-| all_gather | 8 | 679.9 | 680.4 | 76% | 13.6 | PASS |
+| scatter | 8 | 746.0 | 733.5 | 82% | 14.8 | PASS |
+| all_reduce | 8 | 841.3 | 839.1 | 93% | 16.8 | PASS |
+| reduce_scatter | 8 | 696.1 | 695.3 | 77% | 13.9 | PASS |
 | alltoall | 8 | 661.3 | 660.0 | 73% | 13.2 | PASS |
+| gather | 8 | 718.1 | 718.0 | 80% | 14.4 | PASS |
+| all_gather | 8 | 679.9 | 680.4 | 76% | 13.6 | PASS |
+| broadcast | 8 | 681.3 | 684.9 | 76% | 13.7 | PASS |
 | sendrecv | 8 | 655.6 | 656.2 | 73% | 13.1 | PASS |
 
 busbw at 16 GiB, best of out-of-place / in-place, in GB/s. `% of HW max` and effective links use the mean of the two nodes.
@@ -61,15 +61,15 @@ Same hardware on both sides: 8x B200 per node on NVSwitch, NCCL 2.29.2. The Ubun
 
 | Collective | Ubuntu 1 MiB (us) | Rocky 8 1 MiB (us) | 1 MiB | 16 MiB | 256 MiB |
 |------------|------------------:|-------------------:|------:|-------:|--------:|
-| all_reduce | 44.7 | 51.7 | 1.16x | 1.02x | 1.02x |
-| gather | 33.6 | 38.6 | 1.15x | 1.16x | 0.99x |
-| all_gather | 48.4 | 55.7 | 1.15x | 1.02x | 1.01x |
-| sendrecv | 34.6 | 38.4 | 1.11x | 0.99x | 0.98x |
 | reduce | 38.6 | 43.0 | 1.11x | 1.02x | 0.97x |
 | scatter | 34.4 | 37.1 | 1.08x | 0.99x | 0.98x |
-| alltoall | 56.9 | 60.6 | 1.07x | 1.01x | 0.99x |
+| all_reduce | 44.7 | 51.7 | 1.16x | 1.02x | 1.02x |
 | reduce_scatter | 44.4 | 47.3 | 1.06x | 0.97x | 0.98x |
+| alltoall | 56.9 | 60.6 | 1.07x | 1.01x | 0.99x |
+| gather | 33.6 | 38.6 | 1.15x | 1.16x | 0.99x |
+| all_gather | 48.4 | 55.7 | 1.15x | 1.02x | 1.01x |
 | broadcast | 40.3 | 41.0 | 1.02x | 0.98x | 0.98x |
+| sendrecv | 34.6 | 38.4 | 1.11x | 0.99x | 0.98x |
 | **mean** | | | **1.10x** | **1.02x** | **0.99x** |
 
 **Two points.** First, at 1 MiB Ubuntu is ahead on 9 of 9 collectives, mean 1.10x — roughly 4-7 us per operation. No single row is conclusive on its own (each sits inside the 5.8-15.1% Rocky node-to-node spread), but the sign is the same in all nine while the two Ubuntu nodes agree to within 7.5%, so the effect is real, if modest. Second, it is **gone by 16 MiB and slightly reversed by 256 MiB** — the signature of a fixed cost per operation, not a bandwidth difference. `gather` is the one collective still showing 1.16x at 16 MiB, which is where it is still latency-bound (35 us).
@@ -106,18 +106,31 @@ The clusters differ in several ways at once. What matters for reading this run i
 
 Representative node: **node5700** (node5701 agrees to within 2.8% at every converged point; see section 1).
 
-### all_gather
+### reduce
 
 | Message size | OOP time | OOP busbw | IP time | IP busbw |
 |-------------:|---------:|----------:|--------:|---------:|
-| 1 MiB | 48.5 us | 18.9 | 48.0 us | 19.1 |
-| 4 MiB | 46.5 us | 79.0 | 46.8 us | 78.5 |
-| 16 MiB | 106.0 us | 138.4 | 103.4 us | 142.0 |
-| 64 MiB | 141.5 us | 414.9 | 140.9 us | 416.8 |
-| 256 MiB | 405.9 us | 578.6 | 403.5 us | 582.1 |
-| 1 GiB | 1.52 ms | 618.0 | 1.51 ms | 623.5 |
-| 4 GiB | 5.74 ms | 654.8 | 5.67 ms | 662.5 |
-| 16 GiB | 22.45 ms | 669.7 | 22.11 ms | 679.9 |
+| 1 MiB | 38.8 us | 27.0 | 38.4 us | 27.3 |
+| 4 MiB | 41.9 us | 100.2 | 41.6 us | 100.7 |
+| 16 MiB | 53.1 us | 316.0 | 52.8 us | 317.6 |
+| 64 MiB | 133.5 us | 502.7 | 133.7 us | 502.1 |
+| 256 MiB | 438.6 us | 612.0 | 439.3 us | 611.0 |
+| 1 GiB | 1.63 ms | 658.1 | 1.63 ms | 658.0 |
+| 4 GiB | 6.37 ms | 674.6 | 6.36 ms | 675.0 |
+| 16 GiB | 25.23 ms | 680.9 | 25.18 ms | 682.2 |
+
+### scatter
+
+| Message size | OOP time | OOP busbw | IP time | IP busbw |
+|-------------:|---------:|----------:|--------:|---------:|
+| 1 MiB | 34.5 us | 26.6 | 34.0 us | 27.0 |
+| 4 MiB | 35.1 us | 104.4 | 35.2 us | 104.2 |
+| 16 MiB | 36.4 us | 403.8 | 36.1 us | 406.7 |
+| 64 MiB | 98.9 us | 593.9 | 99.3 us | 591.6 |
+| 256 MiB | 353.1 us | 665.2 | 353.1 us | 665.2 |
+| 1 GiB | 1.32 ms | 712.9 | 1.32 ms | 711.3 |
+| 4 GiB | 5.07 ms | 741.2 | 5.08 ms | 740.0 |
+| 16 GiB | 20.15 ms | 746.0 | 20.21 ms | 743.7 |
 
 ### all_reduce
 
@@ -132,6 +145,19 @@ Representative node: **node5700** (node5701 agrees to within 2.8% at every conve
 | 4 GiB | 9.01 ms | 834.1 | 9.02 ms | 833.5 |
 | 16 GiB | 35.73 ms | 841.3 | 35.75 ms | 841.1 |
 
+### reduce_scatter
+
+| Message size | OOP time | OOP busbw | IP time | IP busbw |
+|-------------:|---------:|----------:|--------:|---------:|
+| 1 MiB | 43.8 us | 20.9 | 44.2 us | 20.8 |
+| 4 MiB | 43.2 us | 85.0 | 43.3 us | 84.8 |
+| 16 MiB | 102.4 us | 143.3 | 101.4 us | 144.8 |
+| 64 MiB | 141.4 us | 415.3 | 141.7 us | 414.4 |
+| 256 MiB | 400.8 us | 586.1 | 399.6 us | 587.7 |
+| 1 GiB | 1.47 ms | 639.9 | 1.47 ms | 640.3 |
+| 4 GiB | 5.53 ms | 680.1 | 5.52 ms | 680.9 |
+| 16 GiB | 21.59 ms | 696.1 | 21.60 ms | 696.0 |
+
 ### alltoall
 
 | Message size | OOP time | OOP busbw | IP time | IP busbw |
@@ -144,19 +170,6 @@ Representative node: **node5700** (node5701 agrees to within 2.8% at every conve
 | 1 GiB | 1.55 ms | 604.6 | 1.58 ms | 593.8 |
 | 4 GiB | 5.81 ms | 647.0 | 5.83 ms | 644.3 |
 | 16 GiB | 22.75 ms | 660.8 | 22.73 ms | 661.3 |
-
-### broadcast
-
-| Message size | OOP time | OOP busbw | IP time | IP busbw |
-|-------------:|---------:|----------:|--------:|---------:|
-| 1 MiB | 38.9 us | 27.0 | 38.7 us | 27.1 |
-| 4 MiB | 43.2 us | 97.0 | 42.7 us | 98.2 |
-| 16 MiB | 55.6 us | 301.8 | 55.7 us | 301.1 |
-| 64 MiB | 135.1 us | 496.6 | 136.5 us | 491.5 |
-| 256 MiB | 438.7 us | 611.8 | 439.1 us | 611.4 |
-| 1 GiB | 1.64 ms | 653.2 | 1.65 ms | 651.3 |
-| 4 GiB | 6.43 ms | 667.7 | 6.43 ms | 667.5 |
-| 16 GiB | 25.27 ms | 679.9 | 25.22 ms | 681.3 |
 
 ### gather
 
@@ -171,44 +184,31 @@ Representative node: **node5700** (node5701 agrees to within 2.8% at every conve
 | 4 GiB | 5.24 ms | 717.0 | 5.24 ms | 716.7 |
 | 16 GiB | 20.93 ms | 718.1 | 20.94 ms | 718.0 |
 
-### reduce
+### all_gather
 
 | Message size | OOP time | OOP busbw | IP time | IP busbw |
 |-------------:|---------:|----------:|--------:|---------:|
-| 1 MiB | 38.8 us | 27.0 | 38.4 us | 27.3 |
-| 4 MiB | 41.9 us | 100.2 | 41.6 us | 100.7 |
-| 16 MiB | 53.1 us | 316.0 | 52.8 us | 317.6 |
-| 64 MiB | 133.5 us | 502.7 | 133.7 us | 502.1 |
-| 256 MiB | 438.6 us | 612.0 | 439.3 us | 611.0 |
-| 1 GiB | 1.63 ms | 658.1 | 1.63 ms | 658.0 |
-| 4 GiB | 6.37 ms | 674.6 | 6.36 ms | 675.0 |
-| 16 GiB | 25.23 ms | 680.9 | 25.18 ms | 682.2 |
+| 1 MiB | 48.5 us | 18.9 | 48.0 us | 19.1 |
+| 4 MiB | 46.5 us | 79.0 | 46.8 us | 78.5 |
+| 16 MiB | 106.0 us | 138.4 | 103.4 us | 142.0 |
+| 64 MiB | 141.5 us | 414.9 | 140.9 us | 416.8 |
+| 256 MiB | 405.9 us | 578.6 | 403.5 us | 582.1 |
+| 1 GiB | 1.52 ms | 618.0 | 1.51 ms | 623.5 |
+| 4 GiB | 5.74 ms | 654.8 | 5.67 ms | 662.5 |
+| 16 GiB | 22.45 ms | 669.7 | 22.11 ms | 679.9 |
 
-### reduce_scatter
-
-| Message size | OOP time | OOP busbw | IP time | IP busbw |
-|-------------:|---------:|----------:|--------:|---------:|
-| 1 MiB | 43.8 us | 20.9 | 44.2 us | 20.8 |
-| 4 MiB | 43.2 us | 85.0 | 43.3 us | 84.8 |
-| 16 MiB | 102.4 us | 143.3 | 101.4 us | 144.8 |
-| 64 MiB | 141.4 us | 415.3 | 141.7 us | 414.4 |
-| 256 MiB | 400.8 us | 586.1 | 399.6 us | 587.7 |
-| 1 GiB | 1.47 ms | 639.9 | 1.47 ms | 640.3 |
-| 4 GiB | 5.53 ms | 680.1 | 5.52 ms | 680.9 |
-| 16 GiB | 21.59 ms | 696.1 | 21.60 ms | 696.0 |
-
-### scatter
+### broadcast
 
 | Message size | OOP time | OOP busbw | IP time | IP busbw |
 |-------------:|---------:|----------:|--------:|---------:|
-| 1 MiB | 34.5 us | 26.6 | 34.0 us | 27.0 |
-| 4 MiB | 35.1 us | 104.4 | 35.2 us | 104.2 |
-| 16 MiB | 36.4 us | 403.8 | 36.1 us | 406.7 |
-| 64 MiB | 98.9 us | 593.9 | 99.3 us | 591.6 |
-| 256 MiB | 353.1 us | 665.2 | 353.1 us | 665.2 |
-| 1 GiB | 1.32 ms | 712.9 | 1.32 ms | 711.3 |
-| 4 GiB | 5.07 ms | 741.2 | 5.08 ms | 740.0 |
-| 16 GiB | 20.15 ms | 746.0 | 20.21 ms | 743.7 |
+| 1 MiB | 38.9 us | 27.0 | 38.7 us | 27.1 |
+| 4 MiB | 43.2 us | 97.0 | 42.7 us | 98.2 |
+| 16 MiB | 55.6 us | 301.8 | 55.7 us | 301.1 |
+| 64 MiB | 135.1 us | 496.6 | 136.5 us | 491.5 |
+| 256 MiB | 438.7 us | 611.8 | 439.1 us | 611.4 |
+| 1 GiB | 1.64 ms | 653.2 | 1.65 ms | 651.3 |
+| 4 GiB | 6.43 ms | 667.7 | 6.43 ms | 667.5 |
+| 16 GiB | 25.27 ms | 679.9 | 25.22 ms | 681.3 |
 
 ### sendrecv
 

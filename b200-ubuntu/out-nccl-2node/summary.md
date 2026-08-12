@@ -15,15 +15,15 @@ A *collective* is one communication pattern that all 16 GPUs take part in togeth
 
 | Collective | GPUs | busbw (GB/s) | HW max (GB/s) | % of HW max | effective rails (of 8) | verdict | correctness |
 |------------|-----:|-------------:|--------------:|------------:|-----------------------:|---------|:-----------:|
+| all_reduce | 16 | 268.4 | 400 | 67% | 5.37 | Ring two-pass penalty | PASS |
+| alltoall | 16 | 55.4 | 400 | 14% | 1.11 | NCCL algorithm limit | PASS |
 | sendrecv | 16 | 48.8 | 50 | 98% | 0.98 (per pair) | at line rate | PASS |
+| gather | 16 | 92.9 | 400 | 23% | 1.86 | NCCL algorithm limit | PASS |
 | reduce_scatter | 16 | 380.1 | 400 | 95% | 7.60 | at fabric limit | PASS |
 | reduce | 16 | 380.0 | 400 | 95% | 7.60 | at fabric limit | PASS |
 | all_gather | 16 | 379.1 | 400 | 95% | 7.58 | at fabric limit | PASS |
 | broadcast | 16 | 355.4 | 400 | 89% | 7.11 | at fabric limit | PASS |
 | scatter | 16 | 290.5 | 400 | 73% | 5.81 | expected (root-anchored) | PASS |
-| all_reduce | 16 | 268.4 | 400 | 67% | 5.37 | Ring two-pass penalty | PASS |
-| gather | 16 | 92.9 | 400 | 23% | 1.86 | NCCL algorithm limit | PASS |
-| alltoall | 16 | 55.4 | 400 | 14% | 1.11 | NCCL algorithm limit | PASS |
 
 busbw at 16 GiB, best of out-of-place / in-place.
 
@@ -65,15 +65,15 @@ Same hardware on both sides: 8x B200 per node, 8 NDR rails per node, 16 ranks, N
 
 | Collective | Ubuntu 1 MiB (us) | Rocky 8 1 MiB (us) | 1 MiB | 16 MiB | 256 MiB |
 |------------|------------------:|-------------------:|------:|-------:|--------:|
-| alltoall | 285.3 | 860.9 | **3.02x** | 2.44x | 1.41x |
-| all_gather | 261.7 | 580.9 | **2.22x** | 1.51x | 1.49x |
-| reduce | 233.1 | 514.4 | **2.21x** | 1.45x | 1.11x |
-| scatter | 168.5 | 363.8 | **2.16x** | 1.24x | 1.18x |
 | all_reduce | 183.4 | 383.6 | **2.09x** | 1.31x | 1.39x |
-| broadcast | 222.0 | 452.8 | **2.04x** | 0.84x | 1.19x |
-| reduce_scatter | 265.9 | 504.8 | **1.90x** | 1.39x | 1.25x |
-| gather | 46.9 | 51.1 | 1.09x | 1.00x | 1.00x |
+| alltoall | 285.3 | 860.9 | **3.02x** | 2.44x | 1.41x |
 | sendrecv | 50.4 | 54.4 | 1.08x | 1.00x | 0.99x |
+| gather | 46.9 | 51.1 | 1.09x | 1.00x | 1.00x |
+| reduce_scatter | 265.9 | 504.8 | **1.90x** | 1.39x | 1.25x |
+| reduce | 233.1 | 514.4 | **2.21x** | 1.45x | 1.11x |
+| all_gather | 261.7 | 580.9 | **2.22x** | 1.51x | 1.49x |
+| broadcast | 222.0 | 452.8 | **2.04x** | 0.84x | 1.19x |
+| scatter | 168.5 | 363.8 | **2.16x** | 1.24x | 1.18x |
 
 **Two collectives are exempt at every size, and they identify the mechanism.** `sendrecv` and `gather` sit within ~1.1x from 1 MiB to 16 GiB — exactly the two NCCL does **not** split across its 8 channels (sendrecv is one contiguous chunk per pair, gather a fan-in kept on a single path). Everything that *is* channel-split shows the gap, and it decays as messages grow: averaged over those seven, **2.23x at 1 MiB, 1.45x at 16 MiB, 1.29x at 256 MiB, 1.02x at 16 GiB**. That decay is the signature of a cost paid per operation rather than per byte. (`broadcast` at 0.84x is the single dip below parity, at one size only.)
 
@@ -146,19 +146,6 @@ The other six sit at 89-98% of `HW max` and agree within 2%. **That is the rule:
 
 ## 3. Bandwidth vs message size (GB/s)
 
-### all_gather
-
-| Message size | OOP time | OOP busbw | IP time | IP busbw |
-|-------------:|---------:|----------:|--------:|---------:|
-| 1 MiB | 261.7 us | 3.8 | 322.3 us | 3.0 |
-| 4 MiB | 326.2 us | 12.1 | 337.5 us | 11.7 |
-| 16 MiB | 358.7 us | 43.9 | 376.0 us | 41.8 |
-| 64 MiB | 806.7 us | 78.0 | 791.8 us | 79.5 |
-| 256 MiB | 1.01 ms | 249.1 | 1.03 ms | 244.8 |
-| 1 GiB | 2.88 ms | 349.7 | 2.82 ms | 356.7 |
-| 4 GiB | 10.98 ms | 366.6 | 10.80 ms | 372.8 |
-| 16 GiB | 43.42 ms | 370.9 | 42.49 ms | 379.1 |
-
 ### all_reduce
 
 | Message size | OOP time | OOP busbw | IP time | IP busbw |
@@ -185,71 +172,6 @@ The other six sit at 89-98% of `HW max` and agree within 2%. **That is the rule:
 | 4 GiB | 73.83 ms | 54.5 | 74.28 ms | 54.2 |
 | 16 GiB | 290.61 ms | 55.4 | 290.98 ms | 55.4 |
 
-### broadcast
-
-| Message size | OOP time | OOP busbw | IP time | IP busbw |
-|-------------:|---------:|----------:|--------:|---------:|
-| 1 MiB | 222.0 us | 4.7 | 241.6 us | 4.3 |
-| 4 MiB | 162.4 us | 25.8 | 159.7 us | 26.3 |
-| 16 MiB | 226.6 us | 74.0 | 227.0 us | 73.9 |
-| 64 MiB | 416.4 us | 161.2 | 415.8 us | 161.4 |
-| 256 MiB | 1.17 ms | 228.6 | 1.17 ms | 228.5 |
-| 1 GiB | 3.46 ms | 310.2 | 3.50 ms | 306.7 |
-| 4 GiB | 12.41 ms | 346.1 | 12.41 ms | 346.2 |
-| 16 GiB | 48.41 ms | 354.9 | 48.34 ms | 355.4 |
-
-### gather
-
-| Message size | OOP time | OOP busbw | IP time | IP busbw |
-|-------------:|---------:|----------:|--------:|---------:|
-| 1 MiB | 46.9 us | 20.9 | 47.1 us | 20.9 |
-| 4 MiB | 65.6 us | 60.0 | 66.7 us | 58.9 |
-| 16 MiB | 176.6 us | 89.0 | 175.2 us | 89.8 |
-| 64 MiB | 672.0 us | 93.6 | 671.8 us | 93.7 |
-| 256 MiB | 2.71 ms | 93.0 | 2.70 ms | 93.1 |
-| 1 GiB | 10.83 ms | 92.9 | 10.83 ms | 92.9 |
-| 4 GiB | 43.35 ms | 92.9 | 43.34 ms | 92.9 |
-| 16 GiB | 173.74 ms | 92.7 | 173.38 ms | 92.9 |
-
-### reduce
-
-| Message size | OOP time | OOP busbw | IP time | IP busbw |
-|-------------:|---------:|----------:|--------:|---------:|
-| 1 MiB | 233.1 us | 4.5 | 244.9 us | 4.3 |
-| 4 MiB | 154.2 us | 27.2 | 148.6 us | 28.2 |
-| 16 MiB | 213.8 us | 78.5 | 203.8 us | 82.3 |
-| 64 MiB | 372.5 us | 180.1 | 372.8 us | 180.0 |
-| 256 MiB | 1.09 ms | 245.3 | 1.10 ms | 243.0 |
-| 1 GiB | 3.23 ms | 332.6 | 3.20 ms | 336.0 |
-| 4 GiB | 11.88 ms | 361.4 | 11.63 ms | 369.2 |
-| 16 GiB | 45.21 ms | 380.0 | 45.21 ms | 380.0 |
-
-### reduce_scatter
-
-| Message size | OOP time | OOP busbw | IP time | IP busbw |
-|-------------:|---------:|----------:|--------:|---------:|
-| 1 MiB | 265.9 us | 3.7 | 328.2 us | 3.0 |
-| 4 MiB | 336.6 us | 11.7 | 380.5 us | 10.3 |
-| 16 MiB | 412.2 us | 38.2 | 435.4 us | 36.1 |
-| 64 MiB | 915.8 us | 68.7 | 934.6 us | 67.3 |
-| 256 MiB | 1.10 ms | 228.3 | 1.11 ms | 226.3 |
-| 1 GiB | 2.80 ms | 359.7 | 2.80 ms | 359.8 |
-| 4 GiB | 10.74 ms | 374.9 | 10.73 ms | 375.3 |
-| 16 GiB | 42.37 ms | 380.1 | 42.46 ms | 379.3 |
-
-### scatter
-
-| Message size | OOP time | OOP busbw | IP time | IP busbw |
-|-------------:|---------:|----------:|--------:|---------:|
-| 1 MiB | 168.5 us | 5.8 | 135.2 us | 7.3 |
-| 4 MiB | 100.9 us | 39.0 | 99.2 us | 39.6 |
-| 16 MiB | 135.6 us | 116.0 | 134.1 us | 117.3 |
-| 64 MiB | 298.5 us | 210.8 | 281.8 us | 223.3 |
-| 256 MiB | 986.3 us | 255.2 | 932.1 us | 270.0 |
-| 1 GiB | 3.58 ms | 281.4 | 3.55 ms | 283.2 |
-| 4 GiB | 14.00 ms | 287.6 | 13.99 ms | 287.8 |
-| 16 GiB | 55.51 ms | 290.1 | 55.43 ms | 290.5 |
-
 ### sendrecv
 
 | Message size | OOP time | OOP busbw | IP time | IP busbw |
@@ -264,6 +186,84 @@ The other six sit at 89-98% of `HW max` and agree within 2%. **That is the rule:
 | 16 GiB | 352.41 ms | 48.8 | 352.22 ms | 48.8 |
 
 OOP = out-of-place, IP = in-place.
+
+### gather
+
+| Message size | OOP time | OOP busbw | IP time | IP busbw |
+|-------------:|---------:|----------:|--------:|---------:|
+| 1 MiB | 46.9 us | 20.9 | 47.1 us | 20.9 |
+| 4 MiB | 65.6 us | 60.0 | 66.7 us | 58.9 |
+| 16 MiB | 176.6 us | 89.0 | 175.2 us | 89.8 |
+| 64 MiB | 672.0 us | 93.6 | 671.8 us | 93.7 |
+| 256 MiB | 2.71 ms | 93.0 | 2.70 ms | 93.1 |
+| 1 GiB | 10.83 ms | 92.9 | 10.83 ms | 92.9 |
+| 4 GiB | 43.35 ms | 92.9 | 43.34 ms | 92.9 |
+| 16 GiB | 173.74 ms | 92.7 | 173.38 ms | 92.9 |
+
+### reduce_scatter
+
+| Message size | OOP time | OOP busbw | IP time | IP busbw |
+|-------------:|---------:|----------:|--------:|---------:|
+| 1 MiB | 265.9 us | 3.7 | 328.2 us | 3.0 |
+| 4 MiB | 336.6 us | 11.7 | 380.5 us | 10.3 |
+| 16 MiB | 412.2 us | 38.2 | 435.4 us | 36.1 |
+| 64 MiB | 915.8 us | 68.7 | 934.6 us | 67.3 |
+| 256 MiB | 1.10 ms | 228.3 | 1.11 ms | 226.3 |
+| 1 GiB | 2.80 ms | 359.7 | 2.80 ms | 359.8 |
+| 4 GiB | 10.74 ms | 374.9 | 10.73 ms | 375.3 |
+| 16 GiB | 42.37 ms | 380.1 | 42.46 ms | 379.3 |
+
+### reduce
+
+| Message size | OOP time | OOP busbw | IP time | IP busbw |
+|-------------:|---------:|----------:|--------:|---------:|
+| 1 MiB | 233.1 us | 4.5 | 244.9 us | 4.3 |
+| 4 MiB | 154.2 us | 27.2 | 148.6 us | 28.2 |
+| 16 MiB | 213.8 us | 78.5 | 203.8 us | 82.3 |
+| 64 MiB | 372.5 us | 180.1 | 372.8 us | 180.0 |
+| 256 MiB | 1.09 ms | 245.3 | 1.10 ms | 243.0 |
+| 1 GiB | 3.23 ms | 332.6 | 3.20 ms | 336.0 |
+| 4 GiB | 11.88 ms | 361.4 | 11.63 ms | 369.2 |
+| 16 GiB | 45.21 ms | 380.0 | 45.21 ms | 380.0 |
+
+### all_gather
+
+| Message size | OOP time | OOP busbw | IP time | IP busbw |
+|-------------:|---------:|----------:|--------:|---------:|
+| 1 MiB | 261.7 us | 3.8 | 322.3 us | 3.0 |
+| 4 MiB | 326.2 us | 12.1 | 337.5 us | 11.7 |
+| 16 MiB | 358.7 us | 43.9 | 376.0 us | 41.8 |
+| 64 MiB | 806.7 us | 78.0 | 791.8 us | 79.5 |
+| 256 MiB | 1.01 ms | 249.1 | 1.03 ms | 244.8 |
+| 1 GiB | 2.88 ms | 349.7 | 2.82 ms | 356.7 |
+| 4 GiB | 10.98 ms | 366.6 | 10.80 ms | 372.8 |
+| 16 GiB | 43.42 ms | 370.9 | 42.49 ms | 379.1 |
+
+### broadcast
+
+| Message size | OOP time | OOP busbw | IP time | IP busbw |
+|-------------:|---------:|----------:|--------:|---------:|
+| 1 MiB | 222.0 us | 4.7 | 241.6 us | 4.3 |
+| 4 MiB | 162.4 us | 25.8 | 159.7 us | 26.3 |
+| 16 MiB | 226.6 us | 74.0 | 227.0 us | 73.9 |
+| 64 MiB | 416.4 us | 161.2 | 415.8 us | 161.4 |
+| 256 MiB | 1.17 ms | 228.6 | 1.17 ms | 228.5 |
+| 1 GiB | 3.46 ms | 310.2 | 3.50 ms | 306.7 |
+| 4 GiB | 12.41 ms | 346.1 | 12.41 ms | 346.2 |
+| 16 GiB | 48.41 ms | 354.9 | 48.34 ms | 355.4 |
+
+### scatter
+
+| Message size | OOP time | OOP busbw | IP time | IP busbw |
+|-------------:|---------:|----------:|--------:|---------:|
+| 1 MiB | 168.5 us | 5.8 | 135.2 us | 7.3 |
+| 4 MiB | 100.9 us | 39.0 | 99.2 us | 39.6 |
+| 16 MiB | 135.6 us | 116.0 | 134.1 us | 117.3 |
+| 64 MiB | 298.5 us | 210.8 | 281.8 us | 223.3 |
+| 256 MiB | 986.3 us | 255.2 | 932.1 us | 270.0 |
+| 1 GiB | 3.58 ms | 281.4 | 3.55 ms | 283.2 |
+| 4 GiB | 14.00 ms | 287.6 | 13.99 ms | 287.8 |
+| 16 GiB | 55.51 ms | 290.1 | 55.43 ms | 290.5 |
 
 ## 4. Network fabric
 
