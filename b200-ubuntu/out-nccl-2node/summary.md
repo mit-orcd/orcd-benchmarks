@@ -1,6 +1,6 @@
 # nccl-tests 2-node summary — Ubuntu B200 nodes
 
-- Generated: 2026-08-10 18:52:16
+- Generated: 2026-08-11 21:50:40
 - Runs: node5700+node5701
 - GPUs: 8/node x 2 nodes = 16 x NVIDIA B200 (inter-node, InfiniBand + GPUDirect RDMA)
 - Config: 1 MiB-16 GiB, 5 warmup + 20 iters
@@ -270,4 +270,69 @@ The inter-node data path on the B200 nodes is **NDR (400 Gb/s)**:
 | mlx5_5, 6, 11, 12 | down | unused |
 
 `nvidia_peermem` is loaded on both nodes, enabling GPUDirect RDMA so the NIC DMAs directly to/from GPU HBM over InfiniBand.
+
+## 6. Suggestions for the admins — closing the gap on Rocky 8
+
+Two independent deficits separate the clusters. **node5700 / node5701 now serve as a known-good reference to diff against.** Nothing below needs doing on the Ubuntu nodes.
+
+| # | Deficit | Size | Where it shows |
+|---|---------|------|----------------|
+| 1 | GPUDirect bulk cap on Rocky 8 | **2.7x** on NIC-reads-from-GPU (147.6 vs 395.5 Gb/s) | 1 GPU/node NCCL: 12.7 vs 48.7 GB/s |
+| 2 | Per-operation cost on Rocky 8 | **1.9-3.0x** in time at 1 MiB | every collective NCCL splits across its 8 channels |
+
+### 6.1 Libraries and drivers to install (on the Rocky 8 nodes)
+
+Change **one thing at a time on one node pair**, re-running the perftest triplet and `run-nccl-2node.sh all 8` after each — changing several at once cannot identify the cause.
+
+1. **MOFED / rdma-core -> 25.10** (`OFED-internal-25.10-1.7.1.413`, as on the Ubuntu nodes; Rocky 8 currently runs 26.04-0.8.6). This is the **first thing to try** for deficit 2: the verbs provider sets per-operation posting cost while leaving bulk streaming untouched, which is exactly the measured shape. Note the direction is counter-intuitive — the *newer* stack is the slower one — so this is a downgrade to test a suspected regression.
+2. **NVIDIA driver -> 570.211.01** (Rocky 8 runs 590.48.01), only if MOFED alone does not close the gap. Caveat: r570 caps CUDA at 12.8, so anything built against CUDA 13 must be rebuilt.
+3. **Align node5500's kernel** (EL8 / 4.18) with node5502 (EL10 / 6.12). Not a suspected cause — all three Rocky pairs are equally slow — but a 4.18 kernel under MOFED 26.04 is an odd pairing and worth removing as a variable.
+
+Nothing needs installing for the benchmark itself: `perftest`, `rdma-core` and the NCCL stack are already present on both clusters.
+
+### 6.2 System configuration
+
+**Do not set `iommu=off`.** Both clusters already boot `iommu=pt intel_iommu=on` with 540 groups, and the Ubuntu pair reaches full GPUDirect line rate under it (395.5 Gb/s). The `iommu=off` recommendation in `../b200-nodes/notes.md` is excluded by that control and would cost a reboot for nothing.
+
+For **deficit 1 (the GPUDirect cap)** — this is platform-level and cannot be fixed in software:
+
+- **PCIe Relaxed Ordering** — check it is enabled in BIOS. It is an NVIDIA-recommended setting for GPUDirect, and disabling it degrades NIC-reads-from-GPU specifically, matching the measured read/write asymmetry (147.6 read vs 286.6 write).
+- **ACS on the Broadcom PCIe switches** — compare `lspci -vvv` ACSCtl bits (root required) against node5700. node5700 does *not* carry `pci=disable_acs_redir` and is still at full speed, so the kernel workaround is not the differentiator; the BIOS/firmware state is what to inspect.
+- **PCIe Max Payload Size / Max Read Request** on the HCA and GPU bridges — again, diff against node5700.
+
+For **deficit 2 (per-operation cost)**:
+
+- **CPU frequency governor -> `performance`** and **disable deep C-states**. NCCL's proxy thread posts every RDMA operation on the host CPU, so `powersave` or deep C-states produce precisely this signature. The Ubuntu nodes run `performance`. This is the cheapest, lowest-risk item on the whole list and should be checked first.
+- Report (do not change) the **CPU model** and **HCA firmware** on node5500-5502 — neither is verifiable from node5700, and both could matter for a per-operation cost.
+
+If the Rocky 8 nodes are ever run **without Slurm** like these ones, they will also need passwordless ssh both ways and `memlock unlimited` in non-interactive ssh sessions (`/etc/security/limits.conf` + `UsePAM yes`).
+
+### 6.3 What to do in the application
+
+Application settings **cannot recover deficit 1** — a capped GPUDirect path is platform configuration. They matter for getting the most out of whatever the platform provides, and for diagnosing deficit 2. These are already in `run-nccl-2node.sh`:
+
+- `NCCL_IB_HCA=mlx5_4,mlx5_7,mlx5_8,mlx5_9,mlx5_10,mlx5_13,mlx5_14,mlx5_15` — pin the 8 NDR rails explicitly. Letting NCCL choose works at 1 GPU/node but **fails to connect at 8 GPUs/node**.
+- `NCCL_NET_GDR_LEVEL=2` — keep GPUDirect on the data path.
+- Bootstrap MPI over TCP on a pinned interface (`--mca pml ob1 --mca btl tcp,self`, `--mca btl_tcp_if_include <iface>`, `--mca oob_tcp_if_include <iface>`) and disable UCC/hcoll. MPI only exchanges the NCCL unique-id; the data path is NCCL.
+- Build nccl-tests against the CUDA flavour the **driver** supports (12.9 here, since r570 caps at CUDA 12.8).
+
+For diagnosis rather than tuning:
+
+- `NCCL_DEBUG=INFO` on **both** clusters, comparing channel count, protocol (LL / LL128 / Simple) and algorithm. If Rocky 8 selects a different protocol, deficit 2 is a tuning problem fixable with environment variables rather than a reinstall — worth checking before touching MOFED.
+- `NCCL_MIN_NCHANNELS` / `NCCL_PROTO` sweeps on the Ubuntu side for the large-`scatter` plateau (290 vs 325-339 GB/s). Low priority: scatter rarely bottlenecks training.
+
+### 6.4 How to verify
+
+After each change on Rocky 8, re-run the two tests that isolate the deficits, and compare against the Ubuntu targets:
+
+```bash
+# deficit 1 — GPUDirect bulk path (target: ~395 Gb/s read, ~380 Gb/s write)
+ssh <nodeB> 'ib_write_bw -d mlx5_4 --report_gbits -s 67108864 -n 200'
+ib_write_bw -d mlx5_4 --use_cuda=0 --report_gbits -s 67108864 -n 200 <nodeB>
+
+# deficit 2 — per-operation cost (target: all_reduce ~183 us at 1 MiB, 16 GPUs)
+./run-nccl-2node.sh allreduce 8
+```
+
+**Priority.** If only one thing gets done: check the CPU governor (free, and it may explain deficit 2 outright). If only one *investigation* gets done: the PCIe/BIOS diff against node5700, since deficit 1 is the larger gap and now has a working reference. Neither root cause is established — this list is ordered by evidence and cost, not by certainty.
 
