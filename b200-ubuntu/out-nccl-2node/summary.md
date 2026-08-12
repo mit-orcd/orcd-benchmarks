@@ -268,4 +268,4 @@ Both clusters are the same B200 platform with the same fabric, so the explanatio
 
 ## 5. Suggested actions
 
-The action list derived from sections 1-4 — what to check, what to change, and in what order — is in **`../admin-nccl-notes.md`**. Items common to the 1-node and 2-node cases are in its section 1; those specific to this case are in its section 3.
+The action list derived from sections 1-4 — what to check, what to change, and in what order — is in **`../admin-nccl-notes.md`**, written as an ordered sequence of steps: the free read-only checks first (governor, whether the bulk deficit still exists, NCCL's algorithm selection), then the PCIe/BIOS diff, then the MOFED downgrade as the first change.
