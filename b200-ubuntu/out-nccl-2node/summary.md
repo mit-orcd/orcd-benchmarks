@@ -1,6 +1,6 @@
 # nccl-tests 2-node summary — Ubuntu B200 nodes
 
-- Generated: 2026-08-11 22:14:12 — comparison restructured 2026-08-12; `ib_write_bw` re-measured 2026-08-12 on **both** clusters (Rocky 8 via Slurm job 20306762 on node5501), and the Rocky 8 system-configuration rows read first-hand in the same job
+- Generated: 2026-08-11 22:14:12 — comparison restructured 2026-08-12; Rocky 8 system-configuration rows read first-hand on node5501 (Slurm job 20306762) the same day. `ib_write_bw` GPUDirect measurements live in `../b200-nodes/notes.md`.
 - Runs: node5700+node5701
 - GPUs: 8/node x 2 nodes = 16 x NVIDIA B200 (inter-node, InfiniBand + GPUDirect RDMA)
 - Config: 1 MiB-16 GiB, 5 warmup + 20 iters
@@ -77,22 +77,9 @@ Same hardware on both sides: 8x B200 per node, 8 NDR rails per node, 16 ranks, N
 
 **Two collectives are exempt at every size, and they identify the mechanism.** `sendrecv` and `gather` sit within ~1.1x from 1 MiB to 16 GiB — exactly the two NCCL does **not** split across its 8 channels (sendrecv is one contiguous chunk per pair, gather a fan-in kept on a single path). Everything that *is* channel-split shows the gap, and it decays as messages grow: averaged over those seven, **2.23x at 1 MiB, 1.45x at 16 MiB, 1.29x at 256 MiB, 1.02x at 16 GiB**. That decay is the signature of a cost paid per operation rather than per byte. (`broadcast` at 0.84x is the single dip below parity, at one size only.)
 
-**Bulk GPUDirect path, measured directly on both clusters** (`ib_write_bw`, mlx5_4, 64 MiB RDMA writes, 200 iters). The Rocky 8 column was measured on **2026-08-12** on the current system configuration (Slurm job 20306762 on node5501, `../b200-nodes/job-ibwrite-1node.sh`); the last column is what the same test returned on 2026-07-13, when the GPU-read path was capped:
+**The bulk GPUDirect path is a tie, measured directly.** `ib_write_bw` reaches NDR line rate on both clusters — 395.4 Gb/s Ubuntu, 395.5 Gb/s Rocky 8 reading from GPU memory — so the bulk path is not what separates them. The measurement, the full table and the history of the 2026-07-13 GPU-read cap that this retires are in **`../b200-nodes/notes.md`**.
 
-| Test | Ubuntu 5700<->5701 | Rocky 8 node5501 | ratio | Rocky 8, 2026-07-13 |
-|------|-------------------:|-----------------:|------:|--------------------:|
-| host mem -> host mem | 380.8 Gb/s | 379.7 Gb/s | 1.00x | 379.5 Gb/s |
-| **NIC reads from GPU** | **395.4 Gb/s** | **395.5 Gb/s** | **1.00x** | 147.6 Gb/s |
-| **NIC writes into GPU** | 380.8 Gb/s | 380.5 Gb/s | 1.00x | 286.6 Gb/s |
-| GPU -> GPU | not measured | 395.5 Gb/s | — | not measured |
-
-**The bulk path is now a tie, and the old GPUDirect deficit is gone.** Rocky 8 reads from GPU memory at **395.5 Gb/s** — NDR line rate, within 0.1 Gb/s of Ubuntu — where 2026-07-13 measured 147.6; writes into GPU recovered from 286.6 to 380.5. `GPU -> GPU`, the pattern NCCL actually uses, is also at line rate. Two things about that cluster changed in between and either could account for it: it now boots **`iommu=off`** (0 IOMMU groups, where 2026-07-13 recorded `iommu=pt intel_iommu=on` with 540), and node5500/node5501 have been **reinstalled to EL10 / kernel 6.12** from the earlier EL8 / 4.18. The platform-level suspects previously raised for the cap — ACS redirect, PCIe topology, Relaxed Ordering, Max Payload Size — no longer have anything to explain.
-
-**The NCCL data never supported the cap, and now agrees with perftest.** `sendrecv` at 8 GPUs/node on 2026-08-06 already reached 48.4 GB/s per pair on Rocky 8 — roughly 387 Gb/s out of GPU memory across one rail — which is arithmetically impossible if the NIC could only read from GPU at 147.6 Gb/s, and NCCL reported "GPU Direct RDMA (DMABUF) enabled" there, so it was not bypassing the GPU path. All three Rocky pairs agreed (47.7-49.7 GB/s vs Ubuntu's 48.8).
-
-**Caveat on the re-measurement.** It is a **single-node, cross-rail** test — client on mlx5_4 + GPU0, server on mlx5_7 + GPU1, both PXB-adjacent pairs, traffic leaving the node and returning through the IB switch. The client's GPU -> PCIe switch -> NIC read path is identical to the inter-node case, which is what makes the "NIC reads from GPU" row comparable; the host-to-host row is a sanity check rather than a fabric measurement. A true 2-node reproduction (`../b200-nodes/job-ibwrite-2node.sh`) is queued and blocked on node availability — node5500 is held by another user's reservation until 2026-08-14 and node5502 has been `DOWN+NOT_RESPONDING` since 2026-08-10, leaving only one of the three Rocky nodes free.
-
-**Net:** with the bulk path equalised, the **small-message per-operation gap is the only remaining difference in Ubuntu's favour** — and it is the one that matters for realistic NCCL workloads, which issue many modest collectives rather than a few 16 GiB ones. The single regression the other way is large-message `scatter`, a collective that rarely bottlenecks training.
+**Net:** with the bulk path tied, the **small-message per-operation gap is the only remaining difference in Ubuntu's favour** — and it is the one that matters for realistic NCCL workloads, which issue many modest collectives rather than a few 16 GiB ones. The single regression the other way is large-message `scatter`, a collective that rarely bottlenecks training.
 
 ### 2.2 Possible reasons — differences in system configuration
 
@@ -108,7 +95,7 @@ Rocky 8 rows marked *(2026-08-12)* were read directly off node5501 inside Slurm 
 | GPU <-> rail topology | PXB on every pair | PXB on every pair *(2026-08-12)* | **same** |
 | CPU | Xeon Platinum 8570 | Xeon Platinum 8570 *(2026-08-12)* | **same** |
 | CPU governor | `performance` | `performance` *(2026-08-12)* | **same** |
-| bulk GPUDirect (`ib_write_bw`) | 395.4 Gb/s GPU-read | 395.5 Gb/s GPU-read *(2026-08-12)* | **same** |
+| bulk GPUDirect path | line rate | line rate *(2026-08-12)* | **same** (`../b200-nodes/notes.md`) |
 | **IOMMU (kernel cmdline)** | `iommu=pt intel_iommu=on`, 540 groups | **`iommu=off`, 0 groups** *(2026-08-12)* | **differs** |
 | **MOFED / rdma-core** | OFED-internal-**25.10**-1.7.1.413 | OFED-internal-**26.04**-0.8.6 *(2026-08-12)* | **differs** |
 | **NVIDIA driver** | **570.211.01** | **590.48.01** *(2026-08-12)* | **differs** |
@@ -137,7 +124,7 @@ The other six sit at 89-98% of `HW max` and agree within 2%. **That is the rule:
 
 **What the data already excludes.**
 
-- *IOMMU / IOTLB pressure.* The two clusters differ here — Ubuntu runs `iommu=pt intel_iommu=on` with 540 groups, Rocky 8 runs `iommu=off` with none — but **both reach full GPUDirect line rate**, 395.4 and 395.5 Gb/s reading from GPU. IOMMU state is therefore not what separates them, and it cannot explain the small-message gap in the direction observed: the cluster with the IOMMU *disabled*, which is the configuration with less per-transaction overhead to pay, is the slower one.
+- *IOMMU / IOTLB pressure.* The two clusters differ here — Ubuntu runs `iommu=pt intel_iommu=on` with 540 groups, Rocky 8 runs `iommu=off` with none — but **both reach full GPUDirect line rate** reading from GPU (`../b200-nodes/notes.md`). IOMMU state is therefore not what separates them, and it cannot explain the small-message gap in the direction observed: the cluster with the IOMMU *disabled*, which is the configuration with less per-transaction overhead to pay, is the slower one.
 - *CPU or frequency governor.* Ruled out by direct reading: both clusters run the same **Xeon Platinum 8570** with the **`performance`** governor. This had been the cheapest outstanding hypothesis for a per-operation cost; it is now closed. (Deep C-state configuration is still unread on either side.)
 - *Node heterogeneity within the Rocky cluster.* The EL8 / 4.18 vs EL10 / 6.12 split is gone — node5500 and node5501 both run 6.12.0-211 — and all three Rocky pairs showed the same slow small-message times when the split still existed.
 - *NCCL version or job topology.* 2.29.2 on both, same 16-rank / 8-GPU-per-node layout.
@@ -151,11 +138,11 @@ The other six sit at 89-98% of `HW max` and agree within 2%. **That is the rule:
 3. **Kernel — 6.8 (Ubuntu 24.04) vs 6.12 (EL10).** No longer a heterogeneity problem within the Rocky cluster, but still a difference between clusters, and the RDMA and DMABUF paths did change between those versions.
 4. **HCA firmware — 28.47.2526 vs 28.49.1120.** Newly visible, and it moves in the same direction as MOFED: Rocky 8 runs the newer firmware and is slower per operation. Firmware sets doorbell and completion handling, which is per-operation cost by definition. Worth noting that (1) and (4) usually travel together — a MOFED downgrade test would want the firmware held constant to stay attributable.
 
-**The decisive test is now cheap and half-done.** An `ib_write_bw` small-message sweep separates per-operation cost from bandwidth without NCCL in the picture. The Rocky 8 half was collected alongside the table above (job 20306762): message rate holds at **~5.3 Mpps** from 2 B to 4 KiB, i.e. ~190 ns per operation, and bandwidth scales linearly with size across that whole range, so the rail is not the constraint there. Running the same `ib_write_bw -a -n 1000 --use_cuda=0` sweep on node5700<->node5701 and comparing the small-size message rates would attribute the gap to the IB stack or exonerate it in a single measurement.
+**The decisive test is cheap and half-done.** An `ib_write_bw` small-message sweep separates per-operation cost from bandwidth without NCCL in the picture. The Rocky 8 half is already collected and is recorded in `../b200-nodes/notes.md`; running the same `ib_write_bw -a -n 1000 --use_cuda=0` sweep on node5700<->node5701 and comparing the small-size message rates would attribute the gap to the IB stack or exonerate it in a single measurement.
 
 **The `scatter` plateau — the one place Rocky 8 wins — has no established mechanism.** Unconfirmed possibilities: MOFED 26.04 streaming root-anchored traffic better at 16 GiB; the CUDA 13.1 build picking a different channel count or protocol than the 12.9 build; or `pci=realloc=off` leaving the Ubuntu root GPU's outbound path configured differently. `NCCL_DEBUG=INFO` on both sides would settle it — low priority, since scatter rarely bottlenecks training.
 
-**Caveat on provenance.** The Rocky 8 configuration rows and the `ib_write_bw` figures are now first-hand, read on node5501 inside Slurm job 20306762 on 2026-08-12 — the nodes are Slurm-managed and unreachable by ssh from node5700, but a batch job reaches them. What remains second-hand is the **NCCL timing** comparison: those Rocky numbers are the 2026-08-06 runs from `../b200-nodes/out-nccl-2node/summary.md`, measured on node5500+node5502 before node5500 was reinstalled to EL10 and before the IOMMU change. Since both of those changes are known to have moved the bulk GPUDirect path, the small-message gap should be re-measured on the current Rocky configuration before the candidate list above is acted on. `sbatch job-nccl-2node.sh all 8` on any two current Rocky nodes is the run that would do it.
+**Caveat on provenance.** The Rocky 8 configuration rows are now first-hand, read on node5501 inside Slurm job 20306762 on 2026-08-12 (the `ib_write_bw` figures from the same job are in `../b200-nodes/notes.md`) — the nodes are Slurm-managed and unreachable by ssh from node5700, but a batch job reaches them. What remains second-hand is the **NCCL timing** comparison: those Rocky numbers are the 2026-08-06 runs from `../b200-nodes/out-nccl-2node/summary.md`, measured on node5500+node5502 before node5500 was reinstalled to EL10 and before the IOMMU change. Since both of those changes are known to have moved the bulk GPUDirect path, the small-message gap should be re-measured on the current Rocky configuration before the candidate list above is acted on. `sbatch job-nccl-2node.sh all 8` on any two current Rocky nodes is the run that would do it.
 
 ## 3. Bandwidth vs message size (GB/s)
 

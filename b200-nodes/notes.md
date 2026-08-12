@@ -38,6 +38,10 @@ degraded on both nodes, which is what limits the 2-node NCCL result.**
 The GPU-read cap is symmetric across both nodes, so it is a common platform
 configuration issue, not a single bad node.
 
+> **Superseded.** These figures, and the two sections that follow them, were taken
+> with the earlier system configuration (`iommu=pt intel_iommu=on`, EL8 / 4.18 on
+> node5500). They no longer reproduce — see **2026-08-12** at the end of this file.
+
 ### Why this explains the NCCL 2-node result
 
 NCCL sendrecv is bidirectional: each GPU simultaneously reads (TX) and writes
@@ -76,3 +80,31 @@ ib_write_bw -d mlx5_4 --use_cuda=0 --report_gbits -s $((64*1024*1024)) -n 200
 # client (node5502); drop --use_cuda for host-memory baseline
 ib_write_bw -d mlx5_4 --use_cuda=0 --report_gbits -s $((64*1024*1024)) -n 200 node5500
 ```
+
+---
+
+# 2026-08-12 — GPUDirect re-measured on both clusters
+
+This retires the 2026-07-13 GPU-read cap recorded above. The NCCL results these figures
+support are in `../b200-ubuntu/out-nccl-2node/summary.md` § 2.
+
+**Bulk GPUDirect path, measured directly on both clusters** (`ib_write_bw`, mlx5_4, 64 MiB RDMA writes, 200 iters). The Rocky 8 column was measured on **2026-08-12** on the current system configuration (Slurm job 20306762 on node5501, `job-ibwrite-1node.sh`); the last column is what the same test returned on 2026-07-13, when the GPU-read path was capped:
+
+| Test | Ubuntu 5700<->5701 | Rocky 8 node5501 | ratio | Rocky 8, 2026-07-13 |
+|------|-------------------:|-----------------:|------:|--------------------:|
+| host mem -> host mem | 380.8 Gb/s | 379.7 Gb/s | 1.00x | 379.5 Gb/s |
+| **NIC reads from GPU** | **395.4 Gb/s** | **395.5 Gb/s** | **1.00x** | 147.6 Gb/s |
+| **NIC writes into GPU** | 380.8 Gb/s | 380.5 Gb/s | 1.00x | 286.6 Gb/s |
+| GPU -> GPU | not measured | 395.5 Gb/s | — | not measured |
+
+**The bulk path is now a tie, and the old GPUDirect deficit is gone.** Rocky 8 reads from GPU memory at **395.5 Gb/s** — NDR line rate, within 0.1 Gb/s of Ubuntu — where 2026-07-13 measured 147.6; writes into GPU recovered from 286.6 to 380.5. `GPU -> GPU`, the pattern NCCL actually uses, is also at line rate. Two things about that cluster changed in between and either could account for it: it now boots **`iommu=off`** (0 IOMMU groups, where 2026-07-13 recorded `iommu=pt intel_iommu=on` with 540), and node5500/node5501 have been **reinstalled to EL10 / kernel 6.12** from the earlier EL8 / 4.18. The platform-level suspects previously raised for the cap — ACS redirect, PCIe topology, Relaxed Ordering, Max Payload Size — no longer have anything to explain.
+
+**The NCCL data never supported the cap, and now agrees with perftest.** `sendrecv` at 8 GPUs/node on 2026-08-06 already reached 48.4 GB/s per pair on Rocky 8 — roughly 387 Gb/s out of GPU memory across one rail — which is arithmetically impossible if the NIC could only read from GPU at 147.6 Gb/s, and NCCL reported "GPU Direct RDMA (DMABUF) enabled" there, so it was not bypassing the GPU path. All three Rocky pairs agreed (47.7-49.7 GB/s vs Ubuntu's 48.8).
+
+**Caveat on the re-measurement.** It is a **single-node, cross-rail** test — client on mlx5_4 + GPU0, server on mlx5_7 + GPU1, both PXB-adjacent pairs, traffic leaving the node and returning through the IB switch. The client's GPU -> PCIe switch -> NIC read path is identical to the inter-node case, which is what makes the "NIC reads from GPU" row comparable; the host-to-host row is a sanity check rather than a fabric measurement. A true 2-node reproduction (`job-ibwrite-2node.sh`) is queued and blocked on node availability — node5500 is held by another user's reservation until 2026-08-14 and node5502 has been `DOWN+NOT_RESPONDING` since 2026-08-10, leaving only one of the three Rocky nodes free.
+
+## Small-message sweep (Rocky 8, node5501, job 20306762)
+
+`ib_write_bw -a -n 1000 --use_cuda=0`. Message rate holds at **~5.3 Mpps** from 2 B to 4 KiB — about **190 ns per operation** — and bandwidth scales linearly with size across that whole range, so the rail is not the constraint there.
+
+This is half of the test that would settle the NCCL small-message gap: the same sweep on node5700<->node5701, compared at the small sizes, attributes that gap to the IB stack or exonerates it. See `../b200-ubuntu/out-nccl-2node/summary.md` § 2.2.
