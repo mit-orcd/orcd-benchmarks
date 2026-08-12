@@ -1,0 +1,55 @@
+==============================================================
+ib_write_bw GPUDirect RDMA — Rocky 8 B200, single node
+  date        : 2026-08-12 15:11:29
+  job         : 20306762
+  node        : node5501
+  client      : mlx5_4 + GPU0   (the GPU-read path under test)
+  server      : mlx5_7 + GPU1
+  message     : 67108864 bytes, 200 iterations
+==============================================================
+
+---------- system configuration: node5501 ----------
+kernel       : 6.12.0-211.42.1.el10_2.x86_64
+cmdline      : BOOT_IMAGE=(md/md0)/boot/vmlinuz-6.12.0-211.42.1.el10_2.x86_64 root=UUID=7fd567ea-916b-473d-9be4-a5f07b911316 ro crashkernel=2G-64G:256M,64G-:512M resume=UUID=be9e6b92-0d32-4079-b35f-792b15a1cfac rd.md.uuid=e71a385e:a8c55ed4:054126ed:649f178a rd.md.uuid=1fd401a8:01fe085e:ff76ba2c:145f6096 console=ttyS0,115200 selinux=0 iommu=off
+iommu groups : 0  (0 => IOMMU off)
+governor     : performance
+cpu          : INTEL(R) XEON(R) PLATINUM 8570
+driver       : NVRM version: NVIDIA UNIX Open Kernel Module for x86_64  590.48.01  Release Build  (root@node5501)  Wed Aug  5 12:54:25 PM EDT 2026
+mofed        : OFED-internal-26.04-0.8.6:
+hca fw       : 28.49.1120
+peermem      : 3 module(s)
+gpu0 <-> nic4: PXB
+
+---------- 64 MiB RDMA write ----------
+host mem -> host mem         379.72 Gb/s
+NIC reads from GPU           395.48 Gb/s
+NIC writes into GPU          380.45 Gb/s
+GPU -> GPU                   395.47 Gb/s
+
+---------- size sweep, NIC reads from GPU ----------
+  2                  0.11 Gb/s  7.029737Conflicting Mpps
+  4                  0.17 Gb/s  5.261288Conflicting Mpps
+  8                  0.34 Gb/s  5.249439Conflicting Mpps
+  16                 0.68 Gb/s  5.319396Conflicting Mpps
+  32                 1.35 Gb/s  5.285329Conflicting Mpps
+  64                 2.70 Gb/s  5.280377Conflicting Mpps
+  128                5.43 Gb/s  5.301939Conflicting Mpps
+  256               10.44 Gb/s  5.098438Conflicting Mpps
+  512               21.68 Gb/s  5.293764Conflicting Mpps
+  1024              43.42 Gb/s  5.300684Conflicting Mpps
+  2048              86.75 Gb/s  5.294659Conflicting Mpps
+  4096             174.89 Gb/s  5.337333Conflicting Mpps
+  8192             289.88 Gb/s  4.423187Conflicting Mpps
+  16384            365.22 Gb/s  2.786373Conflicting Mpps
+  32768            355.93 Gb/s  1.357758Conflicting Mpps
+  65536            357.17 Gb/s  0.681257Conflicting Mpps
+  131072           376.76 Gb/s  0.359311Conflicting Mpps
+  262144           378.05 Gb/s  0.180266Conflicting Mpps
+  524288           386.41 Gb/s  0.092127Conflicting Mpps
+  1048576          390.20 Gb/s  0.046516Conflicting Mpps
+  2097152          394.12 Gb/s  0.023491Conflicting Mpps
+  4194304          394.84 Gb/s  0.011767Conflicting Mpps
+  8388608          395.08 Gb/s    0.005887 Mpps
+
+raw perftest output: out-ibwrite/raw-20306762/
+done: 2026-08-12 15:12:23
