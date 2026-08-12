@@ -467,12 +467,60 @@ def admin_section(L, rocky):
              "node5701 now serve as a known-good reference to diff against.** "
              "Nothing below needs doing on the Ubuntu nodes.")
     L.append("")
-    L.append("| # | Deficit | Size | Where it shows |")
-    L.append("|---|---------|------|----------------|")
+    L.append("| # | Deficit | Size | Where it shows | Rocky 8 data from |")
+    L.append("|---|---------|------|----------------|-------------------|")
     L.append("| 1 | GPUDirect bulk cap on Rocky 8 | **2.7x** on NIC-reads-from-GPU "
-             "(147.6 vs 395.5 Gb/s) | 1 GPU/node NCCL: 12.7 vs 48.7 GB/s |")
+             "(147.6 vs 395.5 Gb/s) | 1 GPU/node NCCL: 12.7 vs 48.7 GB/s | "
+             "**2026-07-13 — may be stale, verify first** |")
     L.append("| 2 | Per-operation cost on Rocky 8 | **1.9-3.0x** in time at 1 MiB | "
-             "every collective NCCL splits across its 8 channels |")
+             "every collective NCCL splits across its 8 channels | 2026-08-06 |")
+    L.append("")
+    L.append("### 6.0 Before anything else: confirm the current state")
+    L.append("")
+    L.append("**Deficit 1 rests on 2026-07-13 measurements and may no longer "
+             "exist.** Every Rocky 8 figure for it — the 147.6 Gb/s perftest cap "
+             "and the 12.7 GB/s 1-GPU/node NCCL result — dates from that day. "
+             "The Rocky 8 runs used everywhere else in this summary are from "
+             "**2026-08-06** and are all 8 GPUs/node, a configuration that shows "
+             "**no** bulk deficit (sendrecv 47.7-49.7 GB/s across the three "
+             "pairs, matching Ubuntu's 48.8). Nothing in between was recorded, "
+             "so a fix or a stack change on those nodes would not be visible "
+             "here. Deficit 2, by contrast, is measured on the 2026-08-06 data "
+             "and stands.")
+    L.append("")
+    L.append("There is also an **open question about the IOMMU state on the "
+             "Rocky 8 nodes.** `../b200-nodes/notes.md` (2026-07-13) records "
+             "`iommu=pt intel_iommu=on` with 540 groups, and it is the *AICR "
+             "reference cluster* (b0029+b0030), not node5500-5502, that "
+             "`results_b200.md` documents as needing `iommu=off`. It has since "
+             "been suggested that the Rocky 8 nodes now run `iommu=off`; that "
+             "could not be verified from node5700 (no ssh access, and no run "
+             "output records `/proc/cmdline`). **The two cases lead to opposite "
+             "advice, so settle this before acting:**")
+    L.append("")
+    L.append("- If Rocky 8 still runs **`iommu=pt intel_iommu=on`** — the "
+             "`iommu=off` diagnostic in 6.2 is worth doing.")
+    L.append("- If Rocky 8 already runs **`iommu=off`** and is still capped — "
+             "IOMMU is exonerated on both clusters, that diagnostic is pointless, "
+             "and the search narrows immediately to MOFED, BIOS/ACS state and "
+             "PCIe topology (6.1 and the topology check in 6.2).")
+    L.append("")
+    L.append("For reference, **the Ubuntu nodes run `iommu=pt intel_iommu=on`** "
+             "(540 groups, HCA and GPU in separate IOMMU groups) — IOMMU is "
+             "**on**, not off, and they still reach line rate.")
+    L.append("")
+    L.append("Three commands settle all of it, on any Rocky 8 node:")
+    L.append("")
+    L.append("```bash")
+    L.append("cat /proc/cmdline                      # iommu=off ? iommu=pt ?")
+    L.append("ls /sys/kernel/iommu_groups | wc -l    # 0 => IOMMU off; ~540 => on")
+    L.append("sbatch job-nccl-2node.sh sendrecv 1    # ~12.7 GB/s => cap persists;")
+    L.append("                                       # ~48 GB/s  => deficit 1 is gone")
+    L.append("```")
+    L.append("")
+    L.append("If that last run comes back near 48 GB/s, **stop: deficit 1 no "
+             "longer exists** and only section 6.3's deficit-2 items are worth "
+             "pursuing.")
     L.append("")
 
     L.append("### 6.1 Libraries and drivers to install (on the Rocky 8 nodes)")
@@ -502,11 +550,44 @@ def admin_section(L, rocky):
 
     L.append("### 6.2 System configuration")
     L.append("")
-    L.append("**Do not set `iommu=off`.** Both clusters already boot "
-             "`iommu=pt intel_iommu=on` with 540 groups, and the Ubuntu pair "
-             "reaches full GPUDirect line rate under it (395.5 Gb/s). The "
-             "`iommu=off` recommendation in `../b200-nodes/notes.md` is excluded "
-             "by that control and would cost a reboot for nothing.")
+    L.append("**On `iommu=off` and ACS.** The classic mechanism is real: Linux "
+             "enables ACS on downstream ports when the IOMMU is on, ACS redirect "
+             "sends peer-to-peer TLPs up to the root complex instead of straight "
+             "across the switch, and that can throttle GPUDirect. `iommu=off` is "
+             "the blunt way to take ACS out of the picture, and it is what the "
+             "reference cluster needed.")
+    L.append("")
+    L.append("What the Ubuntu measurement shows is narrower than \"IOMMU does not "
+             "matter\": **IOMMU-on is not *inherently* fatal on this hardware.** "
+             "node5700 boots `iommu=pt intel_iommu=on`, puts the HCA "
+             "(`0000:18:00.0`, group 62) and GPU0 (`0000:1b:00.0`, group 65) in "
+             "separate IOMMU groups — so ACS isolation is active — and still "
+             "reads from GPU at 395.5 Gb/s, i.e. NDR line rate with nothing left "
+             "to recover. `nvidia-smi topo -m` reports **PXB** for each "
+             "GPU<->rail pair (across PCIe bridges, *not* via the host bridge), "
+             "and `lspci -t` confirms the HCA and GPU hang off the same switch.")
+    L.append("")
+    L.append("So for the **Rocky 8** nodes the right conclusion is not \"skip "
+             "`iommu=off`\" but:")
+    L.append("")
+    L.append("- **Do run `iommu=off` on one Rocky node as a diagnostic.** It is "
+             "one cmdline edit plus a reboot, reversible, and decisive: if the "
+             "GPU-read bandwidth jumps from 147.6 Gb/s toward ~395, the cause is "
+             "the IOMMU/ACS interaction on that platform.")
+    L.append("- **But prefer a targeted fix in production.** If `iommu=off` "
+             "proves the point, disabling ACS redirect on the relevant ports "
+             "(BIOS ACS setting, or `pci=disable_acs_redir=` with the *correct* "
+             "device IDs) restores P2P while keeping IOMMU isolation. Note "
+             "node5502 already carries "
+             "`pci=disable_acs_redir=pci:1000:c030` and was still capped — which "
+             "more likely means that mask did not cover the Broadcom switch "
+             "ports in its path than that ACS is innocent.")
+    L.append("- **Compare the two platforms directly**: root `lspci -vvv` "
+             "**ACSCtl** bits on the GPU<->NIC path, and `nvidia-smi topo -m`. If "
+             "a Rocky node reports `NODE`/`SYS` where node5700 reports `PXB`, the "
+             "GPU and its rail are not under a common switch there, and that "
+             "topology difference alone could explain the cap. ACSCtl could not "
+             "be read here — it needs root.")
     L.append("")
     L.append("For **deficit 1 (the GPUDirect cap)** — this is platform-level and "
              "cannot be fixed in software:")
@@ -588,6 +669,69 @@ def admin_section(L, rocky):
              "1 MiB, 16 GPUs)")
     L.append("./run-nccl-2node.sh allreduce 8")
     L.append("```")
+    L.append("")
+    L.append("### 6.5 Keeping IOMMU on while disabling ACS redirect")
+    L.append("")
+    L.append("`iommu=off` is the blunt instrument; it is **not** the only way to "
+             "stop ACS redirect from routing peer-to-peer traffic through the "
+             "root complex. All three options below leave the IOMMU fully on.")
+    L.append("")
+    L.append("**1. Kernel command line (persistent, targeted).**")
+    L.append("")
+    L.append("```")
+    L.append("pci=disable_acs_redir=pci:1000:c030      # by vendor:device")
+    L.append("pci=disable_acs_redir=0000:17:02.0       # or by BDF, ';'-separated")
+    L.append("```")
+    L.append("")
+    L.append("Clears the P2P Request Redirect / Completion Redirect / Upstream "
+             "Forwarding bits on the named devices. **The devices to name are the "
+             "downstream ports of the switch between the GPU and its HCA — not "
+             "the GPU or the NIC.** node5502 already carries exactly this for "
+             "`pci:1000:c030` and was still capped, which suggests that mask did "
+             "not cover the bridges actually in its GPU<->NIC path; on node5700 "
+             "that path is the switch at `[17-1b]` (HCA `0000:18:00.0`, GPU0 "
+             "`0000:1b:00.0`).")
+    L.append("")
+    L.append("**2. BIOS.** Most server BIOSes expose \"PCIe ACS\" / \"ACS "
+             "Enable\". Disabling it there means the capability is never enabled "
+             "at boot, so the kernel has nothing to enforce, and the IOMMU stays "
+             "on. Cleanest production option where it exists.")
+    L.append("")
+    L.append("**3. `setpci` at runtime (no reboot, for A/B testing).**")
+    L.append("")
+    L.append("```bash")
+    L.append("setpci -s <bridge_BDF> ECAP_ACS+6.w=0000   # clear ACS control reg")
+    L.append("```")
+    L.append("")
+    L.append("Per bridge, as root, and it does **not** survive reboot or PCIe "
+             "hotplug — but it is ideal for a quick test on one node: measure "
+             "`ib_write_bw --use_cuda`, clear the bits, measure again.")
+    L.append("")
+    L.append("**Verify what is actually set** (root required):")
+    L.append("")
+    L.append("```bash")
+    L.append("lspci -vvv -s <bridge_BDF> | grep -A2 'Access Control Services'")
+    L.append("```")
+    L.append("")
+    L.append("`ACSCap:` shows what the hardware supports, `ACSCtl:` what is "
+             "enabled. For P2P you want **`RR-` and `CR-`** (Request and "
+             "Completion Redirect off). This is the one measurement that could "
+             "not be taken on node5700 — `lspci -vvv` needs root — so whether "
+             "ACS redirect is actually active there remains unknown, even though "
+             "the bandwidth shows it is not costing anything.")
+    L.append("")
+    L.append("Two caveats for the admins:")
+    L.append("")
+    L.append("- Disabling ACS redirect **merges the affected devices into one "
+             "IOMMU group**, weakening isolation. Irrelevant for bare-metal HPC; "
+             "it matters if those nodes ever host VMs or VFIO passthrough.")
+    L.append("- Avoid the out-of-tree `pcie_acs_override=` patch — a VFIO "
+             "community hack, not appropriate for production HPC nodes.")
+    L.append("")
+    L.append("Note that **`iommu=pt` is a different knob**: it makes host DMA use "
+             "identity mapping to cut translation cost, but it does *not* clear "
+             "ACS redirect. Both clusters already run `iommu=pt`, so it is not a "
+             "substitute for any of the above.")
     L.append("")
     L.append("**Priority.** If only one thing gets done: check the CPU governor "
              "(free, and it may explain deficit 2 outright). If only one "

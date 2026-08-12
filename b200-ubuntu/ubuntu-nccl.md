@@ -87,7 +87,7 @@ anything, to ask for.
 
 | Item | Ubuntu (node5700/5701) | Rocky 8 (node5500-5502) | same? | Reconfigure? |
 |------|------------------------|-------------------------|-------|--------------|
-| IOMMU (kernel cmdline) | `iommu=pt intel_iommu=on`, 540 groups | `iommu=pt intel_iommu=on`, 540 groups | **same** | **No.** Already identical, and the Ubuntu pair reaches full inter-node bandwidth *with* IOMMU on. Do **not** ask for `iommu=off` here. |
+| IOMMU (kernel cmdline) | `iommu=pt intel_iommu=on`, 540 groups | `iommu=pt intel_iommu=on`, 540 groups | **same** | **No — on these Ubuntu nodes.** They already reach full GPUDirect line rate *with* IOMMU on, so there is nothing to recover here. On the **Rocky 8** nodes `iommu=off` is still worth trying as a one-node diagnostic — see "Problem 1" below. |
 | NCCL | 2.29.2 | 2.29.2 | **same** | No. |
 | GPUDirect RDMA | `nvidia_peermem` loaded, DMABUF path | `nvidia_peermem` loaded, DMABUF path | **same** | No. |
 | IB rails | 8 x 400 Gb/s NDR, MTU 4096 | 8 x 400 Gb/s NDR | **same** | No. |
@@ -121,9 +121,10 @@ hangs Open MPI in `MPI_Init`. `run-nccl-2node.sh` already works around it by
 pinning `--mca btl_tcp_if_include eno3`, so this only spares the next person the
 debugging.
 
-**Do not ask for:** `iommu=off`, driver/MOFED/kernel alignment, or CUDA 13 on
-these nodes — none of it is needed for this benchmark, and the driver change
-would cost you the current results.
+**Do not ask for (on node5700/node5701):** `iommu=off`, driver/MOFED/kernel
+alignment, or CUDA 13 — none of it is needed for this benchmark, and the driver
+change would cost you the current results. This is scoped to the *Ubuntu* nodes:
+the Rocky 8 nodes have real deficits and their own action list below.
 
 ## Why this matters
 
@@ -178,11 +179,28 @@ ib_write_bw -d mlx5_4 --use_cuda=0 --report_gbits -s 67108864 -n 200 node5701
 booting the *identical* `iommu=pt intel_iommu=on` with the same 540 IOMMU groups
 as the Rocky 8 nodes.
 
-**This excludes IOMMU as the cause of the Rocky 8 GPU-read cap.** Suspect #1 in
-`../b200-nodes/notes.md` was that IOMMU forced the 18.5 GB/s cap and that
-`iommu=off` would fix it. That was a fair reading of the evidence at the time,
-but a direct control now contradicts it: same IOMMU settings, full speed. The
-admins should not spend a reboot on `iommu=off`.
+**What this does and does not show about IOMMU/ACS.** The classic mechanism is
+real: Linux enables ACS on downstream ports when the IOMMU is on, ACS redirect
+routes peer-to-peer TLPs up to the root complex instead of straight across the
+switch, and that can throttle GPUDirect — which is why the reference cluster
+needed `iommu=off`.
+
+The measurement above shows something narrower: **IOMMU-on is not *inherently*
+fatal on this hardware.** node5700 boots `iommu=pt intel_iommu=on`, places the
+HCA (`0000:18:00.0`, IOMMU group 62) and GPU0 (`0000:1b:00.0`, group 65) in
+separate groups — so ACS isolation is active — and still reads from GPU at
+**395.5 Gb/s**, NDR line rate with nothing left to recover. `nvidia-smi topo -m`
+reports **PXB** for every GPU<->rail pair (across PCIe bridges, *not* via the
+host bridge) and `lspci -t` confirms the HCA and GPU sit under the same switch.
+
+So `iommu=off` is **not** ruled out for the Rocky 8 nodes — it remains a
+legitimate, cheap, reversible **diagnostic** there. What is ruled out is the
+assumption that IOMMU-on *must* cap GPUDirect: it does not on this platform, so
+if it does on theirs, the difference is in ACS state or PCIe topology, and that
+is worth identifying rather than papering over.
+
+(An earlier revision of this file said "do not spend a reboot on `iommu=off`".
+That was too strong and has been corrected.)
 
 # Suggestions for the admins
 
@@ -196,7 +214,21 @@ reaches 48.7 GB/s.
 
 1. **Re-run the perftest triplet above on Rocky 8** to confirm the cap still
    exists — those numbers date from 2026-07-13 and the stack has moved since.
-2. **Diff the PCIe configuration against node5700** (root needed): `lspci -vvv`
+1b. **Boot one Rocky node with `iommu=off` and re-run it.** Decisive: if
+   NIC-reads-from-GPU jumps from 147.6 Gb/s toward ~395, the IOMMU/ACS
+   interaction on that platform is the cause. If it does not move, IOMMU is
+   exonerated there too and the search moves to BIOS/firmware and the stack.
+   Prefer a **targeted** fix in production if this proves the point: disabling
+   ACS redirect on the relevant ports (BIOS ACS, or `pci=disable_acs_redir=`
+   with the *correct* device IDs) keeps IOMMU isolation. Note node5502 already
+   carries `pci=disable_acs_redir=pci:1000:c030` and was still capped — more
+   likely that mask missed the Broadcom switch ports in its path than that ACS
+   is innocent.
+2. **Diff the PCIe configuration against node5700** (root needed). Start with
+   `nvidia-smi topo -m`: node5700 reports **PXB** for each GPU<->rail pair. If a
+   Rocky node reports `NODE`/`SYS` instead, the GPU and its rail are not under a
+   common switch there and that topology difference alone could explain the cap.
+   Then `lspci -vvv`
    **ACS control bits** on the Broadcom switches, **PCIe Relaxed Ordering**, and
    **Max Payload Size**. Relaxed Ordering is the first thing to check — it is an
    NVIDIA-recommended BIOS setting for GPUDirect and disabling it degrades
