@@ -1,0 +1,69 @@
+==============================================================
+ib_write_bw GPUDirect RDMA — Rocky 8 B200
+  date        : 2026-08-17 12:00:04
+  job         : 20306763
+  server      : node5500
+  client      : node5501
+  device      : mlx5_4   GPU: 0
+  message     : 67108864 bytes, 200 iterations
+==============================================================
+
+---------- system configuration: node5500 ----------
+hostname     : node5500
+kernel       : 6.12.0-211.42.1.el10_2.x86_64
+cmdline      : BOOT_IMAGE=(md/md0)/boot/vmlinuz-6.12.0-211.42.1.el10_2.x86_64 root=UUID=4bafea5e-163f-47b1-8b82-65f9b8d45042 ro crashkernel=2G-64G:256M,64G-:512M resume=UUID=b19e0c0a-2df7-4fc9-89ad-0ea90d9892fd rd.md.uuid=a01ca409:c347548b:2a572cb0:d6a8d0c3 rd.md.uuid=9c93b57c:a2b53ba6:56456f68:e4cd217b console=ttyS0,115200 selinux=0 iommu=off rd.driver.blacklist=nouveau rd.driver.blacklist=nova-core
+iommu groups : 0  (0 => IOMMU off)
+governor     : performance
+cpu          : INTEL(R) XEON(R) PLATINUM 8570
+driver       : NVRM version: NVIDIA UNIX Open Kernel Module for x86_64  590.48.01  Release Build  (root@node5500)  Wed Aug  5 01:55:31 PM EDT 2026
+mofed        : OFED-internal-26.04-0.8.6:
+hca fw       : 28.49.1120
+peermem      : 3 module(s)
+gpu0 <-> nic4: PXB
+
+---------- system configuration: node5501 ----------
+hostname     : node5501
+kernel       : 6.12.0-211.42.1.el10_2.x86_64
+cmdline      : BOOT_IMAGE=(md/md0)/boot/vmlinuz-6.12.0-211.42.1.el10_2.x86_64 root=UUID=7fd567ea-916b-473d-9be4-a5f07b911316 ro crashkernel=2G-64G:256M,64G-:512M resume=UUID=be9e6b92-0d32-4079-b35f-792b15a1cfac rd.md.uuid=e71a385e:a8c55ed4:054126ed:649f178a rd.md.uuid=1fd401a8:01fe085e:ff76ba2c:145f6096 console=ttyS0,115200 selinux=0 iommu=off
+iommu groups : 0  (0 => IOMMU off)
+governor     : performance
+cpu          : INTEL(R) XEON(R) PLATINUM 8570
+driver       : NVRM version: NVIDIA UNIX Open Kernel Module for x86_64  590.48.01  Release Build  (root@node5501)  Wed Aug  5 12:54:25 PM EDT 2026
+mofed        : OFED-internal-26.04-0.8.6:
+hca fw       : 28.49.1120
+peermem      : 3 module(s)
+gpu0 <-> nic4: PXB
+
+---------- 64 MiB RDMA write ----------
+host mem -> host mem         378.47 Gb/s
+NIC reads from GPU           395.11 Gb/s
+NIC writes into GPU          379.25 Gb/s
+GPU -> GPU                   395.50 Gb/s
+
+---------- size sweep, NIC reads from GPU ----------
+  2              0.080005 Gb/s    5.000297 Mpps
+  4                  0.16 Gb/s    5.078056 Mpps
+  8                  0.32 Gb/s    5.056713 Mpps
+  16                 0.64 Gb/s    5.011115 Mpps
+  32                 1.30 Gb/s    5.059521 Mpps
+  64                 2.60 Gb/s    5.071153 Mpps
+  128                5.19 Gb/s    5.065576 Mpps
+  256               10.37 Gb/s    5.063272 Mpps
+  512               20.47 Gb/s    4.998327 Mpps
+  1024              41.57 Gb/s    5.074905 Mpps
+  2048              82.96 Gb/s    5.063780 Mpps
+  4096             166.82 Gb/s    5.090803 Mpps
+  8192             282.17 Gb/s    4.305531 Mpps
+  16384            336.45 Gb/s    2.566886 Mpps
+  32768            355.88 Gb/s    1.357567 Mpps
+  65536            357.21 Gb/s    0.681333 Mpps
+  131072           382.92 Gb/s    0.365182 Mpps
+  262144           393.92 Gb/s    0.187837 Mpps
+  524288           394.74 Gb/s    0.094114 Mpps
+  1048576          395.25 Gb/s    0.047118 Mpps
+  2097152          395.47 Gb/s    0.023572 Mpps
+  4194304          395.49 Gb/s    0.011787 Mpps
+  8388608          395.51 Gb/s    0.005894 Mpps
+
+raw perftest output: out-ibwrite/raw-20306763/
+done: 2026-08-17 12:01:13
