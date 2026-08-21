@@ -2,3 +2,5 @@
 [2026-08-21T14:46:35-04:00]   baseline for comparison: max_num_seqs=64, peak 1696.4 tok/s @ c=64 (job 20916742)
 [2026-08-21T14:46:35-04:00] ===== ARM lever1_mns256 : max_num_seqs=256 conc='64 128 256' extra='' =====
 [2026-08-21T14:57:40-04:00] ARM lever1_mns256: server up after 665s
+[2026-08-21T15:38:43-04:00] ARM lever1_mns256: sweep rc=0, 3 point(s)
+[2026-08-21T15:39:19-04:00] ===== ARM lever1_mns512 : max_num_seqs=512 conc='128 256 512' extra='' =====

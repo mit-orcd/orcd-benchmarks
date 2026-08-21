@@ -497,10 +497,32 @@ def build_report(b, a, arch, args):
     # ============================== §1 compute ====================================
     W("## 1. Computing performance")
     W("")
-    W("**Concurrency** = number of independent requests in flight at once. It is a "
+    W("**Metrics used throughout this report.** Every one is measured by "
+      "`vllm bench serve`, not derived, unless stated otherwise:")
+    W("")
+    W("| Term | Stands for | What it measures |")
+    W("|---|---|---|")
+    W("| **TTFT** | **Time To First Token** | Latency from sending a request to receiving "
+      "its *first* output token — i.e. how long the user waits before anything appears. "
+      "Dominated by **prefill** (processing the whole input prompt). |")
+    W("| **TPOT** | **Time Per Output Token** | Average latency *between* successive output "
+      "tokens, after the first. This is the **decode** step time — how fast the answer "
+      "streams once it has started. Reported as a median over all requests. |")
+    W("| **Concurrency** | — | Number of independent requests in flight at once. A "
       f"client-side load setting, not a hardware unit: all {pk['max_concurrency']} requests "
       f"at c={pk['max_concurrency']} are batched together across the same {ngpu} GPUs in one "
-      "continuous-batching loop.")
+      "continuous-batching loop. |")
+    W("| **Throughput (tok/s)** | — | **Aggregate** output tokens per second across *all* "
+      "concurrent requests — not what any single user sees (§1.1). |")
+    W("| **Per-user tok/s** | — | `1000 / TPOT` — just a unit flip: TPOT is ms per token, "
+      "so `1/TPOT` is tokens per ms and `×1000` makes it tokens per second. The streaming "
+      "rate one user actually experiences. *Derived*, not measured directly (§1.1). |")
+    W("| **req/s** | — | Completed requests per second. |")
+    W("")
+    W("TTFT and TPOT answer different questions and are bound by different things here: "
+      "TTFT is compute-dense prefill and stays nearly flat with load, while TPOT is "
+      "memory-bound decode and grows with it (§3.3). Both are quoted as **medians** in "
+      "the tables below; the raw JSON also carries p99.")
     W("")
     W("| Concurrency | Throughput (tok/s) | tok/s per GPU | TTFT med (ms) | TPOT med (ms) | req/s |")
     W("|---:|---:|---:|---:|---:|---:|")
@@ -520,7 +542,17 @@ def build_report(b, a, arch, args):
     W("")
     W("The table above is **aggregate** throughput, shared across all concurrent requests. "
       "A single user does not experience it. What one user sees is the streaming rate of "
-      "their own answer, **1000 / TPOT**, and that moves in the *opposite* direction:")
+      "their own answer, **1000 / TPOT** (TPOT = Time Per Output Token, the decode-step "
+      "latency), and that moves in the *opposite* direction:")
+    W("")
+    W("*Why `1000 / TPOT`:* TPOT is milliseconds per token, so one over it is tokens per "
+      "millisecond, and ×1000 gives tokens per second — a user receiving a token every "
+      "11.24 ms is receiving 89 tokens per second. It is **per-user** because TPOT is "
+      "measured within a single request: continuous batching advances many requests in one "
+      "forward pass, so the engine emits N tokens per step while each user still gets only "
+      "one. That is the whole reason the two columns diverge — aggregate ≈ N × per-user. "
+      "Note it is the steady-state rate and **excludes TTFT**: the full wait for an "
+      "N-token answer is `TTFT + (N-1) × TPOT`.")
     W("")
     W("| Conc | Total tok/s | TPOT med (ms) | **Per-user tok/s** | vs single user |")
     W("|---:|---:|---:|---:|---:|")
