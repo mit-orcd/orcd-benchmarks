@@ -516,6 +516,48 @@ def build_report(b, a, arch, args):
       f"{pk['max_concurrency']} because the server was launched with `--max-num-seqs "
       f"{mem.get('mns', args.max_num_seqs)}`; past it you would measure queueing, not the engine.")
     W("")
+    W("### 1.1 Per-user token rate — what one user actually experiences")
+    W("")
+    W("The table above is **aggregate** throughput, shared across all concurrent requests. "
+      "A single user does not experience it. What one user sees is the streaming rate of "
+      "their own answer, **1000 / TPOT**, and that moves in the *opposite* direction:")
+    W("")
+    W("| Conc | Total tok/s | TPOT med (ms) | **Per-user tok/s** | vs single user |")
+    W("|---:|---:|---:|---:|---:|")
+    solo = 1000.0 / first["median_tpot_ms"] if first["median_tpot_ms"] else None
+    for r in rows:
+        pu = 1000.0 / r["median_tpot_ms"] if r["median_tpot_ms"] else None
+        rel = f"{(pu/solo - 1)*100:+.0f}%" if (pu and solo) else "—"
+        star = "**" if r is first or r is pk else ""
+        W(f"| {star}{r['max_concurrency']}{star} | {fmt(r['output_throughput'])} | "
+          f"{fmt(r['median_tpot_ms'],2)} | {star}{fmt(pu)}{star} | "
+          f"{'_reference_' if r is first else rel} |")
+    W("")
+    if solo:
+        W(f"**Aggregate throughput and single-user speed trade against each other.** Going "
+          f"c={first['max_concurrency']} → c={pk['max_concurrency']} buys "
+          f"**{pk['output_throughput']/first['output_throughput']:.1f}× aggregate "
+          f"throughput** and costs "
+          f"**{(solo/(1000.0/pk['median_tpot_ms'])):.1f}× per-user speed** "
+          f"({fmt(solo)} → {fmt(1000.0/pk['median_tpot_ms'])} tok/s). Both are real; which "
+          "one matters depends entirely on the workload:")
+        W("")
+        W("| Optimising for | Run at | Read |")
+        W("|---|---|---|")
+        W("| One interactive user, a latency SLO, a long agentic session | **low concurrency** | per-user tok/s |")
+        W("| Many users at once, cost per token, GPU utilisation | **high concurrency** | total tok/s |")
+        W("")
+        W("> **This is the caveat on §3.2.** Every lever proposed there raises *aggregate* "
+          "throughput, and three of the four do it by increasing batch size — which makes "
+          "single-user speed **worse**. Raising `--max-num-seqs` is the right call for a "
+          "busy server and the wrong call for one user waiting on one answer.")
+        W("")
+        W("Note also that **none of the §3.2 levers help at c=1 at all**: they all widen the "
+          "per-expert GEMM, and with one token in flight there is nothing to widen. The "
+          "single-user fixes are different ones — speculative decoding / MTP (blocked here, "
+          "see §5), removing PP (impossible on B200, see §1 preamble), and lower TP. See "
+          "`notes-concurrency.md`.")
+    W("")
     W("### Achieved TFLOP/s")
     W("")
     W(f"Only **top-{arch.topk} + {arch.shared} of {arch.E}** experts fire per token. Active "
@@ -1001,17 +1043,42 @@ def build_report(b, a, arch, args):
 
     W("### 6.4 Latency")
     W("")
-    W("| Conc | MI355X TTFT (ms) | B200 TTFT (ms) | MI355X TPOT (ms) | B200 TPOT (ms) |")
-    W("|---:|---:|---:|---:|---:|")
+    W("| Conc | MI355X TTFT | B200 TTFT | MI355X TPOT | B200 TPOT | "
+      "MI355X per-user tok/s | B200 per-user tok/s | **B200/MI355X** |")
+    W("|---:|---:|---:|---:|---:|---:|---:|---:|")
     for r in rows:
         ar = amap.get(r["max_concurrency"])
+        pu_b = 1000.0 / r["median_tpot_ms"] if r["median_tpot_ms"] else None
+        pu_a = 1000.0 / ar["median_tpot_ms"] if (ar and ar["median_tpot_ms"]) else None
+        ratio = f"**{pu_b/pu_a:.2f}×**" if (pu_a and pu_b) else "—"
         W(f"| {r['max_concurrency']} | {fmt(ar['median_ttft_ms']) if ar else '—'} | "
           f"{fmt(r['median_ttft_ms'])} | {fmt(ar['median_tpot_ms'],2) if ar else '—'} | "
-          f"{fmt(r['median_tpot_ms'],2)} |")
+          f"{fmt(r['median_tpot_ms'],2)} | {fmt(pu_a) if pu_a else '—'} | "
+          f"{fmt(pu_b) if pu_b else '—'} | {ratio} |")
     W("")
     W("TPOT is the metric where the PP2 boundary would show up if it costs anything: it is "
       "per-decode-step latency, and the inter-node hop plus any pipeline bubble lands there "
       "directly. TTFT is prefill-dominated and less sensitive to it.")
+    W("")
+    # The per-user column inverts the headline conclusion, so state it plainly rather than
+    # leaving it for the reader to derive from the TPOT column.
+    fa = amap.get(first["max_concurrency"])
+    if fa and fa["median_tpot_ms"] and first["median_tpot_ms"]:
+        pu_a1 = 1000.0 / fa["median_tpot_ms"]
+        pu_b1 = 1000.0 / first["median_tpot_ms"]
+        W(f"**B200 is faster per user at every concurrency — and {pu_b1/pu_a1:.2f}× faster "
+          f"for a single user** ({fmt(pu_b1)} vs {fmt(pu_a1)} tok/s at "
+          f"c={first['max_concurrency']}). This is the one comparison B200 wins outright, "
+          "and §6.3's aggregate view hides it completely.")
+        W("")
+        W("The two results are not in conflict; they answer different questions:")
+        W("")
+        W("- *How many tokens per second per unit of silicon?* → **MI355X**, 1.48× per GPU (§6.3).")
+        W(f"- *How fast does one user's answer stream?* → **B200**, {pu_b1/pu_a1:.2f}× (here).")
+        W("")
+        W("B200's lower per-token latency wins the second question and survives even the "
+          "PP2 pipeline penalty. See `notes-concurrency.md` for the full treatment, "
+          "including why none of the §3.2 levers improve the single-user case.")
     W("")
 
     W("### 6.5 Where each system's headroom is")

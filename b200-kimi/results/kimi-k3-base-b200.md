@@ -57,6 +57,31 @@ The parse is **exactly validated**: routed-expert parameters computed from the c
 
 Throughput scales **20×** from c=1 to c=64 while TPOT grows only 3.2×. The sweep stops at 64 because the server was launched with `--max-num-seqs 64`; past it you would measure queueing, not the engine.
 
+### 1.1 Per-user token rate — what one user actually experiences
+
+The table above is **aggregate** throughput, shared across all concurrent requests. A single user does not experience it. What one user sees is the streaming rate of their own answer, **1000 / TPOT**, and that moves in the *opposite* direction:
+
+| Conc | Total tok/s | TPOT med (ms) | **Per-user tok/s** | vs single user |
+|---:|---:|---:|---:|---:|
+| **1** | 86.7 | 11.24 | **89.0** | _reference_ |
+| 2 | 165.2 | 11.85 | 84.4 | -5% |
+| 4 | 280.8 | 13.62 | 73.4 | -18% |
+| 8 | 475.3 | 15.41 | 64.9 | -27% |
+| 16 | 801.8 | 18.65 | 53.6 | -40% |
+| 32 | 1,209.3 | 25.28 | 39.6 | -56% |
+| **64** | 1,696.4 | 35.89 | **27.9** | -69% |
+
+**Aggregate throughput and single-user speed trade against each other.** Going c=1 → c=64 buys **19.6× aggregate throughput** and costs **3.2× per-user speed** (89.0 → 27.9 tok/s). Both are real; which one matters depends entirely on the workload:
+
+| Optimising for | Run at | Read |
+|---|---|---|
+| One interactive user, a latency SLO, a long agentic session | **low concurrency** | per-user tok/s |
+| Many users at once, cost per token, GPU utilisation | **high concurrency** | total tok/s |
+
+> **This is the caveat on §3.2.** Every lever proposed there raises *aggregate* throughput, and three of the four do it by increasing batch size — which makes single-user speed **worse**. Raising `--max-num-seqs` is the right call for a busy server and the wrong call for one user waiting on one answer.
+
+Note also that **none of the §3.2 levers help at c=1 at all**: they all widen the per-expert GEMM, and with one token in flight there is nothing to widen. The single-user fixes are different ones — speculative decoding / MTP (blocked here, see §5), removing PP (impossible on B200, see §1 preamble), and lower TP. See `notes-concurrency.md`.
+
 ### Achieved TFLOP/s
 
 Only **top-16 + 2 of 896** experts fire per token. Active params per token ≈ **103 B** (of 2.78 T — 3.7% activation ratio):
@@ -322,17 +347,26 @@ The asymmetry is stark: **HBM moves ~67 GB/step while NVLink moves ~0.15 GB and 
 
 ### 6.4 Latency
 
-| Conc | MI355X TTFT (ms) | B200 TTFT (ms) | MI355X TPOT (ms) | B200 TPOT (ms) |
-|---:|---:|---:|---:|---:|
-| 1 | 224.9 | 225.9 | 21.48 | 11.24 |
-| 2 | 251.5 | 217.6 | 22.58 | 11.85 |
-| 4 | 256.5 | 233.3 | 24.98 | 13.62 |
-| 8 | 257.5 | 234.5 | 27.02 | 15.41 |
-| 16 | 261.7 | 234.6 | 31.21 | 18.65 |
-| 32 | 273.9 | 264.4 | 37.83 | 25.28 |
-| 64 | 285.6 | 278.1 | 49.91 | 35.89 |
+| Conc | MI355X TTFT | B200 TTFT | MI355X TPOT | B200 TPOT | MI355X per-user tok/s | B200 per-user tok/s | **B200/MI355X** |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 224.9 | 225.9 | 21.48 | 11.24 | 46.6 | 89.0 | **1.91×** |
+| 2 | 251.5 | 217.6 | 22.58 | 11.85 | 44.3 | 84.4 | **1.91×** |
+| 4 | 256.5 | 233.3 | 24.98 | 13.62 | 40.0 | 73.4 | **1.83×** |
+| 8 | 257.5 | 234.5 | 27.02 | 15.41 | 37.0 | 64.9 | **1.75×** |
+| 16 | 261.7 | 234.6 | 31.21 | 18.65 | 32.0 | 53.6 | **1.67×** |
+| 32 | 273.9 | 264.4 | 37.83 | 25.28 | 26.4 | 39.6 | **1.50×** |
+| 64 | 285.6 | 278.1 | 49.91 | 35.89 | 20.0 | 27.9 | **1.39×** |
 
 TPOT is the metric where the PP2 boundary would show up if it costs anything: it is per-decode-step latency, and the inter-node hop plus any pipeline bubble lands there directly. TTFT is prefill-dominated and less sensitive to it.
+
+**B200 is faster per user at every concurrency — and 1.91× faster for a single user** (89.0 vs 46.6 tok/s at c=1). This is the one comparison B200 wins outright, and §6.3's aggregate view hides it completely.
+
+The two results are not in conflict; they answer different questions:
+
+- *How many tokens per second per unit of silicon?* → **MI355X**, 1.48× per GPU (§6.3).
+- *How fast does one user's answer stream?* → **B200**, 1.91× (here).
+
+B200's lower per-token latency wins the second question and survives even the PP2 pipeline penalty. See `notes-concurrency.md` for the full treatment, including why none of the §3.2 levers improve the single-user case.
 
 ### 6.5 Where each system's headroom is
 
