@@ -33,7 +33,7 @@ The parse is **exactly validated**: routed-expert parameters computed from the c
 
 **§2 Memory** — Per GPU: **97.0 GiB weights** + **59.1 GiB KV pool**. KV decodes exactly: 13,824 B/token = `(kv_lora 512 + rope 64) × 1 B fp8 × 24 MLA layers` — proving only the 24 full-attention layers page KV, and that KV is replicated across TP ranks rather than sharded.
 
-**§3 Bottleneck — intra-GPU HBM bandwidth.** Compute 1.0% utilized, NVLink 0.5%, **HBM ~23%** (1,806.5 GB/s of 8,000). At batch 64 the tokens route independently, so **610 of 896 experts** activate per layer — not 16.
+**§3 Bottleneck — HBM traffic, and it is LATENCY-BOUND, NOT BANDWIDTH-BOUND.** Compute 1.0% utilized, NVLink 0.5%, **HBM only ~23%** (1,806.5 GB/s of 8,000) — the bandwidth is there and is going unused. At batch 64 the tokens route independently, so **610 of 896 experts** activate per layer (not 16), yet each expert then sees only **1.7 tokens** — a matrix-*vector* product that cannot keep enough memory requests in flight to saturate HBM. Weight traffic dominates step time, but the ceiling being hit is memory-access latency/occupancy, not bandwidth. The fix follows directly: widen the GEMMs (§3.2).
 
 **§4 Communication** — two paths now, not one. NVLink carries 93 all-reduces/token within each node (4.16 GB/s per GPU, 0.5% of ceiling). **The PP2 boundary additionally puts InfiniBand in the per-token critical path** — 0.026 GB/s across the pair (0.01% of the 8-rail NDR fabric). This is the cost the MI355X run does not pay, and §4.2 sizes it.
 
@@ -116,7 +116,9 @@ Capacity: **6,435,401 tokens** per GPU. The benchmark used 64 seqs × ~2048 toke
 
 ## 3. What is the bottleneck?
 
-**Intra-GPU HBM bandwidth.** Not compute, not either interconnect.
+**Intra-GPU HBM traffic.** Not compute, not either interconnect.
+
+**But be precise about which HBM limit: this is LATENCY-BOUND, NOT BANDWIDTH-BOUND.** HBM sits at only ~23% of peak, so the box has bandwidth to spare. What binds is that the MoE decode GEMMs are too narrow to keep enough concurrent memory requests in flight to use it (§3.2). Saying "HBM-bandwidth-bound" would point at the wrong fix — buying faster memory would not help; widening the GEMMs would.
 
 | Resource | Demand at c=64 | B200 capability | Utilization |
 |---|---:|---:|---:|
@@ -145,7 +147,9 @@ MXFP4 is what makes this tractable. At BF16 the same reads would be **4× larger
 
 ### 3.2 How to improve it
 
-HBM is the binding resource at ~23%, but the box is not delivering all the HBM it has. The shortfall has a specific cause: with 610 experts fired across 64 tokens, each expert sees only **1.7 tokens** — a matrix-*vector* product, which cannot issue enough concurrent memory requests to saturate HBM. It is memory-bound and latency-bound at the same time.
+HBM is the binding resource at ~23%, but the box is not delivering all the HBM it has. The shortfall has a specific cause: with 610 experts fired across 64 tokens, each expert sees only **1.7 tokens** — a matrix-*vector* product, which cannot issue enough concurrent memory requests to saturate HBM.
+
+**This is the crux: the workload is latency-bound, not bandwidth-bound.** Its *volume* of weight traffic is what dominates step time, but it is nowhere near the bandwidth ceiling — a GEMV has too little memory-level parallelism to fill the pipe. More bandwidth would buy nothing; more tokens per expert buys everything.
 
 Ranked levers:
 
@@ -296,22 +300,22 @@ The asymmetry is stark: **HBM moves ~67 GB/step while NVLink moves ~0.15 GB and 
 
 ### 6.3 Throughput, point by point
 
-| Conc | MI355X tok/s | B200 tok/s | B200/MI355X | MI355X tok/s/GPU | B200 tok/s/GPU | per-GPU ratio |
-|---:|---:|---:|---:|---:|---:|---:|
-| 1 | 46.1 | 86.7 | 1.88× | 5.8 | 5.4 | 0.94× |
-| 2 | 87.0 | 165.2 | 1.90× | 10.9 | 10.3 | 0.95× |
-| 4 | 154.2 | 280.8 | 1.82× | 19.3 | 17.6 | 0.91× |
-| 8 | 288.0 | 475.3 | 1.65× | 36.0 | 29.7 | 0.83× |
-| 16 | 500.9 | 801.8 | 1.60× | 62.6 | 50.1 | 0.80× |
-| 32 | 824.0 | 1,209.3 | 1.47× | 103.0 | 75.6 | 0.73× |
-| 64 | 1,258.5 | 1,696.4 | 1.35× | 157.3 | 106.0 | 0.67× |
+| Conc | MI355X tok/s | B200 tok/s | MI355X/B200 | B200/MI355X | MI355X tok/s/GPU | B200 tok/s/GPU | per-GPU ratio |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 46.1 | 86.7 | 0.53× | 1.88× | 5.8 | 5.4 | 0.94× |
+| 2 | 87.0 | 165.2 | 0.53× | 1.90× | 10.9 | 10.3 | 0.95× |
+| 4 | 154.2 | 280.8 | 0.55× | 1.82× | 19.3 | 17.6 | 0.91× |
+| 8 | 288.0 | 475.3 | 0.61× | 1.65× | 36.0 | 29.7 | 0.83× |
+| 16 | 500.9 | 801.8 | 0.62× | 1.60× | 62.6 | 50.1 | 0.80× |
+| 32 | 824.0 | 1,209.3 | 0.68× | 1.47× | 103.0 | 75.6 | 0.73× |
+| 64 | 1,258.5 | 1,696.4 | 0.74× | 1.35× | 157.3 | 106.0 | 0.67× |
 
-| Headline | MI355X | B200 |
-|---|---:|---:|
-| Peak tok/s (c=64) | 1,258.5 | 1,696.4 |
-| Peak tok/s **per GPU** | 157.3 | 106.0 |
-| Peak tok/s **per node** | 1,258.5 | 848.2 |
-| GPUs to serve the model | 8 | 16 |
+| Headline | MI355X | B200 | MI355X/B200 |
+|---|---:|---:|---:|
+| Peak tok/s (c=64) | 1,258.5 | 1,696.4 | 0.74× |
+| Peak tok/s **per GPU** | 157.3 | 106.0 | 1.48× |
+| Peak tok/s **per node** | 1,258.5 | 848.2 | 1.48× |
+| GPUs to serve the model | 8 | 16 | 0.50× |
 
 ### 6.4 Latency
 
@@ -372,8 +376,8 @@ Per-GPU weight residency is roughly halved on B200 — the same checkpoint sprea
 
 | What | Where |
 |---|---|
-| B200 sweep (per-concurrency JSON) | `/orcd/data/orcd/022/benchmarks/b200-kimi/logs/kimi_base_20260821_130024/sweep` |
-| B200 server log | `/orcd/data/orcd/022/benchmarks/b200-kimi/logs/kimi_base_20260821_130024/server/vllm_server.log` |
+| B200 sweep (per-concurrency JSON) | `logs/kimi_base_20260821_130024/sweep` |
+| B200 server log | `logs/kimi_base_20260821_130024/server/vllm_server.log` |
 | MI355X sweep | `/orcd/data/orcd/022/benchmarks/amd-benchmarks/amd-cloud/logs/atom/sweep_20260814_164903` |
 | MI355X server log | `/orcd/data/orcd/022/benchmarks/amd-benchmarks/amd-cloud/logs/atom/server_20260814_164506/atom_server.log` |
 | Model config | `/orcd/compute/orcd/025/models/Kimi-K3/config.json` |

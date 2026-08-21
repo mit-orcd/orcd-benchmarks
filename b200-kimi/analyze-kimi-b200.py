@@ -470,11 +470,17 @@ def build_report(b, a, arch, args):
         W("**§2 Memory** — the server log did not contain a parseable memory-profiling line; "
           "the memory section below reports what was found and marks the rest unavailable.")
     W("")
-    W(f"**§3 Bottleneck — intra-GPU HBM bandwidth.** Compute {pk['pct_peak']:.1f}% utilized, "
-      f"NVLink {pk['link_pct']:.1f}%, **HBM ~{pk['hbm_pct']:.0f}%** "
-      f"({fmt(pk['hbm_gbs_per_gpu'])} GB/s of {fmt(hw['hbm_bw_gbs'],0)}). At batch "
-      f"{pk['max_concurrency']} the tokens route independently, so "
-      f"**{pk['experts_fired']:.0f} of {arch.E} experts** activate per layer — not {arch.topk}.")
+    W(f"**§3 Bottleneck — HBM traffic, and it is LATENCY-BOUND, NOT BANDWIDTH-BOUND.** "
+      f"Compute {pk['pct_peak']:.1f}% utilized, NVLink {pk['link_pct']:.1f}%, "
+      f"**HBM only ~{pk['hbm_pct']:.0f}%** "
+      f"({fmt(pk['hbm_gbs_per_gpu'])} GB/s of {fmt(hw['hbm_bw_gbs'],0)}) — the bandwidth "
+      f"is there and is going unused. At batch {pk['max_concurrency']} the tokens route "
+      f"independently, so **{pk['experts_fired']:.0f} of {arch.E} experts** activate per "
+      f"layer (not {arch.topk}), yet each expert then sees only "
+      f"**{pk['tokens_per_expert']:.1f} tokens** — a matrix-*vector* product that cannot "
+      "keep enough memory requests in flight to saturate HBM. Weight traffic dominates "
+      "step time, but the ceiling being hit is memory-access latency/occupancy, not "
+      "bandwidth. The fix follows directly: widen the GEMMs (§3.2).")
     W("")
     W(f"**§4 Communication** — two paths now, not one. NVLink carries "
       f"{int(pk['allreduce_per_token'])} all-reduces/token within each node "
@@ -624,7 +630,14 @@ def build_report(b, a, arch, args):
     # ============================== §3 bottleneck =================================
     W("## 3. What is the bottleneck?")
     W("")
-    W("**Intra-GPU HBM bandwidth.** Not compute, not either interconnect.")
+    W("**Intra-GPU HBM traffic.** Not compute, not either interconnect.")
+    W("")
+    W("**But be precise about which HBM limit: this is LATENCY-BOUND, NOT BANDWIDTH-BOUND.** "
+      f"HBM sits at only ~{pk['hbm_pct']:.0f}% of peak, so the box has bandwidth to spare. "
+      "What binds is that the MoE decode GEMMs are too narrow to keep enough concurrent "
+      "memory requests in flight to use it (§3.2). Saying \"HBM-bandwidth-bound\" would "
+      "point at the wrong fix — buying faster memory would not help; widening the GEMMs "
+      "would.")
     W("")
     W(f"| Resource | Demand at c={pk['max_concurrency']} | B200 capability | Utilization |")
     W("|---|---:|---:|---:|")
@@ -667,8 +680,11 @@ def build_report(b, a, arch, args):
       "all the HBM it has. The shortfall has a specific cause: with "
       f"{pk['experts_fired']:.0f} experts fired across {pk['max_concurrency']} tokens, each "
       f"expert sees only **{pk['tokens_per_expert']:.1f} tokens** — a matrix-*vector* product, "
-      "which cannot issue enough concurrent memory requests to saturate HBM. It is "
-      "memory-bound and latency-bound at the same time.")
+      "which cannot issue enough concurrent memory requests to saturate HBM.\n\n"
+      "**This is the crux: the workload is latency-bound, not bandwidth-bound.** Its "
+      "*volume* of weight traffic is what dominates step time, but it is nowhere near the "
+      "bandwidth ceiling — a GEMV has too little memory-level parallelism to fill the "
+      "pipe. More bandwidth would buy nothing; more tokens per expert buys everything.")
     W("")
     W("Ranked levers:")
     W("")
@@ -936,30 +952,37 @@ def build_report(b, a, arch, args):
 
     W("### 6.3 Throughput, point by point")
     W("")
-    W("| Conc | MI355X tok/s | B200 tok/s | B200/MI355X | MI355X tok/s/GPU | B200 tok/s/GPU | per-GPU ratio |")
-    W("|---:|---:|---:|---:|---:|---:|---:|")
+    W("| Conc | MI355X tok/s | B200 tok/s | MI355X/B200 | B200/MI355X | "
+      "MI355X tok/s/GPU | B200 tok/s/GPU | per-GPU ratio |")
+    W("|---:|---:|---:|---:|---:|---:|---:|---:|")
     amap = {r["max_concurrency"]: r for r in arows}
     for r in rows:
         c = r["max_concurrency"]
         ar = amap.get(c)
         if not ar:
-            W(f"| {c} | — | {fmt(r['output_throughput'])} | — | — | {fmt(r['tok_per_gpu'])} | — |")
+            W(f"| {c} | — | {fmt(r['output_throughput'])} | — | — | — | "
+              f"{fmt(r['tok_per_gpu'])} | — |")
             continue
         tot_ratio = r["output_throughput"] / ar["output_throughput"]
+        inv_ratio = ar["output_throughput"] / r["output_throughput"]
         gpu_ratio = r["tok_per_gpu"] / (ar["output_throughput"] / angpu)
         W(f"| {c} | {fmt(ar['output_throughput'])} | {fmt(r['output_throughput'])} | "
-          f"{tot_ratio:.2f}× | {fmt(ar['output_throughput']/angpu)} | "
+          f"{inv_ratio:.2f}× | {tot_ratio:.2f}× | {fmt(ar['output_throughput']/angpu)} | "
           f"{fmt(r['tok_per_gpu'])} | {gpu_ratio:.2f}× |")
     W("")
-    W("| Headline | MI355X | B200 |")
-    W("|---|---:|---:|")
+    W("| Headline | MI355X | B200 | MI355X/B200 |")
+    W("|---|---:|---:|---:|")
     W(f"| Peak tok/s (c={pk['max_concurrency']}) | {fmt(apk['output_throughput'])} | "
-      f"{fmt(pk['output_throughput'])} |")
+      f"{fmt(pk['output_throughput'])} | "
+      f"{apk['output_throughput']/pk['output_throughput']:.2f}× |")
     W(f"| Peak tok/s **per GPU** | {fmt(apk['output_throughput']/angpu)} | "
-      f"{fmt(pk['output_throughput']/ngpu)} |")
+      f"{fmt(pk['output_throughput']/ngpu)} | "
+      f"{(apk['output_throughput']/angpu)/(pk['output_throughput']/ngpu):.2f}× |")
     W(f"| Peak tok/s **per node** | {fmt(apk['output_throughput'])} | "
-      f"{fmt(pk['output_throughput']/nnodes)} |")
-    W(f"| GPUs to serve the model | {angpu} | {ngpu} |")
+      f"{fmt(pk['output_throughput']/nnodes)} | "
+      f"{apk['output_throughput']/(pk['output_throughput']/nnodes):.2f}× |")
+    W(f"| GPUs to serve the model | {angpu} | {ngpu} | "
+      f"{angpu/ngpu:.2f}× |")
     W("")
 
     W("### 6.4 Latency")

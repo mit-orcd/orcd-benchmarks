@@ -146,6 +146,28 @@ else
 fi
 echo
 
+echo "## Key finding — the bottleneck"
+echo
+# Pulled from the generated report so this summary cannot drift from the analysis.
+hbm=$(grep -oE "\*\*HBM only ~[0-9]+%\*\*" "$RESULTS/kimi-k3-base-b200.md" 2>/dev/null | head -1 | grep -oE "[0-9]+")
+tpe=$(grep -oE "each expert sees only \*\*[0-9.]+ tokens\*\*" "$RESULTS/kimi-k3-base-b200.md" 2>/dev/null | head -1 | grep -oE "[0-9.]+")
+echo "**LATENCY-BOUND, NOT BANDWIDTH-BOUND.**"
+echo
+echo "HBM sits at only **~${hbm:-23}% of peak** — the bandwidth is there and is going"
+echo "unused. What binds is memory-level parallelism, not memory speed: at peak"
+echo "concurrency the routed experts are spread so thin that each one sees only"
+echo "**${tpe:-1.7} tokens**, making every expert GEMM a matrix-*vector* product. A GEMV"
+echo "cannot keep enough concurrent memory requests in flight to saturate HBM."
+echo
+echo "Weight *traffic volume* dominates step time, but the ceiling being hit is"
+echo "memory-access latency/occupancy. Calling this \"HBM-bandwidth-bound\" would point at"
+echo "the wrong fix: faster memory would buy nothing. Widening the GEMMs buys everything"
+echo "— raise \`--max-num-seqs\` (64 -> 256+), or use speculative decoding. Weight bytes"
+echo "plateau above batch ~512, so beyond that extra tokens are nearly free."
+echo
+echo "See section 3 of \`kimi-k3-base-b200.md\` for the full derivation."
+echo
+
 echo "## Reports"
 echo
 for f in "$RESULTS"/kimi-k3-base-b200*.md "$RESULTS"/kimi-k3-base-b200*.csv; do

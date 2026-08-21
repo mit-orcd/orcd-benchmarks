@@ -1,8 +1,8 @@
 # Kimi-K3 on B200 — run summary
 
-Generated 2026-08-21T13:41:16-04:00 by job `20916743`.
+Generated 2026-08-21T14:30:59-04:00 by job `regen`.
 
-Chain: `gate:20916740 verify:20916741 base:20916742`
+Chain: `gate:20916740 verify:20916741 base:20916742 summary:20916743`
 
 ## Stage outcomes
 
@@ -11,6 +11,7 @@ Chain: `gate:20916740 verify:20916741 base:20916742`
 | gate | 20916740 | COMPLETED | 00:00:32 |
 | verify | 20916741 | COMPLETED | 00:01:39 |
 | base | 20916742 | COMPLETED | 00:40:32 |
+| summary | 20916743 | COMPLETED | 00:00:03 |
 
 ## Hardware and staging (from the probe)
 
@@ -132,10 +133,28 @@ image    : /orcd/data/orcd/022/benchmarks/b200-kimi/imag/vllm-openai_kimi-k3.sif
 results: /orcd/data/orcd/022/benchmarks/b200-kimi/logs/kimi_base_20260821_130024/sweep
 ```
 
+## Key finding — the bottleneck
+
+**LATENCY-BOUND, NOT BANDWIDTH-BOUND.**
+
+HBM sits at only **~23% of peak** — the bandwidth is there and is going
+unused. What binds is memory-level parallelism, not memory speed: at peak
+concurrency the routed experts are spread so thin that each one sees only
+**1.7 tokens**, making every expert GEMM a matrix-*vector* product. A GEMV
+cannot keep enough concurrent memory requests in flight to saturate HBM.
+
+Weight *traffic volume* dominates step time, but the ceiling being hit is
+memory-access latency/occupancy. Calling this "HBM-bandwidth-bound" would point at
+the wrong fix: faster memory would buy nothing. Widening the GEMMs buys everything
+— raise `--max-num-seqs` (64 -> 256+), or use speculative decoding. Weight bytes
+plateau above batch ~512, so beyond that extra tokens are nearly free.
+
+See section 3 of `kimi-k3-base-b200.md` for the full derivation.
+
 ## Reports
 
-- `/orcd/data/orcd/022/benchmarks/b200-kimi/results/kimi-k3-base-b200.md` (396 lines, 2026-08-21T13:40:51-04:00)
-- `/orcd/data/orcd/022/benchmarks/b200-kimi/results/kimi-k3-base-b200.csv` (15 lines, 2026-08-21T13:40:51-04:00)
+- `/orcd/data/orcd/022/benchmarks/b200-kimi/results/kimi-k3-base-b200.md` (400 lines, 2026-08-21T14:30:25-04:00)
+- `/orcd/data/orcd/022/benchmarks/b200-kimi/results/kimi-k3-base-b200.csv` (15 lines, 2026-08-21T14:30:25-04:00)
 
 ## Comparison baseline
 
