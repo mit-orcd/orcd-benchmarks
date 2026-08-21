@@ -312,6 +312,9 @@ The asymmetry is stark: **HBM moves ~67 GB/step while NVLink moves ~0.15 GB and 
 
 | Headline | MI355X | B200 | MI355X/B200 |
 |---|---:|---:|---:|
+| tok/s at c=1 *(single request)* | 46.1 | 86.7 | 0.53× |
+| tok/s at c=1 **per GPU** | 5.8 | 5.4 | 1.06× |
+| TPOT at c=1 (ms, lower better) | 21.48 | 11.24 | 1.91× |
 | Peak tok/s (c=64) | 1,258.5 | 1,696.4 | 0.74× |
 | Peak tok/s **per GPU** | 157.3 | 106.0 | 1.48× |
 | Peak tok/s **per node** | 1,258.5 | 848.2 | 1.48× |

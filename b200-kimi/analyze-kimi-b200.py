@@ -972,6 +972,20 @@ def build_report(b, a, arch, args):
     W("")
     W("| Headline | MI355X | B200 | MI355X/B200 |")
     W("|---|---:|---:|---:|")
+    # c=1 first: it is the latency-optimal operating point, and it tells the opposite
+    # story to the peak row -- worth surfacing in the headline rather than only in the
+    # point-by-point table above.
+    afirst = amap.get(first["max_concurrency"])
+    if afirst:
+        W(f"| tok/s at c=1 *(single request)* | {fmt(afirst['output_throughput'])} | "
+          f"{fmt(first['output_throughput'])} | "
+          f"{afirst['output_throughput']/first['output_throughput']:.2f}× |")
+        W(f"| tok/s at c=1 **per GPU** | {fmt(afirst['output_throughput']/angpu)} | "
+          f"{fmt(first['output_throughput']/ngpu)} | "
+          f"{(afirst['output_throughput']/angpu)/(first['output_throughput']/ngpu):.2f}× |")
+        W(f"| TPOT at c=1 (ms, lower better) | {fmt(afirst['median_tpot_ms'],2)} | "
+          f"{fmt(first['median_tpot_ms'],2)} | "
+          f"{afirst['median_tpot_ms']/first['median_tpot_ms']:.2f}× |")
     W(f"| Peak tok/s (c={pk['max_concurrency']}) | {fmt(apk['output_throughput'])} | "
       f"{fmt(pk['output_throughput'])} | "
       f"{apk['output_throughput']/pk['output_throughput']:.2f}× |")
