@@ -1,0 +1,85 @@
+[2026-08-20T15:16:26-04:00] Kimi-K3 B200 run [1node]: job 20852177 on node5700-c1
+[2026-08-20T15:16:26-04:00]   TP=8 PP=1 world=8  max_num_seqs=64  max_model_len=16384
+[2026-08-20T15:16:26-04:00]   ISL/OSL=1024/1024  conc='1 2 4 8 16 32 64'  gpu_mem_util=0.95
+[2026-08-20T15:16:26-04:00]   out: /orcd/data/orcd/022/benchmarks/b200-kimi/logs/kimi_1node_20260820_151626
+[2026-08-20T15:16:27-04:00] parallelism OK: TP=8 within each node x PP=1 across 1 node(s) = 8 GPUs
+[2026-08-20T15:16:27-04:00] image OK: /orcd/data/orcd/022/benchmarks/b200-kimi/imag/vllm-openai_kimi-k3.sif (7921852416 bytes, manifest verified)
+[2026-08-20T15:16:29-04:00] model OK (pre-staged, read-only): /orcd/compute/orcd/025/models/Kimi-K3
+[2026-08-20T15:16:29-04:00]   -> /orcd/compute/orcd/025/models/safetensors/Kimi-K3
+[2026-08-20T15:16:29-04:00]   96 shards, 1560936091448 bytes (1.420 TiB)
+[2026-08-20T15:16:30-04:00] node5700-c1: 0 GPU(s) with >1 GiB resident
+[2026-08-20T15:16:32-04:00] per-GPU HBM: 183359 MiB; node total ~1538 GB vs 1561 GB of weights
+[2026-08-20T15:16:32-04:00] STAGE server (expect a long load: 1.42 TiB, timeout 2400s)
+[2026-08-20T15:16:32-04:00] server: nodes=node5700-c1 head=node5700-c1 world=8 (TP=8 PP=1)
+[2026-08-20T15:16:32-04:00] server: ray head at fe80::a449:dfff:fe2e:3b60:6379 temp=/dev/shm/ray-20852177
+[2026-08-20T15:16:32-04:00] server: cmd: /orcd/data/orcd/022/benchmarks/b200-kimi/logs/kimi_1node_20260820_151626/server/server_cmd.sh
+    | #!/usr/bin/env bash
+    | set -uo pipefail
+    | exec python3 -m vllm.entrypoints.openai.api_server \
+    |   --model /orcd/compute/orcd/025/models/Kimi-K3 \
+    |   --served-model-name Kimi-K3 \
+    |   --tensor-parallel-size 8 \
+    |   --pipeline-parallel-size 1 \
+    |   --port 8000 \
+    |   --gpu-memory-utilization 0.95 \
+    |   --max-model-len 16384 \
+    |   --max-num-seqs 64 \
+    |   --kv-cache-dtype fp8 \
+    |   --trust-remote-code \
+    |   --load-format \
+    |   fastsafetensors \
+    |   --no-enable-flashinfer-autotune \
+    |   --no-enable-prefix-caching \
+    |   --max-num-batched-tokens \
+    |   8192 \
+    |   --attention-config \
+    |   \{\"use_prefill_query_quantization\":true\,\"mla_prefill_backend\":\"flashinfer\"\} \
+    |   2>&1 | tee /orcd/data/orcd/022/benchmarks/b200-kimi/logs/kimi_1node_20260820_151626/server/vllm_server.log
+[2026-08-20T15:16:32-04:00] server: waiting for readiness (timeout 2400s)
+ERROR: server exited before becoming ready. Last 60 lines:
+[2026-08-20T15:17:29-04:00] server: cleanup: stopping ray on node5700-c1
+[2026-08-20T15:17:35-04:00] server failed to start (rc=1)
+[2026-08-20T15:17:35-04:00] ---- failure diagnosis ----
+[2026-08-20T15:17:35-04:00] VERDICT: unrecognized failure -- see the tail below and /orcd/data/orcd/022/benchmarks/b200-kimi/logs/kimi_1node_20260820_151626/server/vllm_server.log
+[2026-08-20T15:17:35-04:00] ---- last 40 lines of the server log ----
+    (APIServer pid=46869)     uvloop.run(run_server(args))
+    (APIServer pid=46869)   File "/usr/local/lib/python3.12/dist-packages/uvloop/__init__.py", line 96, in run
+    (APIServer pid=46869)     return __asyncio.run(
+    (APIServer pid=46869)            ^^^^^^^^^^^^^^
+    (APIServer pid=46869)   File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+    (APIServer pid=46869)     return runner.run(main)
+    (APIServer pid=46869)            ^^^^^^^^^^^^^^^^
+    (APIServer pid=46869)   File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+    (APIServer pid=46869)     return self._loop.run_until_complete(task)
+    (APIServer pid=46869)            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    (APIServer pid=46869)   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+    (APIServer pid=46869)   File "/usr/local/lib/python3.12/dist-packages/uvloop/__init__.py", line 48, in wrapper
+    (APIServer pid=46869)     return await main
+    (APIServer pid=46869)            ^^^^^^^^^^
+    (APIServer pid=46869)   File "/usr/local/lib/python3.12/dist-packages/vllm/entrypoints/openai/api_server.py", line 759, in run_server
+    (APIServer pid=46869)     await run_server_worker(listen_address, sock, args, **uvicorn_kwargs)
+    (APIServer pid=46869)   File "/usr/local/lib/python3.12/dist-packages/vllm/entrypoints/openai/api_server.py", line 773, in run_server_worker
+    (APIServer pid=46869)     async with build_async_engine_client(
+    (APIServer pid=46869)   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+    (APIServer pid=46869)     return await anext(self.gen)
+    (APIServer pid=46869)            ^^^^^^^^^^^^^^^^^^^^^
+    (APIServer pid=46869)   File "/usr/local/lib/python3.12/dist-packages/vllm/entrypoints/openai/api_server.py", line 139, in build_async_engine_client
+    (APIServer pid=46869)     async with build_async_engine_client_from_engine_args(
+    (APIServer pid=46869)   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+    (APIServer pid=46869)     return await anext(self.gen)
+    (APIServer pid=46869)            ^^^^^^^^^^^^^^^^^^^^^
+    (APIServer pid=46869)   File "/usr/local/lib/python3.12/dist-packages/vllm/entrypoints/openai/api_server.py", line 163, in build_async_engine_client_from_engine_args
+    (APIServer pid=46869)     vllm_config = engine_args.create_engine_config(usage_context=usage_context)
+    (APIServer pid=46869)                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    (APIServer pid=46869)   File "/usr/local/lib/python3.12/dist-packages/vllm/engine/arg_utils.py", line 1885, in create_engine_config
+    (APIServer pid=46869)     model_config = self.create_model_config()
+    (APIServer pid=46869)                    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    (APIServer pid=46869)   File "/usr/local/lib/python3.12/dist-packages/vllm/engine/arg_utils.py", line 1644, in create_model_config
+    (APIServer pid=46869)     return ModelConfig(
+    (APIServer pid=46869)            ^^^^^^^^^^^^
+    (APIServer pid=46869)   File "/usr/local/lib/python3.12/dist-packages/pydantic/_internal/_dataclasses.py", line 121, in __init__
+    (APIServer pid=46869)     s.__pydantic_validator__.validate_python(ArgsKwargs(args, kwargs), self_instance=s)
+    (APIServer pid=46869) pydantic_core._pydantic_core.ValidationError: 1 validation error for ModelConfig
+    (APIServer pid=46869)   Value error, Model architectures ['KimiK3ForConditionalGeneration'] failed to be inspected. Please check the logs for more details. [type=value_error, input_value=ArgsKwargs((), {'model': ...nderer_num_workers': 1}), input_type=ArgsKwargs]
+    (APIServer pid=46869)     For further information visit https://errors.pydantic.dev/2.13/v/value_error
+[2026-08-20T15:17:35-04:00] trap: tearing down (rc=1)

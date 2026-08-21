@@ -1,0 +1,93 @@
+[2026-08-20T15:53:30-04:00] Kimi-K3 B200 run [1node]: job 20856599 on node5700-c1
+[2026-08-20T15:53:30-04:00]   TP=8 PP=1 world=8  max_num_seqs=64  max_model_len=16384
+[2026-08-20T15:53:30-04:00]   ISL/OSL=1024/1024  conc='1 2 4 8 16 32 64'  gpu_mem_util=0.95
+[2026-08-20T15:53:30-04:00]   out: /orcd/data/orcd/022/benchmarks/b200-kimi/logs/kimi_1node_20260820_155330
+[2026-08-20T15:53:31-04:00] parallelism OK: TP=8 within each node x PP=1 across 1 node(s) = 8 GPUs
+[2026-08-20T15:53:31-04:00] image OK: /orcd/data/orcd/022/benchmarks/b200-kimi/imag/vllm-openai_kimi-k3.sif (7921852416 bytes, manifest verified)
+[2026-08-20T15:53:31-04:00] model OK (pre-staged, read-only): /orcd/compute/orcd/025/models/Kimi-K3
+[2026-08-20T15:53:32-04:00]   -> /orcd/compute/orcd/025/models/safetensors/Kimi-K3
+[2026-08-20T15:53:32-04:00]   96 shards, 1560936091448 bytes (1.420 TiB)
+[2026-08-20T15:53:32-04:00] node5700-c1: 0 GPU(s) with >1 GiB resident
+[2026-08-20T15:53:33-04:00] per-GPU HBM: 183359 MiB; node total ~1538 GB vs 1561 GB of weights
+[2026-08-20T15:53:33-04:00] STAGE server (expect a long load: 1.42 TiB, timeout 2400s)
+[2026-08-20T15:53:33-04:00] server: nodes=node5700-c1 head=node5700-c1 world=8 (TP=8 PP=1)
+[2026-08-20T15:53:33-04:00] server: ray head at 10.1.57.64:6379 temp=/dev/shm/ray-20856599
+[2026-08-20T15:53:33-04:00] server: cmd: /orcd/data/orcd/022/benchmarks/b200-kimi/logs/kimi_1node_20260820_155330/server/server_cmd.sh
+    | #!/usr/bin/env bash
+    | set -uo pipefail
+    | exec python3 -m vllm.entrypoints.openai.api_server \
+    |   --model /orcd/compute/orcd/025/models/Kimi-K3 \
+    |   --served-model-name Kimi-K3 \
+    |   --tensor-parallel-size 8 \
+    |   --pipeline-parallel-size 1 \
+    |   --port 8000 \
+    |   --gpu-memory-utilization 0.95 \
+    |   --max-model-len 16384 \
+    |   --max-num-seqs 64 \
+    |   --kv-cache-dtype fp8 \
+    |   --trust-remote-code \
+    |   --load-format \
+    |   fastsafetensors \
+    |   --no-enable-flashinfer-autotune \
+    |   --no-enable-prefix-caching \
+    |   --max-num-batched-tokens \
+    |   8192 \
+    |   --attention-config \
+    |   \{\"use_prefill_query_quantization\":true\,\"mla_prefill_backend\":\"flashinfer\"\} \
+    |   2>&1 | tee /orcd/data/orcd/022/benchmarks/b200-kimi/logs/kimi_1node_20260820_155330/server/vllm_server.log
+[2026-08-20T15:53:33-04:00] server: waiting for readiness (timeout 2400s)
+[2026-08-20T15:54:33-04:00] server:   still loading, 60s elapsed
+[2026-08-20T15:55:33-04:00] server:   still loading, 120s elapsed
+[2026-08-20T15:56:33-04:00] server:   still loading, 180s elapsed
+ERROR: server exited before becoming ready. Last 60 lines:
+[2026-08-20T15:56:54-04:00] server: cleanup: stopping ray on node5700-c1
+[2026-08-20T15:56:58-04:00] server failed to start (rc=1)
+[2026-08-20T15:56:58-04:00] ---- failure diagnosis ----
+[2026-08-20T15:56:58-04:00] VERDICT: out of memory during model load.
+[2026-08-20T15:56:58-04:00]   This is the EXPECTED result and it is the measurement:
+[2026-08-20T15:56:58-04:00]     node HBM  ~1538 GB (8 x 183359 MiB)
+[2026-08-20T15:56:58-04:00]     weights    1561 GB
+[2026-08-20T15:56:58-04:00]   The checkpoint does not fit on one B200 node. Proceed to job-kimi-base.sh
+[2026-08-20T15:56:58-04:00]   (TP8 x PP2 across two nodes), which is the vLLM recipe's verified B200 layout.
+[2026-08-20T15:56:58-04:00] ---- last 40 lines of the server log ----
+    (APIServer pid=108328)     async with build_async_engine_client(
+    (APIServer pid=108328)   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+    (APIServer pid=108328)     return await anext(self.gen)
+    (APIServer pid=108328)            ^^^^^^^^^^^^^^^^^^^^^
+    (APIServer pid=108328)   File "/usr/local/lib/python3.12/dist-packages/vllm/entrypoints/openai/api_server.py", line 139, in build_async_engine_client
+    (APIServer pid=108328)     async with build_async_engine_client_from_engine_args(
+    (APIServer pid=108328)   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+    (APIServer pid=108328)     return await anext(self.gen)
+    (APIServer pid=108328)            ^^^^^^^^^^^^^^^^^^^^^
+    (APIServer pid=108328)   File "/usr/local/lib/python3.12/dist-packages/vllm/entrypoints/openai/api_server.py", line 175, in build_async_engine_client_from_engine_args
+    (APIServer pid=108328)     async_llm = AsyncLLM.from_vllm_config(
+    (APIServer pid=108328)                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    (APIServer pid=108328)   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/engine/async_llm.py", line 217, in from_vllm_config
+    (APIServer pid=108328)     return cls(
+    (APIServer pid=108328)            ^^^^
+    (APIServer pid=108328)   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/engine/async_llm.py", line 146, in __init__
+    (APIServer pid=108328)     self.engine_core = EngineCoreClient.make_async_mp_client(
+    (APIServer pid=108328)                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    (APIServer pid=108328)   File "/usr/local/lib/python3.12/dist-packages/vllm/tracing/otel.py", line 178, in sync_wrapper
+    (APIServer pid=108328)     return func(*args, **kwargs)
+    (APIServer pid=108328)            ^^^^^^^^^^^^^^^^^^^^^
+    (APIServer pid=108328)   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/engine/core_client.py", line 132, in make_async_mp_client
+    (APIServer pid=108328)     return AsyncMPClient(*client_args)
+    (APIServer pid=108328)            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    (APIServer pid=108328)   File "/usr/local/lib/python3.12/dist-packages/vllm/tracing/otel.py", line 178, in sync_wrapper
+    (APIServer pid=108328)     return func(*args, **kwargs)
+    (APIServer pid=108328)            ^^^^^^^^^^^^^^^^^^^^^
+    (APIServer pid=108328)   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/engine/core_client.py", line 963, in __init__
+    (APIServer pid=108328)     super().__init__(
+    (APIServer pid=108328)   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/engine/core_client.py", line 573, in __init__
+    (APIServer pid=108328)     with launch_core_engines(
+    (APIServer pid=108328)   File "/usr/lib/python3.12/contextlib.py", line 144, in __exit__
+    (APIServer pid=108328)     next(self.gen)
+    (APIServer pid=108328)   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/engine/utils.py", line 1213, in launch_core_engines
+    (APIServer pid=108328)     wait_for_engine_startup(
+    (APIServer pid=108328)   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/engine/utils.py", line 1272, in wait_for_engine_startup
+    (APIServer pid=108328)     raise RuntimeError(
+    (APIServer pid=108328) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}
+    /usr/lib/python3.12/multiprocessing/resource_tracker.py:254: UserWarning: resource_tracker: There appear to be 1 leaked shared_memory objects to clean up at shutdown
+      warnings.warn('resource_tracker: There appear to be %d '
+[2026-08-20T15:56:58-04:00] trap: tearing down (rc=1)

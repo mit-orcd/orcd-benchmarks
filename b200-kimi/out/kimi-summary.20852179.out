@@ -1,0 +1,61 @@
+wrote /orcd/data/orcd/022/benchmarks/b200-kimi/results/RUN-SUMMARY.md
+  # Kimi-K3 on B200 — run summary
+  
+  Generated 2026-08-20T15:19:34-04:00 by job `20852179`.
+  
+  Chain: `gate:20852176 1node:20852177 base:20852178 summary:pending`
+  
+  ## Stage outcomes
+  
+  | Stage | Job | State | Elapsed |
+  |---|---:|---|---:|
+  | gate | 20852176 | COMPLETED | 00:01:09 |
+  | 1node | 20852177 | FAILED | 00:01:18 |
+  | base | 20852178 | CANCELLEDby184217 | 00:00:35 |
+  | summary | pending |  |  |
+  
+  ## Hardware and staging (from the probe)
+  
+  ```
+  ===== node5500-c1 =====
+  | NVIDIA-SMI 590.48.01              Driver Version: 590.48.01      CUDA Version: 13.1     |
+  MODEL VISIBLE: /orcd/compute/orcd/025/models/Kimi-K3
+    96/96 shards, 1560936091448 bytes
+  DRIVER OK: 590.48.01 (r590 >= r580) -- the cu130 vllm:kimi-k3 image can run here
+  ===== node5501-c1 =====
+  | NVIDIA-SMI 590.48.01              Driver Version: 590.48.01      CUDA Version: 13.1     |
+  MODEL VISIBLE: /orcd/compute/orcd/025/models/Kimi-K3
+    96/96 shards, 1560936091448 bytes
+  DRIVER OK: 590.48.01 (r590 >= r580) -- the cu130 vllm:kimi-k3 image can run here
+  ===== node5700-c1 =====
+  | NVIDIA-SMI 590.48.01              Driver Version: 590.48.01      CUDA Version: 13.1     |
+  MODEL VISIBLE: /orcd/compute/orcd/025/models/Kimi-K3
+    96/96 shards, 1560936091448 bytes
+  DRIVER OK: 590.48.01 (r590 >= r580) -- the cu130 vllm:kimi-k3 image can run here
+  ===== node5701-c1 =====
+  | NVIDIA-SMI 590.48.01              Driver Version: 590.48.01      CUDA Version: 13.1     |
+  MODEL VISIBLE: /orcd/compute/orcd/025/models/Kimi-K3
+    96/96 shards, 1560936091448 bytes
+  DRIVER OK: 590.48.01 (r590 >= r580) -- the cu130 vllm:kimi-k3 image can run here
+  ```
+  
+  ## Single-node attempt (TP8 × PP1)
+  
+  Run dir: `/orcd/data/orcd/022/benchmarks/b200-kimi/logs/kimi_1node_20260820_151626`
+  
+  ```
+  [2026-08-20T15:16:27-04:00] parallelism OK: TP=8 within each node x PP=1 across 1 node(s) = 8 GPUs
+  [2026-08-20T15:16:29-04:00] model OK (pre-staged, read-only): /orcd/compute/orcd/025/models/Kimi-K3
+  [2026-08-20T15:16:32-04:00] per-GPU HBM: 183359 MiB; node total ~1538 GB vs 1561 GB of weights
+  [2026-08-20T15:17:35-04:00] VERDICT: unrecognized failure -- see the tail below and /orcd/data/orcd/022/benchmarks/b200-kimi/logs/kimi_1node_20260820_151626/server/vllm_server.log
+  ```
+  
+  ## Two-node run (TP8 × PP2)
+  
+  Run dir: `/orcd/data/orcd/022/benchmarks/b200-kimi/logs/kimi_base_20260820_151756`
+  
+  ```
+  [2026-08-20T15:17:57-04:00] parallelism OK: TP=8 within each node x PP=2 across 2 node(s) = 16 GPUs
+  [2026-08-20T15:17:57-04:00] image OK: /orcd/data/orcd/022/benchmarks/b200-kimi/imag/vllm-openai_kimi-k3.sif (7921852416 bytes, manifest verified)
+  [2026-08-20T15:17:58-04:00] model OK (pre-staged, read-only): /orcd/compute/orcd/025/models/Kimi-K3
+  ```

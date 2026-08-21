@@ -1,0 +1,24 @@
+[2026-08-21T10:40:49-04:00] verify on node5700-c1 node5701-c1 (job 20907073)
+[2026-08-21T10:40:49-04:00] --- check 1: routable IPv4 for the head node ---
+[2026-08-21T10:40:49-04:00] resolve_ipv4(node5700-c1) = 10.1.57.64
+[2026-08-21T10:40:49-04:00]   (raw getent hosts said: fe80::a449:dfff:fe2e:3b60 -- the bug)
+[2026-08-21T10:40:49-04:00] OK: head IP is routable IPv4
+[2026-08-21T10:40:49-04:00] --- check 2: vLLM can inspect KimiK3 (triggers the Triton compile) ---
+    PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    gcc -> /usr/bin/gcc
+    CC=/usr/bin/gcc
+    INSPECT_OK ['KimiK3ForConditionalGeneration']
+[2026-08-21T10:42:01-04:00] OK: model inspection succeeded (Triton compile worked)
+[2026-08-21T10:42:01-04:00] --- check 2b: filelock works on the redirected JIT cache dirs ---
+    HOME = /tmp/cthome-shaohao
+    FLASHINFER_CACHE_DIR = /tmp/flashinfer-shaohao
+    FLOCK_OK /tmp/cthome-shaohao
+    FLOCK_OK /tmp/flashinfer-shaohao
+    FLOCK_OK /tmp/triton-cache-shaohao
+    flashinfer 0.6.15
+    LOCKTEST_OK
+[2026-08-21T10:42:18-04:00] OK: flock works on every JIT cache dir
+[2026-08-21T10:42:18-04:00] --- check 3: ray forms a 16-GPU cluster across both nodes ---
+[2026-08-21T10:42:41-04:00] ray cluster GPUs: 16/16
+[2026-08-21T10:42:41-04:00] OK: 2-node ray cluster formed
+[2026-08-21T10:42:55-04:00] VERIFY PASSED -- both prior failure modes are fixed

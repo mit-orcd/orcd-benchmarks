@@ -1,0 +1,18 @@
+===== node5500-c1 =====
+-- os --
+Rocky Linux 8.10 (Green Obsidian)
+6.12.0-211.42.1.el10_2.x86_64
+-- gpu --
+0, NVIDIA B200, 590.48.01, 183359 MiB
+-- cuda runtime advertised by the driver --
+| NVIDIA-SMI 590.48.01              Driver Version: 590.48.01      CUDA Version: 13.1     |
+-- staged checkpoint visible from this node? --
+MODEL VISIBLE: /orcd/compute/orcd/025/models/Kimi-K3
+  -> /orcd/compute/orcd/025/models/safetensors/Kimi-K3
+  96/96 shards, 1560936091448 bytes
+  shard count OK
+-- verdict --
+DRIVER OK: 590.48.01 (r590 >= r580) -- the cu130 vllm:kimi-k3 image can run here
+HBM: 1 x 183359 MiB = 192 GB per node
+Kimi-K3 weights: 1561 GB
+DOES NOT FIT ON ONE NODE: short by 1369 GB on weights alone, before KV cache, workspace or NCCL buffers -> TP8 x PP2 across two nodes

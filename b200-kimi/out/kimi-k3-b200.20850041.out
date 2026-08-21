@@ -1,0 +1,17 @@
+[2026-08-20T15:04:50-04:00] Kimi-K3 B200 run [base]: job 20850041 on node5700-c1 node5701-c1
+[2026-08-20T15:04:50-04:00]   TP=8 PP=2 world=16  max_num_seqs=64  max_model_len=16384
+[2026-08-20T15:04:50-04:00]   ISL/OSL=1024/1024  conc='1 2 4 8 16 32 64'  gpu_mem_util=0.90
+[2026-08-20T15:04:50-04:00]   out: /orcd/data/orcd/022/benchmarks/b200-kimi/logs/kimi_base_20260820_150450
+[2026-08-20T15:04:51-04:00] parallelism OK: TP=8 within each node x PP=2 across 2 node(s) = 16 GPUs
+[2026-08-20T15:04:51-04:00] image OK: /orcd/data/orcd/022/benchmarks/b200-kimi/imag/vllm-openai_kimi-k3.sif (7921852416 bytes, manifest verified)
+[2026-08-20T15:04:52-04:00] model OK (pre-staged, read-only): /orcd/compute/orcd/025/models/Kimi-K3
+[2026-08-20T15:04:52-04:00]   -> /orcd/compute/orcd/025/models/safetensors/Kimi-K3
+[2026-08-20T15:04:52-04:00]   96 shards, 1560936091448 bytes (1.420 TiB)
+[2026-08-20T15:04:53-04:00] node5700-c1: 0 GPU(s) with >1 GiB resident
+[2026-08-20T15:04:54-04:00] node5701-c1: 0 GPU(s) with >1 GiB resident
+[2026-08-20T15:04:54-04:00] per-GPU HBM: 183359 MiB; node total ~1538 GB vs 1561 GB of weights
+[2026-08-20T15:04:54-04:00] STAGE server (expect a long load: 1.42 TiB, timeout 3600s)
+[2026-08-20T15:04:55-04:00] server: nodes=node5700-c1 node5701-c1 head=node5700-c1 world=16 (TP=8 PP=2)
+[2026-08-20T15:04:55-04:00] server: ray head at fe80::a449:dfff:fe2e:3b60:6379 temp=/dev/shm/ray-20850041
+[2026-08-20T15:04:55-04:00] server: starting ray head on node5700-c1
+[2026-08-20T15:06:52.118] error: *** JOB 20850041 ON node5700-c1 CANCELLED AT 2026-08-20T15:06:52 DUE to SIGNAL Terminated ***

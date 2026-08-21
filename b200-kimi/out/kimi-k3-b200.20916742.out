@@ -1,0 +1,86 @@
+[2026-08-21T13:00:24-04:00] Kimi-K3 B200 run [base]: job 20916742 on node5700-c1 node5701-c1
+[2026-08-21T13:00:24-04:00]   TP=8 PP=2 world=16  max_num_seqs=64  max_model_len=16384
+[2026-08-21T13:00:24-04:00]   ISL/OSL=1024/1024  conc='1 2 4 8 16 32 64'  gpu_mem_util=0.90
+[2026-08-21T13:00:24-04:00]   out: /orcd/data/orcd/022/benchmarks/b200-kimi/logs/kimi_base_20260821_130024
+[2026-08-21T13:00:25-04:00] parallelism OK: TP=8 within each node x PP=2 across 2 node(s) = 16 GPUs
+[2026-08-21T13:00:25-04:00] image OK: /orcd/data/orcd/022/benchmarks/b200-kimi/imag/vllm-openai_kimi-k3.sif (7921852416 bytes, manifest verified)
+[2026-08-21T13:00:26-04:00] model OK (pre-staged, read-only): /orcd/compute/orcd/025/models/Kimi-K3
+[2026-08-21T13:00:26-04:00]   -> /orcd/compute/orcd/025/models/safetensors/Kimi-K3
+[2026-08-21T13:00:26-04:00]   96 shards, 1560936091448 bytes (1.420 TiB)
+[2026-08-21T13:00:28-04:00] node5700-c1: 0 GPU(s) with >1 GiB resident
+[2026-08-21T13:00:30-04:00] node5701-c1: 0 GPU(s) with >1 GiB resident
+[2026-08-21T13:00:31-04:00] per-GPU HBM: 183359 MiB; node total ~1538 GB vs 1561 GB of weights
+[2026-08-21T13:00:31-04:00] STAGE server (expect a long load: 1.42 TiB, timeout 3600s)
+[2026-08-21T13:00:31-04:00] server: nodes=node5700-c1 node5701-c1 head=node5700-c1 world=16 (TP=8 PP=2)
+[2026-08-21T13:00:31-04:00] server: ray head at 10.1.57.64:6379 temp=/dev/shm/ray-20916742
+[2026-08-21T13:00:31-04:00] server: starting ray head on node5700-c1
+[2026-08-21T13:00:35-04:00] server: starting ray worker on node5701-c1
+[2026-08-21T13:00:35-04:00] server: waiting for ray to report 16 GPUs
+[2026-08-21T13:00:41-04:00] server: ray has 16 GPUs
+[2026-08-21T13:00:41-04:00] server: cmd: /orcd/data/orcd/022/benchmarks/b200-kimi/logs/kimi_base_20260821_130024/server/server_cmd.sh
+    | #!/usr/bin/env bash
+    | set -uo pipefail
+    | exec python3 -m vllm.entrypoints.openai.api_server \
+    |   --model /orcd/compute/orcd/025/models/Kimi-K3 \
+    |   --served-model-name Kimi-K3 \
+    |   --tensor-parallel-size 8 \
+    |   --pipeline-parallel-size 2 \
+    |   --port 8000 \
+    |   --gpu-memory-utilization 0.90 \
+    |   --max-model-len 16384 \
+    |   --max-num-seqs 64 \
+    |   --kv-cache-dtype fp8 \
+    |   --trust-remote-code \
+    |   --distributed-executor-backend \
+    |   ray \
+    |   --load-format \
+    |   fastsafetensors \
+    |   --no-enable-flashinfer-autotune \
+    |   --no-enable-prefix-caching \
+    |   --max-num-batched-tokens \
+    |   8192 \
+    |   --attention-config \
+    |   \{\"use_prefill_query_quantization\":true\,\"mla_prefill_backend\":\"flashinfer\"\} \
+    |   2>&1 | tee /orcd/data/orcd/022/benchmarks/b200-kimi/logs/kimi_base_20260821_130024/server/vllm_server.log
+[2026-08-21T13:00:41-04:00] server: waiting for readiness (timeout 3600s)
+[2026-08-21T13:01:40-04:00] server:   still loading, 60s elapsed
+[2026-08-21T13:02:41-04:00] server:   still loading, 120s elapsed
+[2026-08-21T13:03:41-04:00] server:   still loading, 180s elapsed
+[2026-08-21T13:04:42-04:00] server:   still loading, 240s elapsed
+[2026-08-21T13:05:42-04:00] server:   still loading, 300s elapsed
+[2026-08-21T13:06:42-04:00] server:   still loading, 360s elapsed
+[2026-08-21T13:07:43-04:00] server:   still loading, 420s elapsed
+[2026-08-21T13:08:43-04:00] server:   still loading, 480s elapsed
+[2026-08-21T13:09:43-04:00] server:   still loading, 540s elapsed
+[2026-08-21T13:10:44-04:00] server:   still loading, 600s elapsed
+[2026-08-21T13:11:05-04:00] server: READY on node5700-c1:8000 (VRAM resident on 8 GPU(s))
+[2026-08-21T13:11:05-04:00] server up after 634s
+[2026-08-21T13:11:05-04:00] STAGE sweep (conc: 1 2 4 8 16 32 64)
+vLLM serving sweep 2026-08-21T13:11:07-04:00
+model    : /orcd/compute/orcd/025/models/Kimi-K3
+served   : Kimi-K3
+host:port: node5700-c1:8000
+TP/PP    : 8/2    max_num_seqs=64 max_model_len=16384
+ISL/OSL  : 1024/1024  range_ratio=0.8  seed=42
+conc     : 1 2 4 8 16 32 64
+image    : /orcd/data/orcd/022/benchmarks/b200-kimi/imag/vllm-openai_kimi-k3.sif
+
+  conc        req/s    out_tok/s  ttft_ms_med  tpot_ms_med
+     1         0.08         86.7        225.9        11.24   rc=0 166s completed=10
+     2         0.16        165.2        217.6        11.85   rc=0 161s completed=20
+     4         0.26        280.8        233.3        13.62   rc=0 195s completed=40
+     8         0.44        475.3        234.5        15.41   rc=0 227s completed=80
+    16         0.77        801.8        234.6        18.65   rc=0 253s completed=160
+    32         1.16       1209.3        264.4        25.28   rc=0 320s completed=320
+    64         1.64       1696.4        278.1        35.89   rc=0 442s completed=640
+results: /orcd/data/orcd/022/benchmarks/b200-kimi/logs/kimi_base_20260821_130024/sweep
+[2026-08-21T13:40:33-04:00] sweep rc=0
+[2026-08-21T13:40:34-04:00] STAGE teardown
+[2026-08-21T13:40:50-04:00] STAGE analysis (7 concurrency points)
+    B200 HBM overridden to measured 183359 MiB (192.3 GB) per GPU
+    arch: 93 layers (24 MLA + 69 KDA), 896 experts, total 2.777 T, active 103.0 B
+    MI355X baseline: 7 points from /orcd/data/orcd/022/benchmarks/amd-benchmarks/amd-cloud/logs/atom/sweep_20260814_164903
+    wrote /orcd/data/orcd/022/benchmarks/b200-kimi/results/kimi-k3-base-b200.md
+    wrote /orcd/data/orcd/022/benchmarks/b200-kimi/results/kimi-k3-base-b200.csv
+[2026-08-21T13:40:50-04:00] analyze rc=0 -> /orcd/data/orcd/022/benchmarks/b200-kimi/results/kimi-k3-base-b200.md
+[2026-08-21T13:40:51-04:00] DONE. run dir: /orcd/data/orcd/022/benchmarks/b200-kimi/logs/kimi_base_20260821_130024

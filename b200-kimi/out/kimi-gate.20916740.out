@@ -1,0 +1,31 @@
+[2026-08-21T12:57:39-04:00] gate on node5700-c1 (job 20916740)
+[2026-08-21T12:57:39-04:00] image OK: /orcd/data/orcd/022/benchmarks/b200-kimi/imag/vllm-openai_kimi-k3.sif
+    ref=docker://vllm/vllm-openai:kimi-k3
+    tag=kimi-k3
+    bytes=7921852416
+    sha256=1abbfa7a0bbaeb16f75fc9b8de9b495c56cb7215d6673a157b8d1a000470e523
+    pulled=2026-08-20T15:04:08-04:00
+    host=node3312
+    apptainer=apptainer version 1.5.2-1.el8
+    pull_seconds=1639
+[2026-08-21T12:57:39-04:00] model OK: /orcd/compute/orcd/025/models/Kimi-K3 -> /orcd/compute/orcd/025/models/safetensors/Kimi-K3
+[2026-08-21T12:57:39-04:00] driver=590.48.01  gpus=8  mem_per_gpu=183359 MiB
+[2026-08-21T12:57:40-04:00] driver OK (r590 >= r580)
+[2026-08-21T12:57:40-04:00] node HBM = 8 x 183359 MiB = 1432.5 GiB; Kimi-K3 weights = 1454.2 GiB (1.42 TiB)
+DOES NOT FIT: 1432.5 GiB HBM vs 1453.8 GiB of weights
+[2026-08-21T12:57:40-04:00] IB devices visible to the host:
+mlx5_0 mlx5_1 mlx5_10 mlx5_11 mlx5_12 mlx5_13 mlx5_14 mlx5_15 mlx5_2 mlx5_3 mlx5_4 mlx5_5 mlx5_6 mlx5_7 mlx5_8 mlx5_9 
+[2026-08-21T12:57:40-04:00] container gate: torch + vllm + a correct, fast matmul
+    torch 2.13.0+cu130 cuda 13.0
+    vllm 0.1.dev19262+gb6bbf29dd.d20260727
+    device NVIDIA B200
+    capability 10.0
+    devices 8
+    mem_gib 178.4
+    rel_err 3.037e-03
+    TFLOPS 1421.8
+    KimiK3_supported True
+    ray_version 2.57.0
+    ray_executor_ok True
+[2026-08-21T12:58:08-04:00] GATE PASSED: sm_10.0, 8 devices, 1421.8 TF/s BF16, rel_err=3.037e-03, KimiK3 registered, ray 2.57.0
+[2026-08-21T12:58:08-04:00] logs: /orcd/data/orcd/022/benchmarks/b200-kimi/logs/gate_20260821_125739

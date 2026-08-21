@@ -1,0 +1,396 @@
+# Kimi-K3 on 2 × 8 × B200 — compute and communication analysis
+
+Serving `moonshotai/Kimi-K3` (2.78 T params, 1.56 TB MXFP4 checkpoint) on **2 nodes × 8 B200** via vLLM, **TP=8 × PP=2**. Measured 2026-08-21T17:13:53Z.
+
+> **Why two nodes.** The checkpoint is **1561 GB (1.42 TiB)**. One 8 × B200 node holds **1538 GB (1.40 TiB)** of HBM (8 × 192 GB) — **23 GB short of the weights alone**, before a single byte of KV cache, activation workspace, NCCL buffers or CUDA-graph pool, which together take another ~15–20 GB per GPU. There is no single-node B200 configuration for this model. TP8 shards within each node and PP2 splits the 93 layers across the pair. The MI355X baseline runs the same model on **one** node, because 8 × 288 GB = 2304 GB does fit with room to spare. Every throughput figure below is therefore also reported per GPU and per node.
+
+**Run configuration** (from the server log, not assumed):
+
+| Setting | Value |
+|---|---|
+| Parallelism | `tensor_parallel_size=8`, `pipeline_parallel_size=2`, DP=1, **EP off** |
+| GPUs / nodes | 16 / 2 |
+| Quantization | routed MoE experts **MXFP4** (`mxfp4-pack-quantized`, group_size 32); attention, shared experts and dense MLP left at BF16 by the checkpoint's `ignore` list |
+| KV cache dtype | fp8 |
+| `max_model_len` / `max_num_seqs` | 16384 / 64 |
+| `max_num_batched_tokens` | 8192 |
+| `gpu_memory_utilization` | 0.9 |
+| Prefix caching | **disabled** (disabled is required — KDA recurrent state can't be rebuilt from the paged cache) |
+| Workload | ISL/OSL 1024/1024, `--ignore-eos`, concurrency 1→64 |
+| Weight load | 10.6 min for 1.42 TiB off shared NFS (~2.5 GB/s effective) |
+
+**Architecture** (parsed from `config.json`): 93 layers — **24 MLA full-attention** + **69 KDA linear-attention**; hidden 7168; MoE with **896 routed experts, top-16 + 2 shared**, routed-expert latent 3584 → 3072.
+
+The parse is **exactly validated**: routed-expert parameters computed from the config (`92 MoE layers × 896 experts × 3 × 3584 × 3072`) come to **2,722,740,830,208**, which is the checkpoint's own MXFP4 (U8) parameter count to the last digit. Total computed ≈ **2.777 T** against the advertised 2.78 T.
+
+> The routed experts live in a **latent space of 3584**, not on the 7168-wide residual stream. That is the difference between 2.72 T and the ~6.4 T a naive `3 × hidden × expert_width` count would predict, and it is why the exact match above is worth stating.
+
+---
+
+## 0. Overview — the short version
+
+**§1 Compute** — **1,696.4 tok/s** at c=64 (20× scaling from c=1, TPOT only 3.2× worse). Achieved **349.5 TFLOP/s aggregate = 21.8/GPU = 1.0% of B200 BF16 peak**. Only 103 B of 2.78 T params activate per token (3.7%).
+
+**§2 Memory** — Per GPU: **97.0 GiB weights** + **59.1 GiB KV pool**. KV decodes exactly: 13,824 B/token = `(kv_lora 512 + rope 64) × 1 B fp8 × 24 MLA layers` — proving only the 24 full-attention layers page KV, and that KV is replicated across TP ranks rather than sharded.
+
+**§3 Bottleneck — intra-GPU HBM bandwidth.** Compute 1.0% utilized, NVLink 0.5%, **HBM ~23%** (1,806.5 GB/s of 8,000). At batch 64 the tokens route independently, so **610 of 896 experts** activate per layer — not 16.
+
+**§4 Communication** — two paths now, not one. NVLink carries 93 all-reduces/token within each node (4.16 GB/s per GPU, 0.5% of ceiling). **The PP2 boundary additionally puts InfiniBand in the per-token critical path** — 0.026 GB/s across the pair (0.01% of the 8-rail NDR fabric). This is the cost the MI355X run does not pay, and §4.2 sizes it.
+
+**§5** — the levers, and §6 the head-to-head against MI355X.
+
+---
+
+## 1. Computing performance
+
+**Concurrency** = number of independent requests in flight at once. It is a client-side load setting, not a hardware unit: all 64 requests at c=64 are batched together across the same 16 GPUs in one continuous-batching loop.
+
+| Concurrency | Throughput (tok/s) | tok/s per GPU | TTFT med (ms) | TPOT med (ms) | req/s |
+|---:|---:|---:|---:|---:|---:|
+| 1 | 86.7 | 5.4 | 225.9 | 11.24 | 0.08 |
+| 2 | 165.2 | 10.3 | 217.6 | 11.85 | 0.16 |
+| 4 | 280.8 | 17.6 | 233.3 | 13.62 | 0.26 |
+| 8 | 475.3 | 29.7 | 234.5 | 15.41 | 0.44 |
+| 16 | 801.8 | 50.1 | 234.6 | 18.65 | 0.77 |
+| 32 | 1,209.3 | 75.6 | 264.4 | 25.28 | 1.16 |
+| 64 | **1,696.4** | 106.0 | 278.1 | 35.89 | 1.64 |
+
+Throughput scales **20×** from c=1 to c=64 while TPOT grows only 3.2×. The sweep stops at 64 because the server was launched with `--max-num-seqs 64`; past it you would measure queueing, not the engine.
+
+### Achieved TFLOP/s
+
+Only **top-16 + 2 of 896** experts fire per token. Active params per token ≈ **103 B** (of 2.78 T — 3.7% activation ratio):
+
+| Component | Active params/token |
+|---|---:|
+| FFN (top-16 routed + 2 shared + latent projections, 92 layers) | 66.8 B |
+| Attention (24 MLA + 69 KDA) | 33.9 B |
+| Embedding / lm_head | 2.3 B |
+
+At 2 FLOP per active param per token:
+
+| Concurrency | Aggregate TFLOP/s | Per GPU | % of B200 BF16 peak (2,250) |
+|---:|---:|---:|---:|
+| 1 | 17.9 | 1.12 | 0.05% |
+| 64 | 349.5 | 21.85 | 0.97% |
+
+**Decode is nowhere near compute-bound** — barely 1% of peak. Autoregressive decode issues one token per sequence per step, so every weight matrix is used for a single narrow GEMV-like operation. This is a *memory-bandwidth* regime, quantified in §3.
+
+> Caveat: the active-parameter figure is config-derived. The routed-expert term is exact (it reproduces the checkpoint's MXFP4 count to the digit); the KDA term is an approximation from the config dimensions and dominates the attention row. Treat the 103 B figure as ±10%. The conclusion (decode is ~1% of peak) has far too large a margin to be affected.
+
+---
+
+## 2. GPU memory usage
+
+Measured per rank at load time, straight from the server log:
+
+```
+total_gpu=?GiB  utilization=0.9  budget=?GiB
+weights=97.03GiB  non_torch=?GiB  act_peak=?GiB  kv=59.14GiB
+kv_tokens=6435401  kv_blocks=?
+```
+
+Per GPU (× 16 for the 2-node pair):
+
+| Component | Per GPU | Job total | What it is |
+|---|---:|---:|---|
+| Model weights + framework | 97.0 GiB | 1,552.5 GiB | The TP8×PP2 shard — dominated by MXFP4 experts |
+| **KV cache pool** | 59.1 GiB | 946.2 GiB | Allocated up front from what's left |
+
+**It does not load only weights.** Weights are ~97.0 GiB/GPU (1454 GiB of checkpoint sharded 16 ways ≈ 91 GiB, consistent), and a **59.1 GiB KV pool per GPU** is carved out on top.
+
+### KV cache details
+
+Measured `kv_bytes / kv_tokens` = **9,867 B per token per GPU**.
+
+Predicted from the architecture: MLA stores a *compressed latent* — `kv_lora_rank(512) + qk_rope_head_dim(64)` = 576 values/token/layer, at fp8 = 576 B, × **24 full-attention layers** = **13,824 B**.
+
+Measured is 0.71× predicted — the gap is worth chasing before trusting the conclusions below. Candidates: KDA state counted into the same pool, or a block-padding effect.
+
+1. **Only the 24 MLA layers consume paged KV.** The 69 KDA layers keep a fixed-size *recurrent state* per request instead of a growing cache — that is the point of linear attention, and it is why a 93-layer model has the KV footprint of a 24-layer one.
+2. **The KV cache is replicated, not sharded, across TP ranks.** MLA's latent is shared across heads, so sharding it would mean re-gathering it every step. Replication trades otherwise-idle HBM for zero communication.
+
+Capacity: **6,435,401 tokens** per GPU. The benchmark used 64 seqs × ~2048 tokens = **131,072 tokens, 2.0% of the pool**. KV was never remotely a constraint.
+
+---
+
+## 3. What is the bottleneck?
+
+**Intra-GPU HBM bandwidth.** Not compute, not either interconnect.
+
+| Resource | Demand at c=64 | B200 capability | Utilization |
+|---|---:|---:|---:|
+| Compute | 21.8 TFLOP/s per GPU | 2,250 TFLOP/s BF16 | **0.97%** |
+| **HBM bandwidth** | **~1,807 GB/s per GPU** | 8,000 GB/s | **~23%** |
+| NVLink (GPU↔GPU, intra-node) | 4.16 GB/s per GPU | ~900 GB/s (per direction) | **~0.46%** |
+| InfiniBand (PP stage boundary) | 0.026 GB/s | 400 GB/s (8 rails NDR) | **~0.01%** |
+
+### 3.1 Why HBM — the MoE batching mechanism
+
+At **batch 1**, only 16+2 experts fire per layer. At **batch 64** the tokens route independently, so the expected number of *distinct* experts touched per layer is `E × (1 − (1−1/E)^(B·topk))` = **610 of 896**.
+
+| Batch | Experts fired/layer | Tokens per expert | Weight bytes/step (job) | per GPU |
+|---:|---:|---:|---:|---:|
+| 1 | 16 | 1.0 | 26 GB | 2 GB |
+| 8 | 119 | 1.1 | 193 GB | 12 GB |
+| 64 | 610 | 1.7 | 985 GB | 62 GB |
+| 128 | 805 | 2.5 | 1300 GB | 81 GB |
+| 256 | 887 | 4.6 | 1432 GB | 89 GB |
+| 512 | 896 | 9.1 | 1446 GB | 90 GB |
+| 1024 | 896 | 18.3 | 1446 GB | 90 GB |
+
+This is the defining property of sparse MoE: **compute grows with batch, but weight traffic grows much faster** until nearly every expert is touched every step. From batch ~512 upward the weight bytes **plateau** — every additional token is then nearly free in bandwidth terms.
+
+MXFP4 is what makes this tractable. At BF16 the same reads would be **4× larger**, exceeding HBM bandwidth outright and making the model bandwidth-*starved* rather than merely bandwidth-dominated.
+
+### 3.2 How to improve it
+
+HBM is the binding resource at ~23%, but the box is not delivering all the HBM it has. The shortfall has a specific cause: with 610 experts fired across 64 tokens, each expert sees only **1.7 tokens** — a matrix-*vector* product, which cannot issue enough concurrent memory requests to saturate HBM. It is memory-bound and latency-bound at the same time.
+
+Ranked levers:
+
+1. **Raise `--max-num-seqs`** (64 → 256+). Biggest lever, costs nothing, and the KV memory is already provisioned (§2). This is the same conclusion the MI355X run reached, and for the same reason.
+2. **Speculative decoding / MTP** — verifies several tokens per weight read, widening the GEMM exactly as a larger batch does. Note the vLLM recipe **gates DSpark off the `multi_node_tp_pp` profile** (it does not compose with pipeline parallelism yet, vllm-project/vllm#50098), so on this 2-node layout it is unavailable — a real cost of needing PP that the single-node MI355X layout does not pay.
+3. **Expert parallelism** — fewer, whole expert reads per GPU, paid for with all-to-all over the near-idle interconnect. On MI355X this was tested and is **unsupported** (ATOM raises `NotImplementedError` for EP with the MXFP4 SiTUv2 kernel). On B200 it is worth testing separately; it is deliberately **off** here because the MI355X baseline has it off, and arm A exists to hold everything but the hardware constant.
+4. **Prefill/decode disaggregation** — the recipe ships a `pd_cluster` profile.
+
+### 3.3 Why TTFT is flat but TPOT rises
+
+TTFT moves 226 → 278 ms (1.2×) across a 64× concurrency increase, because prefill is genuinely compute-dense (1024 tokens/request in parallel) and has headroom. TPOT rises 3.2× because decode adds weight-read traffic per step as more experts activate. Different regimes — further confirmation that decode is bandwidth-limited.
+
+---
+
+## 4. Data communication analysis
+
+Three paths carry traffic here, where the single-node MI355X run had one.
+
+### 4.1 Intra-node GPU↔GPU (NVLink) — activations only
+
+With **TP=8 and EP disabled**, every expert is sharded across the 8 GPUs of its node, so there is **no expert-routing all-to-all**. The only cross-GPU traffic inside a node is TP activation reduction:
+
+| Property | Value |
+|---|---|
+| Collective | **all-reduce** (NCCL), 2 per layer |
+| Layers per pipeline stage | 93/2 = 46.5 |
+| Count per token per node | 2 × 46.5 = **93** |
+| Payload per call per token | `hidden_size × 2 B` = **14.0 KB** |
+
+| Concurrency | Steps/s | Payload/step | Wire bytes/step¹ | Sustained per GPU |
+|---:|---:|---:|---:|---:|
+| 1 | 89.0 | 1.3 MB | 2.3 MB | **0.21 GB/s** |
+| 64 | 27.9 | 85.3 MB | 149.3 MB | **4.16 GB/s** |
+
+¹ busbw convention: an all-reduce moves `2(N−1)/N × payload` on the wire.
+
+At **4.16 GB/s against a ~900 GB/s per-direction ceiling (0.46%)**, NVLink is almost entirely idle.
+
+**What is NOT transferred:** weights (resident per GPU), KV cache (replicated), gradients (inference), expert tokens (EP off).
+
+#### The message-size regime — why "1% utilized" understates the cost
+
+| | Per all-reduce call |
+|---|---|
+| Payload at c=1 | **14.0 KB** |
+| Payload at c=64 | **896 KB** |
+
+A step-time budget at c=64 (step = 35.9 ms, 93 all-reduces):
+
+| Assumption | All-reduce time/step | Share of step |
+|---|---:|---:|
+| Pure bandwidth, zero overhead | 0.17 ms | 0.5% |
+| + 5 µs fixed latency per call | 0.63 ms | 1.8% |
+| + 10 µs fixed latency per call | 1.10 ms | 3.1% |
+| + 20 µs fixed latency per call | 2.03 ms | 5.6% |
+
+These calls are **latency-dominated, not bandwidth-dominated**: a few microseconds each compounds into milliseconds across 93 serialized collectives per step. The utilization percentage is a floor on the cost, not an estimate of it.
+
+> Not directly measured: there is no per-call NCCL timing from this run, so the latency rows are illustrative arithmetic over a plausible range. Confirming the real figure needs `--profile` or `NCCL_DEBUG=INFO` timing.
+
+### 4.2 Inter-node (InfiniBand) — the pipeline boundary
+
+**This path has no counterpart in the MI355X run**, which is single-node. It exists here only because the model does not fit in one node.
+
+With PP=2, the 93 layers are split into 2 stages. Every step, stage 0 sends its hidden states to stage 1 over IB and (for the next microbatch) receives. The payload is small — hidden state, not weights:
+
+| Property | Value |
+|---|---|
+| Stage boundaries | 1 |
+| Bytes per token per boundary | `hidden_size × 2 B` = 14.0 KB |
+| Bytes per step at c=64 | 0.92 MB |
+| Sustained | **0.026 GB/s** |
+| Fabric capability (8 rails NDR, per node per direction) | 400 GB/s |
+| Utilization | **0.006%** |
+
+Measured fabric health on these nodes, for context (`../b200-nodes/notes.md`, 2026-08-12): `ib_write_bw` GPU→GPU at **395.5 Gb/s** — NDR line rate — and NCCL `sendrecv` at **48.4 GB/s per pair** at 8 GPUs/node. The fabric is not the problem.
+
+**But bandwidth is again the wrong lens, and here it matters more.** The PP cost is not the bytes; it is:
+
+1. **Latency in the critical path.** Every token must traverse stage 0, cross the network, then traverse stage 1. One inter-node hop is added to every decode step — an RDMA write plus synchronization, on the order of single-digit microseconds, against a 35.9 ms step. Small, but it is pure serial addition.
+2. **The pipeline bubble.** vLLM splits the running batch into microbatches to keep both stages busy; whatever it cannot overlap is idle GPU time on one stage or the other. This is the real PP tax and it is **not visible in the byte counts above**.
+3. **Lost features.** DSpark speculative decoding is gated off this profile entirely.
+
+A clean measurement of the bubble needs a stage-resident profile (per-stage step timings), which this run does not collect. What can be said from these data: the PP boundary is **not bandwidth-limited**, so if PP costs throughput here it costs it through bubbles and latency, not through the wire.
+
+### 4.3 Intra-GPU (HBM) — dominated by weights
+
+Per decode step at c=64, per GPU:
+
+| Traffic | Bytes/step | Share |
+|---|---:|---:|
+| **Expert weights (MXFP4)** | 61.59 GB | 92.2% |
+| Attention + shared + dense weights | 3.25 GB | 4.9% |
+| KV cache read | 1.81 GB | 2.7% |
+| Activations (read+write) | 0.17 GB | 0.3% |
+
+The asymmetry is stark: **HBM moves ~67 GB/step while NVLink moves ~0.15 GB and IB ~0.0009 GB.** Optimization effort belongs on the memory side.
+
+---
+
+## 5. Further discussion
+
+**1. Two nodes is a property of the model, not a choice.** 1561 GB of weights against 1538 GB of node HBM — 23 GB short. The consequence is not just "more GPUs": it forfeits DSpark speculative decoding (gated off `multi_node_tp_pp`), adds a pipeline bubble, and halves the per-GPU weight residency. A B300 node (8 × 268 GB = 2144 GB) would hold it single-node; a B200 node cannot.
+
+**2. `max_num_seqs=64` is the binding limit, not hardware.** KV was ~2.0% used and compute ~1%.
+
+**3. Prefix caching is disabled for correctness, and it costs real throughput.** KDA's recurrent state is per-request and cannot be reconstructed from the paged MLA cache. In workloads with shared prefixes this forfeits a large win that non-KDA models get for free — an architectural trade, not a tuning oversight. (The vLLM Blackwell baseline turns prefix caching *on*; it is turned off here both for correctness and to match the MI355X run.)
+
+**4. The hybrid attention design is what makes 2.78 T fit at all.** Only 24 of 93 layers keep a growing KV cache.
+
+**5. Load time was 10.6 minutes** for 1.42 TiB off shared NFS (~2.5 GB/s effective), with `--load-format fastsafetensors`.
+
+---
+
+## 6. B200 vs MI355X — head to head
+
+> **Read this section carefully — it is not an equal-hardware comparison.** MI355X serves this model on **one node with 8 GPUs**; B200 needs **two nodes and 16 GPUs**, because the checkpoint does not fit in 8 × 183 GB. Total throughput therefore compares two different amounts of hardware. The per-GPU and per-node columns are the ones that carry meaning, and even those are confounded by a different engine (vLLM vs ATOM) and a different parallelism (TP8×PP2 vs TP8). Treat this as a **system-level capability comparison**, not a chip-vs-chip benchmark.
+
+### 6.1 What was held constant, and what could not be
+
+| | MI355X | B200 | Matched? |
+|---|---|---|---|
+| Model | Kimi-K3 MXFP4 | Kimi-K3 MXFP4 | ✅ |
+| ISL / OSL | 1024 / 1024 | 1024 / 1024 | ✅ |
+| `max_model_len` | 16384 | 16384 | ✅ |
+| `max_num_seqs` | 64 | 64 | ✅ |
+| KV dtype | fp8 | fp8 | ✅ |
+| Prefix caching | off | off | ✅ |
+| Expert parallelism | off | off | ✅ |
+| Concurrency sweep | 1→64 | 1→64 | ✅ |
+| **Nodes / GPUs** | **1 / 8** | **2 / 16** | ❌ *forced* |
+| **Parallelism** | **TP8** | **TP8×PP2** | ❌ *forced* |
+| **Engine** | **ATOM** | **vLLM** | ❌ *ATOM is ROCm-only* |
+
+### 6.2 Hardware
+
+| | MI355X | B200 | Ratio (B200/MI355X) |
+|---|---:|---:|---:|
+| HBM per GPU | 288 GB | 192 GB | 0.67× |
+| HBM per node (8 GPUs) | 2304 GB | 1538 GB | 0.67× |
+| HBM bandwidth | 8,000 GB/s | 8,000 GB/s | 1.00× |
+| BF16 dense peak | 2,500 TFLOP/s | 2,250 TFLOP/s | 0.90× |
+| GPU↔GPU link | Infinity Fabric (xGMI) | NVLink 5 | — |
+| link, per direction | 537 GB/s | 900 GB/s | 1.68× |
+| **Holds Kimi-K3 on one node?** | **yes** — 2304 GB vs 1561 GB of weights, 743 GB spare | **no** — 1538 GB vs 1561 GB, **23 GB short** | — |
+
+**HBM capacity, not bandwidth or FLOPs, is the axis that decides this workload's layout.** The two parts have identical HBM bandwidth and B200 has 90% of MI355X's BF16 peak — neither of those decides anything here. Capacity does: 288 GB/GPU vs 192 GB/GPU is 1.50×, and that single ratio is the difference between one node and two.
+
+### 6.3 Throughput, point by point
+
+| Conc | MI355X tok/s | B200 tok/s | B200/MI355X | MI355X tok/s/GPU | B200 tok/s/GPU | per-GPU ratio |
+|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 46.1 | 86.7 | 1.88× | 5.8 | 5.4 | 0.94× |
+| 2 | 87.0 | 165.2 | 1.90× | 10.9 | 10.3 | 0.95× |
+| 4 | 154.2 | 280.8 | 1.82× | 19.3 | 17.6 | 0.91× |
+| 8 | 288.0 | 475.3 | 1.65× | 36.0 | 29.7 | 0.83× |
+| 16 | 500.9 | 801.8 | 1.60× | 62.6 | 50.1 | 0.80× |
+| 32 | 824.0 | 1,209.3 | 1.47× | 103.0 | 75.6 | 0.73× |
+| 64 | 1,258.5 | 1,696.4 | 1.35× | 157.3 | 106.0 | 0.67× |
+
+| Headline | MI355X | B200 |
+|---|---:|---:|
+| Peak tok/s (c=64) | 1,258.5 | 1,696.4 |
+| Peak tok/s **per GPU** | 157.3 | 106.0 |
+| Peak tok/s **per node** | 1,258.5 | 848.2 |
+| GPUs to serve the model | 8 | 16 |
+
+### 6.4 Latency
+
+| Conc | MI355X TTFT (ms) | B200 TTFT (ms) | MI355X TPOT (ms) | B200 TPOT (ms) |
+|---:|---:|---:|---:|---:|
+| 1 | 224.9 | 225.9 | 21.48 | 11.24 |
+| 2 | 251.5 | 217.6 | 22.58 | 11.85 |
+| 4 | 256.5 | 233.3 | 24.98 | 13.62 |
+| 8 | 257.5 | 234.5 | 27.02 | 15.41 |
+| 16 | 261.7 | 234.6 | 31.21 | 18.65 |
+| 32 | 273.9 | 264.4 | 37.83 | 25.28 |
+| 64 | 285.6 | 278.1 | 49.91 | 35.89 |
+
+TPOT is the metric where the PP2 boundary would show up if it costs anything: it is per-decode-step latency, and the inter-node hop plus any pipeline bubble lands there directly. TTFT is prefill-dominated and less sensitive to it.
+
+### 6.5 Where each system's headroom is
+
+| Resource (at peak concurrency) | MI355X | B200 |
+|---|---:|---:|
+| Compute utilization | 1.30% | 0.97% |
+| HBM utilization | ~32% | ~23% |
+| GPU↔GPU link utilization | ~1.11% | ~0.46% |
+| Inter-node utilization | n/a (single node) | ~0.006% |
+| Experts fired per layer | 610 / 896 | 610 / 896 |
+| Tokens per expert | 1.7 | 1.7 |
+
+**Both systems land in the same regime and hit the same wall**: ~1% of compute, ~1% of interconnect, and a memory system doing most but not all of what it can, because each expert's weight matrix is read to serve barely more than one token. The lever on both is `max_num_seqs`. That the two agree on the diagnosis, from different vendors' silicon and different serving engines, is the strongest evidence that the finding is about the *model*, not about either box.
+
+### 6.6 Memory footprint
+
+| | MI355X (TP8, 1 node) | B200 (TP8×PP2, 2 nodes) |
+|---|---:|---:|
+| Weights per GPU | 190.4 GiB | 97.0 GiB |
+| KV pool per GPU | 57.7 GiB | 59.1 GiB |
+| KV capacity per GPU | 4,221,440 tok | 6,435,401 tok |
+| KV bytes/token | 13,824 B | 13,824 B |
+| Total HBM committed | 1,984.5 GiB | 2,498.7 GiB |
+
+Per-GPU weight residency is roughly halved on B200 — the same checkpoint spread over twice as many GPUs. That is why B200's per-GPU weight *traffic* is also roughly halved in §3, and why per-GPU throughput comparisons must be read alongside the GPU count, not instead of it.
+
+### 6.7 What this comparison does and does not establish
+
+**Does:**
+
+- MI355X serves Kimi-K3 on **one** node; B200 needs **two**. For a 2.78 T MXFP4 frontier model, HBM capacity per node is the deciding specification.
+- Both reach the same bottleneck (HBM, via thin MoE GEMMs) and the same lever (`max_num_seqs`), independently.
+- The inter-node fabric is **not** the limiting factor on the B200 pair: the PP boundary uses a fraction of a percent of an 8-rail NDR fabric that measures at line rate.
+
+**Does not:**
+
+- Establish a per-chip performance ratio. Engine (vLLM vs ATOM), parallelism (PP2 vs none) and GPU count all differ; no single ratio isolates the silicon.
+- Say anything about B200 with a model that *does* fit in one node — that is a different and more favourable configuration for B200, and it is not this measurement.
+- Measure the pipeline bubble, which needs per-stage profiling this run does not collect.
+
+---
+
+## Source data
+
+| What | Where |
+|---|---|
+| B200 sweep (per-concurrency JSON) | `/orcd/data/orcd/022/benchmarks/b200-kimi/logs/kimi_base_20260821_130024/sweep` |
+| B200 server log | `/orcd/data/orcd/022/benchmarks/b200-kimi/logs/kimi_base_20260821_130024/server/vllm_server.log` |
+| MI355X sweep | `/orcd/data/orcd/022/benchmarks/amd-benchmarks/amd-cloud/logs/atom/sweep_20260814_164903` |
+| MI355X server log | `/orcd/data/orcd/022/benchmarks/amd-benchmarks/amd-cloud/logs/atom/server_20260814_164506/atom_server.log` |
+| Model config | `/orcd/compute/orcd/025/models/Kimi-K3/config.json` |
+| MI355X published report | `/orcd/data/orcd/022/benchmarks/amd-benchmarks/amd-cloud/results/kimi-k3-base.md` |
+
+Derived figures (active params, FLOP/s, HBM / NVLink / IB volumes) are computed from measured throughput plus the parsed architecture, **using the same formulas for both systems** so the columns are comparable. Memory tables are read from each server's own log. Where this report's derived numbers differ from the published MI355X report, it is because that report's active-parameter estimate omitted the MoE latent projections; this one is validated against the checkpoint's exact MXFP4 parameter count.
+
+---
+
+## Terminology — HBM, NVLink, InfiniBand
+
+Three data paths, and the bottleneck analysis turns on telling them apart.
+
+**HBM** — the GPU's own on-package memory, where weights, KV cache and activations live. **Intra-GPU**: one GPU, no other GPU involved. Every weight read is a read from HBM. B200: 192 GB per GPU at 8,000 GB/s.
+
+**NVLink** — the GPU↔GPU interconnect inside one node, NVIDIA's counterpart to AMD's xGMI. **Intra-node**. B200: 1,800 GB/s bidirectional per GPU (~900 GB/s per direction, the figure a ring all-reduce sees). Carries activation all-reduces only (§4.1).
+
+**InfiniBand** — the **inter-node** fabric. Present in this run and absent from the MI355X one. 8 rails × 400 Gb/s NDR per node, measured at 395.5 Gb/s GPU→GPU. Carries the pipeline stage boundary (§4.2).
+
+**Why the distinction decides everything.** HBM is roughly an order of magnitude faster per GPU than NVLink, so the instinct is that HBM can never be the constraint. That is backwards here: HBM moves ~67 GB per step while NVLink moves ~0.15 GB and IB ~0.0009 GB. The *slower* links are the idle ones.

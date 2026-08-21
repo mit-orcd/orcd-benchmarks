@@ -1,0 +1,61 @@
+wrote /orcd/data/orcd/022/benchmarks/b200-kimi/results/RUN-SUMMARY.md
+  # Kimi-K3 on B200 — run summary
+  
+  Generated 2026-08-20T17:56:48-04:00 by job `20863077`.
+  
+  Chain: `gate:20863073 verify:20863074 1node:20863075 base:20863076 summary:pending`
+  
+  ## Stage outcomes
+  
+  | Stage | Job | State | Elapsed |
+  |---|---:|---|---:|
+  | gate | 20863073 | COMPLETED | 00:00:33 |
+  | verify | 20863074 | COMPLETED | 00:01:39 |
+  | 1node | 20863075 | FAILED | 00:03:37 |
+  | base | 20863076 | COMPLETED | 01:15:46 |
+  | summary | pending |  |  |
+  
+  ## Hardware and staging (from the probe)
+  
+  ```
+  ===== node5500-c1 =====
+  | NVIDIA-SMI 590.48.01              Driver Version: 590.48.01      CUDA Version: 13.1     |
+  MODEL VISIBLE: /orcd/compute/orcd/025/models/Kimi-K3
+    96/96 shards, 1560936091448 bytes
+  DRIVER OK: 590.48.01 (r590 >= r580) -- the cu130 vllm:kimi-k3 image can run here
+  ===== node5501-c1 =====
+  | NVIDIA-SMI 590.48.01              Driver Version: 590.48.01      CUDA Version: 13.1     |
+  MODEL VISIBLE: /orcd/compute/orcd/025/models/Kimi-K3
+    96/96 shards, 1560936091448 bytes
+  DRIVER OK: 590.48.01 (r590 >= r580) -- the cu130 vllm:kimi-k3 image can run here
+  ===== node5700-c1 =====
+  | NVIDIA-SMI 590.48.01              Driver Version: 590.48.01      CUDA Version: 13.1     |
+  MODEL VISIBLE: /orcd/compute/orcd/025/models/Kimi-K3
+    96/96 shards, 1560936091448 bytes
+  DRIVER OK: 590.48.01 (r590 >= r580) -- the cu130 vllm:kimi-k3 image can run here
+  ===== node5701-c1 =====
+  | NVIDIA-SMI 590.48.01              Driver Version: 590.48.01      CUDA Version: 13.1     |
+  MODEL VISIBLE: /orcd/compute/orcd/025/models/Kimi-K3
+    96/96 shards, 1560936091448 bytes
+  DRIVER OK: 590.48.01 (r590 >= r580) -- the cu130 vllm:kimi-k3 image can run here
+  ```
+  
+  ## Pre-flight verification (2 nodes, no weight load)
+  
+  Run dir: `/orcd/data/orcd/022/benchmarks/b200-kimi/logs/verify_20260820_163420`
+  
+  ```
+  [2026-08-20T16:34:20-04:00] --- check 1: routable IPv4 for the head node ---
+  [2026-08-20T16:34:20-04:00] resolve_ipv4(node5700-c1) = 10.1.57.64
+  [2026-08-20T16:34:20-04:00] OK: head IP is routable IPv4
+  [2026-08-20T16:34:20-04:00] --- check 2: vLLM can inspect KimiK3 (triggers the Triton compile) ---
+  [2026-08-20T16:35:20-04:00] OK: model inspection succeeded (Triton compile worked)
+  [2026-08-20T16:35:20-04:00] --- check 2b: filelock works on the redirected JIT cache dirs ---
+  [2026-08-20T16:35:37-04:00] OK: flock works on every JIT cache dir
+  [2026-08-20T16:35:37-04:00] --- check 3: ray forms a 16-GPU cluster across both nodes ---
+  [2026-08-20T16:35:47-04:00] ray cluster GPUs: 16/16
+  [2026-08-20T16:35:47-04:00] OK: 2-node ray cluster formed
+  [2026-08-20T16:35:57-04:00] VERIFY PASSED -- both prior failure modes are fixed
+  ```
+  
+  ## Known failure modes already fixed
