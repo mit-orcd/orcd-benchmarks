@@ -18,6 +18,26 @@ FIELDS = ["max_concurrency", "output_throughput", "total_token_throughput",
 # analyze-kimi-b200.py (routed-expert params reproduce the checkpoint's MXFP4 count
 # exactly); restated here so this script stands alone and cannot perturb that one.
 E, TOPK = 896, 16
+MOE_LAYERS = 92
+# 3 matrices of routed_expert_hidden(3584) x moe_intermediate(3072), MXFP4 = 4 bits +
+# one e8m0 scale byte per 32 values.
+BYTES_PER_EXPERT = 3 * 3584 * 3072 * (0.5 + 1.0 / 32.0)
+HBM_BW_GBS = 8000.0     # B200 HBM3e, per GPU
+NGPU = 16               # TP8 x PP2
+
+
+def hbm_util_pct(batch, tpot_ms, ngpu=NGPU):
+    """Approximate HBM utilisation per GPU, the number the latency bound suppresses.
+
+    Weight traffic dominates (>=98% of step bytes), so expert weight reads are a good
+    proxy for total HBM traffic. This is the SAME arithmetic the baseline report uses
+    in section 3; reproduced here so this script stands alone.
+    """
+    if not tpot_ms:
+        return None
+    steps_per_s = 1000.0 / tpot_ms
+    bytes_step_per_gpu = MOE_LAYERS * experts_fired(batch) * BYTES_PER_EXPERT / ngpu
+    return 100.0 * bytes_step_per_gpu * steps_per_s / 1e9 / HBM_BW_GBS
 
 
 def experts_fired(batch):
@@ -86,9 +106,56 @@ def main():
       f"**{fmt(base_peak['output_throughput']) if base_peak else '1,696.4'} tok/s** at c=64, "
       "with HBM at only ~23% of peak because each expert saw just **1.7 tokens** per step.")
     W("")
-    W("**The question every arm below is testing:** the baseline is *latency-bound, not "
-      "bandwidth-bound* — so does widening the per-expert GEMM actually convert the idle "
-      "77% of HBM into throughput?")
+    W("---")
+    W("")
+    W("## What these experiments target: THE LATENCY BOTTLENECK")
+    W("")
+    W("**Every lever here is aimed at one specific thing — the *latency* bound on HBM, "
+      "not a bandwidth shortage.** That distinction decides which fixes can possibly work.")
+    W("")
+    W("The baseline is **latency-bound, not bandwidth-bound**: HBM runs at only ~23% of "
+      "peak, so ~77% of the memory bandwidth sits idle. It is idle because of "
+      "**memory-level parallelism**, not memory speed. At `max_num_seqs=64` the 64 tokens "
+      f"scatter across **{experts_fired(64):.0f} of {E} experts**, leaving each expert GEMM "
+      f"with only **{tokens_per_expert(64):.1f} tokens**. That is a matrix-*vector* product: "
+      "it cannot keep enough memory requests in flight to fill the pipe, so it stalls on "
+      "access latency long before it runs out of bandwidth.")
+    W("")
+    W("**So the fix is never \"more bandwidth\" — it is \"more tokens per expert GEMM\".** "
+      "Each lever is a different way of buying that:")
+    W("")
+    W("| Lever | How it attacks the LATENCY bound | Mechanism |")
+    W("|---|---|---|")
+    W("| **1. Raise `max_num_seqs`** | More concurrent tokens ⇒ more tokens per expert | "
+      f"{tokens_per_expert(64):.1f} → {tokens_per_expert(256):.1f} tok/expert at batch 256, "
+      f"→ {tokens_per_expert(512):.1f} at 512. Directly widens every expert GEMM. |")
+    W("| **2. Speculative decoding** | Several tokens verified per weight read | "
+      "Widens the GEMM *without* needing more concurrent users — the same MLP gain at "
+      "unchanged user load. Blocked by PP here (§3). |")
+    W("| **3. Expert parallelism** | Fewer, larger, contiguous weight reads | "
+      "Under TP each GPU reads a *thin slice* of every fired expert; under EP it reads "
+      "*whole* experts. Higher memory-level parallelism per read, same token count. |")
+    W("| 4. P/D disaggregation | *Does not widen the GEMM* | Removes prefill "
+      "interference from decode steps. A cleanliness gain, not an MLP gain — which is "
+      "why it is the weakest of the four even before the hardware cost (§4). |")
+    W("")
+    W("**How to tell whether a lever actually worked:** watch `tokens/expert` and the "
+      "derived **HBM %** in the tables below. Throughput rising *while HBM % rises* is "
+      "the latency bound being relieved. Throughput rising with HBM % flat would mean "
+      "something else changed.")
+    W("")
+    W("**Where the ceiling is.** Above batch ~512 every expert fires anyway, so weight "
+      "bytes plateau while tokens keep growing — that is where the GEMV finally becomes a "
+      "real GEMM and the latency bound dissolves. Realistic target is **HBM ~50–65%**, not "
+      "90%: a live engine also pays dequantisation, expert routing, MLA/KDA attention, 93 "
+      "all-reduces per token, and interleaved prefill, none of which read weights.")
+    W("")
+    W("**Not tested here, but the same mechanism** (worth trying if the levers below fall "
+      "short): native **MTP / multi-token prediction** (spec decoding's benefit without "
+      "the DSpark-vs-PP block); a larger `--max-num-batched-tokens` (8192 today) so "
+      "chunked prefill contributes more work per step; and a **grouped-GEMM MoE kernel** "
+      "that batches many small expert GEMMs into one launch — which is what AITER's "
+      "SiTUv2 path does on MI355X — raising occupancy without raising batch size at all.")
     W("")
     W(f"Run: `{run}`")
     W("")
@@ -135,27 +202,71 @@ def main():
     if not (arms["lever1_mns256"] or arms["lever1_mns512"]):
         W("_No data: neither arm produced sweep points._")
     else:
-        W("| Cap | Conc | tok/s | vs baseline peak | TTFT med (ms) | TPOT med (ms) | "
-          "experts fired | tokens/expert |")
-        W("|---:|---:|---:|---:|---:|---:|---:|---:|")
+        W("**Mechanism: this is the most direct attack on the latency bottleneck.** More "
+          "concurrent tokens means more tokens land on each fired expert, which widens "
+          "every expert GEMM and lets it keep more memory requests in flight.")
+        W("")
+        W("| Cap | Conc | tok/s | vs baseline peak | TPOT med (ms) | tokens/expert | "
+          "**HBM %** | latency bound relieved? |")
+        W("|---:|---:|---:|---:|---:|---:|---:|---|")
+        base_hbm = None
         if base_peak:
             c = base_peak["max_concurrency"]
+            base_hbm = hbm_util_pct(c, base_peak["median_tpot_ms"])
+            bcell = f"**{base_hbm:.0f}%**" if base_hbm is not None else "—"
             W(f"| 64 *(baseline)* | {c} | {fmt(base_peak['output_throughput'])} | 1.00× | "
-              f"{fmt(base_peak['median_ttft_ms'])} | {fmt(base_peak['median_tpot_ms'],2)} | "
-              f"{experts_fired(c):.0f} | {tokens_per_expert(c):.1f} |")
+              f"{fmt(base_peak['median_tpot_ms'],2)} | {tokens_per_expert(c):.1f} | "
+              f"{bcell} | _reference_ |")
         for tag, cap in (("lever1_mns256", 256), ("lever1_mns512", 512)):
             for r in arms[tag]:
                 c = r["max_concurrency"]
                 rel = f"{r['output_throughput']/b:.2f}×" if b else "—"
+                h = hbm_util_pct(c, r["median_tpot_ms"])
+                # Distinguish RISEN / flat / FALLEN. A falling HBM % is not the same
+                # finding as a flat one and must not be labelled the same way: it means
+                # per-step memory efficiency got WORSE and the extra throughput came
+                # purely from running a bigger batch, so the latency bound tightened
+                # rather than loosened.
+                if h is None or base_hbm is None:
+                    verdict = "—"
+                elif h > base_hbm * 1.15:
+                    verdict = f"✅ **yes** — HBM {base_hbm:.0f}%→{h:.0f}% (+{h-base_hbm:.0f} pts)"
+                elif h > base_hbm * 1.02:
+                    verdict = f"partial — HBM +{h-base_hbm:.0f} pts"
+                elif h >= base_hbm * 0.98:
+                    verdict = "flat — throughput up, HBM unchanged; bound still fully in place"
+                else:
+                    verdict = (f"❌ **worse** — HBM {base_hbm:.0f}%→{h:.0f}% "
+                               f"({h-base_hbm:+.0f} pts); gain is batch size alone")
+                hcell = f"**{h:.0f}%**" if h is not None else "—"
                 W(f"| {cap} | {c} | {fmt(r['output_throughput'])} | {rel} | "
-                  f"{fmt(r['median_ttft_ms'])} | {fmt(r['median_tpot_ms'],2)} | "
-                  f"{experts_fired(c):.0f} | {tokens_per_expert(c):.1f} |")
+                  f"{fmt(r['median_tpot_ms'],2)} | {tokens_per_expert(c):.1f} | "
+                  f"{hcell} | {verdict} |")
         W("")
-        W("**How to read this.** `tokens/expert` is the quantity that was binding: at the "
-          "baseline's 1.7 tokens each expert GEMM is a matrix-*vector* product with too "
-          "little memory-level parallelism to saturate HBM. Every row that raises it is "
-          "buying back the idle bandwidth. Weight bytes plateau above batch ~512, so "
-          "beyond that additional tokens are close to free.")
+        W("**How to read this — is the LATENCY bottleneck actually improving?** "
+          "`tokens/expert` is the quantity that was binding; **HBM %** is the consequence, "
+          "and it is the real scorecard. Three outcomes, and they mean different things:")
+        W("")
+        W("- **HBM % rises with throughput** ⇒ the latency bound is genuinely being "
+          "relieved. Each expert GEMM now has enough width to keep memory requests in "
+          "flight, so the same hardware is doing more useful work per second. This is the "
+          "win condition.")
+        W("- **HBM % flat while throughput rises** ⇒ the extra tokens are being served, "
+          "but per-step memory efficiency is unchanged — the bound is still fully in place "
+          "and the gain is just a bigger batch.")
+        W("- **HBM % falls while throughput rises** ⇒ per-step efficiency got *worse*. "
+          "Throughput went up only because batch went up, and TPOT grew faster than the "
+          "extra expert traffic justified — often queueing or a widening pipeline bubble. "
+          "Raising the cap further will hit diminishing returns fast.")
+        W("")
+        W("HBM % here is derived as `experts_fired(batch) × bytes_per_expert ÷ TPOT`, per "
+          "GPU, against B200's 8 TB/s — the same arithmetic as section 3 of the baseline "
+          "report. Expert weight reads are >=98% of step bytes, so they are a fair proxy "
+          "for total traffic.")
+        W("")
+        W("Weight bytes plateau above batch ~512, so past that point every extra token is "
+          "nearly free in bandwidth terms — which is exactly why the cap-512 arm is the "
+          "one that can push HBM % furthest.")
     W("")
 
     # ---------- lever 3 ----------
@@ -184,12 +295,14 @@ def main():
               f"{fmt(r['output_throughput'])} | {ratio} | "
               f"{fmt(t['median_tpot_ms'],2) if t else '—'} | {fmt(r['median_tpot_ms'],2)} |")
         W("")
-        W("**Why EP could help even though the interconnect is idle.** Under TP each GPU "
+        W("**Mechanism: EP attacks the same latency bottleneck by a different route.** "
+          "Under TP each GPU "
           "reads a *thin slice* of every activated expert and computes a partial GEMM. "
           "Under EP each GPU holds *whole* experts and computes complete GEMMs — fewer, "
-          "larger, more contiguous weight reads with more memory-level parallelism per "
-          "read. That attacks the same bottleneck as lever 1 by a different route, which "
-          "is why it is worth measuring rather than dismissing on the bandwidth numbers.")
+          "larger, more contiguous weight reads, so more memory-level parallelism per "
+          "read at the SAME token count. It raises HBM utilisation without needing a "
+          "bigger batch, which is why it is worth measuring rather than dismissing on the "
+          "fact that the interconnect is idle.")
     W("")
 
     # ---------- lever 2 ----------

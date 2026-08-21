@@ -1,3 +1,4 @@
 [2026-08-21T14:46:35-04:00] IMPROVE run: job 20923539 on node5700-c1 node5701-c1
 [2026-08-21T14:46:35-04:00]   baseline for comparison: max_num_seqs=64, peak 1696.4 tok/s @ c=64 (job 20916742)
 [2026-08-21T14:46:35-04:00] ===== ARM lever1_mns256 : max_num_seqs=256 conc='64 128 256' extra='' =====
+[2026-08-21T14:57:40-04:00] ARM lever1_mns256: server up after 665s

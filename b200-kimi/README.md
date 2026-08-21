@@ -5,8 +5,117 @@ Reproduces, on Engaging's B200 nodes, the Kimi-K3 serving characterization that
 same structure as `../amd-benchmarks/amd-cloud/results/kimi-k3-base.md` plus a
 **B200 vs MI355X** comparison section.
 
-**Nothing here has been run. No job has been submitted.** Scripts are staged and
-syntax-checked; the analyzer is tested end to end on synthetic data (see below).
+**Status: complete.** The full 1→64 concurrency sweep ran on 2 × 8 B200 (TP8 × PP2) and
+`results/kimi-k3-base-b200.md` holds the finished analysis. Peak **1,696 tok/s** at c=64.
+
+---
+
+## Quick start
+
+### I just want the results
+
+Already generated — nothing to run:
+
+| File | What it is |
+|---|---|
+| `results/kimi-k3-base-b200.md` | **The report.** Compute, memory, bottleneck, communication, and the B200 vs MI355X comparison (§6) |
+| `results/kimi-k3-base-b200.csv` | Same sweep data, machine-readable |
+| `results/RUN-SUMMARY.md` | Run-level summary: stage outcomes, hardware, key finding, known failure modes |
+| `results/kimi-k3-improve-b200.md` | The four §3.2 improvement levers (written by `job-improve-b200.sh`) |
+
+```bash
+cat results/RUN-SUMMARY.md              # start here
+cat results/kimi-k3-base-b200.md        # full analysis
+```
+
+### Run the whole benchmark from scratch
+
+One command. It submits a Slurm dependency chain and returns immediately — no
+babysitting process, so it survives logout:
+
+```bash
+./chain.sh
+```
+
+That queues, in order:
+
+```
+gate    (1 node,  ~1 min)   image + GPU + IB + KimiK3 arch + ray
+verify  (2 nodes, ~2 min)   ray 16-GPU cluster, model inspection, JIT filelocks
+1node   (1 node,  ~4 min)   TP8 x PP1 -- EXPECTED to OOM; that failure is the measurement
+base    (2 nodes, ~35 min)  TP8 x PP2: serve -> 1..64 sweep -> analysis
+summary (CPU,     ~5 s)     -> results/RUN-SUMMARY.md
+```
+
+`base` runs the analyzer itself, so **`results/kimi-k3-base-b200.md` exists the moment
+the job ends** — there is no separate analysis step to remember.
+
+Job IDs land in `logs/CHAIN.txt`. Check on it with:
+
+```bash
+squeue -u $USER
+sacct -j $(grep -oE '[0-9]+' logs/CHAIN.txt | tr '\n' ',' | sed 's/,$//') \
+      -o JobID,JobName%18,State,Elapsed,ExitCode
+```
+
+### Run one stage only
+
+```bash
+./submit.sh                 # prints the stages, reservation and parallelism
+./submit.sh probe           # driver / HBM / model-mount check on every B200 node
+./submit.sh gate            # cheap 1-node sanity gate
+./submit.sh base            # the 2-node measurement run
+./submit.sh --alt base      # same, retargeted to the non-reserved Rocky nodes
+```
+
+### Re-analyze without re-running the benchmark
+
+The expensive part is the 2-node run; regenerating the report from saved sweep data
+takes seconds. Use this after editing `analyze-kimi-b200.py`:
+
+```bash
+source common/env.sh
+module load apptainer/1.5.2
+B=logs/kimi_base_20260821_130024          # or: ls -dt logs/kimi_base_* | head -1
+
+apptainer exec $(apt_args) "$VLLM_SIF" $PY_C analyze-kimi-b200.py \
+  --sweep "$B/sweep" --server-log "$B/server/vllm_server.log" \
+  --model-config "$MKIMI/config.json" --run-dir "$B" \
+  --tp 8 --pp 2 --isl 1024 --osl 1024 --max-num-seqs 64 --kv-dtype fp8 \
+  --hbm-mib 183359 --weight-bytes 1560936091448 \
+  -o results
+```
+
+It re-reads the MI355X baseline out of `../amd-benchmarks/amd-cloud/logs/atom/` on every
+run, so the comparison section stays in sync automatically.
+
+### Run the improvement experiments
+
+Tests the four levers from §3.2 of the report. Writes **only**
+`results/kimi-k3-improve-b200.{md,csv}` — it never touches the baseline report:
+
+```bash
+sbatch job-improve-b200.sh      # 2 nodes, ~2 h, all four levers in one allocation
+```
+
+### Test the analyzers without burning an allocation
+
+Both analyzers run against synthetic sweep data plus the **real** MI355X baseline.
+Do this before any change that touches report generation:
+
+```bash
+./selftest-analyze.sh           # exercises analyze-kimi-b200.py end to end
+```
+
+### Before anything else, if the environment may have changed
+
+```bash
+./submit.sh probe               # ~1 min/node: driver r580+? checkpoint visible?
+```
+
+The image is pulled **once** by `./pull-image.sh`; every other script calls
+`check_image()` and fails rather than re-pulling. The Kimi-K3 weights are **never**
+downloaded — they are read in place from `/orcd/compute/orcd/025/models/Kimi-K3`.
 
 ---
 
