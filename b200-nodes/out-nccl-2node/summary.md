@@ -2,6 +2,7 @@
 
 - Generated: 2026-08-06 18:44:04
 - Runs: node5500+node5501, node5500+node5502, node5501+node5502
+- Note: node5500-5502 are no longer in Slurm. The tables below are their historical baseline; the current hardware is the 7 new nodes covered in "New nodes" below.
 - GPUs: 8/node x 2 nodes = 16 x NVIDIA B200 (inter-node, InfiniBand + GPUDirect RDMA)
 - Config: 1 MiB-16 GiB, 5 warmup + 20 iters
 - Reference: MIT aicr-benchmarks `results_b200.md` Table 2 (b0029+b0030, 16x B200 / NDR IB). busbw is the figure of merit.
@@ -32,6 +33,67 @@ The other node pair(s) — node5500+node5502, node5501+node5502 — give essenti
 - **all other collectives** — ring/symmetric or root-anchored, driving all 8 rails concurrently => ceiling 8 x 50 = **400 GB/s** per node per direction.
 
 The NIC is the binding constraint in both directions because PCIe Gen5 x16 is full-duplex (~63 GB/s *each* way), comfortably above the 50 GB/s rail. A collective well below its ceiling is limited by the NCCL algorithm, not by this hardware.
+
+## New nodes (node5600/5601/5602/5702/5800/5801/5802)
+
+Run 2026-08-24 on 5 pairs of the 7 new nodes, same configuration as above
+(all collectives, 8 GPUs/node = 16 ranks, 1 MiB-16 GiB), plus one confirmation
+pair run afterward to isolate the cause of an anomaly (see below).
+
+**4 of 6 pairs tested match the old nodes. Two do not, and the cause is a
+specific route, not a bad node.**
+
+| Collective | old node5500+5501 | healthy new pairs (mean, n=4) | vs old | node5602/5702 + node5802-c1 (mean, n=2) | vs healthy |
+|---|---:|---:|---:|---:|---:|
+| sendrecv | 49.7 | 48.8 | -1.9% | 48.8 | +0.1% |
+| all_reduce | 239.9 | 233.1 | -2.8% | 235.4 | +1.0% |
+| all_gather | 366.8 | 375.4 | +2.3% | **194.2** | **-48.3%** |
+| reduce_scatter | 375.2 | 382.4 | +1.9% | **200.9** | **-47.5%** |
+| reduce | 368.6 | 374.8 | +1.7% | **198.1** | **-47.1%** |
+| broadcast | 368.1 | 359.1 | -2.4% | **198.8** | **-44.7%** |
+| alltoall | 47.5 | 48.9 | +2.9% | 44.0 | -10.1% |
+| gather | 95.4 | 93.0 | -2.5% | 94.1 | +1.2% |
+| scatter | 325.2 | 335.9 | +3.3% | 310.1 | -7.7% |
+
+Healthy pairs = node5600-c1+node5601-c1, node5602-c1+node5702-c1,
+node5800-c1+node5801-c1, and **node5800-c1+node5802-c1** (confirmation run,
+below). Every collective on those is within **3.3%** of the old node5500+node5501
+figures, so the analysis and the ceilings in this document carry over unchanged.
+
+**The problem: the four ring collectives run at almost exactly half bandwidth,
+but only on the routes node5602-c1<->node5802-c1 and node5702-c1<->node5802-c1**
+(~198 GB/s against ~375-380 GB/s, i.e. 4 rails' worth of traffic instead of 8).
+The first hypothesis was "node5802-c1 is degraded" — ruled out by a targeted
+confirmation run pairing it with a *known-good* partner instead:
+
+| Pair | reduce_scatter | all_gather |
+|---|---:|---:|
+| node5800-c1 + node5801-c1 (baseline) | 384.5 | 370.6 |
+| **node5800-c1 + node5802-c1 (confirmation)** | **380.5** | **377.0** |
+| node5602-c1 + node5802-c1 (original) | 204.8 | 191.7 |
+| node5702-c1 + node5802-c1 (original) | 196.9 | 196.8 |
+
+**node5802-c1 is fine — full bandwidth with node5800-c1 (same 58xx chassis
+group).** The degradation appears only in its cross-chassis routes to node5602-c1
+(56xx) and node5702-c1 (57xx), while node5602-c1<->node5702-c1 (also cross-group)
+is itself fully healthy. So this is neither "one bad node" nor "crossing chassis
+groups is slow" — it isolates to the fabric path(s) connecting node5802-c1
+specifically to the 56xx/57xx switches, most likely one or more degraded links or
+a routing/ECMP imbalance on that particular leaf-to-spine hop. What further rules
+out a node- or driver-level cause: all 8 rails report `Active`/400 Gb/s on every
+node; node5802-c1 scores normally on gpu-fryer and every 1-node NVLink
+collective; `nvidia_peermem`, driver version, and subnet manager LID all match a
+healthy node; both slow runs completed with `PASS` correctness and zero
+`NCCL_DEBUG=WARN` output; and `sendrecv`/`all_reduce` (which don't depend on all
+8 rails being open on the same route) are unaffected on the same pairs.
+
+**Recommended follow-up for ORCD:** check fabric routing/cabling specifically on
+the node5802-c1 <-> 56xx and node5802-c1 <-> 57xx paths (leaf/spine assignment,
+per-link counters for CRC errors or symbol errors) rather than on node5802-c1
+itself. A re-run with `NCCL_DEBUG=INFO` on the two affected pairs would show how
+many channels NCCL opens across the node boundary and pin down which of the 8
+rails is the bottleneck.
+
 
 ## Interpreting `ours / HW max`
 

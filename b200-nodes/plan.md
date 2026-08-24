@@ -290,3 +290,30 @@ before any NCCL job starts (§3's ordering constraint), and 1-node finishes befo
 
 Staging dir: `/orcd/pool/004/shaohao/b200-newnodes`
 (`logs/` = Slurm stdout, `out-*/` = benchmark output, `watch.sh` = phase watcher).
+
+### 9.1 Results (2026-08-24)
+
+| Phase | Slurm state | Verdict |
+|---|---|---|
+| gpu-fryer | 7/7 COMPLETED | All healthy, within 1.7% of the old nodes on every precision |
+| NCCL 1-node | 7/7 COMPLETED | All PASS except `hypercube` (fails on old nodes too), within 2.8% of old |
+| NCCL 2-node | 5/5 "FAILED" | **Not a real failure** — see below. 3 pairs healthy, 2 pairs slow |
+
+**Why the 2-node jobs show FAILED.** `job-nccl-2node.sh` runs the collectives in
+one loop and `hypercube_perf` is last. It reports `Out of bounds values : 32
+FAILED` and exits 1, mpirun aborts, and the job's exit status becomes non-zero —
+so `sacct` marks the whole job FAILED even though the 9 preceding collectives
+completed with valid data and `PASS` correctness. The old node5500-5502 runs
+failed identically (job 19791438, also at 00:05:56), and the existing summary was
+built from exactly such "FAILED" runs. No data was lost.
+
+**Real finding, sharpened by a confirmation run:** the four ring collectives run
+at ~half bandwidth (~198 vs ~375-380 GB/s) specifically on the
+node5602-c1<->node5802-c1 and node5702-c1<->node5802-c1 routes. A targeted
+confirmation run (node5800-c1+node5802-c1, job 21137578) shows node5802-c1 is
+**not** degraded in general — 380.5/377.0 GB/s, full bandwidth, when paired with
+node5800-c1 (same 58xx chassis group). The fault isolates to node5802-c1's
+cross-chassis fabric path(s) to the 56xx/57xx switches, not to the node itself —
+likely a routing/cabling issue on that specific hop. Rails, driver, GPUDirect
+config, correctness and NCCL logs all check out clean on both ends. Details and
+the full confirmation table are in `out-nccl-2node/summary.md`.
