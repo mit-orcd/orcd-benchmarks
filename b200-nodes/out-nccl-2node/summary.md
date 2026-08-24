@@ -34,6 +34,32 @@ The other node pair(s) — node5500+node5502, node5501+node5502 — give essenti
 
 The NIC is the binding constraint in both directions because PCIe Gen5 x16 is full-duplex (~63 GB/s *each* way), comfortably above the 50 GB/s rail. A collective well below its ceiling is limited by the NCCL algorithm, not by this hardware.
 
+## Interpreting `ours / HW max`
+
+Dividing each result by one rail's line rate (50 GB/s) gives the most useful view: **how many of the 8 rails the collective actually engages**.
+
+| Collective | ours / HW max | effective rails (of 8) | verdict |
+|------------|--------------:|----------------:|---------|
+| sendrecv | 99% | 0.99 (per pair) | at line rate |
+| reduce_scatter | 94% | 7.50  | at fabric limit |
+| reduce | 92% | 7.37  | at fabric limit |
+| broadcast | 92% | 7.36  | at fabric limit |
+| all_gather | 92% | 7.34  | at fabric limit |
+| scatter | 81% | 6.50  | expected (root-anchored) |
+| all_reduce | 60% | 4.80  | expected Ring two-pass penalty |
+| gather | 24% | 1.91  | NCCL algorithm limit |
+| alltoall | 12% | 0.95  | NCCL algorithm limit |
+
+**At the hardware limit (92-99%).** `sendrecv` is the cleanest validation in the table: each GPU saturates its own rail, so ~99% of 50 GB/s means nothing is left on the table. It is the single number that certifies the fabric is healthy. The ring collectives sit at 7.3-7.5 effective rails because NCCL runs 8 parallel ring channels, each crossing the node boundary on a different rail; the missing few percent is ring fill/drain and protocol overhead, which cannot be recovered.
+
+**Expected shortfalls.** `all_reduce` at ~60% is the Ring two-pass penalty: it runs reduce_scatter then all_gather, and the busbw formula already divides out the doubled traffic (factor 2(N-1)/N), so a perfectly pipelined all_reduce would score the *same* as all_gather. It does not, because the ring fills and drains twice and pays the phase-transition latency. That fixed latency does not shrink when bandwidth grows, which is why our all_reduce is a *smaller* fraction of our all_gather (~65%) than the reference's was (~78%) — and why SHARP, which collapses the two passes into one in-switch reduction, has more to gain here (see `out-nccl-2node-sharp/`). `scatter` is root-anchored and unidirectional, limited by the root's own outbound capacity.
+
+**Algorithm-limited, and the numbers say so precisely.** `alltoall` at ~12% is exactly 1/8 — it engages roughly **one rail's worth** of bandwidth out of 8, a literal quantification of NCCL's N^2 point-to-point transfers not being pipelined across NICs. `gather` at ~24% is about two rails, the same story for fan-in to a single root. The decisive evidence that these are algorithmic rather than physical: this fabric is ~1.9x faster than the reference on sendrecv, yet gather improved only 1.05x and alltoall 1.19x. A faster fabric barely helps a collective that is not using it.
+
+> **Caveat on the denominators.** The 400 GB/s ceiling is exact for the ring collectives, whose traffic streams around a ring bottlenecked by its inter-node links. It is an *approximation* for the root-anchored and all-to-all patterns, where only a fraction of traffic crosses the node boundary (for alltoall, 8 of each GPU's 15 peers are remote; the rest go over NVLink). A per-collective ceiling would shift those percentages — most likely lowering `scatter`'s apparent figure. It does not change any conclusion: gather and alltoall are 4-8x below any reasonable ceiling and are algorithm-bound under every accounting.
+
+> Note: sendrecv here uses 16 GPUs (ring), but the reference 26.6 GB/s is a per-pair (2-GPU) bidir figure, so the two are not directly comparable and `ours / ref` is left blank.
+
 ## New nodes (node5600/5601/5602/5702/5800/5801/5802)
 
 Run 2026-08-24 on 5 pairs of the 7 new nodes, same configuration as above
@@ -94,32 +120,6 @@ itself. A re-run with `NCCL_DEBUG=INFO` on the two affected pairs would show how
 many channels NCCL opens across the node boundary and pin down which of the 8
 rails is the bottleneck.
 
-
-## Interpreting `ours / HW max`
-
-Dividing each result by one rail's line rate (50 GB/s) gives the most useful view: **how many of the 8 rails the collective actually engages**.
-
-| Collective | ours / HW max | effective rails (of 8) | verdict |
-|------------|--------------:|----------------:|---------|
-| sendrecv | 99% | 0.99 (per pair) | at line rate |
-| reduce_scatter | 94% | 7.50  | at fabric limit |
-| reduce | 92% | 7.37  | at fabric limit |
-| broadcast | 92% | 7.36  | at fabric limit |
-| all_gather | 92% | 7.34  | at fabric limit |
-| scatter | 81% | 6.50  | expected (root-anchored) |
-| all_reduce | 60% | 4.80  | expected Ring two-pass penalty |
-| gather | 24% | 1.91  | NCCL algorithm limit |
-| alltoall | 12% | 0.95  | NCCL algorithm limit |
-
-**At the hardware limit (92-99%).** `sendrecv` is the cleanest validation in the table: each GPU saturates its own rail, so ~99% of 50 GB/s means nothing is left on the table. It is the single number that certifies the fabric is healthy. The ring collectives sit at 7.3-7.5 effective rails because NCCL runs 8 parallel ring channels, each crossing the node boundary on a different rail; the missing few percent is ring fill/drain and protocol overhead, which cannot be recovered.
-
-**Expected shortfalls.** `all_reduce` at ~60% is the Ring two-pass penalty: it runs reduce_scatter then all_gather, and the busbw formula already divides out the doubled traffic (factor 2(N-1)/N), so a perfectly pipelined all_reduce would score the *same* as all_gather. It does not, because the ring fills and drains twice and pays the phase-transition latency. That fixed latency does not shrink when bandwidth grows, which is why our all_reduce is a *smaller* fraction of our all_gather (~65%) than the reference's was (~78%) — and why SHARP, which collapses the two passes into one in-switch reduction, has more to gain here (see `out-nccl-2node-sharp/`). `scatter` is root-anchored and unidirectional, limited by the root's own outbound capacity.
-
-**Algorithm-limited, and the numbers say so precisely.** `alltoall` at ~12% is exactly 1/8 — it engages roughly **one rail's worth** of bandwidth out of 8, a literal quantification of NCCL's N^2 point-to-point transfers not being pipelined across NICs. `gather` at ~24% is about two rails, the same story for fan-in to a single root. The decisive evidence that these are algorithmic rather than physical: this fabric is ~1.9x faster than the reference on sendrecv, yet gather improved only 1.05x and alltoall 1.19x. A faster fabric barely helps a collective that is not using it.
-
-> **Caveat on the denominators.** The 400 GB/s ceiling is exact for the ring collectives, whose traffic streams around a ring bottlenecked by its inter-node links. It is an *approximation* for the root-anchored and all-to-all patterns, where only a fraction of traffic crosses the node boundary (for alltoall, 8 of each GPU's 15 peers are remote; the rest go over NVLink). A per-collective ceiling would shift those percentages — most likely lowering `scatter`'s apparent figure. It does not change any conclusion: gather and alltoall are 4-8x below any reasonable ceiling and are algorithm-bound under every accounting.
-
-> Note: sendrecv here uses 16 GPUs (ring), but the reference 26.6 GB/s is a per-pair (2-GPU) bidir figure, so the two are not directly comparable and `ours / ref` is left blank.
 
 ## Bus bandwidth vs message size (GB/s)
 
