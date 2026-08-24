@@ -4,3 +4,18 @@
 [2026-08-21T14:57:40-04:00] ARM lever1_mns256: server up after 665s
 [2026-08-21T15:38:43-04:00] ARM lever1_mns256: sweep rc=0, 3 point(s)
 [2026-08-21T15:39:19-04:00] ===== ARM lever1_mns512 : max_num_seqs=512 conc='128 256 512' extra='' =====
+[2026-08-21T15:46:15-04:00] ARM lever1_mns512: server up after 416s
+[2026-08-21T16:57:47-04:00] ARM lever1_mns512: sweep rc=0, 3 point(s)
+[2026-08-21T16:58:23-04:00] ===== ARM lever3_ep : max_num_seqs=256 conc='64 128 256' extra='--enable-expert-parallel' =====
+[2026-08-21T17:05:13-04:00] ARM lever3_ep: server up after 410s
+[2026-08-21T17:50:45-04:00] ARM lever3_ep: sweep rc=0, 3 point(s)
+[2026-08-21T17:51:21-04:00] ===== ARM lever2_spec : capability probe (expected to be rejected) =====
+[2026-08-21T17:51:21-04:00] ===== ARM lever2_spec : max_num_seqs=64 conc='64' extra='--speculative-config {"model":"RedHatAI/Kimi-K3-speculator.dspark","num_speculative_tokens":8,"method":"dspark","draft_sample_method":"probabilistic","rejection_sample_method":"block"}' =====
+[2026-08-21T17:52:22-04:00] ARM lever2_spec: server FAILED to start (rc=1)
+[2026-08-21T17:52:31-04:00] lever2_spec: did not start (see above) -- this is the expected outcome
+[2026-08-21T17:52:31-04:00] LEVER 4 (P/D disagg): NOT RUN -- needs >=4 nodes (2 instances x 16 GPUs); have 2
+[2026-08-21T17:52:31-04:00] STAGE analysis
+[2026-08-21T17:52:32-04:00] analyze rc=0 -> /orcd/data/orcd/022/benchmarks/b200-kimi/results/kimi-k3-improve-b200.md
+    wrote /orcd/data/orcd/022/benchmarks/b200-kimi/results/kimi-k3-improve-b200.md
+    wrote /orcd/data/orcd/022/benchmarks/b200-kimi/results/kimi-k3-improve-b200.csv
+[2026-08-21T17:52:32-04:00] DONE. run dir: /orcd/data/orcd/022/benchmarks/b200-kimi/logs/improve_20260821_144635

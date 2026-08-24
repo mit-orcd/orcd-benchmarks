@@ -422,6 +422,48 @@ Per-GPU weight residency is roughly halved on B200 — the same checkpoint sprea
 
 ---
 
+## 7. Cross-check against SemiAnalysis InferenceX
+
+SemiAnalysis publish continuous Kimi-K3 benchmarks at <https://inferencex.semianalysis.com>, and open-source the harness (Apache-2.0, `github.com/SemiAnalysisAI/InferenceX`). Their configs are in `../semianalysis-ref/`. Their **B200 recipe uses TP8 × PP2 on 2 nodes — the same layout as this run**, which makes the methodology directly checkable.
+
+### 7.1 What they independently confirm
+
+| Fact | Ours (measured) | Theirs (stated in config) |
+|---|---|---|
+| Checkpoint size | 1,560,936,091,448 B = 1.561 TB / 1.420 TiB, 96 shards | *"1.561 TB decimal (1.420 TiB, 96 safetensors)"* |
+| Does not fit one 8×B200 node | 1561 GB vs 1538 GB — 23 GB short | *"does not fit one 8xB200 node, so TP8 shards … and PP2 splits the 93 layers"* |
+| Layout forced to TP8 × PP2, 16 GPUs | yes | `tensor-parallel-size: 8`, `pipeline-parallel-size: 2`, `agg_nodes: 2` |
+| `gpu-memory-utilization` 0.90 not 0.95 | 0.90 | 0.90, and the *same reason*: *"the flashinfer trtllm MXFP4 MoE kernel allocates a ~1.6 GiB runtime workspace OUTSIDE vLLM's memory pool … at 0.95 a 178 GiB B200 … OOMs"* |
+| Usable HBM per B200 | 178.35 GiB (nvidia-smi) | *"a 178 GiB B200"* |
+| MI355X fits on ONE node at TP8 | yes, 288 GB/GPU | *"~195 GB/GPU across 8 GPUs of the 288 GB part; TP=4 … cannot load"* |
+| Expert parallelism off | EP off | *"Plain TP (NOT TEP): expert parallelism is deliberately off"* |
+| Image, load format, autotune, batched-token cap | `vllm/vllm-openai:kimi-k3`, `fastsafetensors`, autotune off, 8192 | identical on all four |
+
+Two independent teams, different clusters, same conclusions — including the exact checkpoint byte count and the non-obvious 0.90 memory-utilisation workaround.
+
+### 7.2 What differs — why the numbers are NOT directly comparable
+
+| Dimension | Ours | SemiAnalysis | Effect |
+|---|---|---|---|
+| **Workload** | fixed ISL/OSL 1024/1024, `--ignore-eos`, random synthetic | **AgentX agentic trace replay**, real multi-turn traces, 1M+ context | **largest difference.** Their traces have long shared prefixes and huge context; ours is a fixed, cache-hostile synthetic shape |
+| **Prefix caching** | **off** | **on** (default, kept for trajectory reuse) | theirs reuses KV across turns; ours never does. Big throughput swing on agentic traffic |
+| `max-model-len` | 16384 | native **1M** (unset) | theirs pays a far larger KV footprint per sequence |
+| `max-num-seqs` | **64** (fixed) | let vLLM choose | ours deliberately caps the batch; §3.2 shows that cap is what binds our throughput |
+| Benchmark client | `vllm bench serve` | `aiperf` + trace replay | different measurement harness |
+| **MI355X spec decoding** | **off** | **DSpark MTP on** (`SPEC_NUM_TOKENS 2`) | their MI355X arm gets a lever ours does not use — see below |
+| MI355X `max-num-seqs` | 64 | 128 | their MI355X runs a deeper batch |
+| MI355X engine | ATOM (our baseline) | vLLM ROCm *and* an ATOM variant | we compare ATOM-vs-vLLM; they run both |
+
+**Precision is the same, despite the labels.** Their config says `precision: "fp4"` and ours says MXFP4 — the same thing. Both serve the native `moonshotai/Kimi-K3` MXFP4 checkpoint (`mxfp4-pack-quantized`, 4-bit routed experts with e8m0 scales); neither re-quantises. "FP4" on their dashboard is the checkpoint's own format, not a separate NVFP4 conversion.
+
+### 7.3 The one that matters most
+
+Their MI355X agentic recipe enables **DSpark speculative decoding** (`kimik3_fp4_mi355x_mtp.sh`), while their B200 TP8×PP2 recipe does **not**. That is the same asymmetry §5 and `notes-concurrency.md` identify from the vLLM recipe: spec decoding does not compose with pipeline parallelism, and PP is mandatory on B200 because the model does not fit one node. **An independent benchmark team hit the identical constraint and made the identical choice.** Any B200-vs-MI355X comparison on their dashboard therefore carries the same caveat as ours — MI355X is running with a throughput/latency lever that B200 structurally cannot use.
+
+> **No numeric comparison is given here on purpose.** The dashboard's measured values are served from a backend the public repo does not contain, so they could not be verified from this environment. Given the workload differences above, quoting their numbers beside ours would imply a like-for-like comparison that does not exist.
+
+---
+
 ## Source data
 
 | What | Where |
