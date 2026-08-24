@@ -1273,6 +1273,51 @@ def build_report(b, a, arch, args):
       "columns differ in workload (agentic traces vs fixed 1024/1024), prefix caching "
       "(on vs off) and context (1M vs 16K), so this is not a like-for-like ranking.")
     W("")
+    W("#### What \"MTP\" is, and why it nearly triples per-user speed")
+    W("")
+    W("**MTP = Multi-Token Prediction**, a form of **speculative decoding**. It is the "
+      "`spec_method: \"mtp\"` column in their data, and it is the largest single effect in "
+      "the table above.")
+    W("")
+    W("**Normal decode:** one forward pass produces **one** token. To do it, every "
+      "activated expert's weights must be read from HBM — at c=1 that is ~2 GB per GPU "
+      "read to emit a single token. The weight read, not the arithmetic, is the cost.")
+    W("")
+    W("**With MTP:** a small, fast *draft* model proposes the next **N** tokens, and the "
+      "full model then **verifies all N in a single forward pass**. Verification is one "
+      "weight read instead of N. Tokens that match what the big model would have produced "
+      "are kept; the first mismatch and everything after it is discarded and redone. "
+      "Output is bit-identical to normal decoding — this is a pure latency optimisation, "
+      "not an approximation.")
+    W("")
+    W("**Why it works so well here — it attacks exactly the bottleneck §3 identifies.** "
+      "This workload is *latency-bound, not bandwidth-bound*: the expert GEMMs are too "
+      "narrow to keep enough memory requests in flight (§3.2). Verifying N tokens in one "
+      "pass makes each expert GEMM **N tokens wide instead of 1** — the same widening that "
+      "raising `max-num-seqs` achieves, except **it needs no other users**. That is why it "
+      "is the *only* lever in §3.2 that helps a single user (see §1.1 and "
+      "`notes-concurrency.md`), and why its effect is largest at low concurrency: "
+      "**2.7× at c=1, decaying to 1.2× by c=32**, where batching has already widened the "
+      "GEMMs on its own.")
+    W("")
+    W("**Speedup is bounded by draft length × acceptance rate.** With draft length N the "
+      "ceiling is N×, reached only if every proposed token is accepted; real acceptance is "
+      "lower, so the measured gain is always below N.")
+    W("")
+    W("**Implementation detail worth knowing:** Kimi-K3's own checkpoint has "
+      f"`num_nextn_predict_layers = {arch.raw.get('text_config',{}).get('num_nextn_predict_layers', 0)}` "
+      "— **no built-in MTP head**. The speedup comes from **DSpark**, a *separate* "
+      "speculator model (`RedHatAI/Kimi-K3-speculator.dspark`). SemiAnalysis's MI355X "
+      "recipe runs it at draft length 2 (`SPEC_NUM_TOKENS=2`, verified in "
+      "`../semianalysis-ref/kimik3_fp4_mi355x_mtp.sh`); the upstream vLLM recipe specifies "
+      "8. So \"MTP\" here labels the technique, not a model-native feature.")
+    W("")
+    W("**And this is precisely what B200 cannot use in this configuration.** DSpark does "
+      "not compose with pipeline parallelism (vllm-project/vllm#50098), and PP is "
+      "mandatory on B200 because the checkpoint does not fit one node. MI355X fits on one "
+      "node, needs no PP, and therefore gets MTP for free. **The largest lever in the "
+      "table is unavailable to B200 for a memory-capacity reason, not a compute one.**")
+    W("")
     W("**What survives those caveats:**")
     W("")
     W("1. **Our B200 no-spec numbers are in the same band as theirs at low concurrency** "
