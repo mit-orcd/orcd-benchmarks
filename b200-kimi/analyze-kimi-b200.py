@@ -1185,23 +1185,23 @@ def build_report(b, a, arch, args):
     W("")
     W("### 7.1 What they independently confirm")
     W("")
-    W("| Fact | Ours (measured) | Theirs (stated in config) |")
-    W("|---|---|---|")
-    W("| Checkpoint size | 1,560,936,091,448 B = 1.561 TB / 1.420 TiB, 96 shards | "
+    W("| Fact | **Applies to** | Ours (measured) | Theirs (stated in config) |")
+    W("|---|---|---|---|")
+    W("| Checkpoint size | **both** | 1,560,936,091,448 B = 1.561 TB / 1.420 TiB, 96 shards | "
       "*\"1.561 TB decimal (1.420 TiB, 96 safetensors)\"* |")
-    W("| Does not fit one 8×B200 node | 1561 GB vs 1538 GB — 23 GB short | "
+    W("| Does not fit one 8×B200 node | **B200** | 1561 GB vs 1538 GB — 23 GB short | "
       "*\"does not fit one 8xB200 node, so TP8 shards … and PP2 splits the 93 layers\"* |")
-    W("| Layout forced to TP8 × PP2, 16 GPUs | yes | `tensor-parallel-size: 8`, "
+    W("| Layout forced to TP8 × PP2, 16 GPUs | **B200** | yes | `tensor-parallel-size: 8`, "
       "`pipeline-parallel-size: 2`, `agg_nodes: 2` |")
-    W("| `gpu-memory-utilization` 0.90 not 0.95 | 0.90 | 0.90, and the *same reason*: "
+    W("| `gpu-memory-utilization` 0.90 not 0.95 | **B200** | 0.90 | 0.90, and the *same reason*: "
       "*\"the flashinfer trtllm MXFP4 MoE kernel allocates a ~1.6 GiB runtime workspace "
       "OUTSIDE vLLM's memory pool … at 0.95 a 178 GiB B200 … OOMs\"* |")
-    W("| Usable HBM per B200 | 178.35 GiB (nvidia-smi) | *\"a 178 GiB B200\"* |")
-    W("| MI355X fits on ONE node at TP8 | yes, 288 GB/GPU | *\"~195 GB/GPU across 8 GPUs "
+    W("| Usable HBM per GPU | **B200** | 178.35 GiB (nvidia-smi) | *\"a 178 GiB B200\"* |")
+    W("| Fits on ONE node at TP8 | **MI355X** | yes, 288 GB/GPU | *\"~195 GB/GPU across 8 GPUs "
       "of the 288 GB part; TP=4 … cannot load\"* |")
-    W("| Expert parallelism off | EP off | *\"Plain TP (NOT TEP): expert parallelism is "
+    W("| Expert parallelism off | **both** | EP off | *\"Plain TP (NOT TEP): expert parallelism is "
       "deliberately off\"* |")
-    W("| Image, load format, autotune, batched-token cap | `vllm/vllm-openai:kimi-k3`, "
+    W("| Image, load format, autotune, batched-token cap | **B200** | `vllm/vllm-openai:kimi-k3`, "
       "`fastsafetensors`, autotune off, 8192 | identical on all four |")
     W("")
     W("Two independent teams, different clusters, same conclusions — including the exact "
@@ -1209,25 +1209,25 @@ def build_report(b, a, arch, args):
     W("")
     W("### 7.2 What differs — why the numbers are NOT directly comparable")
     W("")
-    W("| Dimension | Ours | SemiAnalysis | Effect |")
-    W("|---|---|---|---|")
-    W("| **Workload** | fixed ISL/OSL 1024/1024, `--ignore-eos`, random synthetic | "
+    W("| Dimension | **Applies to** | Ours | SemiAnalysis | Effect |")
+    W("|---|---|---|---|---|")
+    W("| **Workload** | **both** | fixed ISL/OSL 1024/1024, `--ignore-eos`, random synthetic | "
       "**AgentX agentic trace replay**, real multi-turn traces, 1M+ context | "
       "**largest difference.** Their traces have long shared prefixes and huge context; "
       "ours is a fixed, cache-hostile synthetic shape |")
-    W("| **Prefix caching** | **off** | **on** (default, kept for trajectory reuse) | "
+    W("| **Prefix caching** | **both** | **off** | **on** (default, kept for trajectory reuse) | "
       "theirs reuses KV across turns; ours never does. Big throughput swing on agentic "
       "traffic |")
-    W("| `max-model-len` | 16384 | native **1M** (unset) | theirs pays a far larger KV "
+    W("| `max-model-len` | **both** | 16384 | native **1M** (unset) | theirs pays a far larger KV "
       "footprint per sequence |")
-    W("| `max-num-seqs` | **64** (fixed) | let vLLM choose | ours deliberately caps the "
+    W("| `max-num-seqs` | **B200** | **64** (fixed) | let vLLM choose | ours deliberately caps the "
       "batch; §3.2 shows that cap is what binds our throughput |")
-    W("| Benchmark client | `vllm bench serve` | `aiperf` + trace replay | different "
+    W("| Benchmark client | **both** | `vllm bench serve` | `aiperf` + trace replay | different "
       "measurement harness |")
-    W("| **MI355X spec decoding** | **off** | **DSpark MTP on** (`SPEC_NUM_TOKENS 2`) | "
-      "their MI355X arm gets a lever ours does not use — see below |")
-    W("| MI355X `max-num-seqs` | 64 | 128 | their MI355X runs a deeper batch |")
-    W("| MI355X engine | ATOM (our baseline) | vLLM ROCm *and* an ATOM variant | "
+    W("| **Spec decoding (MTP)** | **MI355X** | **off** | **DSpark MTP on** (`SPEC_NUM_TOKENS 2`) | "
+      "their MI355X arm gets a lever ours does not use — see §7.4 |")
+    W("| `max-num-seqs` | **MI355X** | 64 | 128 | their MI355X runs a deeper batch |")
+    W("| Serving engine | **MI355X** | ATOM (our baseline) | vLLM ROCm *and* an ATOM variant | "
       "we compare ATOM-vs-vLLM; they run both |")
     W("")
     W("**Precision is the same, despite the labels.** Their config says "
@@ -1267,6 +1267,11 @@ def build_report(b, a, arch, args):
     W("| 16 | 53.6 | 8.6 | 77.7 | — | — | 32.0 |")
     W("| 32 | 39.6 | 3.8 | 46.5 | — | — | 26.4 |")
     W("| 64 | 27.9 | — | — | — | — | 20.0 |")
+    W("")
+    W("> ⚠️ **Every one of their MI355X runs uses MTP — they publish no MI355X result "
+      "without it — so their MI355X column can never be compared against their B200 "
+      "no-spec column on equal footing.** (Verified in their API data: all 8 MI355X "
+      "records are `spec_method: mtp`; B200 has both, 9 `none` and 6 `mtp`.)")
     W("")
     W("Units: output tokens/s delivered to a single request. Theirs are `median_intvty`; "
       "ours are `1000 / median TPOT`. **Read across rows with care — see §7.2.** The "
