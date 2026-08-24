@@ -1273,50 +1273,61 @@ def build_report(b, a, arch, args):
       "columns differ in workload (agentic traces vs fixed 1024/1024), prefix caching "
       "(on vs off) and context (1M vs 16K), so this is not a like-for-like ranking.")
     W("")
-    W("#### What \"MTP\" is, and why it nearly triples per-user speed")
+    W("#### What \"MTP\" is — and it is software, not silicon")
     W("")
-    W("**MTP = Multi-Token Prediction**, a form of **speculative decoding**. It is the "
-      "`spec_method: \"mtp\"` column in their data, and it is the largest single effect in "
-      "the table above.")
+    W("**Short answer: yes — MTP is an inference *software* technique, not a hardware "
+      "capability.** It says nothing about how fast the GPU is. Any vendor's hardware can "
+      "run it once the software stack supports it. So the MTP columns above measure "
+      "**software maturity, not silicon**, and must not be read as a hardware comparison.")
     W("")
-    W("**Normal decode:** one forward pass produces **one** token. To do it, every "
-      "activated expert's weights must be read from HBM — at c=1 that is ~2 GB per GPU "
-      "read to emit a single token. The weight read, not the arithmetic, is the cost.")
+    W("**MTP = Multi-Token Prediction**, a form of **speculative decoding**:")
     W("")
-    W("**With MTP:** a small, fast *draft* model proposes the next **N** tokens, and the "
-      "full model then **verifies all N in a single forward pass**. Verification is one "
-      "weight read instead of N. Tokens that match what the big model would have produced "
-      "are kept; the first mismatch and everything after it is discarded and redone. "
-      "Output is bit-identical to normal decoding — this is a pure latency optimisation, "
-      "not an approximation.")
+    W("- **Without it:** one forward pass = **one** token. Every activated expert's "
+      "weights are read from HBM to emit that single token (~2 GB per GPU at c=1). The "
+      "weight read is the cost, not the arithmetic.")
+    W("- **With it:** a small draft model proposes the next **N** tokens; the full model "
+      "**verifies all N in one pass** — one weight read instead of N. Correct guesses are "
+      "kept, the first wrong one and everything after is redone.")
+    W("- **Output is bit-identical** to normal decoding. Pure speedup, no quality tradeoff.")
     W("")
-    W("**Why it works so well here — it attacks exactly the bottleneck §3 identifies.** "
-      "This workload is *latency-bound, not bandwidth-bound*: the expert GEMMs are too "
-      "narrow to keep enough memory requests in flight (§3.2). Verifying N tokens in one "
-      "pass makes each expert GEMM **N tokens wide instead of 1** — the same widening that "
-      "raising `max-num-seqs` achieves, except **it needs no other users**. That is why it "
-      "is the *only* lever in §3.2 that helps a single user (see §1.1 and "
-      "`notes-concurrency.md`), and why its effect is largest at low concurrency: "
-      "**2.7× at c=1, decaying to 1.2× by c=32**, where batching has already widened the "
-      "GEMMs on its own.")
+    W("**Why it helps so much here:** decode is *latency-bound, not bandwidth-bound* (§3). "
+      "Verifying N tokens at once makes each expert GEMM **N wide instead of 1** — the same "
+      "widening `max-num-seqs` buys, but **without needing other users**. That is why it is "
+      "the only §3.2 lever that helps a single user (§1.1).")
     W("")
-    W("**Speedup is bounded by draft length × acceptance rate.** With draft length N the "
-      "ceiling is N×, reached only if every proposed token is accepted; real acceptance is "
-      "lower, so the measured gain is always below N.")
+    W("Measured gain in their B200 data (MTP vs no-spec, same hardware):")
     W("")
-    W("**Implementation detail worth knowing:** Kimi-K3's own checkpoint has "
-      f"`num_nextn_predict_layers = {arch.raw.get('text_config',{}).get('num_nextn_predict_layers', 0)}` "
-      "— **no built-in MTP head**. The speedup comes from **DSpark**, a *separate* "
-      "speculator model (`RedHatAI/Kimi-K3-speculator.dspark`). SemiAnalysis's MI355X "
-      "recipe runs it at draft length 2 (`SPEC_NUM_TOKENS=2`, verified in "
-      "`../semianalysis-ref/kimik3_fp4_mi355x_mtp.sh`); the upstream vLLM recipe specifies "
-      "8. So \"MTP\" here labels the technique, not a model-native feature.")
+    W("| | c=1 | c=8 | c=32 |")
+    W("|---|---:|---:|---:|")
+    W("| B200 per-user tok/s, **no spec** | 81.9 | 21.1 | 3.8 |")
+    W("| B200 per-user tok/s, **MTP** | 221.7 | 154.1 | 46.5 |")
+    W("| ratio | **2.7×** | **7.3×** | **12.2×** |")
     W("")
-    W("**And this is precisely what B200 cannot use in this configuration.** DSpark does "
-      "not compose with pipeline parallelism (vllm-project/vllm#50098), and PP is "
-      "mandatory on B200 because the checkpoint does not fit one node. MI355X fits on one "
-      "node, needs no PP, and therefore gets MTP for free. **The largest lever in the "
-      "table is unavailable to B200 for a memory-capacity reason, not a compute one.**")
+    W("> **Note the trend is the opposite of what simple theory predicts.** Speculative "
+      "decoding should matter *most* at low concurrency and fade as batching widens the "
+      "GEMMs on its own — yet here the ratio grows from 2.7× to 12.2×. The likely cause is "
+      "that the ratio is not a clean MTP-only A/B: the no-spec column collapses steeply "
+      "(81.9 → 3.8) under long-context agentic traces, and their MTP rows come from a "
+      "different recipe family than the `agg-b200-tp8pp2-agentic.yaml` config cross-checked "
+      "in §7.1. Treat the **c=1 figure (2.7×) as the trustworthy one** and the high-"
+      "concurrency ratios as confounded.")
+    W("")
+    W("Ceiling is draft length × acceptance rate — never the full N, since not every guess "
+      "is accepted.")
+    W("")
+    W("**Two facts that matter for reading the table:**")
+    W("")
+    W("1. **Kimi-K3 has no built-in MTP head** "
+      f"(`num_nextn_predict_layers = {arch.raw.get('text_config',{}).get('num_nextn_predict_layers', 0)}`). "
+      "The gain comes from **DSpark**, a separate speculator model. \"MTP\" names the "
+      "technique, not a model feature.")
+    W("2. **B200 cannot use it in this configuration** — DSpark does not compose with "
+      "pipeline parallelism, and PP is mandatory on B200 because the model does not fit "
+      "one node. MI355X fits on one node, needs no PP, and gets MTP for free.")
+    W("")
+    W("> So the MTP gap is *caused* by a hardware limit (memory capacity forcing PP) but "
+      "is not itself *a measure of* hardware speed. A B200 with enough memory per node — "
+      "or a vLLM release that composes DSpark with PP — would get the same ~2.7×.")
     W("")
     W("**What survives those caveats:**")
     W("")
