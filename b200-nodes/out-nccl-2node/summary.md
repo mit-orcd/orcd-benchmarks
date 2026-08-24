@@ -120,12 +120,50 @@ bandwidth — every ring collective landed within 3.5% of its first-run value
 `sendrecv` and `all_reduce` again unaffected, so this is a stable property of
 those routes rather than a transient defect.
 
-**Recommended follow-up for ORCD:** check fabric routing/cabling specifically on
-the node5802-c1 <-> 56xx and node5802-c1 <-> 57xx paths (leaf/spine assignment,
-per-link counters for CRC errors or symbol errors) rather than on node5802-c1
-itself. A re-run with `NCCL_DEBUG=INFO` on the two affected pairs would show how
-many channels NCCL opens across the node boundary and pin down which of the 8
-rails is the bottleneck.
+### Raw InfiniBand check — it is the fabric, and only under concurrent load
+
+NCCL was taken out of the picture with `ib_write_bw` (64 MiB writes), run two
+ways on the affected routes and on two healthy control routes
+(`job-ibwrite-rails.sh`, `job-ibwrite-concurrent.sh`; raw output in
+`../out-ibwrite/`).
+
+**One rail at a time: everything is clean.** All 8 rails reach line rate on every
+route, affected or not — ~379 Gb/s host mem -> host mem and ~395 Gb/s GPU -> GPU.
+No dead link, no degraded cable, no GPUDirect fault.
+
+**All 8 rails at once: the defect appears, and it is a 4-rail split.**
+
+| Route | aggregate, GPU -> GPU | per-rail pattern |
+|---|---:|---|
+| node5602-c1+node5702-c1 (control) | 3163.7 Gb/s | all 8 rails ~395 |
+| node5800-c1+node5802-c1 (control) | 3151.8 Gb/s | all 8 rails ~394 |
+| **node5602-c1+node5802-c1** | **2380.2 Gb/s** | 4 rails ~200, 4 rails ~393 |
+| **node5702-c1+node5802-c1** | **2367.5 Gb/s** | 4 rails ~200, 4 rails ~392 |
+
+The *same four* rails — `mlx5_4`, `mlx5_9`, `mlx5_10`, `mlx5_15` — fall to almost
+exactly half on both affected routes, while the other four hold line rate. Half
+rate on a fixed subset of rails, appearing only when the rails run together, is
+the signature of two rails sharing one inter-switch uplink: each gets 50% when
+both are loaded. It also explains why single-rail tests and `sendrecv` (one pair,
+one rail) never showed anything.
+
+**CPU path vs GPU path: this is not GPUDirect-specific.** Single-rail host-memory
+transfers are at line rate on the affected routes, so the CPU path has no
+per-link fault either. The concurrent host-memory test cannot settle it further:
+it saturates at ~1590 Gb/s aggregate on the *control* route as well as the
+affected one (host memory / PCIe / NUMA limit, well below the ~2370 Gb/s the
+affected route still delivers to GPUs), so it never reaches the regime where the
+fabric limit would show. Nothing observed is specific to GPU memory — the loss
+tracks which rails are used simultaneously, not whether the source is GPU or host
+memory.
+
+**Recommended follow-up for ORCD:** the evidence points at uplink capacity /
+routing between node5802-c1's leaf and the 56xx-57xx leaves, not at node5802-c1
+or its NICs. Worth checking how rails `mlx5_4`, `mlx5_9`, `mlx5_10`, `mlx5_15`
+from node5802-c1 are routed toward those leaves (shared uplink? adaptive-routing
+or ECMP hashing collision?) and whether the corresponding inter-switch links are
+fewer, down, or error-counting. `ibdiagnet` / `ibqueryerrors` on that leaf-spine
+hop, and `ibtracert` between the affected rails, should show it directly.
 
 
 ## Bus bandwidth vs message size (GB/s)
