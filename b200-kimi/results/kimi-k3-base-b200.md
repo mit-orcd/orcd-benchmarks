@@ -456,9 +456,26 @@ Two independent teams, different clusters, same conclusions — including the ex
 
 **Precision is the same, despite the labels.** Their config says `precision: "fp4"` and ours says MXFP4 — the same thing. Both serve the native `moonshotai/Kimi-K3` MXFP4 checkpoint (`mxfp4-pack-quantized`, 4-bit routed experts with e8m0 scales); neither re-quantises. "FP4" on their dashboard is the checkpoint's own format, not a separate NVFP4 conversion.
 
-### 7.3 The one that matters most
+### 7.3 MTP on B200 — supported, just not configured here
 
-Their MI355X agentic recipe enables **DSpark speculative decoding** (`kimik3_fp4_mi355x_mtp.sh`), while their B200 TP8×PP2 recipe does **not**. That is the same asymmetry §5 and `notes-concurrency.md` identify from the vLLM recipe: spec decoding does not compose with pipeline parallelism, and PP is mandatory on B200 because the model does not fit one node. **An independent benchmark team hit the identical constraint and made the identical choice.** Any B200-vs-MI355X comparison on their dashboard therefore carries the same caveat as ours — MI355X is running with a throughput/latency lever that B200 structurally cannot use.
+**Correction to an earlier claim in this report.** Sections elsewhere state that spec decoding "does not compose with pipeline parallelism" and is therefore unavailable on B200. That was inferred from the upstream vLLM recipe, which gates DSpark off its `multi_node_tp_pp` strategy — but that is a **recipe-level default, not an engine limitation**. SemiAnalysis's own B200 recipe (`agg-b200-tp8pp2-mooncake-*.yaml`) runs DSpark *with* `pipeline-parallel-size: 2`.
+
+**MTP is fully supported in vLLM — no extra package is needed.** Verified inside the exact image this run used (`vllm/vllm-openai:kimi-k3`):
+
+| Component | Status in our image |
+|---|---|
+| `--speculative-config` with `"method": "dspark"` | ✅ built in |
+| `KimiK3MTPModel` → `KimiK3MTP` | ✅ registered |
+| `TOKENSPEED_MLA` attention backend | ✅ present |
+| `--decode-context-parallel-size` / `--dcp-comm-backend` | ✅ present |
+
+So what is actually missing is **not software** — it is:
+
+1. **The speculator weights.** `Inferact/Kimi-K3-DSpark` (`num_speculative_tokens: 7` in their recipe). Not downloaded here, and our container runs `HF_HUB_OFFLINE=1`.
+2. **A one-line config shim.** That checkpoint publishes its parallel-drafting token as `mask_token_id`, but vLLM's parallel drafter expects `pard_token`. SemiAnalysis's `kimik3-dspark-config-compat.sh` builds a symlinked local copy of the checkpoint with `pard_token = mask_token_id` injected into `config.json`. **Without it the speculative-config does not load** — this, not PP, is the likely reason the plain upstream recipe avoids the combination.
+3. **Three extra server flags**: `--decode-context-parallel-size 8`, `--dcp-comm-backend a2a`, `--attention-backend TOKENSPEED_MLA`.
+
+**Bottom line: enabling MTP on our B200 run is a configuration task, not a hardware or engine limitation.** It was not attempted here. Given their measured ~2.7× per-user gain at c=1 (§7.4), it is the single highest-value follow-up available — larger than any lever in §3.2.
 
 ### 7.4 Per-user tok/s — theirs vs ours
 
