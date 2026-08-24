@@ -1236,45 +1236,7 @@ def build_report(b, a, arch, args):
       "with e8m0 scales); neither re-quantises. \"FP4\" on their dashboard is the "
       "checkpoint's own format, not a separate NVFP4 conversion.")
     W("")
-    W("### 7.3 MTP on B200 — supported, just not configured here")
-    W("")
-    W("**Correction to an earlier claim in this report.** Sections elsewhere state that "
-      "spec decoding \"does not compose with pipeline parallelism\" and is therefore "
-      "unavailable on B200. That was inferred from the upstream vLLM recipe, which gates "
-      "DSpark off its `multi_node_tp_pp` strategy — but that is a **recipe-level default, "
-      "not an engine limitation**. SemiAnalysis's own B200 recipe "
-      "(`agg-b200-tp8pp2-mooncake-*.yaml`) runs DSpark *with* `pipeline-parallel-size: 2`.")
-    W("")
-    W("**MTP is fully supported in vLLM — no extra package is needed.** Verified inside "
-      "the exact image this run used (`vllm/vllm-openai:kimi-k3`):")
-    W("")
-    W("| Component | Status in our image |")
-    W("|---|---|")
-    W("| `--speculative-config` with `\"method\": \"dspark\"` | ✅ built in |")
-    W("| `KimiK3MTPModel` → `KimiK3MTP` | ✅ registered |")
-    W("| `TOKENSPEED_MLA` attention backend | ✅ present |")
-    W("| `--decode-context-parallel-size` / `--dcp-comm-backend` | ✅ present |")
-    W("")
-    W("So what is actually missing is **not software** — it is:")
-    W("")
-    W("1. **The speculator weights.** `Inferact/Kimi-K3-DSpark` "
-      "(`num_speculative_tokens: 7` in their recipe). Not downloaded here, and our "
-      "container runs `HF_HUB_OFFLINE=1`.")
-    W("2. **A one-line config shim.** That checkpoint publishes its parallel-drafting "
-      "token as `mask_token_id`, but vLLM's parallel drafter expects `pard_token`. "
-      "SemiAnalysis's `kimik3-dspark-config-compat.sh` builds a symlinked local copy of "
-      "the checkpoint with `pard_token = mask_token_id` injected into `config.json`. "
-      "**Without it the speculative-config does not load** — this, not PP, is the likely "
-      "reason the plain upstream recipe avoids the combination.")
-    W("3. **Three extra server flags**: `--decode-context-parallel-size 8`, "
-      "`--dcp-comm-backend a2a`, `--attention-backend TOKENSPEED_MLA`.")
-    W("")
-    W("**Bottom line: enabling MTP on our B200 run is a configuration task, not a "
-      "hardware or engine limitation.** It was not attempted here. Given their measured "
-      "~2.7× per-user gain at c=1 (§7.4), it is the single highest-value follow-up "
-      "available — larger than any lever in §3.2.")
-    W("")
-    W("### 7.4 Per-user tok/s — theirs vs ours")
+    W("### 7.3 Per-user tok/s — theirs vs ours")
     W("")
     W("Retrieved live from their public API "
       "(`/api/v1/benchmarks?model=Kimi-K3`); raw JSON and an extracted CSV are in "
@@ -1375,7 +1337,7 @@ def build_report(b, a, arch, args):
       "per-step work grows with concurrency in a way our fixed 1024/1024 shape does not.")
     W("3. **MTP is worth ~2.7× at c=1 on B200** (221.7 vs 81.9) in their own data, same "
       "hardware and layout. That is the single largest lever in this entire table — and "
-      "§7.3 explains why it is not available on the TP8×PP2 layout the model forces on "
+      "§7.4 explains why it is not available on the TP8×PP2 layout the model forces on "
       "B200. Their MTP B200 rows come from a different recipe family than the "
       "`agg-b200-tp8pp2-agentic.yaml` we cross-checked.")
     W("4. **On MI355X, engine choice is worth ~1.5×** (ATOM 127.2 vs vLLM 84.0 at c=1, "
@@ -1386,6 +1348,44 @@ def build_report(b, a, arch, args):
       "and MI355X land far closer than either vendor's best-configured number suggests, "
       "and the biggest single differentiator in the whole table is MTP — a software "
       "feature, not silicon.**")
+    W("")
+    W("### 7.4 MTP on B200 — supported, just not configured here")
+    W("")
+    W("**Correction to an earlier claim in this report.** Sections elsewhere state that "
+      "spec decoding \"does not compose with pipeline parallelism\" and is therefore "
+      "unavailable on B200. That was inferred from the upstream vLLM recipe, which gates "
+      "DSpark off its `multi_node_tp_pp` strategy — but that is a **recipe-level default, "
+      "not an engine limitation**. SemiAnalysis's own B200 recipe "
+      "(`agg-b200-tp8pp2-mooncake-*.yaml`) runs DSpark *with* `pipeline-parallel-size: 2`.")
+    W("")
+    W("**MTP is fully supported in vLLM — no extra package is needed.** Verified inside "
+      "the exact image this run used (`vllm/vllm-openai:kimi-k3`):")
+    W("")
+    W("| Component | Status in our image |")
+    W("|---|---|")
+    W("| `--speculative-config` with `\"method\": \"dspark\"` | ✅ built in |")
+    W("| `KimiK3MTPModel` → `KimiK3MTP` | ✅ registered |")
+    W("| `TOKENSPEED_MLA` attention backend | ✅ present |")
+    W("| `--decode-context-parallel-size` / `--dcp-comm-backend` | ✅ present |")
+    W("")
+    W("So what is actually missing is **not software** — it is:")
+    W("")
+    W("1. **The speculator weights.** `Inferact/Kimi-K3-DSpark` "
+      "(`num_speculative_tokens: 7` in their recipe). Not downloaded here, and our "
+      "container runs `HF_HUB_OFFLINE=1`.")
+    W("2. **A one-line config shim.** That checkpoint publishes its parallel-drafting "
+      "token as `mask_token_id`, but vLLM's parallel drafter expects `pard_token`. "
+      "SemiAnalysis's `kimik3-dspark-config-compat.sh` builds a symlinked local copy of "
+      "the checkpoint with `pard_token = mask_token_id` injected into `config.json`. "
+      "**Without it the speculative-config does not load** — this, not PP, is the likely "
+      "reason the plain upstream recipe avoids the combination.")
+    W("3. **Three extra server flags**: `--decode-context-parallel-size 8`, "
+      "`--dcp-comm-backend a2a`, `--attention-backend TOKENSPEED_MLA`.")
+    W("")
+    W("**Bottom line: enabling MTP on our B200 run is a configuration task, not a "
+      "hardware or engine limitation.** It was not attempted here. Given their measured "
+      "~2.7× per-user gain at c=1 (§7.3), it is the single highest-value follow-up "
+      "available — larger than any lever in §3.2.")
     W("")
     W("---")
     W("")

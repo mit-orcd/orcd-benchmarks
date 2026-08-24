@@ -456,28 +456,7 @@ Two independent teams, different clusters, same conclusions — including the ex
 
 **Precision is the same, despite the labels.** Their config says `precision: "fp4"` and ours says MXFP4 — the same thing. Both serve the native `moonshotai/Kimi-K3` MXFP4 checkpoint (`mxfp4-pack-quantized`, 4-bit routed experts with e8m0 scales); neither re-quantises. "FP4" on their dashboard is the checkpoint's own format, not a separate NVFP4 conversion.
 
-### 7.3 MTP on B200 — supported, just not configured here
-
-**Correction to an earlier claim in this report.** Sections elsewhere state that spec decoding "does not compose with pipeline parallelism" and is therefore unavailable on B200. That was inferred from the upstream vLLM recipe, which gates DSpark off its `multi_node_tp_pp` strategy — but that is a **recipe-level default, not an engine limitation**. SemiAnalysis's own B200 recipe (`agg-b200-tp8pp2-mooncake-*.yaml`) runs DSpark *with* `pipeline-parallel-size: 2`.
-
-**MTP is fully supported in vLLM — no extra package is needed.** Verified inside the exact image this run used (`vllm/vllm-openai:kimi-k3`):
-
-| Component | Status in our image |
-|---|---|
-| `--speculative-config` with `"method": "dspark"` | ✅ built in |
-| `KimiK3MTPModel` → `KimiK3MTP` | ✅ registered |
-| `TOKENSPEED_MLA` attention backend | ✅ present |
-| `--decode-context-parallel-size` / `--dcp-comm-backend` | ✅ present |
-
-So what is actually missing is **not software** — it is:
-
-1. **The speculator weights.** `Inferact/Kimi-K3-DSpark` (`num_speculative_tokens: 7` in their recipe). Not downloaded here, and our container runs `HF_HUB_OFFLINE=1`.
-2. **A one-line config shim.** That checkpoint publishes its parallel-drafting token as `mask_token_id`, but vLLM's parallel drafter expects `pard_token`. SemiAnalysis's `kimik3-dspark-config-compat.sh` builds a symlinked local copy of the checkpoint with `pard_token = mask_token_id` injected into `config.json`. **Without it the speculative-config does not load** — this, not PP, is the likely reason the plain upstream recipe avoids the combination.
-3. **Three extra server flags**: `--decode-context-parallel-size 8`, `--dcp-comm-backend a2a`, `--attention-backend TOKENSPEED_MLA`.
-
-**Bottom line: enabling MTP on our B200 run is a configuration task, not a hardware or engine limitation.** It was not attempted here. Given their measured ~2.7× per-user gain at c=1 (§7.4), it is the single highest-value follow-up available — larger than any lever in §3.2.
-
-### 7.4 Per-user tok/s — theirs vs ours
+### 7.3 Per-user tok/s — theirs vs ours
 
 Retrieved live from their public API (`/api/v1/benchmarks?model=Kimi-K3`); raw JSON and an extracted CSV are in `../semianalysis-ref/`. Their **"Interactivity"** metric is exactly our per-user tok/s — verified against their own fields: `mean_tpot` 0.00454 s → 1/0.00454 = 220.3 = their `mean_intvty`. Same definition, `1 / TPOT`.
 
@@ -533,10 +512,31 @@ Ceiling is draft length × acceptance rate — never the full N, since not every
 
 1. **Our B200 no-spec numbers are in the same band as theirs at low concurrency** (89.0 vs 81.9 at c=1) — an independent sanity check that our TP8×PP2 setup is performing normally, not misconfigured.
 2. **Their curve falls off far faster than ours** (81.9 → 3.8 by c=32, vs our 89.0 → 39.6). Expected: their agentic traces carry vastly longer contexts, so per-step work grows with concurrency in a way our fixed 1024/1024 shape does not.
-3. **MTP is worth ~2.7× at c=1 on B200** (221.7 vs 81.9) in their own data, same hardware and layout. That is the single largest lever in this entire table — and §7.3 explains why it is not available on the TP8×PP2 layout the model forces on B200. Their MTP B200 rows come from a different recipe family than the `agg-b200-tp8pp2-agentic.yaml` we cross-checked.
+3. **MTP is worth ~2.7× at c=1 on B200** (221.7 vs 81.9) in their own data, same hardware and layout. That is the single largest lever in this entire table — and §7.4 explains why it is not available on the TP8×PP2 layout the model forces on B200. Their MTP B200 rows come from a different recipe family than the `agg-b200-tp8pp2-agentic.yaml` we cross-checked.
 4. **On MI355X, engine choice is worth ~1.5×** (ATOM 127.2 vs vLLM 84.0 at c=1, both with MTP). Our MI355X baseline is ATOM *without* spec decoding at 46.6, so the gap to their 127.2 is mostly MTP plus a newer ATOM build.
 
 > The honest headline: **on equal footing (no spec decoding, low concurrency) B200 and MI355X land far closer than either vendor's best-configured number suggests, and the biggest single differentiator in the whole table is MTP — a software feature, not silicon.**
+
+### 7.4 MTP on B200 — supported, just not configured here
+
+**Correction to an earlier claim in this report.** Sections elsewhere state that spec decoding "does not compose with pipeline parallelism" and is therefore unavailable on B200. That was inferred from the upstream vLLM recipe, which gates DSpark off its `multi_node_tp_pp` strategy — but that is a **recipe-level default, not an engine limitation**. SemiAnalysis's own B200 recipe (`agg-b200-tp8pp2-mooncake-*.yaml`) runs DSpark *with* `pipeline-parallel-size: 2`.
+
+**MTP is fully supported in vLLM — no extra package is needed.** Verified inside the exact image this run used (`vllm/vllm-openai:kimi-k3`):
+
+| Component | Status in our image |
+|---|---|
+| `--speculative-config` with `"method": "dspark"` | ✅ built in |
+| `KimiK3MTPModel` → `KimiK3MTP` | ✅ registered |
+| `TOKENSPEED_MLA` attention backend | ✅ present |
+| `--decode-context-parallel-size` / `--dcp-comm-backend` | ✅ present |
+
+So what is actually missing is **not software** — it is:
+
+1. **The speculator weights.** `Inferact/Kimi-K3-DSpark` (`num_speculative_tokens: 7` in their recipe). Not downloaded here, and our container runs `HF_HUB_OFFLINE=1`.
+2. **A one-line config shim.** That checkpoint publishes its parallel-drafting token as `mask_token_id`, but vLLM's parallel drafter expects `pard_token`. SemiAnalysis's `kimik3-dspark-config-compat.sh` builds a symlinked local copy of the checkpoint with `pard_token = mask_token_id` injected into `config.json`. **Without it the speculative-config does not load** — this, not PP, is the likely reason the plain upstream recipe avoids the combination.
+3. **Three extra server flags**: `--decode-context-parallel-size 8`, `--dcp-comm-backend a2a`, `--attention-backend TOKENSPEED_MLA`.
+
+**Bottom line: enabling MTP on our B200 run is a configuration task, not a hardware or engine limitation.** It was not attempted here. Given their measured ~2.7× per-user gain at c=1 (§7.3), it is the single highest-value follow-up available — larger than any lever in §3.2.
 
 ---
 
