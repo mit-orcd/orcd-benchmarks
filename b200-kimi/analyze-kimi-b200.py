@@ -1268,6 +1268,10 @@ def build_report(b, a, arch, args):
     W("| 32 | 39.6 | 3.8 | 46.5 | — | — | 26.4 |")
     W("| 64 | 27.9 | — | — | — | — | 20.0 |")
     W("")
+    W("**\"no spec\" = plain decoding, one token per forward pass. \"+MTP\" = "
+      "speculative decoding on: a draft model proposes several tokens and "
+      "the big model verifies them in one pass.**")
+    W("")
     W("> ⚠️ **Every one of their MI355X runs uses MTP — they publish no MI355X result "
       "without it — so their MI355X column can never be compared against their B200 "
       "no-spec column on equal footing.** (Verified in their API data: all 8 MI355X "

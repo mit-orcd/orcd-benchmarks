@@ -475,6 +475,8 @@ Retrieved live from their public API (`/api/v1/benchmarks?model=Kimi-K3`); raw J
 | 32 | 39.6 | 3.8 | 46.5 | — | — | 26.4 |
 | 64 | 27.9 | — | — | — | — | 20.0 |
 
+**"no spec" = plain decoding, one token per forward pass. "+MTP" = speculative decoding on: a draft model proposes several tokens and the big model verifies them in one pass.**
+
 > ⚠️ **Every one of their MI355X runs uses MTP — they publish no MI355X result without it — so their MI355X column can never be compared against their B200 no-spec column on equal footing.** (Verified in their API data: all 8 MI355X records are `spec_method: mtp`; B200 has both, 9 `none` and 6 `mtp`.)
 
 Units: output tokens/s delivered to a single request. Theirs are `median_intvty`; ours are `1000 / median TPOT`. **Read across rows with care — see §7.2.** The columns differ in workload (agentic traces vs fixed 1024/1024), prefix caching (on vs off) and context (1M vs 16K), so this is not a like-for-like ranking.

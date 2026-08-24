@@ -1,21 +1,59 @@
-# Can we apply MTP in our runs?
+# Can we apply MTP in our runs? — CORRECTED
 
-**On B200: no.** DSpark speculative decoding does not compose with pipeline parallelism
-(vllm-project/vllm#50098), and PP2 is mandatory here because the 1561 GB Kimi-K3
-checkpoint does not fit one 8×B200 node (1538 GB). Tested directly as the `lever2_spec`
-arm in the improvement job — the recipe's own gate rejects the combination.
+**Earlier note in this file was wrong.** It claimed DSpark "does not compose with
+pipeline parallelism" on B200, citing the upstream vLLM recipe's `strategies` list
+gating DSpark off `multi_node_tp_pp`. That is a **recipe-level default, not a hard
+engine limitation** — SemiAnalysis's own B200 recipe proves it.
 
-**On MI355X: yes, in principle.** MI355X fits the model on one node at TP8 (288 GB/GPU),
-so no PP is needed and DSpark works — this is exactly what SemiAnalysis's
-`kimik3_fp4_mi355x_mtp.sh` recipe does. But we have no MI355X hardware access; our
-MI355X baseline is a pre-existing ATOM run from `../amd-benchmarks`, not something we
-can rerun with MTP added.
+## What they actually do
 
-Two further blockers even for a hypothetical B200 attempt: the speculator model
-(`RedHatAI/Kimi-K3-speculator.dspark`) is not downloaded here, and the container runs
-`HF_HUB_OFFLINE=1`.
+Found in `agg-b200-tp8pp2-mooncake-c1-agentic.yaml` (and siblings c2/c4/…/c96),
+fetched from `github.com/SemiAnalysisAI/InferenceX`:
 
-**Bottom line:** not on the hardware we have, in the configuration it forces.
+```yaml
+tensor-parallel-size: 8
+pipeline-parallel-size: 2
+decode-context-parallel-size: 8
+dcp-comm-backend: a2a
+speculative-config: '{"model":"Inferact/Kimi-K3-DSpark","num_speculative_tokens":7,
+                      "method":"dspark","attention_backend":"TOKENSPEED_MLA",
+                      "draft_sample_method":"probabilistic"}'
+```
 
-See `results/kimi-k3-base-b200.md` §7.4 for the measured MTP effect (SemiAnalysis's own
-data, ~2.7× per-user speed at c=1) and why it is unavailable to B200 specifically.
+**MTP + PP2 together, on B200, 16 GPUs.** This is what produced the `spec_method: mtp`
+B200 rows in their public API data (§7.4 of `results/kimi-k3-base-b200.md`).
+
+## Three things they do that we don't
+
+1. **A different speculator** — `Inferact/Kimi-K3-DSpark`, not the
+   `RedHatAI/Kimi-K3-speculator.dspark` the upstream vLLM recipe names.
+   `num_speculative_tokens: 7`.
+2. **A compat shim** (`configs/kimik3-dspark-config-compat.sh`). The Inferact DSpark
+   checkpoint publishes its parallel-drafting token as `mask_token_id`; vLLM's parallel
+   drafter expects `pard_token`. Their script downloads the checkpoint, builds a
+   symlinked local copy, and injects `pard_token = mask_token_id` into `config.json`
+   without touching the weights. **Without this shim the speculative-config simply does
+   not load** — this, not PP, looks like the real reason the plain upstream recipe
+   avoids the combination.
+3. **`decode-context-parallel-size: 8`** with `dcp-comm-backend: a2a` and the
+   `TOKENSPEED_MLA` attention backend, plus Mooncake KV offload (`offload=on` on all 6
+   of their B200 MTP API records) — none of which are in our current server flags.
+
+## Revised answer
+
+**We can, in principle.** It is a real configuration gap, not a hardware or engine
+wall:
+
+- download `Inferact/Kimi-K3-DSpark` (blocked today by `HF_HUB_OFFLINE=1`)
+- apply the `pard_token` compat shim to a local copy of it
+- add `--decode-context-parallel-size 8 --dcp-comm-backend a2a
+  --attention-backend TOKENSPEED_MLA` and the `speculative-config` JSON to
+  `job-kimi-base.sh`'s server args
+
+**Not done here** because it was not attempted, not because it is blocked. This
+reverses the "structurally unavailable" framing that appears in §7.3/§7.4 of
+`results/kimi-k3-base-b200.md` and in `notes-concurrency.md` — those still need
+correcting to reflect this.
+
+Source: `semianalysis-ref/` does not yet contain the mooncake yaml or the compat shim;
+fetched directly from GitHub during this investigation, not yet saved locally.
