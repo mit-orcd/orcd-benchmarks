@@ -113,6 +113,13 @@ healthy node; both slow runs completed with `PASS` correctness and zero
 `NCCL_DEBUG=WARN` output; and `sendrecv`/`all_reduce` (which don't depend on all
 8 rails being open on the same route) are unaffected on the same pairs.
 
+**Confirmed reproducible, not a one-off.** Both affected pairs were re-run
+independently (jobs 21139314 / 21139315) and reproduced the same halved
+bandwidth — every ring collective landed within 3.5% of its first-run value
+(e.g. node5702-c1+node5802-c1 reduce_scatter 196.9 then 197.2 GB/s), with
+`sendrecv` and `all_reduce` again unaffected, so this is a stable property of
+those routes rather than a transient defect.
+
 **Recommended follow-up for ORCD:** check fabric routing/cabling specifically on
 the node5802-c1 <-> 56xx and node5802-c1 <-> 57xx paths (leaf/spine assignment,
 per-link counters for CRC errors or symbol errors) rather than on node5802-c1
