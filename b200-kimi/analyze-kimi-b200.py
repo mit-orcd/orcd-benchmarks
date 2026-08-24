@@ -766,10 +766,10 @@ def build_report(b, a, arch, args):
       "lever, costs nothing, and the KV memory is already provisioned (§2). This is the "
       "same conclusion the MI355X run reached, and for the same reason.")
     W("2. **Speculative decoding / MTP** — verifies several tokens per weight read, widening "
-      "the GEMM exactly as a larger batch does. Note the vLLM recipe **gates DSpark off the "
-      "`multi_node_tp_pp` profile** (it does not compose with pipeline parallelism yet, "
-      "vllm-project/vllm#50098), so on this 2-node layout it is unavailable — a real cost of "
-      "needing PP that the single-node MI355X layout does not pay.")
+      "the GEMM exactly as a larger batch does. The upstream vLLM recipe gates DSpark off "
+      "its `multi_node_tp_pp` profile, but that is a recipe default, not an engine limit: "
+      "SemiAnalysis run DSpark on B200 TP8×PP2 (§7.4 has the setup). Untested on this run — "
+      "the speculator model is not downloaded here.")
     W("3. **Expert parallelism** — fewer, whole expert reads per GPU, paid for with all-to-all "
       "over the near-idle interconnect. On MI355X this was tested and is **unsupported** "
       "(ATOM raises `NotImplementedError` for EP with the MXFP4 SiTUv2 kernel). On B200 it is "
@@ -925,9 +925,10 @@ def build_report(b, a, arch, args):
     W(f"**1. Two nodes is a property of the model, not a choice.** "
       f"{gb(args.weight_bytes):.0f} GB of weights against {gb(node_hbm_b):.0f} GB of node "
       f"HBM — {gb(short_b):.0f} GB short. The consequence is not just "
-      "\"more GPUs\": it forfeits DSpark speculative decoding (gated off `multi_node_tp_pp`), "
-      "adds a pipeline bubble, and halves the per-GPU weight residency. A B300 node "
-      "(8 × 268 GB = 2144 GB) would hold it single-node; a B200 node cannot.")
+      "\"more GPUs\": DSpark speculative decoding needs an extra shim and DCP flags to "
+      "work with PP2 (§7.4) rather than dropping in for free as it does on one node, "
+      "and PP adds a pipeline bubble plus halves the per-GPU weight residency. A B300 "
+      "node (8 × 268 GB = 2144 GB) would hold it single-node; a B200 node cannot.")
     W("")
     W(f"**2. `max_num_seqs={mem.get('mns', args.max_num_seqs)}` is the binding limit, not "
       f"hardware.** KV was ~{100*pk['max_concurrency']*(args.isl+args.osl)/mem['kv_tokens']:.1f}% "
@@ -1313,41 +1314,23 @@ def build_report(b, a, arch, args):
     W("Ceiling is draft length × acceptance rate — never the full N, since not every guess "
       "is accepted.")
     W("")
-    W("**Two facts that matter for reading the table:**")
+    W("**One fact that matters for reading the table:** Kimi-K3 has no built-in MTP head "
+      f"(`num_nextn_predict_layers = {arch.raw.get('text_config',{}).get('num_nextn_predict_layers', 0)}`) "
+      "— the gain comes from **DSpark**, a separate speculator model, downloaded and run "
+      "alongside it. \"MTP\" names the technique, not a checkpoint feature (§7.4 has the "
+      "how-to, for both platforms).")
     W("")
-    W("1. **Kimi-K3 has no built-in MTP head** "
-      f"(`num_nextn_predict_layers = {arch.raw.get('text_config',{}).get('num_nextn_predict_layers', 0)}`). "
-      "The gain comes from **DSpark**, a separate speculator model. \"MTP\" names the "
-      "technique, not a model feature.")
-    W("2. **B200 cannot use it in this configuration** — DSpark does not compose with "
-      "pipeline parallelism, and PP is mandatory on B200 because the model does not fit "
-      "one node. MI355X fits on one node, needs no PP, and gets MTP for free.")
+    W("**What the table shows, in three points:**")
     W("")
-    W("> So the MTP gap is *caused* by a hardware limit (memory capacity forcing PP) but "
-      "is not itself *a measure of* hardware speed. A B200 with enough memory per node — "
-      "or a vLLM release that composes DSpark with PP — would get the same ~2.7×.")
-    W("")
-    W("**What survives those caveats:**")
-    W("")
-    W("1. **Our B200 no-spec numbers are in the same band as theirs at low concurrency** "
-      "(89.0 vs 81.9 at c=1) — an independent sanity check that our TP8×PP2 setup is "
-      "performing normally, not misconfigured.")
-    W("2. **Their curve falls off far faster than ours** (81.9 → 3.8 by c=32, vs our "
-      "89.0 → 39.6). Expected: their agentic traces carry vastly longer contexts, so "
-      "per-step work grows with concurrency in a way our fixed 1024/1024 shape does not.")
-    W("3. **MTP is worth ~2.7× at c=1 on B200** (221.7 vs 81.9) in their own data, same "
-      "hardware and layout. That is the single largest lever in this entire table — and "
-      "§7.4 explains why it is not available on the TP8×PP2 layout the model forces on "
-      "B200. Their MTP B200 rows come from a different recipe family than the "
-      "`agg-b200-tp8pp2-agentic.yaml` we cross-checked.")
-    W("4. **On MI355X, engine choice is worth ~1.5×** (ATOM 127.2 vs vLLM 84.0 at c=1, "
-      "both with MTP). Our MI355X baseline is ATOM *without* spec decoding at 46.6, so "
-      "the gap to their 127.2 is mostly MTP plus a newer ATOM build.")
-    W("")
-    W("> The honest headline: **on equal footing (no spec decoding, low concurrency) B200 "
-      "and MI355X land far closer than either vendor's best-configured number suggests, "
-      "and the biggest single differentiator in the whole table is MTP — a software "
-      "feature, not silicon.**")
+    W("1. **Our B200 no-spec number matches theirs at c=1** (89.0 vs 81.9) — an "
+      "independent check that our TP8×PP2 setup is performing normally, not "
+      "misconfigured.")
+    W("2. **MTP is worth ~2.7× at c=1 on B200**, in their own data, same hardware — the "
+      "single largest lever in this table. §7.4 shows how to get it.")
+    W("3. **On equal footing (no spec decoding, low concurrency) B200 and MI355X land "
+      "far closer than either vendor's best-configured number suggests.** The biggest "
+      "differentiator in the whole table is MTP — a **software** feature both platforms "
+      "can run, not a silicon difference.")
     W("")
     W("### 7.4 How to enable MTP — B200 and MI355X")
     W("")
@@ -1360,25 +1343,36 @@ def build_report(b, a, arch, args):
       "package. Both platforms use the **same speculator model**, "
       "`Inferact/Kimi-K3-DSpark`.")
     W("")
-    W("| Step | MI355X (1 node, TP8) | B200 (2 nodes, TP8×PP2) |")
+    W("| Step | MI355X | B200 |")
     W("|---|---|---|")
-    W("| 1. Download the speculator | `Inferact/Kimi-K3-DSpark` | *same* |")
-    W("| 2. Apply the `pard_token` shim | not needed (single-node TP loads it directly) | "
-      "**required** — the checkpoint's `mask_token_id` must be aliased to `pard_token` "
-      "in a local copy of `config.json`, or the config fails to load |")
-    W("| 3. Extra server flags | none beyond `--speculative-config` | "
-      "`--decode-context-parallel-size 8 --dcp-comm-backend a2a "
-      "--attention-backend TOKENSPEED_MLA` |")
-    W("| 4. `--speculative-config` | "
-      "`{\"model\":\"Inferact/Kimi-K3-DSpark\",\"num_speculative_tokens\":2,"
-      "\"method\":\"dspark\",\"attention_backend\":\"TRITON_MLA\"}` "
-      "(SemiAnalysis's `_mtp` recipe) | same JSON, `attention_backend` → "
-      "`TOKENSPEED_MLA`, `num_speculative_tokens` 7 in their B200 recipe |")
+    W("| 1. Speculator | `Inferact/Kimi-K3-DSpark` | *same* |")
+    W("| 2. `pard_token` shim | not needed | **required** |")
+    W("| 3. Extra server flags | none | 3 flags, below |")
+    W("| 4. Attention backend in the config | `TRITON_MLA` | `TOKENSPEED_MLA` |")
+    W("| 5. Draft length | 2 (SemiAnalysis recipe) | 7 (SemiAnalysis recipe) |")
     W("")
-    W("**MI355X is simpler because it needs no PP.** One node holds the whole model, so "
-      "the speculator drops straight into the existing TP8 launch. **B200 needs the shim "
-      "and the extra DCP flags because of PP2** — those exist to keep the speculator's "
-      "draft/verify state consistent across the pipeline stage boundary.")
+    W("**Why MI355X is simpler:** one node holds the whole model, so the speculator "
+      "drops straight into the existing TP8 launch — no shim, no extra flags.")
+    W("")
+    W("**Why B200 needs more:** PP2 splits the model across 2 nodes, so the speculator's "
+      "draft/verify state has to stay consistent across the pipeline stage boundary. "
+      "That needs decode context parallelism plus a config shim (the checkpoint's "
+      "`mask_token_id` must be aliased to `pard_token` in a local copy of `config.json`, "
+      "or the speculative-config fails to load) and three extra server flags:")
+    W("")
+    W("```")
+    W("--decode-context-parallel-size 8")
+    W("--dcp-comm-backend a2a")
+    W("--attention-backend TOKENSPEED_MLA")
+    W("```")
+    W("")
+    W("`--speculative-config` JSON (same shape on both, `attention_backend` and "
+      "`num_speculative_tokens` differ as in the table above):")
+    W("")
+    W("```json")
+    W("{\"model\": \"Inferact/Kimi-K3-DSpark\", \"num_speculative_tokens\": 2,")
+    W(" \"method\": \"dspark\", \"attention_backend\": \"TRITON_MLA\"}")
+    W("```")
     W("")
     W("**Neither was attempted here** — the speculator is not downloaded "
       "(`HF_HUB_OFFLINE=1`). Given the ~2.7× per-user gain at c=1 measured in §7.3, this "

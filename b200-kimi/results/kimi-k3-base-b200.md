@@ -192,7 +192,7 @@ HBM is the binding resource at ~23%, but the box is not delivering all the HBM i
 Ranked levers:
 
 1. **Raise `--max-num-seqs`** (64 → 256+). Biggest lever, costs nothing, and the KV memory is already provisioned (§2). This is the same conclusion the MI355X run reached, and for the same reason.
-2. **Speculative decoding / MTP** — verifies several tokens per weight read, widening the GEMM exactly as a larger batch does. Note the vLLM recipe **gates DSpark off the `multi_node_tp_pp` profile** (it does not compose with pipeline parallelism yet, vllm-project/vllm#50098), so on this 2-node layout it is unavailable — a real cost of needing PP that the single-node MI355X layout does not pay.
+2. **Speculative decoding / MTP** — verifies several tokens per weight read, widening the GEMM exactly as a larger batch does. The upstream vLLM recipe gates DSpark off its `multi_node_tp_pp` profile, but that is a recipe default, not an engine limit: SemiAnalysis run DSpark on B200 TP8×PP2 (§7.4 has the setup). Untested on this run — the speculator model is not downloaded here.
 3. **Expert parallelism** — fewer, whole expert reads per GPU, paid for with all-to-all over the near-idle interconnect. On MI355X this was tested and is **unsupported** (ATOM raises `NotImplementedError` for EP with the MXFP4 SiTUv2 kernel). On B200 it is worth testing separately; it is deliberately **off** here because the MI355X baseline has it off, and arm A exists to hold everything but the hardware constant.
 4. **Prefill/decode disaggregation** — the recipe ships a `pd_cluster` profile.
 
@@ -290,7 +290,7 @@ The asymmetry is stark: **HBM moves ~67 GB/step while NVLink moves ~0.15 GB and 
 
 ## 5. Further discussion
 
-**1. Two nodes is a property of the model, not a choice.** 1561 GB of weights against 1538 GB of node HBM — 23 GB short. The consequence is not just "more GPUs": it forfeits DSpark speculative decoding (gated off `multi_node_tp_pp`), adds a pipeline bubble, and halves the per-GPU weight residency. A B300 node (8 × 268 GB = 2144 GB) would hold it single-node; a B200 node cannot.
+**1. Two nodes is a property of the model, not a choice.** 1561 GB of weights against 1538 GB of node HBM — 23 GB short. The consequence is not just "more GPUs": DSpark speculative decoding needs an extra shim and DCP flags to work with PP2 (§7.4) rather than dropping in for free as it does on one node, and PP adds a pipeline bubble plus halves the per-GPU weight residency. A B300 node (8 × 268 GB = 2144 GB) would hold it single-node; a B200 node cannot.
 
 **2. `max_num_seqs=64` is the binding limit, not hardware.** KV was ~2.0% used and compute ~1%.
 
@@ -501,34 +501,42 @@ Measured gain in their B200 data (MTP vs no-spec, same hardware):
 
 Ceiling is draft length × acceptance rate — never the full N, since not every guess is accepted.
 
-**Two facts that matter for reading the table:**
+**One fact that matters for reading the table:** Kimi-K3 has no built-in MTP head (`num_nextn_predict_layers = 0`) — the gain comes from **DSpark**, a separate speculator model, downloaded and run alongside it. "MTP" names the technique, not a checkpoint feature (§7.4 has the how-to, for both platforms).
 
-1. **Kimi-K3 has no built-in MTP head** (`num_nextn_predict_layers = 0`). The gain comes from **DSpark**, a separate speculator model. "MTP" names the technique, not a model feature.
-2. **B200 cannot use it in this configuration** — DSpark does not compose with pipeline parallelism, and PP is mandatory on B200 because the model does not fit one node. MI355X fits on one node, needs no PP, and gets MTP for free.
+**What the table shows, in three points:**
 
-> So the MTP gap is *caused* by a hardware limit (memory capacity forcing PP) but is not itself *a measure of* hardware speed. A B200 with enough memory per node — or a vLLM release that composes DSpark with PP — would get the same ~2.7×.
-
-**What survives those caveats:**
-
-1. **Our B200 no-spec numbers are in the same band as theirs at low concurrency** (89.0 vs 81.9 at c=1) — an independent sanity check that our TP8×PP2 setup is performing normally, not misconfigured.
-2. **Their curve falls off far faster than ours** (81.9 → 3.8 by c=32, vs our 89.0 → 39.6). Expected: their agentic traces carry vastly longer contexts, so per-step work grows with concurrency in a way our fixed 1024/1024 shape does not.
-3. **MTP is worth ~2.7× at c=1 on B200** (221.7 vs 81.9) in their own data, same hardware and layout. That is the single largest lever in this entire table — and §7.4 explains why it is not available on the TP8×PP2 layout the model forces on B200. Their MTP B200 rows come from a different recipe family than the `agg-b200-tp8pp2-agentic.yaml` we cross-checked.
-4. **On MI355X, engine choice is worth ~1.5×** (ATOM 127.2 vs vLLM 84.0 at c=1, both with MTP). Our MI355X baseline is ATOM *without* spec decoding at 46.6, so the gap to their 127.2 is mostly MTP plus a newer ATOM build.
-
-> The honest headline: **on equal footing (no spec decoding, low concurrency) B200 and MI355X land far closer than either vendor's best-configured number suggests, and the biggest single differentiator in the whole table is MTP — a software feature, not silicon.**
+1. **Our B200 no-spec number matches theirs at c=1** (89.0 vs 81.9) — an independent check that our TP8×PP2 setup is performing normally, not misconfigured.
+2. **MTP is worth ~2.7× at c=1 on B200**, in their own data, same hardware — the single largest lever in this table. §7.4 shows how to get it.
+3. **On equal footing (no spec decoding, low concurrency) B200 and MI355X land far closer than either vendor's best-configured number suggests.** The biggest differentiator in the whole table is MTP — a **software** feature both platforms can run, not a silicon difference.
 
 ### 7.4 How to enable MTP — B200 and MI355X
 
 **Correction to an earlier claim in this report:** spec decoding does *not* require single-node TP. That was inferred from the upstream vLLM recipe gating DSpark off `multi_node_tp_pp` — a **recipe default, not an engine limit**. SemiAnalysis's own B200 recipe runs DSpark with `pipeline-parallel-size: 2`. **MTP is already built into our image** (`vllm/vllm-openai:kimi-k3`) — the `dspark` method, `KimiK3MTP`, and `TOKENSPEED_MLA` are all present. No new package. Both platforms use the **same speculator model**, `Inferact/Kimi-K3-DSpark`.
 
-| Step | MI355X (1 node, TP8) | B200 (2 nodes, TP8×PP2) |
+| Step | MI355X | B200 |
 |---|---|---|
-| 1. Download the speculator | `Inferact/Kimi-K3-DSpark` | *same* |
-| 2. Apply the `pard_token` shim | not needed (single-node TP loads it directly) | **required** — the checkpoint's `mask_token_id` must be aliased to `pard_token` in a local copy of `config.json`, or the config fails to load |
-| 3. Extra server flags | none beyond `--speculative-config` | `--decode-context-parallel-size 8 --dcp-comm-backend a2a --attention-backend TOKENSPEED_MLA` |
-| 4. `--speculative-config` | `{"model":"Inferact/Kimi-K3-DSpark","num_speculative_tokens":2,"method":"dspark","attention_backend":"TRITON_MLA"}` (SemiAnalysis's `_mtp` recipe) | same JSON, `attention_backend` → `TOKENSPEED_MLA`, `num_speculative_tokens` 7 in their B200 recipe |
+| 1. Speculator | `Inferact/Kimi-K3-DSpark` | *same* |
+| 2. `pard_token` shim | not needed | **required** |
+| 3. Extra server flags | none | 3 flags, below |
+| 4. Attention backend in the config | `TRITON_MLA` | `TOKENSPEED_MLA` |
+| 5. Draft length | 2 (SemiAnalysis recipe) | 7 (SemiAnalysis recipe) |
 
-**MI355X is simpler because it needs no PP.** One node holds the whole model, so the speculator drops straight into the existing TP8 launch. **B200 needs the shim and the extra DCP flags because of PP2** — those exist to keep the speculator's draft/verify state consistent across the pipeline stage boundary.
+**Why MI355X is simpler:** one node holds the whole model, so the speculator drops straight into the existing TP8 launch — no shim, no extra flags.
+
+**Why B200 needs more:** PP2 splits the model across 2 nodes, so the speculator's draft/verify state has to stay consistent across the pipeline stage boundary. That needs decode context parallelism plus a config shim (the checkpoint's `mask_token_id` must be aliased to `pard_token` in a local copy of `config.json`, or the speculative-config fails to load) and three extra server flags:
+
+```
+--decode-context-parallel-size 8
+--dcp-comm-backend a2a
+--attention-backend TOKENSPEED_MLA
+```
+
+`--speculative-config` JSON (same shape on both, `attention_backend` and `num_speculative_tokens` differ as in the table above):
+
+```json
+{"model": "Inferact/Kimi-K3-DSpark", "num_speculative_tokens": 2,
+ "method": "dspark", "attention_backend": "TRITON_MLA"}
+```
 
 **Neither was attempted here** — the speculator is not downloaded (`HF_HUB_OFFLINE=1`). Given the ~2.7× per-user gain at c=1 measured in §7.3, this is the single highest-value follow-up available — bigger than any lever in §3.2.
 
