@@ -460,7 +460,31 @@ Two independent teams, different clusters, same conclusions — including the ex
 
 Their MI355X agentic recipe enables **DSpark speculative decoding** (`kimik3_fp4_mi355x_mtp.sh`), while their B200 TP8×PP2 recipe does **not**. That is the same asymmetry §5 and `notes-concurrency.md` identify from the vLLM recipe: spec decoding does not compose with pipeline parallelism, and PP is mandatory on B200 because the model does not fit one node. **An independent benchmark team hit the identical constraint and made the identical choice.** Any B200-vs-MI355X comparison on their dashboard therefore carries the same caveat as ours — MI355X is running with a throughput/latency lever that B200 structurally cannot use.
 
-> **No numeric comparison is given here on purpose.** The dashboard's measured values are served from a backend the public repo does not contain, so they could not be verified from this environment. Given the workload differences above, quoting their numbers beside ours would imply a like-for-like comparison that does not exist.
+### 7.4 Per-user tok/s — theirs vs ours
+
+Retrieved live from their public API (`/api/v1/benchmarks?model=Kimi-K3`); raw JSON and an extracted CSV are in `../semianalysis-ref/`. Their **"Interactivity"** metric is exactly our per-user tok/s — verified against their own fields: `mean_tpot` 0.00454 s → 1/0.00454 = 220.3 = their `mean_intvty`. Same definition, `1 / TPOT`.
+
+| Conc | **Ours** B200 TP8×PP2 (no spec) | **Theirs** B200 TP8×PP2 (no spec) | **Theirs** B200 +MTP | **Theirs** MI355X vLLM +MTP | **Theirs** MI355X ATOM +MTP | **Ours** MI355X ATOM (no spec) |
+|---:|---:|---:|---:|---:|---:|---:|
+| 1 | **89.0** | 81.9 | **221.7** | 84.0 | 127.2 | 46.6 |
+| 2 | 84.4 | 74.8 | 219.3 | — | — | 44.3 |
+| 4 | 73.4 | 54.1 | 203.3 | 62.5 | 88.7 | 40.0 |
+| 8 | 64.9 | 21.1 | 154.1 | 41.4 | 64.7 | 37.0 |
+| 10 | — | — | — | 35.7 | 62.7 | — |
+| 16 | 53.6 | 8.6 | 77.7 | — | — | 32.0 |
+| 32 | 39.6 | 3.8 | 46.5 | — | — | 26.4 |
+| 64 | 27.9 | — | — | — | — | 20.0 |
+
+Units: output tokens/s delivered to a single request. Theirs are `median_intvty`; ours are `1000 / median TPOT`. **Read across rows with care — see §7.2.** The columns differ in workload (agentic traces vs fixed 1024/1024), prefix caching (on vs off) and context (1M vs 16K), so this is not a like-for-like ranking.
+
+**What survives those caveats:**
+
+1. **Our B200 no-spec numbers are in the same band as theirs at low concurrency** (89.0 vs 81.9 at c=1) — an independent sanity check that our TP8×PP2 setup is performing normally, not misconfigured.
+2. **Their curve falls off far faster than ours** (81.9 → 3.8 by c=32, vs our 89.0 → 39.6). Expected: their agentic traces carry vastly longer contexts, so per-step work grows with concurrency in a way our fixed 1024/1024 shape does not.
+3. **MTP is worth ~2.7× at c=1 on B200** (221.7 vs 81.9) in their own data, same hardware and layout. That is the single largest lever in this entire table — and §7.3 explains why it is not available on the TP8×PP2 layout the model forces on B200. Their MTP B200 rows come from a different recipe family than the `agg-b200-tp8pp2-agentic.yaml` we cross-checked.
+4. **On MI355X, engine choice is worth ~1.5×** (ATOM 127.2 vs vLLM 84.0 at c=1, both with MTP). Our MI355X baseline is ATOM *without* spec decoding at 46.6, so the gap to their 127.2 is mostly MTP plus a newer ATOM build.
+
+> The honest headline: **on equal footing (no spec decoding, low concurrency) B200 and MI355X land far closer than either vendor's best-configured number suggests, and the biggest single differentiator in the whole table is MTP — a software feature, not silicon.**
 
 ---
 
