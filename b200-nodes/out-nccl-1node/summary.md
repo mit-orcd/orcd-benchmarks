@@ -2,6 +2,7 @@
 
 - Generated: 2026-08-06 17:03:17
 - Nodes: node5500, node5501, node5502 (each 8 x NVIDIA B200, single node, intra-node NVLink)
+- Note: node5500-5502 are no longer in Slurm. The tables below are their historical baseline; the current hardware is the 7 new nodes covered in "New nodes" below.
 - Config: 1 thread, 1 MiB-16 GiB, 5 warmup + 20 iters
 - Collectives: sendrecv, reduce, broadcast, gather, scatter, reduce_scatter, all_gather, all_reduce, alltoall, hypercube
 - Reference: MIT aicr-benchmarks `results_b200.md`, Table 1 (b0027, 8x B200, NVLink 5.0 / NVSwitch), busbw at 900 GB/s NVLink max
@@ -22,6 +23,30 @@ Converged busbw = busbw at the largest message size, best of out-of-place / in-p
 | all_reduce | 797.2 | 837.5 | 864.3 | 841 | 95% | 100% | 103% | PASS |
 | alltoall | 648.5 | 659.9 | 678.9 | 675 | 96% | 98% | 101% | PASS |
 | hypercube | FAILED | FAILED | FAILED | — | — | — | — | FAIL |
+
+## New nodes (node5600/5601/5602/5702/5800/5801/5802)
+
+Run 2026-08-24 on the 7 new B200 nodes, same configuration as above (all 10
+collectives, 8 GPUs, 1 MiB-16 GiB).
+
+**They match the nodes above — no separate per-collective tables needed.**
+Comparing 7-node means against the node5500-5502 means, every collective agrees
+to within **2.8%** (largest gap: broadcast, -2.8%; next: reduce, +2.2%; all
+others within 1.3%). Absolute figures sit in the same band, e.g. all_reduce
+832.9-852.6 GB/s (old mean 833.0), sendrecv 657.7-675.8 GB/s (old mean 674.8).
+Every node lands at **94-102% of the b0027 reference** on every passing
+collective.
+
+**Correctness: PASS everywhere except `hypercube`,** which fails on all 7 nodes
+exactly as it did on all 3 old nodes — a known nccl-tests issue, not a node
+fault.
+
+**One mild outlier, not a fault.** `node5602-c1` averages 1.4% below the 7-node
+mean and is the slowest node on the four root-anchored / ring collectives
+(broadcast, gather, scatter, reduce_scatter), worst case **-4.8%** on
+reduce_scatter. It still returns 94-96% of the reference — inside the spread the
+old nodes themselves showed (node5500 was at 95% on all_reduce and 96% on
+reduce). No action beyond a re-check if the same pattern shows up in a later run.
 
 ## Bus bandwidth vs message size (out-of-place busbw, GB/s)
 

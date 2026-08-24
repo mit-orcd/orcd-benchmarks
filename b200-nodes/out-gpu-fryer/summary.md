@@ -2,6 +2,7 @@
 
 - Generated: 2026-08-06 17:19:05
 - Nodes: node5500 (8 x B200), node5501 (8 x B200), node5502 (8 x B200)
+- Note: node5500-5502 are no longer in Slurm. The tables below are their historical baseline; the current hardware is the 7 new nodes covered in "New nodes" below.
 - Precisions: FP32, BF16, FP8
 - Reference (MIT aicr-benchmarks, `gpu-fryer/summary.md`, b0025, **B200**): per-GPU mean TFLOP/s — FP32 772, BF16 1500, FP8 4115
 
@@ -21,6 +22,23 @@
 | node5500 | 96% | 97% | 97% |
 | node5501 | 97% | 97% | 97% |
 | node5502 | 98% | 96% | 99% |
+
+## New nodes (node5600/5601/5602/5702/5800/5801/5802)
+
+Run 2026-08-24 on the 7 new B200 nodes, same configuration as above (300 s per
+precision, all 8 GPUs, 7 single-node jobs).
+
+**They match the nodes above — no separate tables needed.** Per-node means land
+at FP32 740-752, BF16 1451-1465, FP8 3949-4032 TFLOP/s. Against the node5500-5502
+means the 7-node means differ by **-0.4% (FP32), +0.5% (BF16), -0.3% (FP8)**, and
+no individual node is more than **1.7%** away on any precision (worst:
+node5600-c1, FP8). Every node lands at 96-98% of the b0025 B200 reference, the
+same band the old nodes occupied.
+
+**All 7 are healthy.** gpu-fryer reports "All GPUs seem healthy" on every node;
+no HW, thermal-SW or thermal-HW throttling flag was raised on any of the 56 GPUs.
+Per-GPU uniformity is also unchanged: at 8 GPUs the derived speed-up is
+7.81-7.88x, against 7.87-8.03x on the old nodes.
 
 ## Speed-up vs number of GPUs
 

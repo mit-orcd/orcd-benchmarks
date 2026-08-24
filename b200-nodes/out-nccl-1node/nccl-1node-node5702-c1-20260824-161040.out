@@ -1,0 +1,296 @@
+/orcd/software/core/001/pkg/nvhpc/26.1/Linux_x86_64/26.1/comm_libs/mpi/bin/mpirun
+/orcd/software/core/001/pkg/nvhpc/26.1/Linux_x86_64/26.1/compilers/bin/nvcc
+Bin dir = /orcd/data/orcd/022/benchmarks/nccl-tests/build-nvhpc-26.1
+num_gpu_per_task = 8
+collectives = sendrecv_perf all_reduce_perf all_gather_perf reduce_scatter_perf reduce_perf broadcast_perf alltoall_perf gather_perf scatter_perf hypercube_perf
+%%%%%%%%% sendrecv_perf %%%%%%%%%%
+# nThread 1 nGpus 8 minBytes 1048576 maxBytes 17179869184 step: 4(factor) warmup iters: 5 iters: 20 agg iters: 1 validation: 1 graph: 0
+#
+# Using devices
+#  Rank  0 Group  0 Pid   7306 on node5702-c1 device  0 [0x1b] NVIDIA B200
+#  Rank  1 Group  0 Pid   7306 on node5702-c1 device  1 [0x43] NVIDIA B200
+#  Rank  2 Group  0 Pid   7306 on node5702-c1 device  2 [0x52] NVIDIA B200
+#  Rank  3 Group  0 Pid   7306 on node5702-c1 device  3 [0x61] NVIDIA B200
+#  Rank  4 Group  0 Pid   7306 on node5702-c1 device  4 [0x9d] NVIDIA B200
+#  Rank  5 Group  0 Pid   7306 on node5702-c1 device  5 [0xc3] NVIDIA B200
+#  Rank  6 Group  0 Pid   7306 on node5702-c1 device  6 [0xd1] NVIDIA B200
+#  Rank  7 Group  0 Pid   7306 on node5702-c1 device  7 [0xdf] NVIDIA B200
+#
+#                                                              out-of-place                       in-place          
+#       size         count      type   redop    root     time   algbw   busbw #wrong     time   algbw   busbw #wrong
+#        (B)    (elements)                               (us)  (GB/s)  (GB/s)            (us)  (GB/s)  (GB/s)       
+     1048576        262144     float     sum      -1    46.31   22.64   22.64      0    43.88   23.90   23.90    N/A
+     4194304       1048576     float     sum      -1    65.18   64.35   64.35      0    64.89   64.64   64.64    N/A
+    16777216       4194304     float     sum      -1    213.6   78.53   78.53      0    214.4   78.24   78.24    N/A
+    67108864      16777216     float     sum      -1    783.9   85.61   85.61      0    780.6   85.97   85.97    N/A
+   268435456      67108864     float     sum      -1    795.6  337.40  337.40      0    792.5  338.71  338.71    N/A
+  1073741824     268435456     float     sum      -1   1644.7  652.83  652.83      0   1647.5  651.74  651.74    N/A
+  4294967296    1073741824     float     sum      -1   6418.5  669.15  669.15      0   6511.7  659.58  659.58    N/A
+ 17179869184    4294967296     float     sum      -1    25508  673.51  673.51      0    25981  661.25  661.25    N/A
+# Out of bounds values : 0 OK
+# Avg bus bandwidth    : 321.753 
+#
+
+%%%%%%%%% all_reduce_perf %%%%%%%%%%
+# nThread 1 nGpus 8 minBytes 1048576 maxBytes 17179869184 step: 4(factor) warmup iters: 5 iters: 20 agg iters: 1 validation: 1 graph: 0
+#
+# Using devices
+#  Rank  0 Group  0 Pid   7393 on node5702-c1 device  0 [0x1b] NVIDIA B200
+#  Rank  1 Group  0 Pid   7393 on node5702-c1 device  1 [0x43] NVIDIA B200
+#  Rank  2 Group  0 Pid   7393 on node5702-c1 device  2 [0x52] NVIDIA B200
+#  Rank  3 Group  0 Pid   7393 on node5702-c1 device  3 [0x61] NVIDIA B200
+#  Rank  4 Group  0 Pid   7393 on node5702-c1 device  4 [0x9d] NVIDIA B200
+#  Rank  5 Group  0 Pid   7393 on node5702-c1 device  5 [0xc3] NVIDIA B200
+#  Rank  6 Group  0 Pid   7393 on node5702-c1 device  6 [0xd1] NVIDIA B200
+#  Rank  7 Group  0 Pid   7393 on node5702-c1 device  7 [0xdf] NVIDIA B200
+#
+#                                                              out-of-place                       in-place          
+#       size         count      type   redop    root     time   algbw   busbw #wrong     time   algbw   busbw #wrong
+#        (B)    (elements)                               (us)  (GB/s)  (GB/s)            (us)  (GB/s)  (GB/s)       
+     1048576        262144     float     sum      -1    54.34   19.30   33.77      0    48.83   21.47   37.58      0
+     4194304       1048576     float     sum      -1    58.68   71.48  125.09      0    58.73   71.41  124.97      0
+    16777216       4194304     float     sum      -1    111.0  151.21  264.62      0    108.8  154.24  269.92      0
+    67108864      16777216     float     sum      -1    281.3  238.60  417.55      0    280.8  239.01  418.27      0
+   268435456      67108864     float     sum      -1    718.5  373.60  653.80      0    718.1  373.81  654.17      0
+  1073741824     268435456     float     sum      -1   2578.4  416.44  728.77      0   2581.3  415.97  727.95      0
+  4294967296    1073741824     float     sum      -1   9146.5  469.58  821.76      0   9147.8  469.51  821.64      0
+ 17179869184    4294967296     float     sum      -1    36095  475.96  832.94      0    36108  475.79  832.63      0
+# Out of bounds values : 0 OK
+# Avg bus bandwidth    : 485.34 
+#
+
+%%%%%%%%% all_gather_perf %%%%%%%%%%
+# nThread 1 nGpus 8 minBytes 1048576 maxBytes 17179869184 step: 4(factor) warmup iters: 5 iters: 20 agg iters: 1 validation: 1 graph: 0
+#
+# Using devices
+#  Rank  0 Group  0 Pid   7489 on node5702-c1 device  0 [0x1b] NVIDIA B200
+#  Rank  1 Group  0 Pid   7489 on node5702-c1 device  1 [0x43] NVIDIA B200
+#  Rank  2 Group  0 Pid   7489 on node5702-c1 device  2 [0x52] NVIDIA B200
+#  Rank  3 Group  0 Pid   7489 on node5702-c1 device  3 [0x61] NVIDIA B200
+#  Rank  4 Group  0 Pid   7489 on node5702-c1 device  4 [0x9d] NVIDIA B200
+#  Rank  5 Group  0 Pid   7489 on node5702-c1 device  5 [0xc3] NVIDIA B200
+#  Rank  6 Group  0 Pid   7489 on node5702-c1 device  6 [0xd1] NVIDIA B200
+#  Rank  7 Group  0 Pid   7489 on node5702-c1 device  7 [0xdf] NVIDIA B200
+#
+#                                                              out-of-place                       in-place          
+#       size         count      type   redop    root     time   algbw   busbw #wrong     time   algbw   busbw #wrong
+#        (B)    (elements)                               (us)  (GB/s)  (GB/s)            (us)  (GB/s)  (GB/s)       
+     1048576         32768     float    none      -1    55.19   19.00   16.62      0    57.08   18.37   16.07      0
+     4194304        131072     float    none      -1    50.61   82.88   72.52      0    50.35   83.30   72.89      0
+    16777216        524288     float    none      -1    105.7  158.70  138.86      0    104.2  160.99  140.87      0
+    67108864       2097152     float    none      -1    140.7  476.92  417.31      0    139.7  480.25  420.22      0
+   268435456       8388608     float    none      -1    405.8  661.46  578.77      0    403.9  664.67  581.58      0
+  1073741824      33554432     float    none      -1   1531.5  701.09  613.45      0   1521.4  705.74  617.52      0
+  4294967296     134217728     float    none      -1   5759.2  745.76  652.54      0   5690.7  754.74  660.40      0
+ 17179869184     536870912     float    none      -1    22471  764.54  668.97      0    22252  772.08  675.57      0
+# Out of bounds values : 0 OK
+# Avg bus bandwidth    : 396.511 
+#
+
+%%%%%%%%% reduce_scatter_perf %%%%%%%%%%
+# nThread 1 nGpus 8 minBytes 1048576 maxBytes 17179869184 step: 4(factor) warmup iters: 5 iters: 20 agg iters: 1 validation: 1 graph: 0
+#
+# Using devices
+#  Rank  0 Group  0 Pid   7576 on node5702-c1 device  0 [0x1b] NVIDIA B200
+#  Rank  1 Group  0 Pid   7576 on node5702-c1 device  1 [0x43] NVIDIA B200
+#  Rank  2 Group  0 Pid   7576 on node5702-c1 device  2 [0x52] NVIDIA B200
+#  Rank  3 Group  0 Pid   7576 on node5702-c1 device  3 [0x61] NVIDIA B200
+#  Rank  4 Group  0 Pid   7576 on node5702-c1 device  4 [0x9d] NVIDIA B200
+#  Rank  5 Group  0 Pid   7576 on node5702-c1 device  5 [0xc3] NVIDIA B200
+#  Rank  6 Group  0 Pid   7576 on node5702-c1 device  6 [0xd1] NVIDIA B200
+#  Rank  7 Group  0 Pid   7576 on node5702-c1 device  7 [0xdf] NVIDIA B200
+#
+#                                                              out-of-place                       in-place          
+#       size         count      type   redop    root     time   algbw   busbw #wrong     time   algbw   busbw #wrong
+#        (B)    (elements)                               (us)  (GB/s)  (GB/s)            (us)  (GB/s)  (GB/s)       
+     1048576         32768     float     sum      -1    49.93   21.00   18.37      0    49.35   21.25   18.59      0
+     4194304        131072     float     sum      -1    46.99   89.26   78.10      0    46.32   90.56   79.24      0
+    16777216        524288     float     sum      -1    100.2  167.48  146.55      0    100.2  167.40  146.48      0
+    67108864       2097152     float     sum      -1    141.2  475.17  415.77      0    140.4  478.01  418.25      0
+   268435456       8388608     float     sum      -1    399.0  672.74  588.65      0    398.1  674.22  589.94      0
+  1073741824      33554432     float     sum      -1   1470.6  730.15  638.88      0   1468.8  731.04  639.66      0
+  4294967296     134217728     float     sum      -1   5541.5  775.06  678.18      0   5552.3  773.54  676.85      0
+ 17179869184     536870912     float     sum      -1    21643  793.80  694.58      0    21654  793.39  694.21      0
+# Out of bounds values : 0 OK
+# Avg bus bandwidth    : 407.645 
+#
+
+%%%%%%%%% reduce_perf %%%%%%%%%%
+# nThread 1 nGpus 8 minBytes 1048576 maxBytes 17179869184 step: 4(factor) warmup iters: 5 iters: 20 agg iters: 1 validation: 1 graph: 0
+#
+# Using devices
+#  Rank  0 Group  0 Pid   7663 on node5702-c1 device  0 [0x1b] NVIDIA B200
+#  Rank  1 Group  0 Pid   7663 on node5702-c1 device  1 [0x43] NVIDIA B200
+#  Rank  2 Group  0 Pid   7663 on node5702-c1 device  2 [0x52] NVIDIA B200
+#  Rank  3 Group  0 Pid   7663 on node5702-c1 device  3 [0x61] NVIDIA B200
+#  Rank  4 Group  0 Pid   7663 on node5702-c1 device  4 [0x9d] NVIDIA B200
+#  Rank  5 Group  0 Pid   7663 on node5702-c1 device  5 [0xc3] NVIDIA B200
+#  Rank  6 Group  0 Pid   7663 on node5702-c1 device  6 [0xd1] NVIDIA B200
+#  Rank  7 Group  0 Pid   7663 on node5702-c1 device  7 [0xdf] NVIDIA B200
+#
+#                                                              out-of-place                       in-place          
+#       size         count      type   redop    root     time   algbw   busbw #wrong     time   algbw   busbw #wrong
+#        (B)    (elements)                               (us)  (GB/s)  (GB/s)            (us)  (GB/s)  (GB/s)       
+     1048576        262144     float     sum       0    43.69   24.00   24.00      0    46.70   22.46   22.46      0
+     4194304       1048576     float     sum       0    49.29   85.10   85.10      0    48.61   86.29   86.29      0
+    16777216       4194304     float     sum       0    56.34  297.76  297.76      0    55.90  300.11  300.11      0
+    67108864      16777216     float     sum       0    132.7  505.84  505.84      0    132.5  506.34  506.34      0
+   268435456      67108864     float     sum       0    435.5  616.34  616.34      0    436.2  615.40  615.40      0
+  1073741824     268435456     float     sum       0   1599.7  671.20  671.20      0   1595.5  672.97  672.97      0
+  4294967296    1073741824     float     sum       0   6196.4  693.14  693.14      0   6206.3  692.03  692.03      0
+ 17179869184    4294967296     float     sum       0    24459  702.39  702.39      0    24495  701.36  701.36      0
+# Out of bounds values : 0 OK
+# Avg bus bandwidth    : 449.546 
+#
+
+%%%%%%%%% broadcast_perf %%%%%%%%%%
+# nThread 1 nGpus 8 minBytes 1048576 maxBytes 17179869184 step: 4(factor) warmup iters: 5 iters: 20 agg iters: 1 validation: 1 graph: 0
+#
+# Using devices
+#  Rank  0 Group  0 Pid   7750 on node5702-c1 device  0 [0x1b] NVIDIA B200
+#  Rank  1 Group  0 Pid   7750 on node5702-c1 device  1 [0x43] NVIDIA B200
+#  Rank  2 Group  0 Pid   7750 on node5702-c1 device  2 [0x52] NVIDIA B200
+#  Rank  3 Group  0 Pid   7750 on node5702-c1 device  3 [0x61] NVIDIA B200
+#  Rank  4 Group  0 Pid   7750 on node5702-c1 device  4 [0x9d] NVIDIA B200
+#  Rank  5 Group  0 Pid   7750 on node5702-c1 device  5 [0xc3] NVIDIA B200
+#  Rank  6 Group  0 Pid   7750 on node5702-c1 device  6 [0xd1] NVIDIA B200
+#  Rank  7 Group  0 Pid   7750 on node5702-c1 device  7 [0xdf] NVIDIA B200
+#
+#                                                              out-of-place                       in-place          
+#       size         count      type   redop    root     time   algbw   busbw #wrong     time   algbw   busbw #wrong
+#        (B)    (elements)                               (us)  (GB/s)  (GB/s)            (us)  (GB/s)  (GB/s)       
+     1048576        262144     float    none       0    40.03   26.19   26.19      0    40.02   26.20   26.20      0
+     4194304       1048576     float    none       0    44.36   94.56   94.56      0    44.56   94.13   94.13      0
+    16777216       4194304     float    none       0    55.18  304.06  304.06      0    54.79  306.21  306.21      0
+    67108864      16777216     float    none       0    135.1  496.84  496.84      0    135.4  495.49  495.49      0
+   268435456      67108864     float    none       0    440.2  609.84  609.84      0    440.9  608.87  608.87      0
+  1073741824     268435456     float    none       0   1666.7  644.22  644.22      0   1668.2  643.66  643.66      0
+  4294967296    1073741824     float    none       0   6535.2  657.21  657.21      0   6529.9  657.74  657.74      0
+ 17179869184    4294967296     float    none       0    25221  681.17  681.17      0    25237  680.75  680.75      0
+# Out of bounds values : 0 OK
+# Avg bus bandwidth    : 439.196 
+#
+
+%%%%%%%%% alltoall_perf %%%%%%%%%%
+# nThread 1 nGpus 8 minBytes 1048576 maxBytes 17179869184 step: 4(factor) warmup iters: 5 iters: 20 agg iters: 1 validation: 1 graph: 0
+#
+# Using devices
+#  Rank  0 Group  0 Pid   7837 on node5702-c1 device  0 [0x1b] NVIDIA B200
+#  Rank  1 Group  0 Pid   7837 on node5702-c1 device  1 [0x43] NVIDIA B200
+#  Rank  2 Group  0 Pid   7837 on node5702-c1 device  2 [0x52] NVIDIA B200
+#  Rank  3 Group  0 Pid   7837 on node5702-c1 device  3 [0x61] NVIDIA B200
+#  Rank  4 Group  0 Pid   7837 on node5702-c1 device  4 [0x9d] NVIDIA B200
+#  Rank  5 Group  0 Pid   7837 on node5702-c1 device  5 [0xc3] NVIDIA B200
+#  Rank  6 Group  0 Pid   7837 on node5702-c1 device  6 [0xd1] NVIDIA B200
+#  Rank  7 Group  0 Pid   7837 on node5702-c1 device  7 [0xdf] NVIDIA B200
+#
+#                                                              out-of-place                       in-place          
+#       size         count      type   redop    root     time   algbw   busbw #wrong     time   algbw   busbw #wrong
+#        (B)    (elements)                               (us)  (GB/s)  (GB/s)            (us)  (GB/s)  (GB/s)       
+     1048576         32768     float    none      -1    59.60   17.59   15.39      0    60.66   17.29   15.13    N/A
+     4194304        131072     float    none      -1    71.30   58.83   51.47      0    66.64   62.94   55.07    N/A
+    16777216        524288     float    none      -1    66.38  252.75  221.16      0    64.12  261.67  228.96    N/A
+    67108864       2097152     float    none      -1    137.7  487.42  426.49      0    140.9  476.37  416.82    N/A
+   268435456       8388608     float    none      -1    440.2  609.83  533.60      0    438.8  611.76  535.29    N/A
+  1073741824      33554432     float    none      -1   1550.2  692.64  606.06      0   1589.6  675.50  591.06    N/A
+  4294967296     134217728     float    none      -1   5802.8  740.15  647.63      0   5818.5  738.16  645.89    N/A
+ 17179869184     536870912     float    none      -1    22770  754.51  660.20      0    22746  755.29  660.88    N/A
+# Out of bounds values : 0 OK
+# Avg bus bandwidth    : 394.444 
+#
+
+%%%%%%%%% gather_perf %%%%%%%%%%
+# nThread 1 nGpus 8 minBytes 1048576 maxBytes 17179869184 step: 4(factor) warmup iters: 5 iters: 20 agg iters: 1 validation: 1 graph: 0
+#
+# Using devices
+#  Rank  0 Group  0 Pid   7924 on node5702-c1 device  0 [0x1b] NVIDIA B200
+#  Rank  1 Group  0 Pid   7924 on node5702-c1 device  1 [0x43] NVIDIA B200
+#  Rank  2 Group  0 Pid   7924 on node5702-c1 device  2 [0x52] NVIDIA B200
+#  Rank  3 Group  0 Pid   7924 on node5702-c1 device  3 [0x61] NVIDIA B200
+#  Rank  4 Group  0 Pid   7924 on node5702-c1 device  4 [0x9d] NVIDIA B200
+#  Rank  5 Group  0 Pid   7924 on node5702-c1 device  5 [0xc3] NVIDIA B200
+#  Rank  6 Group  0 Pid   7924 on node5702-c1 device  6 [0xd1] NVIDIA B200
+#  Rank  7 Group  0 Pid   7924 on node5702-c1 device  7 [0xdf] NVIDIA B200
+#
+#                                                              out-of-place                       in-place          
+#       size         count      type   redop    root     time   algbw   busbw #wrong     time   algbw   busbw #wrong
+#        (B)    (elements)                               (us)  (GB/s)  (GB/s)            (us)  (GB/s)  (GB/s)       
+     1048576         32768     float    none       0    37.55   27.92   24.43      0    37.98   27.61   24.16      0
+     4194304        131072     float    none       0    40.51  103.55   90.61      0    41.28  101.62   88.91      0
+    16777216        524288     float    none       0    44.56  376.49  329.43      0    42.29  396.71  347.12      0
+    67108864       2097152     float    none       0    95.38  703.60  615.65      0    94.88  707.28  618.87      0
+   268435456       8388608     float    none       0    335.8  799.44  699.51      0    336.8  796.98  697.35      0
+  1073741824      33554432     float    none       0   1337.7  802.69  702.35      0   1338.9  801.94  701.70      0
+  4294967296     134217728     float    none       0   5253.2  817.59  715.39      0   5255.1  817.30  715.14      0
+ 17179869184     536870912     float    none       0    20944  820.27  717.74      0    20945  820.23  717.70      0
+# Out of bounds values : 0 OK
+# Avg bus bandwidth    : 487.879 
+#
+
+%%%%%%%%% scatter_perf %%%%%%%%%%
+# nThread 1 nGpus 8 minBytes 1048576 maxBytes 17179869184 step: 4(factor) warmup iters: 5 iters: 20 agg iters: 1 validation: 1 graph: 0
+#
+# Using devices
+#  Rank  0 Group  0 Pid   8011 on node5702-c1 device  0 [0x1b] NVIDIA B200
+#  Rank  1 Group  0 Pid   8011 on node5702-c1 device  1 [0x43] NVIDIA B200
+#  Rank  2 Group  0 Pid   8011 on node5702-c1 device  2 [0x52] NVIDIA B200
+#  Rank  3 Group  0 Pid   8011 on node5702-c1 device  3 [0x61] NVIDIA B200
+#  Rank  4 Group  0 Pid   8011 on node5702-c1 device  4 [0x9d] NVIDIA B200
+#  Rank  5 Group  0 Pid   8011 on node5702-c1 device  5 [0xc3] NVIDIA B200
+#  Rank  6 Group  0 Pid   8011 on node5702-c1 device  6 [0xd1] NVIDIA B200
+#  Rank  7 Group  0 Pid   8011 on node5702-c1 device  7 [0xdf] NVIDIA B200
+#
+#                                                              out-of-place                       in-place          
+#       size         count      type   redop    root     time   algbw   busbw #wrong     time   algbw   busbw #wrong
+#        (B)    (elements)                               (us)  (GB/s)  (GB/s)            (us)  (GB/s)  (GB/s)       
+     1048576         32768     float    none       0    36.15   29.00   25.38      0    36.18   28.98   25.36      0
+     4194304        131072     float    none       0    36.92  113.60   99.40      0    36.91  113.63   99.43      0
+    16777216        524288     float    none       0    38.52  435.57  381.13      0    37.96  441.96  386.72      0
+    67108864       2097152     float    none       0    102.3  655.69  573.73      0    102.0  658.12  575.85      0
+   268435456       8388608     float    none       0    368.3  728.89  637.78      0    368.9  727.57  636.62      0
+  1073741824      33554432     float    none       0   1314.2  817.00  714.88      0   1313.7  817.32  715.16      0
+  4294967296     134217728     float    none       0   5143.8  834.97  730.60      0   5156.3  832.96  728.84      0
+ 17179869184     536870912     float    none       0    20463  839.57  734.62      0    20538  836.50  731.93      0
+# Out of bounds values : 0 OK
+# Avg bus bandwidth    : 487.339 
+#
+
+%%%%%%%%% hypercube_perf %%%%%%%%%%
+# nThread 1 nGpus 8 minBytes 1048576 maxBytes 17179869184 step: 4(factor) warmup iters: 5 iters: 20 agg iters: 1 validation: 1 graph: 0
+#
+# Using devices
+#  Rank  0 Group  0 Pid   8098 on node5702-c1 device  0 [0x1b] NVIDIA B200
+#  Rank  1 Group  0 Pid   8098 on node5702-c1 device  1 [0x43] NVIDIA B200
+#  Rank  2 Group  0 Pid   8098 on node5702-c1 device  2 [0x52] NVIDIA B200
+#  Rank  3 Group  0 Pid   8098 on node5702-c1 device  3 [0x61] NVIDIA B200
+#  Rank  4 Group  0 Pid   8098 on node5702-c1 device  4 [0x9d] NVIDIA B200
+#  Rank  5 Group  0 Pid   8098 on node5702-c1 device  5 [0xc3] NVIDIA B200
+#  Rank  6 Group  0 Pid   8098 on node5702-c1 device  6 [0xd1] NVIDIA B200
+#  Rank  7 Group  0 Pid   8098 on node5702-c1 device  7 [0xdf] NVIDIA B200
+#
+#                                                              out-of-place                       in-place          
+#       size         count      type   redop    root     time   algbw   busbw #wrong     time   algbw   busbw #wrong
+#        (B)    (elements)                               (us)  (GB/s)  (GB/s)            (us)  (GB/s)  (GB/s)       
+     1048576         32768     float              -1    83.81   10.95   10.95  994624    47.12   19.47   19.47  1.01478e+06
+     4194304        131072     float              -1    73.25   50.11   50.11  4.07354e+06    49.13   74.70   74.70  4.01818e+06
+    16777216        524288     float              -1    117.0  125.44  125.44  1.21332e+07    111.2  131.99  131.99  1.20788e+07
+    67108864       2097152     float              -1    410.6  143.02  143.02  2.3924e+07    404.3  145.26  145.26  2.41472e+07
+   268435456       8388608     float              -1   1207.3  194.55  194.55  1.10272e+08   1197.3  196.17  196.17  1.10469e+08
+  1073741824      33554432     float              -1   2255.7  416.51  416.51  6.51247e+08   2210.5  425.02  425.02  6.40839e+08
+  4294967296     134217728     float              -1   8023.1  468.41  468.41  9.00705e+08   7861.4  478.05  478.05  8.71935e+08
+ 17179869184     536870912     float              -1    31830  472.27  472.27  3.13171e+09    31194  481.90  481.90  2.99195e+09
+# Out of bounds values : 16 FAILED
+# Avg bus bandwidth    : 239.613 
+#
+
+--------------------------------------------------------------------------
+Primary job  terminated normally, but 1 process returned
+a non-zero exit code. Per user-direction, the job has been aborted.
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+mpirun detected that one or more processes exited with non-zero status, thus causing
+the job to be terminated. The first process to do so was:
+
+  Process name: [[44010,1],0]
+  Exit code:    1
+--------------------------------------------------------------------------
