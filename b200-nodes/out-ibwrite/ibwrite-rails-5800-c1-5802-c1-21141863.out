@@ -1,0 +1,22 @@
+==============================================================
+ib_write_bw per-rail scan — host mem vs GPU mem
+  date    : 2026-08-24 17:19:07
+  job     : 21141863
+  server  : node5800-c1
+  client  : node5802-c1
+  message : 67108864 bytes, 200 iterations, NDR rail max 400 Gb/s
+==============================================================
+
+rail       gpu        host->host       GPU->GPU
+---------- ------ -------------- --------------
+mlx5_4     GPU0           379.99         395.71
+mlx5_7     GPU1           379.72         395.43
+mlx5_8     GPU2           379.72         395.38
+mlx5_9     GPU3           379.76         394.80
+mlx5_10    GPU4           377.67         395.74
+mlx5_13    GPU5           378.64         395.67
+mlx5_14    GPU6           378.71         395.65
+mlx5_15    GPU7           377.72         394.73
+
+raw perftest output: out-ibwrite/rails-21141863/
+done: 2026-08-24 17:21:34

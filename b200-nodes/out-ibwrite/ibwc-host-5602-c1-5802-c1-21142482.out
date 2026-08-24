@@ -1,0 +1,24 @@
+==============================================================
+ib_write_bw — all 8 rails concurrently
+  date    : 2026-08-24 17:26:34
+  job     : 21142482
+  server  : node5602-c1
+  client  : node5802-c1
+  mode    : host
+  message : 67108864 bytes, 500 iterations
+==============================================================
+
+rail                 Gb/s
+---------- --------------
+mlx5_4             144.82
+mlx5_7             371.15
+mlx5_8             370.07
+mlx5_9             136.86
+mlx5_10            143.50
+mlx5_13            139.68
+mlx5_14            137.87
+mlx5_15            136.58
+AGGREGATE         1580.53
+
+raw perftest output: out-ibwrite/concurrent-21142482/
+done: 2026-08-24 17:26:46
