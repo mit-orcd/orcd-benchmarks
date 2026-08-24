@@ -517,26 +517,20 @@ Ceiling is draft length × acceptance rate — never the full N, since not every
 
 > The honest headline: **on equal footing (no spec decoding, low concurrency) B200 and MI355X land far closer than either vendor's best-configured number suggests, and the biggest single differentiator in the whole table is MTP — a software feature, not silicon.**
 
-### 7.4 MTP on B200 — supported, just not configured here
+### 7.4 How to enable MTP — B200 and MI355X
 
-**Correction to an earlier claim in this report.** Sections elsewhere state that spec decoding "does not compose with pipeline parallelism" and is therefore unavailable on B200. That was inferred from the upstream vLLM recipe, which gates DSpark off its `multi_node_tp_pp` strategy — but that is a **recipe-level default, not an engine limitation**. SemiAnalysis's own B200 recipe (`agg-b200-tp8pp2-mooncake-*.yaml`) runs DSpark *with* `pipeline-parallel-size: 2`.
+**Correction to an earlier claim in this report:** spec decoding does *not* require single-node TP. That was inferred from the upstream vLLM recipe gating DSpark off `multi_node_tp_pp` — a **recipe default, not an engine limit**. SemiAnalysis's own B200 recipe runs DSpark with `pipeline-parallel-size: 2`. **MTP is already built into our image** (`vllm/vllm-openai:kimi-k3`) — the `dspark` method, `KimiK3MTP`, and `TOKENSPEED_MLA` are all present. No new package. Both platforms use the **same speculator model**, `Inferact/Kimi-K3-DSpark`.
 
-**MTP is fully supported in vLLM — no extra package is needed.** Verified inside the exact image this run used (`vllm/vllm-openai:kimi-k3`):
+| Step | MI355X (1 node, TP8) | B200 (2 nodes, TP8×PP2) |
+|---|---|---|
+| 1. Download the speculator | `Inferact/Kimi-K3-DSpark` | *same* |
+| 2. Apply the `pard_token` shim | not needed (single-node TP loads it directly) | **required** — the checkpoint's `mask_token_id` must be aliased to `pard_token` in a local copy of `config.json`, or the config fails to load |
+| 3. Extra server flags | none beyond `--speculative-config` | `--decode-context-parallel-size 8 --dcp-comm-backend a2a --attention-backend TOKENSPEED_MLA` |
+| 4. `--speculative-config` | `{"model":"Inferact/Kimi-K3-DSpark","num_speculative_tokens":2,"method":"dspark","attention_backend":"TRITON_MLA"}` (SemiAnalysis's `_mtp` recipe) | same JSON, `attention_backend` → `TOKENSPEED_MLA`, `num_speculative_tokens` 7 in their B200 recipe |
 
-| Component | Status in our image |
-|---|---|
-| `--speculative-config` with `"method": "dspark"` | ✅ built in |
-| `KimiK3MTPModel` → `KimiK3MTP` | ✅ registered |
-| `TOKENSPEED_MLA` attention backend | ✅ present |
-| `--decode-context-parallel-size` / `--dcp-comm-backend` | ✅ present |
+**MI355X is simpler because it needs no PP.** One node holds the whole model, so the speculator drops straight into the existing TP8 launch. **B200 needs the shim and the extra DCP flags because of PP2** — those exist to keep the speculator's draft/verify state consistent across the pipeline stage boundary.
 
-So what is actually missing is **not software** — it is:
-
-1. **The speculator weights.** `Inferact/Kimi-K3-DSpark` (`num_speculative_tokens: 7` in their recipe). Not downloaded here, and our container runs `HF_HUB_OFFLINE=1`.
-2. **A one-line config shim.** That checkpoint publishes its parallel-drafting token as `mask_token_id`, but vLLM's parallel drafter expects `pard_token`. SemiAnalysis's `kimik3-dspark-config-compat.sh` builds a symlinked local copy of the checkpoint with `pard_token = mask_token_id` injected into `config.json`. **Without it the speculative-config does not load** — this, not PP, is the likely reason the plain upstream recipe avoids the combination.
-3. **Three extra server flags**: `--decode-context-parallel-size 8`, `--dcp-comm-backend a2a`, `--attention-backend TOKENSPEED_MLA`.
-
-**Bottom line: enabling MTP on our B200 run is a configuration task, not a hardware or engine limitation.** It was not attempted here. Given their measured ~2.7× per-user gain at c=1 (§7.3), it is the single highest-value follow-up available — larger than any lever in §3.2.
+**Neither was attempted here** — the speculator is not downloaded (`HF_HUB_OFFLINE=1`). Given the ~2.7× per-user gain at c=1 measured in §7.3, this is the single highest-value follow-up available — bigger than any lever in §3.2.
 
 ---
 
