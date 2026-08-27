@@ -1386,15 +1386,25 @@ def build_report(b, a, arch, args):
       "which is why the concurrency axis in §7.3 and §7.4 maps onto agent behaviour at "
       "all. It only works when the calls do not depend on each other's results.")
     W("")
+    _ob = {x["max_concurrency"]: x for x in rows}
+    _have = all(c in _ob and _ob[c]["median_tpot_ms"] for c in (1, 4, 8))
+    if _have:
+        _pu1 = 1000.0 / _ob[1]["median_tpot_ms"]
+        _pu6 = ((1000.0 / _ob[4]["median_tpot_ms"])
+                + (1000.0 / _ob[8]["median_tpot_ms"])) / 2.0
+        _t6 = (_ob[4]["median_ttft_ms"] + _ob[8]["median_ttft_ms"]) / 2000.0
     W("**Which number governs each step:**")
     W("")
-    W("| Step | Conc | Rate that governs it | Read it from |")
-    W("|---|---:|---|---|")
-    W("| 1. Plan / pick tools | **1** | per-user tok/s | §7.4, c=1 row |")
+    W("| Step | Conc | Rate that governs it | Ours B200 | Read it from |")
+    W("|---|---:|---|---:|---|")
+    W(f"| 1. Plan / pick tools | **1** | per-user tok/s | {fmt(_pu1) if _have else '—'} "
+      "tok/s | §7.4, c=1 row |")
     W("| 2. Six parallel tool calls | **6** | per-user tok/s at c≈6 — six streams run at "
-      "once, so the *session* rate is 6× that | §7.4, interpolated between c=4 and c=8; "
-      "the session rate is §7.3's aggregate column |")
-    W("| 3. Stream the answer | **1** | per-user tok/s | §7.4, c=1 row |")
+      f"once, so the *session* rate is 6× that | {fmt(_pu6) if _have else '—'} tok/s "
+      f"each → **{fmt(6*_pu6) if _have else '—'} session** | §7.4, interpolated between "
+      "c=4 and c=8; the session rate is §7.3's aggregate column |")
+    W(f"| 3. Stream the answer | **1** | per-user tok/s | {fmt(_pu1) if _have else '—'} "
+      "tok/s | §7.4, c=1 row |")
     W("")
     W("Each step costs `TTFT + (tokens per stream − 1) ÷ per-user tok/s`. Only the "
       "**per-user** rate enters the arithmetic — the fan-out is already accounted for by "
@@ -1440,11 +1450,7 @@ def build_report(b, a, arch, args):
         W(f"| {label} | {p_:.1f} s | {t_:.1f} s | {a_:.1f} s | **{tot_:.1f} s** | "
           f"{fw_:.1f} s | {wps_:.0f} words/s |")
     W("")
-    _ob = {x["max_concurrency"]: x for x in rows}
-    if all(c in _ob for c in (1, 4, 8)):
-        _pu1 = 1000.0 / _ob[1]["median_tpot_ms"]
-        _pu6 = _mid(1000.0 / _ob[4]["median_tpot_ms"], 1000.0 / _ob[8]["median_tpot_ms"])
-        _t6 = _mid(_ob[4]["median_ttft_ms"], _ob[8]["median_ttft_ms"]) / 1000.0
+    if _have:
         W(f"*Worked example, the first row.* §7.4 gives {fmt(_pu1)} tok/s at c=1 and "
           f"{fmt(_pu6)} at c≈6. Step 1 = {_ob[1]['median_ttft_ms']/1000.0:.2f} + 199/"
           f"{fmt(_pu1)} = {tt[order[0]][0]:.1f} s. Step 2 = {_t6:.2f} + 499/{fmt(_pu6)} = "
