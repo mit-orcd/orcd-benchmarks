@@ -1382,13 +1382,20 @@ def build_report(b, a, arch, args):
       "per token), so an 800-token answer is ~600 words and the print rates below are "
       "`tok/s × 0.75`.")
     W("")
+    W("The three steps play different roles: the model *thinks* (plan), then *acts* "
+      "(tool calls), then *writes* (answer). Only the middle step is fan-out — it is the "
+      "only one where the work naturally splits into independent pieces that can run "
+      "concurrently; you cannot parallelise \"write one coherent plan\" or \"write one "
+      "coherent answer\" the same way.")
+    W("")
     W("**Fan-out** = the agent issuing several requests *at the same time* instead of one "
-      "after another — searching five files at once, spawning three subagents, calling "
-      "four independent tools. A fan-out of 8 is concurrency 8 from that single agent, "
+      "after another — searching several files at once, spawning multiple subagents, "
+      "calling several independent tools. A fan-out of 8 is concurrency 8 from that "
+      "single agent, "
       "which is why the concurrency axis in §7.3 and §7.4 maps onto agent behaviour at "
       "all. It only works when the calls do not depend on each other's results. Real "
       "fan-out runs ~2–8; **8 is used here because it is a measured point on every sweep "
-      "in §7.3 and §7.4**, so nothing below is interpolated.")
+      "in §7.3 and §7.4**.")
     W("")
 
     def _pu_at(src):
@@ -1415,12 +1422,12 @@ def build_report(b, a, arch, args):
     W(f"| Step | Conc | Rate that governs it | Ours {ngpu}× B200 | Ours {angpu}× MI355X | "
       "Read it from |")
     W("|---|---:|---|---:|---:|---|")
-    W(f"| 1. Plan / pick tools | **1** | per-user tok/s | {_c1(_b)} | {_c1(_a)} | "
+    W(f"| 1. Plan / pick tools — *think* | **1** | per-user tok/s | {_c1(_b)} | {_c1(_a)} | "
       "§7.4, c=1 row |")
-    W("| 2. Eight parallel tool calls | **8** | per-user tok/s at c=8 — eight streams run "
+    W("| 2. Eight parallel tool calls — *act* | **8** | per-user tok/s at c=8 — eight streams run "
       f"at once, so the *session* rate is 8× that | {_c8(_b)} | {_c8(_a)} | §7.4, c=8 row; "
       "the session rate is §7.3's aggregate column |")
-    W(f"| 3. Stream the answer | **1** | per-user tok/s | {_c1(_b)} | {_c1(_a)} | "
+    W(f"| 3. Stream the answer — *write* | **1** | per-user tok/s | {_c1(_b)} | {_c1(_a)} | "
       "§7.4, c=1 row |")
     W("")
     W("Each step costs `TTFT + (tokens per stream − 1) ÷ per-user tok/s`. Only the "

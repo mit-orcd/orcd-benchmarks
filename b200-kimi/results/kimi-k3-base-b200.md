@@ -530,15 +530,17 @@ Units: output tokens/s delivered to a single request. Theirs are `median_intvty`
 
 A user waits for a whole turn, not for a token. Modelled here as one realistic agent request — **plan (200 tok) → fan out 8 parallel tool calls (500 tok each, hidden) → stream the answer (800 tok, shown)** — priced with each system's own measured TTFT and per-user rate. **English runs ~1.3 tokens per word** (≈0.75 words per token), so an 800-token answer is ~600 words and the print rates below are `tok/s × 0.75`.
 
-**Fan-out** = the agent issuing several requests *at the same time* instead of one after another — searching five files at once, spawning three subagents, calling four independent tools. A fan-out of 8 is concurrency 8 from that single agent, which is why the concurrency axis in §7.3 and §7.4 maps onto agent behaviour at all. It only works when the calls do not depend on each other's results. Real fan-out runs ~2–8; **8 is used here because it is a measured point on every sweep in §7.3 and §7.4**, so nothing below is interpolated.
+The three steps play different roles: the model *thinks* (plan), then *acts* (tool calls), then *writes* (answer). Only the middle step is fan-out — it is the only one where the work naturally splits into independent pieces that can run concurrently; you cannot parallelise "write one coherent plan" or "write one coherent answer" the same way.
+
+**Fan-out** = the agent issuing several requests *at the same time* instead of one after another — searching several files at once, spawning multiple subagents, calling several independent tools. A fan-out of 8 is concurrency 8 from that single agent, which is why the concurrency axis in §7.3 and §7.4 maps onto agent behaviour at all. It only works when the calls do not depend on each other's results. Real fan-out runs ~2–8; **8 is used here because it is a measured point on every sweep in §7.3 and §7.4**.
 
 **Which number governs each step:**
 
 | Step | Conc | Rate that governs it | Ours 16× B200 | Ours 8× MI355X | Read it from |
 |---|---:|---|---:|---:|---|
-| 1. Plan / pick tools | **1** | per-user tok/s | 89.0 tok/s | 46.6 tok/s | §7.4, c=1 row |
-| 2. Eight parallel tool calls | **8** | per-user tok/s at c=8 — eight streams run at once, so the *session* rate is 8× that | 64.9 each → **519.3 tok/s** session | 37.0 each → **296.1 tok/s** session | §7.4, c=8 row; the session rate is §7.3's aggregate column |
-| 3. Stream the answer | **1** | per-user tok/s | 89.0 tok/s | 46.6 tok/s | §7.4, c=1 row |
+| 1. Plan / pick tools — *think* | **1** | per-user tok/s | 89.0 tok/s | 46.6 tok/s | §7.4, c=1 row |
+| 2. Eight parallel tool calls — *act* | **8** | per-user tok/s at c=8 — eight streams run at once, so the *session* rate is 8× that | 64.9 each → **519.3 tok/s** session | 37.0 each → **296.1 tok/s** session | §7.4, c=8 row; the session rate is §7.3's aggregate column |
+| 3. Stream the answer — *write* | **1** | per-user tok/s | 89.0 tok/s | 46.6 tok/s | §7.4, c=1 row |
 
 Each step costs `TTFT + (tokens per stream − 1) ÷ per-user tok/s`. Only the **per-user** rate enters the arithmetic — the fan-out is already accounted for by the fact that eight streams run concurrently, so §7.3's aggregate is the same information viewed from the server side, not a second speedup to multiply in. (*Close to §7.3's aggregate, not exactly equal*: `8 × per-user` is a steady-state rate, while the aggregate column is measured tokens ÷ wall clock, so it carries the prefill time too.)
 
