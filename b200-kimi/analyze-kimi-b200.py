@@ -1439,40 +1439,46 @@ def build_report(b, a, arch, args):
       "prefill time too.)")
     W("")
 
-    def _phase(t1, r1, t8, r8):
+    def _phase(t1, r1, t8, r8, n_plan=200, n_tool=500, n_ans=800):
         """Whole-turn timing from (TTFT, per-user tok/s) at c=1 and at the c=8 fan-out."""
-        plan = t1 + 199.0 / r1
-        tools = t8 + 499.0 / r8
-        ans = t1 + 799.0 / r1
+        plan = t1 + (n_plan - 1) / r1
+        tools = t8 + (n_tool - 1) / r8
+        ans = t1 + (n_ans - 1) / r1
         return plan, tools, ans, plan + tools + ans, plan + tools + t1, r1 * 0.75
 
-    tt = {}
-    order = []
+    # (label, TTFT at c=1, per-user at c=1, TTFT at c=8, per-user at c=8)
+    sysd = []
     for label, src in (("**Ours** B200 (no spec)", rows),
                        ("**Ours** MI355X ATOM (no spec)", arows)):
         m = {x["max_concurrency"]: x for x in src}
         if not all(c in m and m[c]["median_tpot_ms"] for c in (1, 8)):
             continue
-        pu = {c: 1000.0 / m[c]["median_tpot_ms"] for c in (1, 8)}
-        tt[label] = _phase(m[1]["median_ttft_ms"] / 1000.0, pu[1],
-                           m[8]["median_ttft_ms"] / 1000.0, pu[8])
-        order.append(label)
+        sysd.append((label, m[1]["median_ttft_ms"] / 1000.0,
+                     1000.0 / m[1]["median_tpot_ms"],
+                     m[8]["median_ttft_ms"] / 1000.0,
+                     1000.0 / m[8]["median_tpot_ms"]))
     # Theirs: median_ttft and median_intvty from the API dump in ../semianalysis-ref/.
-    for label, t1, r1, t6, r6 in (
-            ("**Theirs** B200 +MTP", 1.15, 221.7, 0.86, 154.1),
-            ("**Theirs** B200 (no spec)", 4.52, 81.9, 6.70, 21.1),
-            ("**Theirs** MI355X ATOM +MTP", 0.80, 127.2, 0.80, 64.7),
-            ("**Theirs** MI355X vLLM +MTP", 1.41, 84.0, 1.63, 41.4)):
-        tt[label] = _phase(t1, r1, t6, r6)
-        order.append(label)
+    sysd += [("**Theirs** B200 +MTP", 1.15, 221.7, 0.86, 154.1),
+             ("**Theirs** B200 (no spec)", 4.52, 81.9, 6.70, 21.1),
+             ("**Theirs** MI355X ATOM +MTP", 0.80, 127.2, 0.80, 64.7),
+             ("**Theirs** MI355X vLLM +MTP", 1.41, 84.0, 1.63, 41.4)]
+    order = [d[0] for d in sysd]
 
-    W("| System | Plan | 8 tool calls | Answer | **Whole turn** | First word at | Print rate |")
-    W("|---|---:|---:|---:|---:|---:|---:|")
-    for label in order:
-        p_, t_, a_, tot_, fw_, wps_ = tt[label]
-        W(f"| {label} | {p_:.1f} s | {t_:.1f} s | {a_:.1f} s | **{tot_:.1f} s** | "
-          f"{fw_:.1f} s | {wps_:.0f} words/s |")
-    W("")
+    def _turn_table(n_plan, n_tool, n_ans, label_counts=False):
+        t = {d[0]: _phase(d[1], d[2], d[3], d[4], n_plan, n_tool, n_ans) for d in sysd}
+        _sfx = (f" ({n_plan} tok)", f" ({n_tool} tok ea)", f" ({n_ans} tok)") \
+            if label_counts else ("", "", "")
+        W(f"| System | Plan{_sfx[0]} | 8 tool calls{_sfx[1]} | Answer{_sfx[2]} | "
+          "**Whole turn** | First word at | Print rate |")
+        W("|---|---:|---:|---:|---:|---:|---:|")
+        for label in order:
+            p_, t2_, a_, tot_, fw_, wps_ = t[label]
+            W(f"| {label} | {p_:.1f} s | {t2_:.1f} s | {a_:.1f} s | **{tot_:.1f} s** | "
+              f"{fw_:.1f} s | {wps_:.0f} words/s |")
+        W("")
+        return t
+
+    tt = _turn_table(200, 500, 800)
     if _have:
         W(f"*Worked example, the first row.* §7.4 gives {fmt(_pu1)} tok/s at c=1 and "
           f"{fmt(_pu8)} at c=8. Step 1 = {_t1:.2f} + 199/{fmt(_pu1)} = "
@@ -1502,6 +1508,25 @@ def build_report(b, a, arch, args):
       "phase also assumes the 8 calls are independent — if each needs the previous one's "
       "result they run serially and that phase takes ~8× longer.")
     W("")
+    W("#### A short task")
+    W("")
+    W("The turn above is a heavy one. Most agent traffic is lighter — a brief plan, small "
+      "tool payloads, a couple of sentences back. Same three steps and same measured "
+      "rates, but **plan 30 tok → 8 tool calls of 70 tok → answer 100 tok** (~75 words):")
+    W("")
+    ts = _turn_table(30, 70, 100, label_counts=True)
+    tb = tt.get("**Ours** B200 (no spec)")
+    sb = ts.get("**Ours** B200 (no spec)")
+    if tb and sb and _have:
+        _gen = 29.0 / _pu1 + 69.0 / _pu8 + 99.0 / _pu1
+        _gen_big = 199.0 / _pu1 + 499.0 / _pu8 + 799.0 / _pu1
+        W(f"**Prefill stops being negligible.** The turn drops from {tb[3]:.1f} s to "
+          f"**{sb[3]:.1f} s**, and the three prefills ({2*_t1 + _t8:.2f} s of TTFT) go from "
+          f"{100*(1-_gen_big/tb[3]):.0f}% of the heavy turn to "
+          f"**{100*(1-_gen/sb[3]):.0f}%** of this one. Generation still dominates at this "
+          "size, but the margin narrows — and on realistic agent prompts of 100k+ tokens, "
+          "where TTFT is seconds rather than 0.23 s (§7.2), it would invert entirely.")
+        W("")
 
     W("### 7.6 MTP — what it is, and how to enable it")
     W("")

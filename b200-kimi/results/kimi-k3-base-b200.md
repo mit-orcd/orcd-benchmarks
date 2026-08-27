@@ -561,6 +561,21 @@ Each step costs `TTFT + (tokens per stream − 1) ÷ per-user tok/s`. Only the *
 
 **Do not read the total column across the ours/theirs boundary.** Their TTFT is measured on 100k+ token agentic prompts with prefix caching on; ours on a 1024-token prompt with it off (§7.2). Compare ours-to-ours and theirs-to-theirs. The fan-out phase also assumes the 8 calls are independent — if each needs the previous one's result they run serially and that phase takes ~8× longer.
 
+#### A short task
+
+The turn above is a heavy one. Most agent traffic is lighter — a brief plan, small tool payloads, a couple of sentences back. Same three steps and same measured rates, but **plan 30 tok → 8 tool calls of 70 tok → answer 100 tok** (~75 words):
+
+| System | Plan (30 tok) | 8 tool calls (70 tok ea) | Answer (100 tok) | **Whole turn** | First word at | Print rate |
+|---|---:|---:|---:|---:|---:|---:|
+| **Ours** B200 (no spec) | 0.6 s | 1.3 s | 1.3 s | **3.2 s** | 2.1 s | 67 words/s |
+| **Ours** MI355X ATOM (no spec) | 0.8 s | 2.1 s | 2.4 s | **5.3 s** | 3.2 s | 35 words/s |
+| **Theirs** B200 +MTP | 1.3 s | 1.3 s | 1.6 s | **4.2 s** | 3.7 s | 166 words/s |
+| **Theirs** B200 (no spec) | 4.9 s | 10.0 s | 5.7 s | **20.6 s** | 19.4 s | 61 words/s |
+| **Theirs** MI355X ATOM +MTP | 1.0 s | 1.9 s | 1.6 s | **4.5 s** | 3.7 s | 95 words/s |
+| **Theirs** MI355X vLLM +MTP | 1.8 s | 3.3 s | 2.6 s | **7.6 s** | 6.5 s | 63 words/s |
+
+**Prefill stops being negligible.** The turn drops from 19.6 s to **3.2 s**, and the three prefills (0.69 s of TTFT) go from 4% of the heavy turn to **22%** of this one. Generation still dominates at this size, but the margin narrows — and on realistic agent prompts of 100k+ tokens, where TTFT is seconds rather than 0.23 s (§7.2), it would invert entirely.
+
 ### 7.6 MTP — what it is, and how to enable it
 
 #### What "MTP" is — and it is software, not silicon
