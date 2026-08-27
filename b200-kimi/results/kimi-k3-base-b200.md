@@ -528,36 +528,36 @@ Units: output tokens/s delivered to a single request. Theirs are `median_intvty`
 
 ### 7.5 One agent turn, end to end
 
-A user waits for a whole turn, not for a token. Modelled here as one realistic agent request — **plan (200 tok) → fan out 6 parallel tool calls (500 tok each, hidden) → stream the answer (800 tok, shown)** — priced with each system's own measured TTFT and per-user rate. **English runs ~1.3 tokens per word** (≈0.75 words per token), so a 800-token answer is ~600 words and the print rates below are `tok/s × 0.75`.
+A user waits for a whole turn, not for a token. Modelled here as one realistic agent request — **plan (200 tok) → fan out 8 parallel tool calls (500 tok each, hidden) → stream the answer (800 tok, shown)** — priced with each system's own measured TTFT and per-user rate. **English runs ~1.3 tokens per word** (≈0.75 words per token), so an 800-token answer is ~600 words and the print rates below are `tok/s × 0.75`.
 
-**Fan-out** = the agent issuing several requests *at the same time* instead of one after another — searching five files at once, spawning three subagents, calling four independent tools. A fan-out of 6 is concurrency 6 from that single agent, which is why the concurrency axis in §7.3 and §7.4 maps onto agent behaviour at all. It only works when the calls do not depend on each other's results.
+**Fan-out** = the agent issuing several requests *at the same time* instead of one after another — searching five files at once, spawning three subagents, calling four independent tools. A fan-out of 8 is concurrency 8 from that single agent, which is why the concurrency axis in §7.3 and §7.4 maps onto agent behaviour at all. It only works when the calls do not depend on each other's results. Real fan-out runs ~2–8; **8 is used here because it is a measured point on every sweep in §7.3 and §7.4**, so nothing below is interpolated.
 
 **Which number governs each step:**
 
 | Step | Conc | Rate that governs it | Ours 16× B200 | Ours 8× MI355X | Read it from |
 |---|---:|---|---:|---:|---|
 | 1. Plan / pick tools | **1** | per-user tok/s | 89.0 tok/s | 46.6 tok/s | §7.4, c=1 row |
-| 2. Six parallel tool calls | **6** | per-user tok/s at c≈6 — six streams run at once, so the *session* rate is 6× that | 69.2 each → **414.9 tok/s** session | 38.5 each → **231.1 tok/s** session | §7.4, interpolated between c=4 and c=8; the session rate is §7.3's aggregate column |
+| 2. Eight parallel tool calls | **8** | per-user tok/s at c=8 — eight streams run at once, so the *session* rate is 8× that | 64.9 each → **519.3 tok/s** session | 37.0 each → **296.1 tok/s** session | §7.4, c=8 row; the session rate is §7.3's aggregate column |
 | 3. Stream the answer | **1** | per-user tok/s | 89.0 tok/s | 46.6 tok/s | §7.4, c=1 row |
 
-Each step costs `TTFT + (tokens per stream − 1) ÷ per-user tok/s`. Only the **per-user** rate enters the arithmetic — the fan-out is already accounted for by the fact that six streams run concurrently, so §7.3's aggregate is the same information viewed from the server side, not a second speedup to multiply in. (*Close to §7.3's aggregate, not exactly equal*: `6 × per-user` is a steady-state rate interpolated to c=6, while the aggregate column is measured tokens ÷ wall clock at real sweep points, so it carries the prefill time too.)
+Each step costs `TTFT + (tokens per stream − 1) ÷ per-user tok/s`. Only the **per-user** rate enters the arithmetic — the fan-out is already accounted for by the fact that eight streams run concurrently, so §7.3's aggregate is the same information viewed from the server side, not a second speedup to multiply in. (*Close to §7.3's aggregate, not exactly equal*: `8 × per-user` is a steady-state rate, while the aggregate column is measured tokens ÷ wall clock, so it carries the prefill time too.)
 
-| System | Plan | 6 tool calls | Answer | **Whole turn** | First word at | Print rate |
+| System | Plan | 8 tool calls | Answer | **Whole turn** | First word at | Print rate |
 |---|---:|---:|---:|---:|---:|---:|
-| **Ours** B200 (no spec) | 2.5 s | 7.4 s | 9.2 s | **19.1 s** | 10.1 s | 67 words/s |
-| **Ours** MI355X ATOM (no spec) | 4.5 s | 13.2 s | 17.4 s | **35.1 s** | 17.9 s | 35 words/s |
-| **Theirs** B200 +MTP | 2.0 s | 3.6 s | 4.8 s | **10.4 s** | 6.8 s | 166 words/s |
-| **Theirs** B200 (no spec) | 6.9 s | 19.4 s | 14.3 s | **40.7 s** | 30.9 s | 61 words/s |
-| **Theirs** MI355X ATOM +MTP | 2.4 s | 7.2 s | 7.1 s | **16.7 s** | 10.4 s | 95 words/s |
-| **Theirs** MI355X vLLM +MTP | 3.8 s | 11.1 s | 10.9 s | **25.8 s** | 16.3 s | 63 words/s |
+| **Ours** B200 (no spec) | 2.5 s | 7.9 s | 9.2 s | **19.6 s** | 10.6 s | 67 words/s |
+| **Ours** MI355X ATOM (no spec) | 4.5 s | 13.7 s | 17.4 s | **35.6 s** | 18.5 s | 35 words/s |
+| **Theirs** B200 +MTP | 2.0 s | 4.1 s | 4.8 s | **10.9 s** | 7.3 s | 166 words/s |
+| **Theirs** B200 (no spec) | 6.9 s | 30.3 s | 14.3 s | **51.6 s** | 41.8 s | 61 words/s |
+| **Theirs** MI355X ATOM +MTP | 2.4 s | 8.5 s | 7.1 s | **18.0 s** | 11.7 s | 95 words/s |
+| **Theirs** MI355X vLLM +MTP | 3.8 s | 13.7 s | 10.9 s | **28.4 s** | 18.9 s | 63 words/s |
 
-*Worked example, the first row.* §7.4 gives 89.0 tok/s at c=1 and 69.2 at c≈6. Step 1 = 0.23 + 199/89.0 = 2.5 s. Step 2 = 0.23 + 499/69.2 = 7.4 s for all six calls together — a session rate of 402.7 tok/s (the steady-state 414.9, diluted by the 0.23 s prefill), which is §7.3's aggregate column. Step 3 = 0.23 + 799/89.0 = 9.2 s.
+*Worked example, the first row.* §7.4 gives 89.0 tok/s at c=1 and 64.9 at c=8. Step 1 = 0.23 + 199/89.0 = 2.5 s. Step 2 = 0.23 + 499/64.9 = 7.9 s for all eight calls together — a session rate of 504.9 tok/s (the steady-state 519.3, diluted by the 0.23 s prefill), which is §7.3's aggregate column. Step 3 = 0.23 + 799/89.0 = 9.2 s.
 
 **Printing is never the constraint.** Every row prints at 35–166 words/s against a human reading speed of ~4–5. Past ~10 words/s more per-user tok/s is imperceptible — it only shortens the tail before the reader can start scrolling. **What the user feels is the wait before the first word**, which is hidden token generation plus prefill.
 
-**MTP is worth 3.9× on the whole turn** in their B200 data (40.7 s → 10.4 s) — larger than any hardware gap in this table, and it shortens the hidden phases as well as the visible one (§7.6).
+**MTP is worth 4.7× on the whole turn** in their B200 data (51.6 s → 10.9 s) — larger than any hardware gap in this table, and it shortens the hidden phases as well as the visible one (§7.6).
 
-**Do not read the total column across the ours/theirs boundary.** Their TTFT is measured on 100k+ token agentic prompts with prefix caching on; ours on a 1024-token prompt with it off (§7.2). Compare ours-to-ours and theirs-to-theirs. The fan-out phase also assumes the 6 calls are independent — if each needs the previous one's result they run serially and that phase takes ~6× longer.
+**Do not read the total column across the ours/theirs boundary.** Their TTFT is measured on 100k+ token agentic prompts with prefix caching on; ours on a 1024-token prompt with it off (§7.2). Compare ours-to-ours and theirs-to-theirs. The fan-out phase also assumes the 8 calls are independent — if each needs the previous one's result they run serially and that phase takes ~8× longer.
 
 ### 7.6 MTP — what it is, and how to enable it
 

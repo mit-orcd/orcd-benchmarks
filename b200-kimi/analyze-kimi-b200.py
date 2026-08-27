@@ -1376,39 +1376,39 @@ def build_report(b, a, arch, args):
     W("### 7.5 One agent turn, end to end")
     W("")
     W("A user waits for a whole turn, not for a token. Modelled here as one realistic "
-      "agent request — **plan (200 tok) → fan out 6 parallel tool calls (500 tok each, "
+      "agent request — **plan (200 tok) → fan out 8 parallel tool calls (500 tok each, "
       "hidden) → stream the answer (800 tok, shown)** — priced with each system's own "
       "measured TTFT and per-user rate. **English runs ~1.3 tokens per word** (≈0.75 words "
-      "per token), so a 800-token answer is ~600 words and the print rates below are "
+      "per token), so an 800-token answer is ~600 words and the print rates below are "
       "`tok/s × 0.75`.")
     W("")
     W("**Fan-out** = the agent issuing several requests *at the same time* instead of one "
       "after another — searching five files at once, spawning three subagents, calling "
-      "four independent tools. A fan-out of 6 is concurrency 6 from that single agent, "
+      "four independent tools. A fan-out of 8 is concurrency 8 from that single agent, "
       "which is why the concurrency axis in §7.3 and §7.4 maps onto agent behaviour at "
-      "all. It only works when the calls do not depend on each other's results.")
+      "all. It only works when the calls do not depend on each other's results. Real "
+      "fan-out runs ~2–8; **8 is used here because it is a measured point on every sweep "
+      "in §7.3 and §7.4**, so nothing below is interpolated.")
     W("")
+
     def _pu_at(src):
-        """(per-user tok/s at c=1, at c~6, TTFT at c~6 in s) or None if points missing."""
+        """(per-user tok/s at c=1, at c=8, TTFT at c=8 in s, TTFT at c=1 in s) or None."""
         m = {x["max_concurrency"]: x for x in src}
-        if not all(c in m and m[c]["median_tpot_ms"] for c in (1, 4, 8)):
+        if not all(c in m and m[c]["median_tpot_ms"] for c in (1, 8)):
             return None
-        return (1000.0 / m[1]["median_tpot_ms"],
-                ((1000.0 / m[4]["median_tpot_ms"])
-                 + (1000.0 / m[8]["median_tpot_ms"])) / 2.0,
-                (m[4]["median_ttft_ms"] + m[8]["median_ttft_ms"]) / 2000.0,
-                m[1]["median_ttft_ms"] / 1000.0)
+        return (1000.0 / m[1]["median_tpot_ms"], 1000.0 / m[8]["median_tpot_ms"],
+                m[8]["median_ttft_ms"] / 1000.0, m[1]["median_ttft_ms"] / 1000.0)
     _b = _pu_at(rows)
     _a = _pu_at(arows)
     _have = _b is not None
     if _have:
-        _pu1, _pu6, _t6, _t1 = _b
+        _pu1, _pu8, _t8, _t1 = _b
 
     def _c1(v):
         return f"{fmt(v[0])} tok/s" if v else "—"
 
-    def _c6(v):
-        return f"{fmt(v[1])} each → **{fmt(6*v[1])} tok/s** session" if v else "—"
+    def _c8(v):
+        return f"{fmt(v[1])} each → **{fmt(8*v[1])} tok/s** session" if v else "—"
 
     W("**Which number governs each step:**")
     W("")
@@ -1417,53 +1417,49 @@ def build_report(b, a, arch, args):
     W("|---|---:|---|---:|---:|---|")
     W(f"| 1. Plan / pick tools | **1** | per-user tok/s | {_c1(_b)} | {_c1(_a)} | "
       "§7.4, c=1 row |")
-    W("| 2. Six parallel tool calls | **6** | per-user tok/s at c≈6 — six streams run at "
-      f"once, so the *session* rate is 6× that | {_c6(_b)} | {_c6(_a)} | §7.4, "
-      "interpolated between c=4 and c=8; the session rate is §7.3's aggregate column |")
+    W("| 2. Eight parallel tool calls | **8** | per-user tok/s at c=8 — eight streams run "
+      f"at once, so the *session* rate is 8× that | {_c8(_b)} | {_c8(_a)} | §7.4, c=8 row; "
+      "the session rate is §7.3's aggregate column |")
     W(f"| 3. Stream the answer | **1** | per-user tok/s | {_c1(_b)} | {_c1(_a)} | "
       "§7.4, c=1 row |")
     W("")
     W("Each step costs `TTFT + (tokens per stream − 1) ÷ per-user tok/s`. Only the "
       "**per-user** rate enters the arithmetic — the fan-out is already accounted for by "
-      "the fact that six streams run concurrently, so §7.3's aggregate is the same "
+      "the fact that eight streams run concurrently, so §7.3's aggregate is the same "
       "information viewed from the server side, not a second speedup to multiply in. "
-      "(*Close to §7.3's aggregate, not exactly equal*: `6 × per-user` is a steady-state "
-      "rate interpolated to c=6, while the aggregate column is measured tokens ÷ wall "
-      "clock at real sweep points, so it carries the prefill time too.)")
+      "(*Close to §7.3's aggregate, not exactly equal*: `8 × per-user` is a steady-state "
+      "rate, while the aggregate column is measured tokens ÷ wall clock, so it carries the "
+      "prefill time too.)")
     W("")
 
-    def _phase(t1, r1, t6, r6):
-        """Whole-turn timing from (TTFT, per-user tok/s) at c=1 and at the c~6 fan-out."""
+    def _phase(t1, r1, t8, r8):
+        """Whole-turn timing from (TTFT, per-user tok/s) at c=1 and at the c=8 fan-out."""
         plan = t1 + 199.0 / r1
-        tools = t6 + 499.0 / r6
+        tools = t8 + 499.0 / r8
         ans = t1 + 799.0 / r1
         return plan, tools, ans, plan + tools + ans, plan + tools + t1, r1 * 0.75
-
-    def _mid(a, b):
-        return (a + b) / 2.0
 
     tt = {}
     order = []
     for label, src in (("**Ours** B200 (no spec)", rows),
                        ("**Ours** MI355X ATOM (no spec)", arows)):
         m = {x["max_concurrency"]: x for x in src}
-        if not all(c in m and m[c]["median_tpot_ms"] for c in (1, 4, 8)):
+        if not all(c in m and m[c]["median_tpot_ms"] for c in (1, 8)):
             continue
-        pu = {c: 1000.0 / m[c]["median_tpot_ms"] for c in (1, 4, 8)}
+        pu = {c: 1000.0 / m[c]["median_tpot_ms"] for c in (1, 8)}
         tt[label] = _phase(m[1]["median_ttft_ms"] / 1000.0, pu[1],
-                           _mid(m[4]["median_ttft_ms"], m[8]["median_ttft_ms"]) / 1000.0,
-                           _mid(pu[4], pu[8]))
+                           m[8]["median_ttft_ms"] / 1000.0, pu[8])
         order.append(label)
     # Theirs: median_ttft and median_intvty from the API dump in ../semianalysis-ref/.
     for label, t1, r1, t6, r6 in (
-            ("**Theirs** B200 +MTP", 1.15, 221.7, 0.83, _mid(203.3, 154.1)),
-            ("**Theirs** B200 (no spec)", 4.52, 81.9, 6.17, _mid(54.1, 21.1)),
-            ("**Theirs** MI355X ATOM +MTP", 0.80, 127.2, 0.72, _mid(88.7, 64.7)),
-            ("**Theirs** MI355X vLLM +MTP", 1.41, 84.0, 1.54, _mid(62.5, 41.4))):
+            ("**Theirs** B200 +MTP", 1.15, 221.7, 0.86, 154.1),
+            ("**Theirs** B200 (no spec)", 4.52, 81.9, 6.70, 21.1),
+            ("**Theirs** MI355X ATOM +MTP", 0.80, 127.2, 0.80, 64.7),
+            ("**Theirs** MI355X vLLM +MTP", 1.41, 84.0, 1.63, 41.4)):
         tt[label] = _phase(t1, r1, t6, r6)
         order.append(label)
 
-    W("| System | Plan | 6 tool calls | Answer | **Whole turn** | First word at | Print rate |")
+    W("| System | Plan | 8 tool calls | Answer | **Whole turn** | First word at | Print rate |")
     W("|---|---:|---:|---:|---:|---:|---:|")
     for label in order:
         p_, t_, a_, tot_, fw_, wps_ = tt[label]
@@ -1472,13 +1468,12 @@ def build_report(b, a, arch, args):
     W("")
     if _have:
         W(f"*Worked example, the first row.* §7.4 gives {fmt(_pu1)} tok/s at c=1 and "
-          f"{fmt(_pu6)} at c≈6. Step 1 = {_t1:.2f} + 199/"
-          f"{fmt(_pu1)} = {tt[order[0]][0]:.1f} s. Step 2 = {_t6:.2f} + 499/{fmt(_pu6)} = "
-          f"{tt[order[0]][1]:.1f} s for all six calls together — a session rate of "
-          f"{fmt(3000/tt[order[0]][1])} tok/s (the steady-state {fmt(6*_pu6)}, diluted by "
-          f"the {_t6:.2f} s prefill), which is §7.3's aggregate column. "
-          f"Step 3 = {_t1:.2f} + 799/{fmt(_pu1)} = "
-          f"{tt[order[0]][2]:.1f} s.")
+          f"{fmt(_pu8)} at c=8. Step 1 = {_t1:.2f} + 199/{fmt(_pu1)} = "
+          f"{tt[order[0]][0]:.1f} s. Step 2 = {_t8:.2f} + 499/{fmt(_pu8)} = "
+          f"{tt[order[0]][1]:.1f} s for all eight calls together — a session rate of "
+          f"{fmt(4000/tt[order[0]][1])} tok/s (the steady-state {fmt(8*_pu8)}, diluted by "
+          f"the {_t8:.2f} s prefill), which is §7.3's aggregate column. "
+          f"Step 3 = {_t1:.2f} + 799/{fmt(_pu1)} = {tt[order[0]][2]:.1f} s.")
         W("")
     W("**Printing is never the constraint.** Every row prints at "
       f"{min(v[5] for v in tt.values()):.0f}–{max(v[5] for v in tt.values()):.0f} words/s "
@@ -1497,8 +1492,8 @@ def build_report(b, a, arch, args):
     W("**Do not read the total column across the ours/theirs boundary.** Their TTFT is "
       "measured on 100k+ token agentic prompts with prefix caching on; ours on a 1024-token "
       "prompt with it off (§7.2). Compare ours-to-ours and theirs-to-theirs. The fan-out "
-      "phase also assumes the 6 calls are independent — if each needs the previous one's "
-      "result they run serially and that phase takes ~6× longer.")
+      "phase also assumes the 8 calls are independent — if each needs the previous one's "
+      "result they run serially and that phase takes ~8× longer.")
     W("")
 
     W("### 7.6 MTP — what it is, and how to enable it")
