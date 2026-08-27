@@ -1073,6 +1073,21 @@ def build_report(b, a, arch, args):
     W(f"| GPUs to serve the model | {angpu} | {ngpu} | "
       f"{angpu/ngpu:.2f}× |")
     W("")
+    # Readers routinely mistake the peak aggregate number for a per-request speed.
+    # State plainly which workload each view answers for.
+    W(f"**What the peak numbers mean.** These are *aggregate* rates — the sum over all "
+      f"{pk['max_concurrency']} in-flight requests, i.e. what the server delivers, not what "
+      f"one request sees. At c={pk['max_concurrency']} an individual stream gets only "
+      f"{fmt(1000.0/pk['median_tpot_ms'],1)} tok/s on B200 and "
+      f"{fmt(1000.0/apk['median_tpot_ms'],1)} tok/s on MI355X (§6.4). Which view is "
+      "\"real world\" depends on the workload, not the user count: one interactive chat "
+      "issues one request at a time and feels per-user tok/s, while a batch job or an "
+      "agentic app fanning out parallel calls fills the server itself and gets the "
+      "aggregate rate. Both matter; here they agree on the ranking (B200 wins "
+      f"{pk['output_throughput']/apk['output_throughput']:.2f}× aggregate"
+      + (f", {afirst['median_tpot_ms']/first['median_tpot_ms']:.2f}× per-user at c=1"
+         if afirst else "") + ").")
+    W("")
 
     W("### 6.4 Latency")
     W("")

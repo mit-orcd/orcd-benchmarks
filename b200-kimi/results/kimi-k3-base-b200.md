@@ -358,6 +358,8 @@ The asymmetry is stark: **HBM moves ~67 GB/step while NVLink moves ~0.15 GB and 
 | Peak tok/s **per node** | 1,258.5 | 848.2 | 1.48× |
 | GPUs to serve the model | 8 | 16 | 0.50× |
 
+**What the peak numbers mean.** These are *aggregate* rates — the sum over all 64 in-flight requests, i.e. what the server delivers, not what one request sees. At c=64 an individual stream gets only 27.9 tok/s on B200 and 20.0 tok/s on MI355X (§6.4). Which view is "real world" depends on the workload, not the user count: one interactive chat issues one request at a time and feels per-user tok/s, while a batch job or an agentic app fanning out parallel calls fills the server itself and gets the aggregate rate. Both matter; here they agree on the ranking (B200 wins 1.35× aggregate, 1.91× per-user at c=1).
+
 ### 6.4 Latency
 
 | Conc | MI355X TTFT | B200 TTFT | MI355X TPOT | B200 TPOT | MI355X per-user tok/s | B200 per-user tok/s | **B200/MI355X** |
@@ -546,8 +548,8 @@ Ceiling is draft length × acceptance rate — never the full N, since not every
 
 | What | Where |
 |---|---|
-| B200 sweep (per-concurrency JSON) | `logs/kimi_base_20260821_130024/sweep` |
-| B200 server log | `logs/kimi_base_20260821_130024/server/vllm_server.log` |
+| B200 sweep (per-concurrency JSON) | `/orcd/data/orcd/022/benchmarks/b200-kimi/logs/kimi_base_20260821_130024/sweep` |
+| B200 server log | `/orcd/data/orcd/022/benchmarks/b200-kimi/logs/kimi_base_20260821_130024/server/vllm_server.log` |
 | MI355X sweep | `/orcd/data/orcd/022/benchmarks/amd-benchmarks/amd-cloud/logs/atom/sweep_20260814_164903` |
 | MI355X server log | `/orcd/data/orcd/022/benchmarks/amd-benchmarks/amd-cloud/logs/atom/server_20260814_164506/atom_server.log` |
 | Model config | `/orcd/compute/orcd/025/models/Kimi-K3/config.json` |
