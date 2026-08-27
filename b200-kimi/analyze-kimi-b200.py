@@ -1129,6 +1129,34 @@ def build_report(b, a, arch, args):
           "including why none of the §3.2 levers improve the single-user case.")
     W("")
 
+    # A single agent session is a low-concurrency client, so the peak aggregate number in
+    # 6.3 is the wrong one to quote at anybody sizing an agent workload.
+    W("**What an agent app should expect.** One agent session is mostly serial — a single "
+      "in-flight request at a time, with occasional fan-out (parallel tool calls, "
+      "subagents) of ~2–8. So one agent user sits at c=1–8, and reads the per-user column:")
+    W("")
+    W(f"| What the agent is doing | Conc | {angpu}× MI355X tok/s | {ngpu}× B200 tok/s |")
+    W("|---|---:|---:|---:|")
+    agent_labels = {1: "Serial turn — one request at a time",
+                    2: "Light fan-out", 4: "Light fan-out",
+                    8: "Heavy fan-out — 8 parallel calls"}
+    for r in rows:
+        c = r["max_concurrency"]
+        if c not in agent_labels:
+            continue
+        ar = amap.get(c)
+        pu_b = 1000.0 / r["median_tpot_ms"] if r["median_tpot_ms"] else None
+        pu_a = 1000.0 / ar["median_tpot_ms"] if (ar and ar["median_tpot_ms"]) else None
+        W(f"| {agent_labels[c]} | {c} | {fmt(pu_a) if pu_a else '—'} | "
+          f"{fmt(pu_b) if pu_b else '—'} |")
+    W("")
+    W("Server-side concurrency of 32–64 comes from *many* users, not one agent — the peak "
+      "aggregate rate in §6.3 only appears when that many streams are in flight at once. "
+      "Note these come from a fixed 1024-in/1024-out sweep; real agent traffic has much "
+      "longer, cache-heavy prompts, so TTFT would be worse and TPOT somewhat better with "
+      "prefix caching on (§7).")
+    W("")
+
     W("### 6.5 Where each system's headroom is")
     W("")
     W("| Resource (at peak concurrency) | MI355X | B200 |")

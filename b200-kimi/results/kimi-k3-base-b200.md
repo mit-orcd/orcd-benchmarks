@@ -383,6 +383,17 @@ The two results are not in conflict; they answer different questions:
 
 B200's lower per-token latency wins the second question and survives even the PP2 pipeline penalty. See `notes-concurrency.md` for the full treatment, including why none of the §3.2 levers improve the single-user case.
 
+**What an agent app should expect.** One agent session is mostly serial — a single in-flight request at a time, with occasional fan-out (parallel tool calls, subagents) of ~2–8. So one agent user sits at c=1–8, and reads the per-user column:
+
+| What the agent is doing | Conc | 8× MI355X tok/s | 16× B200 tok/s |
+|---|---:|---:|---:|
+| Serial turn — one request at a time | 1 | 46.6 | 89.0 |
+| Light fan-out | 2 | 44.3 | 84.4 |
+| Light fan-out | 4 | 40.0 | 73.4 |
+| Heavy fan-out — 8 parallel calls | 8 | 37.0 | 64.9 |
+
+Server-side concurrency of 32–64 comes from *many* users, not one agent — the peak aggregate rate in §6.3 only appears when that many streams are in flight at once. Note these come from a fixed 1024-in/1024-out sweep; real agent traffic has much longer, cache-heavy prompts, so TTFT would be worse and TPOT somewhat better with prefix caching on (§7).
+
 ### 6.5 Where each system's headroom is
 
 | Resource (at peak concurrency) | MI355X | B200 |
