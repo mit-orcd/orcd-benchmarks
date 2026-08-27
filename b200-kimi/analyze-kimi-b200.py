@@ -768,7 +768,7 @@ def build_report(b, a, arch, args):
     W("2. **Speculative decoding / MTP** — verifies several tokens per weight read, widening "
       "the GEMM exactly as a larger batch does. The upstream vLLM recipe gates DSpark off "
       "its `multi_node_tp_pp` profile, but that is a recipe default, not an engine limit: "
-      "SemiAnalysis run DSpark on B200 TP8×PP2 (§7.5 has the setup). Untested on this run — "
+      "SemiAnalysis run DSpark on B200 TP8×PP2 (§7.6 has the setup). Untested on this run — "
       "the speculator model is not downloaded here.")
     W("3. **Expert parallelism** — fewer, whole expert reads per GPU, paid for with all-to-all "
       "over the near-idle interconnect. On MI355X this was tested and is **unsupported** "
@@ -926,7 +926,7 @@ def build_report(b, a, arch, args):
       f"{gb(args.weight_bytes):.0f} GB of weights against {gb(node_hbm_b):.0f} GB of node "
       f"HBM — {gb(short_b):.0f} GB short. The consequence is not just "
       "\"more GPUs\": DSpark speculative decoding needs an extra shim and DCP flags to "
-      "work with PP2 (§7.5) rather than dropping in for free as it does on one node, "
+      "work with PP2 (§7.6) rather than dropping in for free as it does on one node, "
       "and PP adds a pipeline bubble plus halves the per-GPU weight residency. A B300 "
       "node (8 × 268 GB = 2144 GB) would hold it single-node; a B200 node cannot.")
     W("")
@@ -1231,7 +1231,7 @@ def build_report(b, a, arch, args):
     W("| Benchmark client | **both** | `vllm bench serve` | `aiperf` + trace replay | different "
       "measurement harness |")
     W("| **Spec decoding (MTP)** | **MI355X** | **off** | **DSpark MTP on** (`SPEC_NUM_TOKENS 2`) | "
-      "their MI355X arm gets a lever ours does not use — see §7.5 |")
+      "their MI355X arm gets a lever ours does not use — see §7.6 |")
     W("| `max-num-seqs` | **MI355X** | 64 | 128 | their MI355X runs a deeper batch |")
     W("| Serving engine | **MI355X** | ATOM (our baseline) | vLLM ROCm *and* an ATOM variant | "
       "we compare ATOM-vs-vLLM; they run both |")
@@ -1310,7 +1310,7 @@ def build_report(b, a, arch, args):
       "work — it just is not output. (Their `tput_per_gpu` is computed on that total, "
       "which is why it looks so large.)")
     W("- **Their per-user lead is a real software lever** — MTP, which we do not use. "
-      "Turning it on would raise *both* of our columns (§7.5).")
+      "Turning it on would raise *both* of our columns (§7.6).")
     W("")
     W("**Which view is \"real world\" depends on the workload, not the user count.** One "
       "interactive chat issues one request at a time and feels per-user tok/s; a batch job "
@@ -1361,37 +1361,86 @@ def build_report(b, a, arch, args):
       "columns differ in workload (agentic traces vs fixed 1024/1024), prefix caching "
       "(on vs off) and context (1M vs 16K), so this is not a like-for-like ranking.")
     W("")
-    W("#### What an agent app should expect")
+    W("**What the table shows, in three points:**")
     W("")
-    ours_pu = {r["max_concurrency"]: (1000.0 / r["median_tpot_ms"])
-               for r in rows if r["median_tpot_ms"]}
-    W("An agent fans out to a few parallel tool calls or subagents, so it runs at c=1–8. "
-      "Per-user tok/s *falls* with fan-out — but the user is not waiting on one stream, "
-      "they are waiting on all N to finish at once. What they feel is **session tok/s = "
-      "N × per-user**, which is simply our aggregate column (§1) when one agent owns the "
-      "machine:")
+    W("1. **Our B200 no-spec number matches theirs at c=1** (89.0 vs 81.9) — an "
+      "independent check that our TP8×PP2 setup is performing normally, not "
+      "misconfigured.")
+    W("2. **MTP is worth ~2.7× at c=1 on B200**, in their own data, same hardware — the "
+      "single largest lever in this table. §7.6 shows how to get it.")
+    W("3. **On equal footing (no spec decoding, low concurrency) B200 and MI355X land "
+      "far closer than either vendor's best-configured number suggests.** The biggest "
+      "differentiator in the whole table is MTP — a **software** feature both platforms "
+      "can run, not a silicon difference.")
     W("")
-    W(f"| Agent fan-out | Per-user tok/s | **Session tok/s** | Wall clock for N × {args.osl} tok |")
-    W("|---:|---:|---:|---:|")
-    wall = {}
-    for c in (1, 2, 4, 8):
-        r = next((x for x in rows if x["max_concurrency"] == c), None)
-        if not r:
+    W("### 7.5 One agent turn, end to end")
+    W("")
+    W("A user waits for a whole turn, not for a token. Modelled here as one realistic "
+      "agent request — **plan (200 tok) → fan out 6 parallel tool calls (500 tok each, "
+      "hidden) → stream the answer (800 tok, shown)** — priced with each system's own "
+      "measured TTFT and per-user rate. English runs ~0.75 words per token.")
+    W("")
+
+    def _phase(t1, r1, t6, r6):
+        """Whole-turn timing from (TTFT, per-user tok/s) at c=1 and at the c~6 fan-out."""
+        plan = t1 + 199.0 / r1
+        tools = t6 + 499.0 / r6
+        ans = t1 + 799.0 / r1
+        return plan, tools, ans, plan + tools + ans, plan + tools + t1, r1 * 0.75
+
+    def _mid(a, b):
+        return (a + b) / 2.0
+
+    tt = {}
+    order = []
+    for label, src in (("**Ours** B200 (no spec)", rows),
+                       ("**Ours** MI355X ATOM (no spec)", arows)):
+        m = {x["max_concurrency"]: x for x in src}
+        if not all(c in m and m[c]["median_tpot_ms"] for c in (1, 4, 8)):
             continue
-        wall[c] = r["median_ttft_ms"] / 1000.0 + args.osl * r["median_tpot_ms"] / 1000.0
-        W(f"| {c} call{'s' if c > 1 else ''} | {fmt(ours_pu[c])} | "
-          f"{fmt(r['output_throughput'])} | {wall[c]:.1f} s |")
+        pu = {c: 1000.0 / m[c]["median_tpot_ms"] for c in (1, 4, 8)}
+        tt[label] = _phase(m[1]["median_ttft_ms"] / 1000.0, pu[1],
+                           _mid(m[4]["median_ttft_ms"], m[8]["median_ttft_ms"]) / 1000.0,
+                           _mid(pu[4], pu[8]))
+        order.append(label)
+    # Theirs: median_ttft and median_intvty from the API dump in ../semianalysis-ref/.
+    for label, t1, r1, t6, r6 in (
+            ("**Theirs** B200 +MTP", 1.15, 221.7, 0.83, _mid(203.3, 154.1)),
+            ("**Theirs** B200 (no spec)", 4.52, 81.9, 6.17, _mid(54.1, 21.1)),
+            ("**Theirs** MI355X ATOM +MTP", 0.80, 127.2, 0.72, _mid(88.7, 64.7)),
+            ("**Theirs** MI355X vLLM +MTP", 1.41, 84.0, 1.54, _mid(62.5, 41.4))):
+        tt[label] = _phase(t1, r1, t6, r6)
+        order.append(label)
+
+    W("| System | Plan | 6 tool calls | Answer | **Whole turn** | First word at | Print rate |")
+    W("|---|---:|---:|---:|---:|---:|---:|")
+    for label in order:
+        p_, t_, a_, tot_, fw_, wps_ = tt[label]
+        W(f"| {label} | {p_:.1f} s | {t_:.1f} s | {a_:.1f} s | **{tot_:.1f} s** | "
+          f"{fw_:.1f} s | {wps_:.0f} words/s |")
     W("")
-    if 1 in wall and 8 in wall:
-        W(f"Eight calls in parallel finish in **{wall[8]:.1f} s**; the same eight done one "
-          f"after another take 8 × {wall[1]:.1f} = **{8*wall[1]:.1f} s** — fan-out is "
-          f"**{8*wall[1]/wall[8]:.1f}× faster in wall clock**, even though each stream is "
-          f"{100*(1-ours_pu[8]/ours_pu[1]):.0f}% slower. The per-stream slowdown is "
-          "sublinear, which is why fanning out wins.")
+    W("**Printing is never the constraint.** Every row prints at "
+      f"{min(v[5] for v in tt.values()):.0f}–{max(v[5] for v in tt.values()):.0f} words/s "
+      "against a human reading speed of ~4–5. Past ~10 words/s more per-user tok/s is "
+      "imperceptible — it only shortens the tail before the reader can start scrolling. "
+      "**What the user feels is the wait before the first word**, which is hidden token "
+      "generation plus prefill.")
+    W("")
+    b_mtp = tt.get("**Theirs** B200 +MTP")
+    b_no = tt.get("**Theirs** B200 (no spec)")
+    if b_mtp and b_no:
+        W(f"**MTP is worth {b_no[3]/b_mtp[3]:.1f}× on the whole turn** in their B200 data "
+          f"({b_no[3]:.1f} s → {b_mtp[3]:.1f} s) — larger than any hardware gap in this "
+          "table, and it shortens the hidden phases as well as the visible one (§7.6).")
         W("")
-    W("So: per-user tok/s answers *how fast does this one answer stream*; session tok/s "
-      "answers *how fast does this turn finish*. For a fan-out agent it is the second. "
-      "MTP raises both (§7.5).")
+    W("**Do not read the total column across the ours/theirs boundary.** Their TTFT is "
+      "measured on 100k+ token agentic prompts with prefix caching on; ours on a 1024-token "
+      "prompt with it off (§7.2). Compare ours-to-ours and theirs-to-theirs. The fan-out "
+      "phase also assumes the 6 calls are independent — if each needs the previous one's "
+      "result they run serially and that phase takes ~6× longer.")
+    W("")
+
+    W("### 7.6 MTP — what it is, and how to enable it")
     W("")
     W("#### What \"MTP\" is — and it is software, not silicon")
     W("")
@@ -1438,22 +1487,10 @@ def build_report(b, a, arch, args):
     W("**One fact that matters for reading the table:** Kimi-K3 has no built-in MTP head "
       f"(`num_nextn_predict_layers = {arch.raw.get('text_config',{}).get('num_nextn_predict_layers', 0)}`) "
       "— the gain comes from **DSpark**, a separate speculator model, downloaded and run "
-      "alongside it. \"MTP\" names the technique, not a checkpoint feature (§7.5 has the "
-      "how-to, for both platforms).")
+      "alongside it. \"MTP\" names the technique, not a checkpoint feature — the how-to "
+      "follows below, for both platforms.")
     W("")
-    W("**What the table shows, in three points:**")
-    W("")
-    W("1. **Our B200 no-spec number matches theirs at c=1** (89.0 vs 81.9) — an "
-      "independent check that our TP8×PP2 setup is performing normally, not "
-      "misconfigured.")
-    W("2. **MTP is worth ~2.7× at c=1 on B200**, in their own data, same hardware — the "
-      "single largest lever in this table. §7.5 shows how to get it.")
-    W("3. **On equal footing (no spec decoding, low concurrency) B200 and MI355X land "
-      "far closer than either vendor's best-configured number suggests.** The biggest "
-      "differentiator in the whole table is MTP — a **software** feature both platforms "
-      "can run, not a silicon difference.")
-    W("")
-    W("### 7.5 How to enable MTP — B200 and MI355X")
+    W("#### How to enable it — B200 and MI355X")
     W("")
     W("**Correction to an earlier claim in this report:** spec decoding does *not* "
       "require single-node TP. That was inferred from the upstream vLLM recipe gating "
@@ -1496,7 +1533,7 @@ def build_report(b, a, arch, args):
     W("```")
     W("")
     W("**Neither was attempted here** — the speculator is not downloaded "
-      "(`HF_HUB_OFFLINE=1`). Given the ~2.7× per-user gain at c=1 measured in §7.4, this "
+      "(`HF_HUB_OFFLINE=1`). Given the ~2.7× per-user gain at c=1 measured above, this "
       "is the single highest-value follow-up available — bigger than any lever in §3.2.")
     W("")
     W("---")

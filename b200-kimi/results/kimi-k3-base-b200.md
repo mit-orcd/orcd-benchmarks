@@ -192,7 +192,7 @@ HBM is the binding resource at ~23%, but the box is not delivering all the HBM i
 Ranked levers:
 
 1. **Raise `--max-num-seqs`** (64 → 256+). Biggest lever, costs nothing, and the KV memory is already provisioned (§2). This is the same conclusion the MI355X run reached, and for the same reason.
-2. **Speculative decoding / MTP** — verifies several tokens per weight read, widening the GEMM exactly as a larger batch does. The upstream vLLM recipe gates DSpark off its `multi_node_tp_pp` profile, but that is a recipe default, not an engine limit: SemiAnalysis run DSpark on B200 TP8×PP2 (§7.5 has the setup). Untested on this run — the speculator model is not downloaded here.
+2. **Speculative decoding / MTP** — verifies several tokens per weight read, widening the GEMM exactly as a larger batch does. The upstream vLLM recipe gates DSpark off its `multi_node_tp_pp` profile, but that is a recipe default, not an engine limit: SemiAnalysis run DSpark on B200 TP8×PP2 (§7.6 has the setup). Untested on this run — the speculator model is not downloaded here.
 3. **Expert parallelism** — fewer, whole expert reads per GPU, paid for with all-to-all over the near-idle interconnect. On MI355X this was tested and is **unsupported** (ATOM raises `NotImplementedError` for EP with the MXFP4 SiTUv2 kernel). On B200 it is worth testing separately; it is deliberately **off** here because the MI355X baseline has it off, and arm A exists to hold everything but the hardware constant.
 4. **Prefill/decode disaggregation** — the recipe ships a `pd_cluster` profile.
 
@@ -290,7 +290,7 @@ The asymmetry is stark: **HBM moves ~67 GB/step while NVLink moves ~0.15 GB and 
 
 ## 5. Further discussion
 
-**1. Two nodes is a property of the model, not a choice.** 1561 GB of weights against 1538 GB of node HBM — 23 GB short. The consequence is not just "more GPUs": DSpark speculative decoding needs an extra shim and DCP flags to work with PP2 (§7.5) rather than dropping in for free as it does on one node, and PP adds a pipeline bubble plus halves the per-GPU weight residency. A B300 node (8 × 268 GB = 2144 GB) would hold it single-node; a B200 node cannot.
+**1. Two nodes is a property of the model, not a choice.** 1561 GB of weights against 1538 GB of node HBM — 23 GB short. The consequence is not just "more GPUs": DSpark speculative decoding needs an extra shim and DCP flags to work with PP2 (§7.6) rather than dropping in for free as it does on one node, and PP adds a pipeline bubble plus halves the per-GPU weight residency. A B300 node (8 × 268 GB = 2144 GB) would hold it single-node; a B200 node cannot.
 
 **2. `max_num_seqs=64` is the binding limit, not hardware.** KV was ~2.0% used and compute ~1%.
 
@@ -452,7 +452,7 @@ Two independent teams, different clusters, same conclusions — including the ex
 | `max-model-len` | **both** | 16384 | native **1M** (unset) | theirs pays a far larger KV footprint per sequence |
 | `max-num-seqs` | **B200** | **64** (fixed) | let vLLM choose | ours deliberately caps the batch; §3.2 shows that cap is what binds our throughput |
 | Benchmark client | **both** | `vllm bench serve` | `aiperf` + trace replay | different measurement harness |
-| **Spec decoding (MTP)** | **MI355X** | **off** | **DSpark MTP on** (`SPEC_NUM_TOKENS 2`) | their MI355X arm gets a lever ours does not use — see §7.5 |
+| **Spec decoding (MTP)** | **MI355X** | **off** | **DSpark MTP on** (`SPEC_NUM_TOKENS 2`) | their MI355X arm gets a lever ours does not use — see §7.6 |
 | `max-num-seqs` | **MI355X** | 64 | 128 | their MI355X runs a deeper batch |
 | Serving engine | **MI355X** | ATOM (our baseline) | vLLM ROCm *and* an ATOM variant | we compare ATOM-vs-vLLM; they run both |
 
@@ -493,7 +493,7 @@ So `aggregate ÷ concurrency` is always ≤ per-user tok/s, and the gap is the *
 Their traces average **~138k input tokens** per request against a handful of output tokens, so half their wall clock is prefill; our `--ignore-eos` 1024/1024 shape keeps nearly every slot decoding continuously. Neither number is a hardware verdict:
 
 - **Our aggregate lead is a workload artifact.** Counting *all* tokens processed, our c=64 run moves ~3,389.7 tok/s (input + output); their c=32 run moves **111,970**. They do far more token work — it just is not output. (Their `tput_per_gpu` is computed on that total, which is why it looks so large.)
-- **Their per-user lead is a real software lever** — MTP, which we do not use. Turning it on would raise *both* of our columns (§7.5).
+- **Their per-user lead is a real software lever** — MTP, which we do not use. Turning it on would raise *both* of our columns (§7.6).
 
 **Which view is "real world" depends on the workload, not the user count.** One interactive chat issues one request at a time and feels per-user tok/s; a batch job or an agentic app fanning out parallel calls fills the server itself and gets the aggregate rate. Their data makes the same point from the other side: their aggregate column is a *capacity* number measured under agentic load, which is why it is dominated by prefill and says almost nothing about how fast a single agent turn streams. For that, read §7.4.
 
@@ -520,20 +520,32 @@ Retrieved live from their public API (`/api/v1/benchmarks?model=Kimi-K3`); raw J
 
 Units: output tokens/s delivered to a single request. Theirs are `median_intvty`; ours are `1000 / median TPOT`. **Read across rows with care — see §7.2.** The columns differ in workload (agentic traces vs fixed 1024/1024), prefix caching (on vs off) and context (1M vs 16K), so this is not a like-for-like ranking.
 
-#### What an agent app should expect
+**What the table shows, in three points:**
 
-An agent fans out to a few parallel tool calls or subagents, so it runs at c=1–8. Per-user tok/s *falls* with fan-out — but the user is not waiting on one stream, they are waiting on all N to finish at once. What they feel is **session tok/s = N × per-user**, which is simply our aggregate column (§1) when one agent owns the machine:
+1. **Our B200 no-spec number matches theirs at c=1** (89.0 vs 81.9) — an independent check that our TP8×PP2 setup is performing normally, not misconfigured.
+2. **MTP is worth ~2.7× at c=1 on B200**, in their own data, same hardware — the single largest lever in this table. §7.6 shows how to get it.
+3. **On equal footing (no spec decoding, low concurrency) B200 and MI355X land far closer than either vendor's best-configured number suggests.** The biggest differentiator in the whole table is MTP — a **software** feature both platforms can run, not a silicon difference.
 
-| Agent fan-out | Per-user tok/s | **Session tok/s** | Wall clock for N × 1024 tok |
-|---:|---:|---:|---:|
-| 1 call | 89.0 | 86.7 | 11.7 s |
-| 2 calls | 84.4 | 165.2 | 12.3 s |
-| 4 calls | 73.4 | 280.8 | 14.2 s |
-| 8 calls | 64.9 | 475.3 | 16.0 s |
+### 7.5 One agent turn, end to end
 
-Eight calls in parallel finish in **16.0 s**; the same eight done one after another take 8 × 11.7 = **93.9 s** — fan-out is **5.9× faster in wall clock**, even though each stream is 27% slower. The per-stream slowdown is sublinear, which is why fanning out wins.
+A user waits for a whole turn, not for a token. Modelled here as one realistic agent request — **plan (200 tok) → fan out 6 parallel tool calls (500 tok each, hidden) → stream the answer (800 tok, shown)** — priced with each system's own measured TTFT and per-user rate. English runs ~0.75 words per token.
 
-So: per-user tok/s answers *how fast does this one answer stream*; session tok/s answers *how fast does this turn finish*. For a fan-out agent it is the second. MTP raises both (§7.5).
+| System | Plan | 6 tool calls | Answer | **Whole turn** | First word at | Print rate |
+|---|---:|---:|---:|---:|---:|---:|
+| **Ours** B200 (no spec) | 2.5 s | 7.4 s | 9.2 s | **19.1 s** | 10.1 s | 67 words/s |
+| **Ours** MI355X ATOM (no spec) | 4.5 s | 13.2 s | 17.4 s | **35.1 s** | 17.9 s | 35 words/s |
+| **Theirs** B200 +MTP | 2.0 s | 3.6 s | 4.8 s | **10.4 s** | 6.8 s | 166 words/s |
+| **Theirs** B200 (no spec) | 6.9 s | 19.4 s | 14.3 s | **40.7 s** | 30.9 s | 61 words/s |
+| **Theirs** MI355X ATOM +MTP | 2.4 s | 7.2 s | 7.1 s | **16.7 s** | 10.4 s | 95 words/s |
+| **Theirs** MI355X vLLM +MTP | 3.8 s | 11.1 s | 10.9 s | **25.8 s** | 16.3 s | 63 words/s |
+
+**Printing is never the constraint.** Every row prints at 35–166 words/s against a human reading speed of ~4–5. Past ~10 words/s more per-user tok/s is imperceptible — it only shortens the tail before the reader can start scrolling. **What the user feels is the wait before the first word**, which is hidden token generation plus prefill.
+
+**MTP is worth 3.9× on the whole turn** in their B200 data (40.7 s → 10.4 s) — larger than any hardware gap in this table, and it shortens the hidden phases as well as the visible one (§7.6).
+
+**Do not read the total column across the ours/theirs boundary.** Their TTFT is measured on 100k+ token agentic prompts with prefix caching on; ours on a 1024-token prompt with it off (§7.2). Compare ours-to-ours and theirs-to-theirs. The fan-out phase also assumes the 6 calls are independent — if each needs the previous one's result they run serially and that phase takes ~6× longer.
+
+### 7.6 MTP — what it is, and how to enable it
 
 #### What "MTP" is — and it is software, not silicon
 
@@ -559,15 +571,9 @@ Measured gain in their B200 data (MTP vs no-spec, same hardware):
 
 Ceiling is draft length × acceptance rate — never the full N, since not every guess is accepted.
 
-**One fact that matters for reading the table:** Kimi-K3 has no built-in MTP head (`num_nextn_predict_layers = 0`) — the gain comes from **DSpark**, a separate speculator model, downloaded and run alongside it. "MTP" names the technique, not a checkpoint feature (§7.5 has the how-to, for both platforms).
+**One fact that matters for reading the table:** Kimi-K3 has no built-in MTP head (`num_nextn_predict_layers = 0`) — the gain comes from **DSpark**, a separate speculator model, downloaded and run alongside it. "MTP" names the technique, not a checkpoint feature — the how-to follows below, for both platforms.
 
-**What the table shows, in three points:**
-
-1. **Our B200 no-spec number matches theirs at c=1** (89.0 vs 81.9) — an independent check that our TP8×PP2 setup is performing normally, not misconfigured.
-2. **MTP is worth ~2.7× at c=1 on B200**, in their own data, same hardware — the single largest lever in this table. §7.5 shows how to get it.
-3. **On equal footing (no spec decoding, low concurrency) B200 and MI355X land far closer than either vendor's best-configured number suggests.** The biggest differentiator in the whole table is MTP — a **software** feature both platforms can run, not a silicon difference.
-
-### 7.5 How to enable MTP — B200 and MI355X
+#### How to enable it — B200 and MI355X
 
 **Correction to an earlier claim in this report:** spec decoding does *not* require single-node TP. That was inferred from the upstream vLLM recipe gating DSpark off `multi_node_tp_pp` — a **recipe default, not an engine limit**. SemiAnalysis's own B200 recipe runs DSpark with `pipeline-parallel-size: 2`. **MTP is already built into our image** (`vllm/vllm-openai:kimi-k3`) — the `dspark` method, `KimiK3MTP`, and `TOKENSPEED_MLA` are all present. No new package. Both platforms use the **same speculator model**, `Inferact/Kimi-K3-DSpark`.
 
@@ -596,7 +602,7 @@ Ceiling is draft length × acceptance rate — never the full N, since not every
  "method": "dspark", "attention_backend": "TRITON_MLA"}
 ```
 
-**Neither was attempted here** — the speculator is not downloaded (`HF_HUB_OFFLINE=1`). Given the ~2.7× per-user gain at c=1 measured in §7.4, this is the single highest-value follow-up available — bigger than any lever in §3.2.
+**Neither was attempted here** — the speculator is not downloaded (`HF_HUB_OFFLINE=1`). Given the ~2.7× per-user gain at c=1 measured above, this is the single highest-value follow-up available — bigger than any lever in §3.2.
 
 ---
 
