@@ -1314,14 +1314,41 @@ def build_report(b, a, arch, args):
             + [fmt(ar["output_throughput"]) if ar else "—"]
         W(f"| {c} | " + " | ".join(cells) + " |")
     W("")
-    W("**Their output tok/s look small because agentic traces are input-heavy, not because "
-      "the servers are slow.** Their traces read enormous prompts and emit few tokens per "
-      "turn, so output is a sliver of the work: the same c=96 run that shows 1,159 output "
-      "tok/s moves **145,266 tok/s total** (input + output), and their per-GPU figure "
-      "(`tput_per_gpu`) is computed on that total. Ours is a fixed 1024-in/1024-out shape "
-      "where output tok/s *is* essentially the whole story. **This column pair is the "
-      "least comparable in the whole report** — §7.4's per-user view is the one that "
-      "survives the workload difference.")
+    # The obvious question on seeing this table next to 7.4's: we win one and lose the
+    # other. Answer it here rather than leaving the reader to assume a hardware verdict.
+    W("#### Why ours leads here but trails on per-user tok/s (§7.4)")
+    W("")
+    W("The two metrics have different denominators:")
+    W("")
+    W("- **Per-user tok/s** = `1 / TPOT` — the rate a request streams *while it is "
+      "decoding*. Measured directly (their `median_intvty`, our median TPOT).")
+    W("- **Aggregate tok/s** = output tokens ÷ total wall clock — which includes every "
+      "second spent on **prefill**, producing no output at all.")
+    W("")
+    W("So `aggregate ÷ concurrency` is always ≤ per-user tok/s, and the gap is the "
+      "**decode duty cycle** — the fraction of the run that was decode rather than prefill:")
+    W("")
+    W("| | Conc | Aggregate | ÷ conc | Per-user (measured) | Duty cycle |")
+    W("|---|---:|---:|---:|---:|---:|")
+    pu_pk = 1000.0 / pk["median_tpot_ms"]
+    W(f"| **Ours** B200, 1024/1024 | {pk['max_concurrency']} | "
+      f"{fmt(pk['output_throughput'])} | "
+      f"{fmt(pk['output_throughput']/pk['max_concurrency'])} | {fmt(pu_pk)} | "
+      f"**{(pk['output_throughput']/pk['max_concurrency'])/pu_pk:.2f}** |")
+    W("| **Theirs** B200 +MTP, agentic | 32 | 768.0 | 24.0 | 46.5 | **0.52** |")
+    W("")
+    W("Their traces average **~138k input tokens** per request against a handful of output "
+      "tokens, so half their wall clock is prefill; our `--ignore-eos` 1024/1024 shape "
+      "keeps nearly every slot decoding continuously. Neither number is a hardware verdict:")
+    W("")
+    W("- **Our aggregate lead is a workload artifact.** Counting *all* tokens processed, "
+      f"our c={pk['max_concurrency']} run moves ~"
+      f"{fmt(pk.get('total_token_throughput') or pk['request_throughput']*(args.isl+args.osl))} "
+      "tok/s (input + output); their c=32 run moves **111,970**. They do far more token "
+      "work — it just is not output. (Their `tput_per_gpu` is computed on that total, "
+      "which is why it looks so large.)")
+    W("- **Their per-user lead is a real software lever** — MTP, which we do not use. "
+      "Turning it on would raise *both* of our columns (§7.5).")
     W("")
     W("**Their no-spec column is not one curve.** It falls to 60.2 at c=32 and then jumps "
       "to 838.2 at c=48 because the c=1–32 and c=48–96 points come from different recipe "

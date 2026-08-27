@@ -487,7 +487,24 @@ Their API carries aggregate output throughput (`output_tput_tps`) at every concu
 | 72 | — | 1,021.6 | — | — | — | — |
 | 96 | — | 1,159.4 | — | — | — | — |
 
-**Their output tok/s look small because agentic traces are input-heavy, not because the servers are slow.** Their traces read enormous prompts and emit few tokens per turn, so output is a sliver of the work: the same c=96 run that shows 1,159 output tok/s moves **145,266 tok/s total** (input + output), and their per-GPU figure (`tput_per_gpu`) is computed on that total. Ours is a fixed 1024-in/1024-out shape where output tok/s *is* essentially the whole story. **This column pair is the least comparable in the whole report** — §7.4's per-user view is the one that survives the workload difference.
+#### Why ours leads here but trails on per-user tok/s (§7.4)
+
+The two metrics have different denominators:
+
+- **Per-user tok/s** = `1 / TPOT` — the rate a request streams *while it is decoding*. Measured directly (their `median_intvty`, our median TPOT).
+- **Aggregate tok/s** = output tokens ÷ total wall clock — which includes every second spent on **prefill**, producing no output at all.
+
+So `aggregate ÷ concurrency` is always ≤ per-user tok/s, and the gap is the **decode duty cycle** — the fraction of the run that was decode rather than prefill:
+
+| | Conc | Aggregate | ÷ conc | Per-user (measured) | Duty cycle |
+|---|---:|---:|---:|---:|---:|
+| **Ours** B200, 1024/1024 | 64 | 1,696.4 | 26.5 | 27.9 | **0.95** |
+| **Theirs** B200 +MTP, agentic | 32 | 768.0 | 24.0 | 46.5 | **0.52** |
+
+Their traces average **~138k input tokens** per request against a handful of output tokens, so half their wall clock is prefill; our `--ignore-eos` 1024/1024 shape keeps nearly every slot decoding continuously. Neither number is a hardware verdict:
+
+- **Our aggregate lead is a workload artifact.** Counting *all* tokens processed, our c=64 run moves ~3,389.7 tok/s (input + output); their c=32 run moves **111,970**. They do far more token work — it just is not output. (Their `tput_per_gpu` is computed on that total, which is why it looks so large.)
+- **Their per-user lead is a real software lever** — MTP, which we do not use. Turning it on would raise *both* of our columns (§7.5).
 
 **Their no-spec column is not one curve.** It falls to 60.2 at c=32 and then jumps to 838.2 at c=48 because the c=1–32 and c=48–96 points come from different recipe families (the low-concurrency records carry no `recipe_fingerprint`; the high-concurrency ones do). Do not read a scaling trend down that column.
 
