@@ -528,17 +528,17 @@ Units: output tokens/s delivered to a single request. Theirs are `median_intvty`
 
 ### 7.5 One agent turn, end to end
 
-A user waits for a whole turn, not for a token. Modelled here as one realistic agent request — **plan (200 tok) → fan out 6 parallel tool calls (500 tok each, hidden) → stream the answer (800 tok, shown)** — priced with each system's own measured TTFT and per-user rate. English runs ~0.75 words per token.
+A user waits for a whole turn, not for a token. Modelled here as one realistic agent request — **plan (200 tok) → fan out 6 parallel tool calls (500 tok each, hidden) → stream the answer (800 tok, shown)** — priced with each system's own measured TTFT and per-user rate. **English runs ~1.3 tokens per word** (≈0.75 words per token), so a 800-token answer is ~600 words and the print rates below are `tok/s × 0.75`.
 
 **Fan-out** = the agent issuing several requests *at the same time* instead of one after another — searching five files at once, spawning three subagents, calling four independent tools. A fan-out of 6 is concurrency 6 from that single agent, which is why the concurrency axis in §7.3 and §7.4 maps onto agent behaviour at all. It only works when the calls do not depend on each other's results.
 
 **Which number governs each step:**
 
-| Step | Conc | Rate that governs it | Ours B200 | Read it from |
-|---|---:|---|---:|---|
-| 1. Plan / pick tools | **1** | per-user tok/s | 89.0 tok/s | §7.4, c=1 row |
-| 2. Six parallel tool calls | **6** | per-user tok/s at c≈6 — six streams run at once, so the *session* rate is 6× that | 69.2 tok/s each → **414.9 session** | §7.4, interpolated between c=4 and c=8; the session rate is §7.3's aggregate column |
-| 3. Stream the answer | **1** | per-user tok/s | 89.0 tok/s | §7.4, c=1 row |
+| Step | Conc | Rate that governs it | Ours 16× B200 | Ours 8× MI355X | Read it from |
+|---|---:|---|---:|---:|---|
+| 1. Plan / pick tools | **1** | per-user tok/s | 89.0 tok/s | 46.6 tok/s | §7.4, c=1 row |
+| 2. Six parallel tool calls | **6** | per-user tok/s at c≈6 — six streams run at once, so the *session* rate is 6× that | 69.2 each → **414.9 tok/s** session | 38.5 each → **231.1 tok/s** session | §7.4, interpolated between c=4 and c=8; the session rate is §7.3's aggregate column |
+| 3. Stream the answer | **1** | per-user tok/s | 89.0 tok/s | 46.6 tok/s | §7.4, c=1 row |
 
 Each step costs `TTFT + (tokens per stream − 1) ÷ per-user tok/s`. Only the **per-user** rate enters the arithmetic — the fan-out is already accounted for by the fact that six streams run concurrently, so §7.3's aggregate is the same information viewed from the server side, not a second speedup to multiply in.
 
@@ -551,7 +551,7 @@ Each step costs `TTFT + (tokens per stream − 1) ÷ per-user tok/s`. Only the *
 | **Theirs** MI355X ATOM +MTP | 2.4 s | 7.2 s | 7.1 s | **16.7 s** | 10.4 s | 95 words/s |
 | **Theirs** MI355X vLLM +MTP | 3.8 s | 11.1 s | 10.9 s | **25.8 s** | 16.3 s | 63 words/s |
 
-*Worked example, the first row.* §7.4 gives 89.0 tok/s at c=1 and 69.2 at c≈6. Step 1 = 0.23 + 199/89.0 = 2.5 s. Step 2 = 0.23 + 499/69.2 = 7.4 s for all six calls together — a session rate of 402.7 tok/s, which is §7.3's aggregate column. Step 3 = 0.23 + 799/89.0 = 9.2 s.
+*Worked example, the first row.* §7.4 gives 89.0 tok/s at c=1 and 69.2 at c≈6. Step 1 = 0.23 + 199/89.0 = 2.5 s. Step 2 = 0.23 + 499/69.2 = 7.4 s for all six calls together — a session rate of 402.7 tok/s (the steady-state 414.9, diluted by the 0.23 s prefill), which is §7.3's aggregate column. Step 3 = 0.23 + 799/89.0 = 9.2 s.
 
 **Printing is never the constraint.** Every row prints at 35–166 words/s against a human reading speed of ~4–5. Past ~10 words/s more per-user tok/s is imperceptible — it only shortens the tail before the reader can start scrolling. **What the user feels is the wait before the first word**, which is hidden token generation plus prefill.
 
