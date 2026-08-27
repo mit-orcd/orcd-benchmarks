@@ -540,7 +540,7 @@ A user waits for a whole turn, not for a token. Modelled here as one realistic a
 | 2. Six parallel tool calls | **6** | per-user tok/s at c≈6 — six streams run at once, so the *session* rate is 6× that | 69.2 each → **414.9 tok/s** session | 38.5 each → **231.1 tok/s** session | §7.4, interpolated between c=4 and c=8; the session rate is §7.3's aggregate column |
 | 3. Stream the answer | **1** | per-user tok/s | 89.0 tok/s | 46.6 tok/s | §7.4, c=1 row |
 
-Each step costs `TTFT + (tokens per stream − 1) ÷ per-user tok/s`. Only the **per-user** rate enters the arithmetic — the fan-out is already accounted for by the fact that six streams run concurrently, so §7.3's aggregate is the same information viewed from the server side, not a second speedup to multiply in.
+Each step costs `TTFT + (tokens per stream − 1) ÷ per-user tok/s`. Only the **per-user** rate enters the arithmetic — the fan-out is already accounted for by the fact that six streams run concurrently, so §7.3's aggregate is the same information viewed from the server side, not a second speedup to multiply in. (*Close to §7.3's aggregate, not exactly equal*: `6 × per-user` is a steady-state rate interpolated to c=6, while the aggregate column is measured tokens ÷ wall clock at real sweep points, so it carries the prefill time too.)
 
 | System | Plan | 6 tool calls | Answer | **Whole turn** | First word at | Print rate |
 |---|---:|---:|---:|---:|---:|---:|

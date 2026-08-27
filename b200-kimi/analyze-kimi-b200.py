@@ -1426,7 +1426,10 @@ def build_report(b, a, arch, args):
     W("Each step costs `TTFT + (tokens per stream − 1) ÷ per-user tok/s`. Only the "
       "**per-user** rate enters the arithmetic — the fan-out is already accounted for by "
       "the fact that six streams run concurrently, so §7.3's aggregate is the same "
-      "information viewed from the server side, not a second speedup to multiply in.")
+      "information viewed from the server side, not a second speedup to multiply in. "
+      "(*Close to §7.3's aggregate, not exactly equal*: `6 × per-user` is a steady-state "
+      "rate interpolated to c=6, while the aggregate column is measured tokens ÷ wall "
+      "clock at real sweep points, so it carries the prefill time too.)")
     W("")
 
     def _phase(t1, r1, t6, r6):
