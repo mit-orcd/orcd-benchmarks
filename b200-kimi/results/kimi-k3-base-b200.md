@@ -522,16 +522,18 @@ Units: output tokens/s delivered to a single request. Theirs are `median_intvty`
 
 #### What an agent app should expect
 
-One agent session is mostly serial — a single in-flight request at a time, with occasional fan-out (parallel tool calls, subagents) of ~2–8. So one agent user sits at c=1–8 and reads this row range, not the peak aggregate in §6.3:
+An agent fans out to a few parallel tool calls or subagents, so it runs at c=1–8. Per-user tok/s *falls* with fan-out — but the user is not waiting on one stream, they are waiting on all N to finish at once. What they feel is **session tok/s = N × per-user**, which is simply our aggregate column (§1) when one agent owns the machine:
 
-| What the agent is doing | Conc | Ours 8× MI355X | Ours 16× B200 | Theirs B200 +MTP | Theirs B200 no-spec |
-|---|---:|---:|---:|---:|---:|
-| Serial turn — one request at a time | 1 | 46.6 | 89.0 | 221.7 | 81.9 |
-| Light fan-out | 2 | 44.3 | 84.4 | 219.3 | 74.8 |
-| Light fan-out | 4 | 40.0 | 73.4 | 203.3 | 54.1 |
-| Heavy fan-out — 8 parallel calls | 8 | 37.0 | 64.9 | 154.1 | 21.1 |
+| Agent fan-out | Per-user tok/s | **Session tok/s** | Wall clock for N × 1024 tok |
+|---:|---:|---:|---:|
+| 1 call | 89.0 | 86.7 | 11.7 s |
+| 2 calls | 84.4 | 165.2 | 12.3 s |
+| 4 calls | 73.4 | 280.8 | 14.2 s |
+| 8 calls | 64.9 | 475.3 | 16.0 s |
 
-**Their columns are the closest published proxy for real agent traffic** — agentic trace replay with 100k+ token context and prefix caching on — and they say two things our sweep cannot. First, **with MTP an agent turn streams 154–222 tok/s**, well above anything in our no-spec run: spec decoding is the lever that matters for this workload (§7.5). Second, **without it, long context hurts a single agent user far more than concurrency does** — their no-spec column falls 81.9 → 21.1 over c=1→8 while ours only falls 89.0 → 64.9 on a fixed 1024-token prompt. Expect our numbers to be optimistic for TPOT on long agentic prompts, and pessimistic for TTFT since we run with prefix caching off.
+Eight calls in parallel finish in **16.0 s**; the same eight done one after another take 8 × 11.7 = **93.9 s** — fan-out is **5.9× faster in wall clock**, even though each stream is 27% slower. The per-stream slowdown is sublinear, which is why fanning out wins.
+
+So: per-user tok/s answers *how fast does this one answer stream*; session tok/s answers *how fast does this turn finish*. For a fan-out agent it is the second. MTP raises both (§7.5).
 
 #### What "MTP" is — and it is software, not silicon
 

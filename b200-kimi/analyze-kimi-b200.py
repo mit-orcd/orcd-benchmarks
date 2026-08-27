@@ -1363,35 +1363,35 @@ def build_report(b, a, arch, args):
     W("")
     W("#### What an agent app should expect")
     W("")
-    W("One agent session is mostly serial — a single in-flight request at a time, with "
-      "occasional fan-out (parallel tool calls, subagents) of ~2–8. So one agent user sits "
-      "at c=1–8 and reads this row range, not the peak aggregate in §6.3:")
-    W("")
-    W(f"| What the agent is doing | Conc | Ours {angpu}× MI355X | Ours {ngpu}× B200 | "
-      "Theirs B200 +MTP | Theirs B200 no-spec |")
-    W("|---|---:|---:|---:|---:|---:|")
-    agent_rows = [(1, "Serial turn — one request at a time", 221.7, 81.9),
-                  (2, "Light fan-out", 219.3, 74.8),
-                  (4, "Light fan-out", 203.3, 54.1),
-                  (8, "Heavy fan-out — 8 parallel calls", 154.1, 21.1)]
     ours_pu = {r["max_concurrency"]: (1000.0 / r["median_tpot_ms"])
                for r in rows if r["median_tpot_ms"]}
-    for c, label, t_mtp, t_none in agent_rows:
-        ar = amap.get(c)
-        pu_a = 1000.0 / ar["median_tpot_ms"] if (ar and ar["median_tpot_ms"]) else None
-        W(f"| {label} | {c} | {fmt(pu_a) if pu_a else '—'} | "
-          f"{fmt(ours_pu[c]) if c in ours_pu else '—'} | {fmt(t_mtp)} | {fmt(t_none)} |")
+    W("An agent fans out to a few parallel tool calls or subagents, so it runs at c=1–8. "
+      "Per-user tok/s *falls* with fan-out — but the user is not waiting on one stream, "
+      "they are waiting on all N to finish at once. What they feel is **session tok/s = "
+      "N × per-user**, which is simply our aggregate column (§1) when one agent owns the "
+      "machine:")
     W("")
-    W("**Their columns are the closest published proxy for real agent traffic** — agentic "
-      "trace replay with 100k+ token context and prefix caching on — and they say two "
-      "things our sweep cannot. First, **with MTP an agent turn streams 154–222 tok/s**, "
-      "well above anything in our no-spec run: spec decoding is the lever that matters for "
-      "this workload (§7.5). Second, **without it, long context hurts a single agent user "
-      "far more than concurrency does** — their no-spec column falls 81.9 → 21.1 over "
-      "c=1→8 while ours only falls "
-      f"{fmt(ours_pu[1])} → {fmt(ours_pu[8])} on a fixed 1024-token prompt. Expect our "
-      "numbers to be optimistic for TPOT on long agentic prompts, and pessimistic for TTFT "
-      "since we run with prefix caching off.")
+    W(f"| Agent fan-out | Per-user tok/s | **Session tok/s** | Wall clock for N × {args.osl} tok |")
+    W("|---:|---:|---:|---:|")
+    wall = {}
+    for c in (1, 2, 4, 8):
+        r = next((x for x in rows if x["max_concurrency"] == c), None)
+        if not r:
+            continue
+        wall[c] = r["median_ttft_ms"] / 1000.0 + args.osl * r["median_tpot_ms"] / 1000.0
+        W(f"| {c} call{'s' if c > 1 else ''} | {fmt(ours_pu[c])} | "
+          f"{fmt(r['output_throughput'])} | {wall[c]:.1f} s |")
+    W("")
+    if 1 in wall and 8 in wall:
+        W(f"Eight calls in parallel finish in **{wall[8]:.1f} s**; the same eight done one "
+          f"after another take 8 × {wall[1]:.1f} = **{8*wall[1]:.1f} s** — fan-out is "
+          f"**{8*wall[1]/wall[8]:.1f}× faster in wall clock**, even though each stream is "
+          f"{100*(1-ours_pu[8]/ours_pu[1]):.0f}% slower. The per-stream slowdown is "
+          "sublinear, which is why fanning out wins.")
+        W("")
+    W("So: per-user tok/s answers *how fast does this one answer stream*; session tok/s "
+      "answers *how fast does this turn finish*. For a fan-out agent it is the second. "
+      "MTP raises both (§7.5).")
     W("")
     W("#### What \"MTP\" is — and it is software, not silicon")
     W("")
