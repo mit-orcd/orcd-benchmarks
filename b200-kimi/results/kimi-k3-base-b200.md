@@ -358,7 +358,7 @@ The asymmetry is stark: **HBM moves ~67 GB/step while NVLink moves ~0.15 GB and 
 | Peak tok/s **per node** | 1,258.5 | 848.2 | 1.48× |
 | GPUs to serve the model | 8 | 16 | 0.50× |
 
-**What the peak numbers mean.** These are *aggregate* rates — the sum over all 64 in-flight requests, i.e. what the server delivers, not what one request sees. At c=64 an individual stream gets only 27.9 tok/s on B200 and 20.0 tok/s on MI355X (§6.4). Which view is "real world" depends on the workload, not the user count: one interactive chat issues one request at a time and feels per-user tok/s, while a batch job or an agentic app fanning out parallel calls fills the server itself and gets the aggregate rate. Both matter; here they agree on the ranking (B200 wins 1.35× aggregate, 1.91× per-user at c=1).
+These are *aggregate* rates — the sum over all 64 in-flight requests, not what one request sees (27.9 tok/s on B200 at c=64). §7.3 discusses which of the two views applies to which workload.
 
 ### 6.4 Latency
 
@@ -382,17 +382,6 @@ The two results are not in conflict; they answer different questions:
 - *How fast does one user's answer stream?* → **B200**, 1.91× (here).
 
 B200's lower per-token latency wins the second question and survives even the PP2 pipeline penalty. See `notes-concurrency.md` for the full treatment, including why none of the §3.2 levers improve the single-user case.
-
-**What an agent app should expect.** One agent session is mostly serial — a single in-flight request at a time, with occasional fan-out (parallel tool calls, subagents) of ~2–8. So one agent user sits at c=1–8, and reads the per-user column:
-
-| What the agent is doing | Conc | 8× MI355X tok/s | 16× B200 tok/s |
-|---|---:|---:|---:|
-| Serial turn — one request at a time | 1 | 46.6 | 89.0 |
-| Light fan-out | 2 | 44.3 | 84.4 |
-| Light fan-out | 4 | 40.0 | 73.4 |
-| Heavy fan-out — 8 parallel calls | 8 | 37.0 | 64.9 |
-
-Server-side concurrency of 32–64 comes from *many* users, not one agent — the peak aggregate rate in §6.3 only appears when that many streams are in flight at once. Note these come from a fixed 1024-in/1024-out sweep; real agent traffic has much longer, cache-heavy prompts, so TTFT would be worse and TPOT somewhat better with prefix caching on (§7).
 
 ### 6.5 Where each system's headroom is
 
@@ -506,6 +495,8 @@ Their traces average **~138k input tokens** per request against a handful of out
 - **Our aggregate lead is a workload artifact.** Counting *all* tokens processed, our c=64 run moves ~3,389.7 tok/s (input + output); their c=32 run moves **111,970**. They do far more token work — it just is not output. (Their `tput_per_gpu` is computed on that total, which is why it looks so large.)
 - **Their per-user lead is a real software lever** — MTP, which we do not use. Turning it on would raise *both* of our columns (§7.5).
 
+**Which view is "real world" depends on the workload, not the user count.** One interactive chat issues one request at a time and feels per-user tok/s; a batch job or an agentic app fanning out parallel calls fills the server itself and gets the aggregate rate. Their data makes the same point from the other side: their aggregate column is a *capacity* number measured under agentic load, which is why it is dominated by prefill and says almost nothing about how fast a single agent turn streams. For that, read §7.4.
+
 **Their no-spec column is not one curve.** It falls to 60.2 at c=32 and then jumps to 838.2 at c=48 because the c=1–32 and c=48–96 points come from different recipe families (the low-concurrency records carry no `recipe_fingerprint`; the high-concurrency ones do). Do not read a scaling trend down that column.
 
 ### 7.4 Per-user tok/s — theirs vs ours
@@ -528,6 +519,19 @@ Retrieved live from their public API (`/api/v1/benchmarks?model=Kimi-K3`); raw J
 > ⚠️ **Every one of their MI355X runs uses MTP — they publish no MI355X result without it — so their MI355X column can never be compared against their B200 no-spec column on equal footing.** (Verified in their API data: all 8 MI355X records are `spec_method: mtp`; B200 has both, 9 `none` and 6 `mtp`.)
 
 Units: output tokens/s delivered to a single request. Theirs are `median_intvty`; ours are `1000 / median TPOT`. **Read across rows with care — see §7.2.** The columns differ in workload (agentic traces vs fixed 1024/1024), prefix caching (on vs off) and context (1M vs 16K), so this is not a like-for-like ranking.
+
+#### What an agent app should expect
+
+One agent session is mostly serial — a single in-flight request at a time, with occasional fan-out (parallel tool calls, subagents) of ~2–8. So one agent user sits at c=1–8 and reads this row range, not the peak aggregate in §6.3:
+
+| What the agent is doing | Conc | Ours 8× MI355X | Ours 16× B200 | Theirs B200 +MTP | Theirs B200 no-spec |
+|---|---:|---:|---:|---:|---:|
+| Serial turn — one request at a time | 1 | 46.6 | 89.0 | 221.7 | 81.9 |
+| Light fan-out | 2 | 44.3 | 84.4 | 219.3 | 74.8 |
+| Light fan-out | 4 | 40.0 | 73.4 | 203.3 | 54.1 |
+| Heavy fan-out — 8 parallel calls | 8 | 37.0 | 64.9 | 154.1 | 21.1 |
+
+**Their columns are the closest published proxy for real agent traffic** — agentic trace replay with 100k+ token context and prefix caching on — and they say two things our sweep cannot. First, **with MTP an agent turn streams 154–222 tok/s**, well above anything in our no-spec run: spec decoding is the lever that matters for this workload (§7.5). Second, **without it, long context hurts a single agent user far more than concurrency does** — their no-spec column falls 81.9 → 21.1 over c=1→8 while ours only falls 89.0 → 64.9 on a fixed 1024-token prompt. Expect our numbers to be optimistic for TPOT on long agentic prompts, and pessimistic for TTFT since we run with prefix caching off.
 
 #### What "MTP" is — and it is software, not silicon
 

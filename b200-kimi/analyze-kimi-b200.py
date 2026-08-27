@@ -1073,20 +1073,10 @@ def build_report(b, a, arch, args):
     W(f"| GPUs to serve the model | {angpu} | {ngpu} | "
       f"{angpu/ngpu:.2f}× |")
     W("")
-    # Readers routinely mistake the peak aggregate number for a per-request speed.
-    # State plainly which workload each view answers for.
-    W(f"**What the peak numbers mean.** These are *aggregate* rates — the sum over all "
-      f"{pk['max_concurrency']} in-flight requests, i.e. what the server delivers, not what "
-      f"one request sees. At c={pk['max_concurrency']} an individual stream gets only "
-      f"{fmt(1000.0/pk['median_tpot_ms'],1)} tok/s on B200 and "
-      f"{fmt(1000.0/apk['median_tpot_ms'],1)} tok/s on MI355X (§6.4). Which view is "
-      "\"real world\" depends on the workload, not the user count: one interactive chat "
-      "issues one request at a time and feels per-user tok/s, while a batch job or an "
-      "agentic app fanning out parallel calls fills the server itself and gets the "
-      "aggregate rate. Both matter; here they agree on the ranking (B200 wins "
-      f"{pk['output_throughput']/apk['output_throughput']:.2f}× aggregate"
-      + (f", {afirst['median_tpot_ms']/first['median_tpot_ms']:.2f}× per-user at c=1"
-         if afirst else "") + ").")
+    W(f"These are *aggregate* rates — the sum over all {pk['max_concurrency']} in-flight "
+      f"requests, not what one request sees ({fmt(1000.0/pk['median_tpot_ms'],1)} tok/s on "
+      f"B200 at c={pk['max_concurrency']}). §7.3 discusses which of the two views applies "
+      "to which workload.")
     W("")
 
     W("### 6.4 Latency")
@@ -1127,34 +1117,6 @@ def build_report(b, a, arch, args):
         W("B200's lower per-token latency wins the second question and survives even the "
           "PP2 pipeline penalty. See `notes-concurrency.md` for the full treatment, "
           "including why none of the §3.2 levers improve the single-user case.")
-    W("")
-
-    # A single agent session is a low-concurrency client, so the peak aggregate number in
-    # 6.3 is the wrong one to quote at anybody sizing an agent workload.
-    W("**What an agent app should expect.** One agent session is mostly serial — a single "
-      "in-flight request at a time, with occasional fan-out (parallel tool calls, "
-      "subagents) of ~2–8. So one agent user sits at c=1–8, and reads the per-user column:")
-    W("")
-    W(f"| What the agent is doing | Conc | {angpu}× MI355X tok/s | {ngpu}× B200 tok/s |")
-    W("|---|---:|---:|---:|")
-    agent_labels = {1: "Serial turn — one request at a time",
-                    2: "Light fan-out", 4: "Light fan-out",
-                    8: "Heavy fan-out — 8 parallel calls"}
-    for r in rows:
-        c = r["max_concurrency"]
-        if c not in agent_labels:
-            continue
-        ar = amap.get(c)
-        pu_b = 1000.0 / r["median_tpot_ms"] if r["median_tpot_ms"] else None
-        pu_a = 1000.0 / ar["median_tpot_ms"] if (ar and ar["median_tpot_ms"]) else None
-        W(f"| {agent_labels[c]} | {c} | {fmt(pu_a) if pu_a else '—'} | "
-          f"{fmt(pu_b) if pu_b else '—'} |")
-    W("")
-    W("Server-side concurrency of 32–64 comes from *many* users, not one agent — the peak "
-      "aggregate rate in §6.3 only appears when that many streams are in flight at once. "
-      "Note these come from a fixed 1024-in/1024-out sweep; real agent traffic has much "
-      "longer, cache-heavy prompts, so TTFT would be worse and TPOT somewhat better with "
-      "prefix caching on (§7).")
     W("")
 
     W("### 6.5 Where each system's headroom is")
@@ -1350,6 +1312,14 @@ def build_report(b, a, arch, args):
     W("- **Their per-user lead is a real software lever** — MTP, which we do not use. "
       "Turning it on would raise *both* of our columns (§7.5).")
     W("")
+    W("**Which view is \"real world\" depends on the workload, not the user count.** One "
+      "interactive chat issues one request at a time and feels per-user tok/s; a batch job "
+      "or an agentic app fanning out parallel calls fills the server itself and gets the "
+      "aggregate rate. Their data makes the same point from the other side: their "
+      "aggregate column is a *capacity* number measured under agentic load, which is why "
+      "it is dominated by prefill and says almost nothing about how fast a single agent "
+      "turn streams. For that, read §7.4.")
+    W("")
     W("**Their no-spec column is not one curve.** It falls to 60.2 at c=32 and then jumps "
       "to 838.2 at c=48 because the c=1–32 and c=48–96 points come from different recipe "
       "families (the low-concurrency records carry no `recipe_fingerprint`; the "
@@ -1390,6 +1360,38 @@ def build_report(b, a, arch, args):
       "ours are `1000 / median TPOT`. **Read across rows with care — see §7.2.** The "
       "columns differ in workload (agentic traces vs fixed 1024/1024), prefix caching "
       "(on vs off) and context (1M vs 16K), so this is not a like-for-like ranking.")
+    W("")
+    W("#### What an agent app should expect")
+    W("")
+    W("One agent session is mostly serial — a single in-flight request at a time, with "
+      "occasional fan-out (parallel tool calls, subagents) of ~2–8. So one agent user sits "
+      "at c=1–8 and reads this row range, not the peak aggregate in §6.3:")
+    W("")
+    W(f"| What the agent is doing | Conc | Ours {angpu}× MI355X | Ours {ngpu}× B200 | "
+      "Theirs B200 +MTP | Theirs B200 no-spec |")
+    W("|---|---:|---:|---:|---:|---:|")
+    agent_rows = [(1, "Serial turn — one request at a time", 221.7, 81.9),
+                  (2, "Light fan-out", 219.3, 74.8),
+                  (4, "Light fan-out", 203.3, 54.1),
+                  (8, "Heavy fan-out — 8 parallel calls", 154.1, 21.1)]
+    ours_pu = {r["max_concurrency"]: (1000.0 / r["median_tpot_ms"])
+               for r in rows if r["median_tpot_ms"]}
+    for c, label, t_mtp, t_none in agent_rows:
+        ar = amap.get(c)
+        pu_a = 1000.0 / ar["median_tpot_ms"] if (ar and ar["median_tpot_ms"]) else None
+        W(f"| {label} | {c} | {fmt(pu_a) if pu_a else '—'} | "
+          f"{fmt(ours_pu[c]) if c in ours_pu else '—'} | {fmt(t_mtp)} | {fmt(t_none)} |")
+    W("")
+    W("**Their columns are the closest published proxy for real agent traffic** — agentic "
+      "trace replay with 100k+ token context and prefix caching on — and they say two "
+      "things our sweep cannot. First, **with MTP an agent turn streams 154–222 tok/s**, "
+      "well above anything in our no-spec run: spec decoding is the lever that matters for "
+      "this workload (§7.5). Second, **without it, long context hurts a single agent user "
+      "far more than concurrency does** — their no-spec column falls 81.9 → 21.1 over "
+      "c=1→8 while ours only falls "
+      f"{fmt(ours_pu[1])} → {fmt(ours_pu[8])} on a fixed 1024-token prompt. Expect our "
+      "numbers to be optimistic for TPOT on long agentic prompts, and pessimistic for TTFT "
+      "since we run with prefix caching off.")
     W("")
     W("#### What \"MTP\" is — and it is software, not silicon")
     W("")
