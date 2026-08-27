@@ -1380,6 +1380,27 @@ def build_report(b, a, arch, args):
       "hidden) → stream the answer (800 tok, shown)** — priced with each system's own "
       "measured TTFT and per-user rate. English runs ~0.75 words per token.")
     W("")
+    W("**Fan-out** = the agent issuing several requests *at the same time* instead of one "
+      "after another — searching five files at once, spawning three subagents, calling "
+      "four independent tools. A fan-out of 6 is concurrency 6 from that single agent, "
+      "which is why the concurrency axis in §7.3 and §7.4 maps onto agent behaviour at "
+      "all. It only works when the calls do not depend on each other's results.")
+    W("")
+    W("**Which number governs each step:**")
+    W("")
+    W("| Step | Conc | Rate that governs it | Read it from |")
+    W("|---|---:|---|---|")
+    W("| 1. Plan / pick tools | **1** | per-user tok/s | §7.4, c=1 row |")
+    W("| 2. Six parallel tool calls | **6** | per-user tok/s at c≈6 — six streams run at "
+      "once, so the *session* rate is 6× that | §7.4, interpolated between c=4 and c=8; "
+      "the session rate is §7.3's aggregate column |")
+    W("| 3. Stream the answer | **1** | per-user tok/s | §7.4, c=1 row |")
+    W("")
+    W("Each step costs `TTFT + (tokens per stream − 1) ÷ per-user tok/s`. Only the "
+      "**per-user** rate enters the arithmetic — the fan-out is already accounted for by "
+      "the fact that six streams run concurrently, so §7.3's aggregate is the same "
+      "information viewed from the server side, not a second speedup to multiply in.")
+    W("")
 
     def _phase(t1, r1, t6, r6):
         """Whole-turn timing from (TTFT, per-user tok/s) at c=1 and at the c~6 fan-out."""
@@ -1419,6 +1440,19 @@ def build_report(b, a, arch, args):
         W(f"| {label} | {p_:.1f} s | {t_:.1f} s | {a_:.1f} s | **{tot_:.1f} s** | "
           f"{fw_:.1f} s | {wps_:.0f} words/s |")
     W("")
+    _ob = {x["max_concurrency"]: x for x in rows}
+    if all(c in _ob for c in (1, 4, 8)):
+        _pu1 = 1000.0 / _ob[1]["median_tpot_ms"]
+        _pu6 = _mid(1000.0 / _ob[4]["median_tpot_ms"], 1000.0 / _ob[8]["median_tpot_ms"])
+        _t6 = _mid(_ob[4]["median_ttft_ms"], _ob[8]["median_ttft_ms"]) / 1000.0
+        W(f"*Worked example, the first row.* §7.4 gives {fmt(_pu1)} tok/s at c=1 and "
+          f"{fmt(_pu6)} at c≈6. Step 1 = {_ob[1]['median_ttft_ms']/1000.0:.2f} + 199/"
+          f"{fmt(_pu1)} = {tt[order[0]][0]:.1f} s. Step 2 = {_t6:.2f} + 499/{fmt(_pu6)} = "
+          f"{tt[order[0]][1]:.1f} s for all six calls together — a session rate of "
+          f"{fmt(3000/tt[order[0]][1])} tok/s, which is §7.3's aggregate column. "
+          f"Step 3 = {_ob[1]['median_ttft_ms']/1000.0:.2f} + 799/{fmt(_pu1)} = "
+          f"{tt[order[0]][2]:.1f} s.")
+        W("")
     W("**Printing is never the constraint.** Every row prints at "
       f"{min(v[5] for v in tt.values()):.0f}–{max(v[5] for v in tt.values()):.0f} words/s "
       "against a human reading speed of ~4–5. Past ~10 words/s more per-user tok/s is "

@@ -530,6 +530,18 @@ Units: output tokens/s delivered to a single request. Theirs are `median_intvty`
 
 A user waits for a whole turn, not for a token. Modelled here as one realistic agent request — **plan (200 tok) → fan out 6 parallel tool calls (500 tok each, hidden) → stream the answer (800 tok, shown)** — priced with each system's own measured TTFT and per-user rate. English runs ~0.75 words per token.
 
+**Fan-out** = the agent issuing several requests *at the same time* instead of one after another — searching five files at once, spawning three subagents, calling four independent tools. A fan-out of 6 is concurrency 6 from that single agent, which is why the concurrency axis in §7.3 and §7.4 maps onto agent behaviour at all. It only works when the calls do not depend on each other's results.
+
+**Which number governs each step:**
+
+| Step | Conc | Rate that governs it | Read it from |
+|---|---:|---|---|
+| 1. Plan / pick tools | **1** | per-user tok/s | §7.4, c=1 row |
+| 2. Six parallel tool calls | **6** | per-user tok/s at c≈6 — six streams run at once, so the *session* rate is 6× that | §7.4, interpolated between c=4 and c=8; the session rate is §7.3's aggregate column |
+| 3. Stream the answer | **1** | per-user tok/s | §7.4, c=1 row |
+
+Each step costs `TTFT + (tokens per stream − 1) ÷ per-user tok/s`. Only the **per-user** rate enters the arithmetic — the fan-out is already accounted for by the fact that six streams run concurrently, so §7.3's aggregate is the same information viewed from the server side, not a second speedup to multiply in.
+
 | System | Plan | 6 tool calls | Answer | **Whole turn** | First word at | Print rate |
 |---|---:|---:|---:|---:|---:|---:|
 | **Ours** B200 (no spec) | 2.5 s | 7.4 s | 9.2 s | **19.1 s** | 10.1 s | 67 words/s |
@@ -538,6 +550,8 @@ A user waits for a whole turn, not for a token. Modelled here as one realistic a
 | **Theirs** B200 (no spec) | 6.9 s | 19.4 s | 14.3 s | **40.7 s** | 30.9 s | 61 words/s |
 | **Theirs** MI355X ATOM +MTP | 2.4 s | 7.2 s | 7.1 s | **16.7 s** | 10.4 s | 95 words/s |
 | **Theirs** MI355X vLLM +MTP | 3.8 s | 11.1 s | 10.9 s | **25.8 s** | 16.3 s | 63 words/s |
+
+*Worked example, the first row.* §7.4 gives 89.0 tok/s at c=1 and 69.2 at c≈6. Step 1 = 0.23 + 199/89.0 = 2.5 s. Step 2 = 0.23 + 499/69.2 = 7.4 s for all six calls together — a session rate of 402.7 tok/s, which is §7.3's aggregate column. Step 3 = 0.23 + 799/89.0 = 9.2 s.
 
 **Printing is never the constraint.** Every row prints at 35–166 words/s against a human reading speed of ~4–5. Past ~10 words/s more per-user tok/s is imperceptible — it only shortens the tail before the reader can start scrolling. **What the user feels is the wait before the first word**, which is hidden token generation plus prefill.
 
