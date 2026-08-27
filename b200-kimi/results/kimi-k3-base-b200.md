@@ -192,7 +192,7 @@ HBM is the binding resource at ~23%, but the box is not delivering all the HBM i
 Ranked levers:
 
 1. **Raise `--max-num-seqs`** (64 → 256+). Biggest lever, costs nothing, and the KV memory is already provisioned (§2). This is the same conclusion the MI355X run reached, and for the same reason.
-2. **Speculative decoding / MTP** — verifies several tokens per weight read, widening the GEMM exactly as a larger batch does. The upstream vLLM recipe gates DSpark off its `multi_node_tp_pp` profile, but that is a recipe default, not an engine limit: SemiAnalysis run DSpark on B200 TP8×PP2 (§7.4 has the setup). Untested on this run — the speculator model is not downloaded here.
+2. **Speculative decoding / MTP** — verifies several tokens per weight read, widening the GEMM exactly as a larger batch does. The upstream vLLM recipe gates DSpark off its `multi_node_tp_pp` profile, but that is a recipe default, not an engine limit: SemiAnalysis run DSpark on B200 TP8×PP2 (§7.5 has the setup). Untested on this run — the speculator model is not downloaded here.
 3. **Expert parallelism** — fewer, whole expert reads per GPU, paid for with all-to-all over the near-idle interconnect. On MI355X this was tested and is **unsupported** (ATOM raises `NotImplementedError` for EP with the MXFP4 SiTUv2 kernel). On B200 it is worth testing separately; it is deliberately **off** here because the MI355X baseline has it off, and arm A exists to hold everything but the hardware constant.
 4. **Prefill/decode disaggregation** — the recipe ships a `pd_cluster` profile.
 
@@ -290,7 +290,7 @@ The asymmetry is stark: **HBM moves ~67 GB/step while NVLink moves ~0.15 GB and 
 
 ## 5. Further discussion
 
-**1. Two nodes is a property of the model, not a choice.** 1561 GB of weights against 1538 GB of node HBM — 23 GB short. The consequence is not just "more GPUs": DSpark speculative decoding needs an extra shim and DCP flags to work with PP2 (§7.4) rather than dropping in for free as it does on one node, and PP adds a pipeline bubble plus halves the per-GPU weight residency. A B300 node (8 × 268 GB = 2144 GB) would hold it single-node; a B200 node cannot.
+**1. Two nodes is a property of the model, not a choice.** 1561 GB of weights against 1538 GB of node HBM — 23 GB short. The consequence is not just "more GPUs": DSpark speculative decoding needs an extra shim and DCP flags to work with PP2 (§7.5) rather than dropping in for free as it does on one node, and PP adds a pipeline bubble plus halves the per-GPU weight residency. A B300 node (8 × 268 GB = 2144 GB) would hold it single-node; a B200 node cannot.
 
 **2. `max_num_seqs=64` is the binding limit, not hardware.** KV was ~2.0% used and compute ~1%.
 
@@ -463,13 +463,35 @@ Two independent teams, different clusters, same conclusions — including the ex
 | `max-model-len` | **both** | 16384 | native **1M** (unset) | theirs pays a far larger KV footprint per sequence |
 | `max-num-seqs` | **B200** | **64** (fixed) | let vLLM choose | ours deliberately caps the batch; §3.2 shows that cap is what binds our throughput |
 | Benchmark client | **both** | `vllm bench serve` | `aiperf` + trace replay | different measurement harness |
-| **Spec decoding (MTP)** | **MI355X** | **off** | **DSpark MTP on** (`SPEC_NUM_TOKENS 2`) | their MI355X arm gets a lever ours does not use — see §7.4 |
+| **Spec decoding (MTP)** | **MI355X** | **off** | **DSpark MTP on** (`SPEC_NUM_TOKENS 2`) | their MI355X arm gets a lever ours does not use — see §7.5 |
 | `max-num-seqs` | **MI355X** | 64 | 128 | their MI355X runs a deeper batch |
 | Serving engine | **MI355X** | ATOM (our baseline) | vLLM ROCm *and* an ATOM variant | we compare ATOM-vs-vLLM; they run both |
 
 **Precision is the same, despite the labels.** Their config says `precision: "fp4"` and ours says MXFP4 — the same thing. Both serve the native `moonshotai/Kimi-K3` MXFP4 checkpoint (`mxfp4-pack-quantized`, 4-bit routed experts with e8m0 scales); neither re-quantises. "FP4" on their dashboard is the checkpoint's own format, not a separate NVFP4 conversion.
 
-### 7.3 Per-user tok/s — theirs vs ours
+### 7.3 Aggregate throughput — theirs vs ours
+
+Their API carries aggregate output throughput (`output_tput_tps`) at every concurrency point — the same quantity as our §1 "Throughput (tok/s)" column. Their **B200 arms are 16 GPUs, TP8 × PP2 across 2 nodes — the same layout as ours**; their MI355X arms are 8 GPUs on one node.
+
+| Conc | **Ours** B200 TP8×PP2 (no spec) | **Theirs** B200 TP8×PP2 (no spec) | **Theirs** B200 +MTP | **Theirs** MI355X vLLM +MTP | **Theirs** MI355X ATOM +MTP | **Ours** MI355X ATOM (no spec) |
+|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 86.7 | 59.9 | 118.1 | 67.4 | 91.0 | 46.1 |
+| 2 | 165.2 | 72.1 | 144.5 | — | — | 87.0 |
+| 4 | 280.8 | 76.0 | 190.3 | 115.7 | 137.1 | 154.2 |
+| 8 | 475.3 | 99.7 | 338.3 | 169.5 | 233.0 | 288.0 |
+| 10 | — | — | — | 235.0 | 293.1 | — |
+| 16 | 801.8 | 92.4 | 518.0 | — | — | 500.9 |
+| 32 | 1,209.3 | 60.2 | 768.0 | — | — | 824.0 |
+| 48 | — | 838.2 | — | — | — | — |
+| 64 | 1,696.4 | — | — | — | — | 1,258.5 |
+| 72 | — | 1,021.6 | — | — | — | — |
+| 96 | — | 1,159.4 | — | — | — | — |
+
+**Their output tok/s look small because agentic traces are input-heavy, not because the servers are slow.** Their traces read enormous prompts and emit few tokens per turn, so output is a sliver of the work: the same c=96 run that shows 1,159 output tok/s moves **145,266 tok/s total** (input + output), and their per-GPU figure (`tput_per_gpu`) is computed on that total. Ours is a fixed 1024-in/1024-out shape where output tok/s *is* essentially the whole story. **This column pair is the least comparable in the whole report** — §7.4's per-user view is the one that survives the workload difference.
+
+**Their no-spec column is not one curve.** It falls to 60.2 at c=32 and then jumps to 838.2 at c=48 because the c=1–32 and c=48–96 points come from different recipe families (the low-concurrency records carry no `recipe_fingerprint`; the high-concurrency ones do). Do not read a scaling trend down that column.
+
+### 7.4 Per-user tok/s — theirs vs ours
 
 Retrieved live from their public API (`/api/v1/benchmarks?model=Kimi-K3`); raw JSON and an extracted CSV are in `../semianalysis-ref/`. Their **"Interactivity"** metric is exactly our per-user tok/s — verified against their own fields: `mean_tpot` 0.00454 s → 1/0.00454 = 220.3 = their `mean_intvty`. Same definition, `1 / TPOT`.
 
@@ -514,15 +536,15 @@ Measured gain in their B200 data (MTP vs no-spec, same hardware):
 
 Ceiling is draft length × acceptance rate — never the full N, since not every guess is accepted.
 
-**One fact that matters for reading the table:** Kimi-K3 has no built-in MTP head (`num_nextn_predict_layers = 0`) — the gain comes from **DSpark**, a separate speculator model, downloaded and run alongside it. "MTP" names the technique, not a checkpoint feature (§7.4 has the how-to, for both platforms).
+**One fact that matters for reading the table:** Kimi-K3 has no built-in MTP head (`num_nextn_predict_layers = 0`) — the gain comes from **DSpark**, a separate speculator model, downloaded and run alongside it. "MTP" names the technique, not a checkpoint feature (§7.5 has the how-to, for both platforms).
 
 **What the table shows, in three points:**
 
 1. **Our B200 no-spec number matches theirs at c=1** (89.0 vs 81.9) — an independent check that our TP8×PP2 setup is performing normally, not misconfigured.
-2. **MTP is worth ~2.7× at c=1 on B200**, in their own data, same hardware — the single largest lever in this table. §7.4 shows how to get it.
+2. **MTP is worth ~2.7× at c=1 on B200**, in their own data, same hardware — the single largest lever in this table. §7.5 shows how to get it.
 3. **On equal footing (no spec decoding, low concurrency) B200 and MI355X land far closer than either vendor's best-configured number suggests.** The biggest differentiator in the whole table is MTP — a **software** feature both platforms can run, not a silicon difference.
 
-### 7.4 How to enable MTP — B200 and MI355X
+### 7.5 How to enable MTP — B200 and MI355X
 
 **Correction to an earlier claim in this report:** spec decoding does *not* require single-node TP. That was inferred from the upstream vLLM recipe gating DSpark off `multi_node_tp_pp` — a **recipe default, not an engine limit**. SemiAnalysis's own B200 recipe runs DSpark with `pipeline-parallel-size: 2`. **MTP is already built into our image** (`vllm/vllm-openai:kimi-k3`) — the `dspark` method, `KimiK3MTP`, and `TOKENSPEED_MLA` are all present. No new package. Both platforms use the **same speculator model**, `Inferact/Kimi-K3-DSpark`.
 
@@ -551,7 +573,7 @@ Ceiling is draft length × acceptance rate — never the full N, since not every
  "method": "dspark", "attention_backend": "TRITON_MLA"}
 ```
 
-**Neither was attempted here** — the speculator is not downloaded (`HF_HUB_OFFLINE=1`). Given the ~2.7× per-user gain at c=1 measured in §7.3, this is the single highest-value follow-up available — bigger than any lever in §3.2.
+**Neither was attempted here** — the speculator is not downloaded (`HF_HUB_OFFLINE=1`). Given the ~2.7× per-user gain at c=1 measured in §7.4, this is the single highest-value follow-up available — bigger than any lever in §3.2.
 
 ---
 
