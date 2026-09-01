@@ -210,6 +210,10 @@ TTFT moves 226 → 278 ms (1.2×) across a 64× concurrency increase, because pr
 
 Three paths carry traffic here, where the single-node MI355X run had one.
 
+![Sixteen GPUs across two nodes. Inside each GPU, arrows run between compute and HBM. Within each node, every GPU connects to an NVLink spine joining all eight. Between the nodes, dashed InfiniBand links join each GPU to its counterpart in the other node.](kimi-k3-gpu-topology.svg)
+
+*The three paths, structurally: HBM ⇄ compute inside every GPU (§4.3), NVLink among the eight GPUs of a node (§4.1), and InfiniBand rank-to-rank across the pipeline stage boundary (§4.2). Volumes and utilizations follow below.*
+
 ### 4.1 Intra-node GPU↔GPU (NVLink) — activations only
 
 With **TP=8 and EP disabled**, every expert is sharded across the 8 GPUs of its node, so there is **no expert-routing all-to-all**. The only cross-GPU traffic inside a node is TP activation reduction:

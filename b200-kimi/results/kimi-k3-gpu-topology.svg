@@ -1,0 +1,222 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 940" role="img"
+     aria-label="Sixteen GPUs across two nodes. Inside each GPU, arrows run between compute and HBM. Within each node, every GPU connects to an NVLink spine joining all eight. Between the nodes, dashed InfiniBand links join each GPU to its counterpart in the other node.">
+  <title>Distributed inference topology: sixteen GPUs, two nodes, and the three data paths</title>
+  <defs>
+    <marker id="a-hot" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="11" markerHeight="11"
+            markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#C4571F"/></marker>
+    <marker id="a-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7"
+            markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#5D6970"/></marker>
+    <marker id="a-cool" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9"
+            markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#12708A"/></marker>
+  </defs>
+  <style>
+    text { font-family: "IBM Plex Sans", "Segoe UI", Arial, sans-serif; fill: #333F47; }
+    .bg { fill: #FFFFFF; }
+    .eyebrow { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11.5px;
+                letter-spacing: .14em; fill: #5D6970; }
+    .h1 { font-family: Chivo, "Segoe UI", sans-serif; font-size: 23px; font-weight: 700;
+           fill: #151B20; letter-spacing: -.012em; }
+    .sub { font-size: 13px; fill: #5D6970; }
+    .panel { fill: #F6F9FA; stroke: #CFD9DD; stroke-width: 1; }
+    .node-id { font-family: "IBM Plex Mono", monospace; font-size: 14px; font-weight: 500;
+                letter-spacing: .12em; fill: #151B20; }
+    .node-sub { font-size: 12px; fill: #5D6970; }
+    .tile { fill: #FFFFFF; stroke: #CFD9DD; stroke-width: 1; }
+    .gpu { font-family: "IBM Plex Mono", monospace; font-size: 12.5px; font-weight: 500; fill: #5D6970; }
+    .core { fill: #EFF3F4; stroke: #CFD9DD; stroke-width: 1; }
+    .hbm { fill: #F7EDE6; stroke: #C4571F; stroke-width: 1.2; }
+    .blk { font-size: 11.5px; fill: #333F47; }
+    .hbm-t { font-family: "IBM Plex Mono", monospace; font-size: 12px; font-weight: 500; fill: #A8481A; }
+    .rd { stroke: #C4571F; stroke-width: 5; }
+    .wr { stroke: #5D6970; stroke-width: 1.6; }
+    .spine { fill: #12708A; }
+    .spine-t { font-size: 12px; fill: #12708A; letter-spacing: .04em; }
+    .nvl { stroke: #12708A; stroke-width: 1.8; }
+    .ib { stroke: #12708A; stroke-width: 2; stroke-dasharray: 9 6; }
+    .ib-t { font-size: 13px; fill: #12708A; font-weight: 600; }
+    .ib-s { font-size: 11.5px; fill: #5D6970; }
+    .lg { font-size: 12.5px; fill: #333F47; }
+  </style>
+
+  <rect class="bg" x="0" y="0" width="1200" height="940"/>
+
+  <text class="eyebrow" x="40" y="40">KIMI-K3 · vLLM · TENSOR PARALLEL WITHIN A NODE, PIPELINE PARALLEL ACROSS NODES</text>
+  <text class="h1" x="40" y="72">Sixteen GPUs, two nodes — and every path the data takes</text>
+  <text class="sub" x="40" y="94">inside each GPU (HBM ⇄ compute) · among the GPUs of a node (NVLink) · between the nodes (InfiniBand)</text>
+
+  <rect class="panel" x="40" y="112" width="430" height="748" rx="12"/>
+      <text class="node-id" x="70" y="146">NODE 0</text>
+      <text class="node-sub" x="70" y="166">pipeline stage 0 — first half of the layers</text>
+      <rect class="spine" x="70" y="180" width="14" height="650" rx="7"/>
+      <text class="spine-t" transform="rotate(-90 58 505)" x="58" y="505" text-anchor="middle">NVLink — every GPU to every other</text>
+      <line class="nvl" x1="84" y1="211" x2="118" y2="211"/>
+      <rect class="tile" x="118" y="180" width="330" height="62" rx="6"/>
+      <text class="gpu" x="134" y="217">G0</text>
+      <rect class="core" x="166" y="192" width="100" height="38" rx="4"/>
+      <text class="blk" x="216" y="216" text-anchor="middle">compute</text>
+      <rect class="hbm" x="324" y="192" width="110" height="38" rx="4"/>
+      <text class="blk hbm-t" x="379" y="216" text-anchor="middle">HBM</text>
+      <line class="rd" x1="320" y1="204" x2="271" y2="204" marker-end="url(#a-hot)"/>
+      <line class="wr" x1="270" y1="223" x2="319" y2="223" marker-end="url(#a-ink)"/>
+      <line class="nvl" x1="84" y1="295" x2="118" y2="295"/>
+      <rect class="tile" x="118" y="264" width="330" height="62" rx="6"/>
+      <text class="gpu" x="134" y="301">G1</text>
+      <rect class="core" x="166" y="276" width="100" height="38" rx="4"/>
+      <text class="blk" x="216" y="300" text-anchor="middle">compute</text>
+      <rect class="hbm" x="324" y="276" width="110" height="38" rx="4"/>
+      <text class="blk hbm-t" x="379" y="300" text-anchor="middle">HBM</text>
+      <line class="rd" x1="320" y1="288" x2="271" y2="288" marker-end="url(#a-hot)"/>
+      <line class="wr" x1="270" y1="307" x2="319" y2="307" marker-end="url(#a-ink)"/>
+      <line class="nvl" x1="84" y1="379" x2="118" y2="379"/>
+      <rect class="tile" x="118" y="348" width="330" height="62" rx="6"/>
+      <text class="gpu" x="134" y="385">G2</text>
+      <rect class="core" x="166" y="360" width="100" height="38" rx="4"/>
+      <text class="blk" x="216" y="384" text-anchor="middle">compute</text>
+      <rect class="hbm" x="324" y="360" width="110" height="38" rx="4"/>
+      <text class="blk hbm-t" x="379" y="384" text-anchor="middle">HBM</text>
+      <line class="rd" x1="320" y1="372" x2="271" y2="372" marker-end="url(#a-hot)"/>
+      <line class="wr" x1="270" y1="391" x2="319" y2="391" marker-end="url(#a-ink)"/>
+      <line class="nvl" x1="84" y1="463" x2="118" y2="463"/>
+      <rect class="tile" x="118" y="432" width="330" height="62" rx="6"/>
+      <text class="gpu" x="134" y="469">G3</text>
+      <rect class="core" x="166" y="444" width="100" height="38" rx="4"/>
+      <text class="blk" x="216" y="468" text-anchor="middle">compute</text>
+      <rect class="hbm" x="324" y="444" width="110" height="38" rx="4"/>
+      <text class="blk hbm-t" x="379" y="468" text-anchor="middle">HBM</text>
+      <line class="rd" x1="320" y1="456" x2="271" y2="456" marker-end="url(#a-hot)"/>
+      <line class="wr" x1="270" y1="475" x2="319" y2="475" marker-end="url(#a-ink)"/>
+      <line class="nvl" x1="84" y1="547" x2="118" y2="547"/>
+      <rect class="tile" x="118" y="516" width="330" height="62" rx="6"/>
+      <text class="gpu" x="134" y="553">G4</text>
+      <rect class="core" x="166" y="528" width="100" height="38" rx="4"/>
+      <text class="blk" x="216" y="552" text-anchor="middle">compute</text>
+      <rect class="hbm" x="324" y="528" width="110" height="38" rx="4"/>
+      <text class="blk hbm-t" x="379" y="552" text-anchor="middle">HBM</text>
+      <line class="rd" x1="320" y1="540" x2="271" y2="540" marker-end="url(#a-hot)"/>
+      <line class="wr" x1="270" y1="559" x2="319" y2="559" marker-end="url(#a-ink)"/>
+      <line class="nvl" x1="84" y1="631" x2="118" y2="631"/>
+      <rect class="tile" x="118" y="600" width="330" height="62" rx="6"/>
+      <text class="gpu" x="134" y="637">G5</text>
+      <rect class="core" x="166" y="612" width="100" height="38" rx="4"/>
+      <text class="blk" x="216" y="636" text-anchor="middle">compute</text>
+      <rect class="hbm" x="324" y="612" width="110" height="38" rx="4"/>
+      <text class="blk hbm-t" x="379" y="636" text-anchor="middle">HBM</text>
+      <line class="rd" x1="320" y1="624" x2="271" y2="624" marker-end="url(#a-hot)"/>
+      <line class="wr" x1="270" y1="643" x2="319" y2="643" marker-end="url(#a-ink)"/>
+      <line class="nvl" x1="84" y1="715" x2="118" y2="715"/>
+      <rect class="tile" x="118" y="684" width="330" height="62" rx="6"/>
+      <text class="gpu" x="134" y="721">G6</text>
+      <rect class="core" x="166" y="696" width="100" height="38" rx="4"/>
+      <text class="blk" x="216" y="720" text-anchor="middle">compute</text>
+      <rect class="hbm" x="324" y="696" width="110" height="38" rx="4"/>
+      <text class="blk hbm-t" x="379" y="720" text-anchor="middle">HBM</text>
+      <line class="rd" x1="320" y1="708" x2="271" y2="708" marker-end="url(#a-hot)"/>
+      <line class="wr" x1="270" y1="727" x2="319" y2="727" marker-end="url(#a-ink)"/>
+      <line class="nvl" x1="84" y1="799" x2="118" y2="799"/>
+      <rect class="tile" x="118" y="768" width="330" height="62" rx="6"/>
+      <text class="gpu" x="134" y="805">G7</text>
+      <rect class="core" x="166" y="780" width="100" height="38" rx="4"/>
+      <text class="blk" x="216" y="804" text-anchor="middle">compute</text>
+      <rect class="hbm" x="324" y="780" width="110" height="38" rx="4"/>
+      <text class="blk hbm-t" x="379" y="804" text-anchor="middle">HBM</text>
+      <line class="rd" x1="320" y1="792" x2="271" y2="792" marker-end="url(#a-hot)"/>
+      <line class="wr" x1="270" y1="811" x2="319" y2="811" marker-end="url(#a-ink)"/>
+
+  <rect class="panel" x="730" y="112" width="430" height="748" rx="12"/>
+      <text class="node-id" x="760" y="146">NODE 1</text>
+      <text class="node-sub" x="760" y="166">pipeline stage 1 — second half of the layers</text>
+      <rect class="spine" x="760" y="180" width="14" height="650" rx="7"/>
+      <text class="spine-t" transform="rotate(-90 748 505)" x="748" y="505" text-anchor="middle">NVLink — every GPU to every other</text>
+      <line class="nvl" x1="774" y1="211" x2="808" y2="211"/>
+      <rect class="tile" x="808" y="180" width="330" height="62" rx="6"/>
+      <text class="gpu" x="824" y="217">G8</text>
+      <rect class="core" x="856" y="192" width="100" height="38" rx="4"/>
+      <text class="blk" x="906" y="216" text-anchor="middle">compute</text>
+      <rect class="hbm" x="1014" y="192" width="110" height="38" rx="4"/>
+      <text class="blk hbm-t" x="1069" y="216" text-anchor="middle">HBM</text>
+      <line class="rd" x1="1010" y1="204" x2="961" y2="204" marker-end="url(#a-hot)"/>
+      <line class="wr" x1="960" y1="223" x2="1009" y2="223" marker-end="url(#a-ink)"/>
+      <line class="nvl" x1="774" y1="295" x2="808" y2="295"/>
+      <rect class="tile" x="808" y="264" width="330" height="62" rx="6"/>
+      <text class="gpu" x="824" y="301">G9</text>
+      <rect class="core" x="856" y="276" width="100" height="38" rx="4"/>
+      <text class="blk" x="906" y="300" text-anchor="middle">compute</text>
+      <rect class="hbm" x="1014" y="276" width="110" height="38" rx="4"/>
+      <text class="blk hbm-t" x="1069" y="300" text-anchor="middle">HBM</text>
+      <line class="rd" x1="1010" y1="288" x2="961" y2="288" marker-end="url(#a-hot)"/>
+      <line class="wr" x1="960" y1="307" x2="1009" y2="307" marker-end="url(#a-ink)"/>
+      <line class="nvl" x1="774" y1="379" x2="808" y2="379"/>
+      <rect class="tile" x="808" y="348" width="330" height="62" rx="6"/>
+      <text class="gpu" x="824" y="385">G10</text>
+      <rect class="core" x="856" y="360" width="100" height="38" rx="4"/>
+      <text class="blk" x="906" y="384" text-anchor="middle">compute</text>
+      <rect class="hbm" x="1014" y="360" width="110" height="38" rx="4"/>
+      <text class="blk hbm-t" x="1069" y="384" text-anchor="middle">HBM</text>
+      <line class="rd" x1="1010" y1="372" x2="961" y2="372" marker-end="url(#a-hot)"/>
+      <line class="wr" x1="960" y1="391" x2="1009" y2="391" marker-end="url(#a-ink)"/>
+      <line class="nvl" x1="774" y1="463" x2="808" y2="463"/>
+      <rect class="tile" x="808" y="432" width="330" height="62" rx="6"/>
+      <text class="gpu" x="824" y="469">G11</text>
+      <rect class="core" x="856" y="444" width="100" height="38" rx="4"/>
+      <text class="blk" x="906" y="468" text-anchor="middle">compute</text>
+      <rect class="hbm" x="1014" y="444" width="110" height="38" rx="4"/>
+      <text class="blk hbm-t" x="1069" y="468" text-anchor="middle">HBM</text>
+      <line class="rd" x1="1010" y1="456" x2="961" y2="456" marker-end="url(#a-hot)"/>
+      <line class="wr" x1="960" y1="475" x2="1009" y2="475" marker-end="url(#a-ink)"/>
+      <line class="nvl" x1="774" y1="547" x2="808" y2="547"/>
+      <rect class="tile" x="808" y="516" width="330" height="62" rx="6"/>
+      <text class="gpu" x="824" y="553">G12</text>
+      <rect class="core" x="856" y="528" width="100" height="38" rx="4"/>
+      <text class="blk" x="906" y="552" text-anchor="middle">compute</text>
+      <rect class="hbm" x="1014" y="528" width="110" height="38" rx="4"/>
+      <text class="blk hbm-t" x="1069" y="552" text-anchor="middle">HBM</text>
+      <line class="rd" x1="1010" y1="540" x2="961" y2="540" marker-end="url(#a-hot)"/>
+      <line class="wr" x1="960" y1="559" x2="1009" y2="559" marker-end="url(#a-ink)"/>
+      <line class="nvl" x1="774" y1="631" x2="808" y2="631"/>
+      <rect class="tile" x="808" y="600" width="330" height="62" rx="6"/>
+      <text class="gpu" x="824" y="637">G13</text>
+      <rect class="core" x="856" y="612" width="100" height="38" rx="4"/>
+      <text class="blk" x="906" y="636" text-anchor="middle">compute</text>
+      <rect class="hbm" x="1014" y="612" width="110" height="38" rx="4"/>
+      <text class="blk hbm-t" x="1069" y="636" text-anchor="middle">HBM</text>
+      <line class="rd" x1="1010" y1="624" x2="961" y2="624" marker-end="url(#a-hot)"/>
+      <line class="wr" x1="960" y1="643" x2="1009" y2="643" marker-end="url(#a-ink)"/>
+      <line class="nvl" x1="774" y1="715" x2="808" y2="715"/>
+      <rect class="tile" x="808" y="684" width="330" height="62" rx="6"/>
+      <text class="gpu" x="824" y="721">G14</text>
+      <rect class="core" x="856" y="696" width="100" height="38" rx="4"/>
+      <text class="blk" x="906" y="720" text-anchor="middle">compute</text>
+      <rect class="hbm" x="1014" y="696" width="110" height="38" rx="4"/>
+      <text class="blk hbm-t" x="1069" y="720" text-anchor="middle">HBM</text>
+      <line class="rd" x1="1010" y1="708" x2="961" y2="708" marker-end="url(#a-hot)"/>
+      <line class="wr" x1="960" y1="727" x2="1009" y2="727" marker-end="url(#a-ink)"/>
+      <line class="nvl" x1="774" y1="799" x2="808" y2="799"/>
+      <rect class="tile" x="808" y="768" width="330" height="62" rx="6"/>
+      <text class="gpu" x="824" y="805">G15</text>
+      <rect class="core" x="856" y="780" width="100" height="38" rx="4"/>
+      <text class="blk" x="906" y="804" text-anchor="middle">compute</text>
+      <rect class="hbm" x="1014" y="780" width="110" height="38" rx="4"/>
+      <text class="blk hbm-t" x="1069" y="804" text-anchor="middle">HBM</text>
+      <line class="rd" x1="1010" y1="792" x2="961" y2="792" marker-end="url(#a-hot)"/>
+      <line class="wr" x1="960" y1="811" x2="1009" y2="811" marker-end="url(#a-ink)"/>
+
+  <text class="ib-t" x="626" y="150" text-anchor="middle">InfiniBand</text>
+  <text class="ib-s" x="626" y="168" text-anchor="middle">each GPU to its counterpart</text>
+  <line class="ib" x1="452" y1="211" x2="800" y2="211" marker-end="url(#a-cool)"/>
+      <line class="ib" x1="452" y1="295" x2="800" y2="295" marker-end="url(#a-cool)"/>
+      <line class="ib" x1="452" y1="379" x2="800" y2="379" marker-end="url(#a-cool)"/>
+      <line class="ib" x1="452" y1="463" x2="800" y2="463" marker-end="url(#a-cool)"/>
+      <line class="ib" x1="452" y1="547" x2="800" y2="547" marker-end="url(#a-cool)"/>
+      <line class="ib" x1="452" y1="631" x2="800" y2="631" marker-end="url(#a-cool)"/>
+      <line class="ib" x1="452" y1="715" x2="800" y2="715" marker-end="url(#a-cool)"/>
+      <line class="ib" x1="452" y1="799" x2="800" y2="799" marker-end="url(#a-cool)"/>
+
+  <line class="nvl" x1="40" y1="888" x2="70" y2="888"/>
+  <text class="lg" x="82" y="892">NVLink — GPU to GPU within a node</text>
+  <line class="ib" x1="40" y1="912" x2="70" y2="912"/>
+  <text class="lg" x="82" y="916">InfiniBand — GPU to GPU across the nodes</text>
+  <line class="rd" x1="620" y1="888" x2="648" y2="888" marker-end="url(#a-hot)"/>
+  <text class="lg" x="668" y="892">HBM to compute — weights and KV cache, read every step</text>
+  <line class="wr" x1="620" y1="912" x2="648" y2="912" marker-end="url(#a-ink)"/>
+  <text class="lg" x="668" y="916">compute to HBM — activations written back</text>
+</svg>
