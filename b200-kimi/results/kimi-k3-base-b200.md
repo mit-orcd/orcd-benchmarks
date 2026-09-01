@@ -4,6 +4,10 @@ Serving `moonshotai/Kimi-K3` (2.78 T params, 1.56 TB MXFP4 checkpoint) on **2 no
 
 > **Why two nodes.** The checkpoint is **1561 GB (1.42 TiB)**. One 8 × B200 node holds **1538 GB (1.40 TiB)** of HBM (8 × 192 GB) — **23 GB short of the weights alone**, before a single byte of KV cache, activation workspace, NCCL buffers or CUDA-graph pool, which together take another ~15–20 GB per GPU. There is no single-node B200 configuration for this model. TP8 shards within each node and PP2 splits the 93 layers across the pair. The MI355X baseline runs the same model on **one** node, because 8 × 288 GB = 2304 GB does fit with room to spare. Every throughput figure below is therefore also reported per GPU and per node.
 
+![Two server computers drawn as rack boxes. Each box holds two GPUs, each GPU with its own memory, joined inside the box by a direct link. A network cable runs between the two boxes so they can work on the same model together.](kimi-k3-two-nodes-simple.svg)
+
+*The same idea without the jargon, for readers new to HPC: the model does not fit in one computer, so it is spread across two, and they are joined by a cable. The real job uses eight GPUs per node, not the two drawn here.*
+
 **Run configuration** (from the server log, not assumed):
 
 | Setting | Value |

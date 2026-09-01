@@ -1,0 +1,242 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 660" role="img"
+     aria-label="Two server computers drawn as rack boxes. Each box holds two GPUs, each GPU with its own memory, joined inside the box by a direct link. A network cable runs between the two boxes so they can work on the same model together.">
+  <title>Why a large AI model needs more than one computer</title>
+  <defs>
+    <marker id="c-dn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9"
+            markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#12708A"/></marker>
+    <marker id="c-up" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9"
+            markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#12708A"/></marker>
+  </defs>
+  <style>
+    text { font-family: "IBM Plex Sans", "Segoe UI", Arial, sans-serif; fill: #333F47; }
+    .bg { fill: #FFFFFF; }
+    .eyebrow { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11.5px;
+                letter-spacing: .14em; fill: #5D6970; }
+    .h1 { font-family: Chivo, "Segoe UI", sans-serif; font-size: 25px; font-weight: 700;
+           fill: #151B20; letter-spacing: -.014em; }
+    .sub { font-size: 14px; fill: #333F47; }
+    .node-n { font-family: Chivo, sans-serif; font-size: 17px; font-weight: 700; fill: #151B20; }
+    .node-s { font-size: 12.5px; fill: #5D6970; }
+    .chassis { fill: #E4E9EB; stroke: #AFBBC1; stroke-width: 1.5; }
+    .lid { fill: #F3F6F7; }
+    .bezel { fill: #3A464D; }
+    .vent { fill: #232D32; }
+    .led-on { fill: #4FAE6A; }
+    .led-am { fill: #E0A33B; }
+    .shroud { fill: #2C3A42; stroke: #1B252A; stroke-width: 1.5; }
+    .shroud-top { fill: #445560; }
+    .fan-r { fill: #56676F; stroke: #1B252A; stroke-width: 1.5; }
+    .fan-h { fill: #8B9AA2; }
+    .blade { stroke: #8B9AA2; stroke-width: 3; stroke-linecap: round; }
+    .gpu-t { font-family: Chivo, sans-serif; font-size: 21px; font-weight: 700;
+              fill: #E9EEF0; letter-spacing: .06em; }
+    .mem { fill: #C4571F; stroke: #8E3E15; stroke-width: 1.2; }
+    .mem-t { font-family: "IBM Plex Mono", monospace; font-size: 12.5px; font-weight: 500; fill: #2A1408; }
+    .inlink { stroke: #12708A; stroke-width: 4; }
+    .inlink-t { font-size: 12.5px; fill: #12708A; font-weight: 600; }
+    .cable { fill: none; stroke: #12708A; stroke-width: 7; stroke-linecap: round; }
+    .plug { fill: #3A464D; }
+    .cable-t { font-family: Chivo, sans-serif; font-size: 15px; font-weight: 700; fill: #12708A; }
+    .cable-s { font-size: 12.5px; fill: #5D6970; }
+    .lg { font-size: 13px; fill: #333F47; }
+    .lg-b { font-weight: 600; fill: #151B20; }
+  </style>
+
+  <rect class="bg" x="0" y="0" width="1200" height="660"/>
+
+  <text class="eyebrow" x="70" y="42">HOW A VERY LARGE AI MODEL RUNS ON MORE THAN ONE COMPUTER</text>
+  <text class="h1" x="70" y="76">The model is too big for one computer, so it runs on two</text>
+  <text class="sub" x="70" y="102">Each box below is one computer, called a <tspan font-weight="600">node</tspan>. Inside each are GPUs — the chips that do the heavy work, each with its own memory.</text>
+  <text class="sub" x="70" y="122">A cable joins the two boxes so they can work on the same model together.</text>
+
+  <text class="node-n" x="290" y="162" text-anchor="middle">NODE 1</text>
+      <text class="node-s" x="290" y="182" text-anchor="middle">one server computer</text>
+      <rect class="chassis" x="70" y="200" width="440" height="300" rx="10"/>
+      <rect class="lid" x="72" y="202" width="436" height="9" rx="4"/>
+      <path class="bezel" d="M80,200 h42 v300 h-42 a10,10 0 0 1 -10,-10 v-280 a10,10 0 0 1 10,-10 z"/>
+      <circle class="led-on" cx="88" cy="228" r="5"/>
+      <circle class="led-am" cx="106" cy="228" r="5"/>
+      <rect class="vent" x="82" y="262" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="82" y="281" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="82" y="300" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="82" y="319" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="82" y="338" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="82" y="357" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="82" y="376" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="82" y="395" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="82" y="414" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="82" y="433" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="82" y="452" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="95" y="262" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="95" y="281" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="95" y="300" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="95" y="319" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="95" y="338" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="95" y="357" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="95" y="376" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="95" y="395" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="95" y="414" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="95" y="433" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="95" y="452" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="108" y="262" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="108" y="281" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="108" y="300" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="108" y="319" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="108" y="338" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="108" y="357" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="108" y="376" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="108" y="395" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="108" y="414" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="108" y="433" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="108" y="452" width="8" height="11" rx="2.5"/>
+      <rect class="shroud" x="142" y="236" width="340" height="90" rx="8"/>
+      <rect class="shroud-top" x="148" y="241" width="328" height="6" rx="3"/>
+      <circle class="fan-r" cx="198" cy="284" r="28"/>
+      <line class="blade" x1="204.8" y1="285.5" x2="221.5" y2="289.0"/>
+      <line class="blade" x1="201.1" y1="290.3" x2="208.7" y2="305.5"/>
+      <line class="blade" x1="195.1" y1="290.4" x2="187.9" y2="305.8"/>
+      <line class="blade" x1="191.2" y1="285.7" x2="174.7" y2="289.7"/>
+      <line class="blade" x1="192.5" y1="279.7" x2="179.0" y2="269.3"/>
+      <line class="blade" x1="197.9" y1="277.0" x2="197.6" y2="260.0"/>
+      <line class="blade" x1="203.4" y1="279.6" x2="216.5" y2="268.8"/>
+      <circle class="fan-h" cx="198" cy="284" r="8"/>
+      <circle class="fan-r" cx="268" cy="284" r="28"/>
+      <line class="blade" x1="274.8" y1="285.5" x2="291.5" y2="289.0"/>
+      <line class="blade" x1="271.1" y1="290.3" x2="278.7" y2="305.5"/>
+      <line class="blade" x1="265.1" y1="290.4" x2="257.9" y2="305.8"/>
+      <line class="blade" x1="261.2" y1="285.7" x2="244.7" y2="289.7"/>
+      <line class="blade" x1="262.5" y1="279.7" x2="249.0" y2="269.3"/>
+      <line class="blade" x1="267.9" y1="277.0" x2="267.6" y2="260.0"/>
+      <line class="blade" x1="273.4" y1="279.6" x2="286.5" y2="268.8"/>
+      <circle class="fan-h" cx="268" cy="284" r="8"/>
+      <text class="gpu-t" x="328" y="292">GPU</text>
+      <rect class="mem" x="374" y="260" width="94" height="42" rx="5"/>
+      <text class="mem-t" x="421" y="286" text-anchor="middle">memory</text>
+      <rect class="shroud" x="142" y="374" width="340" height="90" rx="8"/>
+      <rect class="shroud-top" x="148" y="379" width="328" height="6" rx="3"/>
+      <circle class="fan-r" cx="198" cy="422" r="28"/>
+      <line class="blade" x1="204.8" y1="423.5" x2="221.5" y2="427.0"/>
+      <line class="blade" x1="201.1" y1="428.3" x2="208.7" y2="443.5"/>
+      <line class="blade" x1="195.1" y1="428.4" x2="187.9" y2="443.8"/>
+      <line class="blade" x1="191.2" y1="423.7" x2="174.7" y2="427.7"/>
+      <line class="blade" x1="192.5" y1="417.7" x2="179.0" y2="407.3"/>
+      <line class="blade" x1="197.9" y1="415.0" x2="197.6" y2="398.0"/>
+      <line class="blade" x1="203.4" y1="417.6" x2="216.5" y2="406.8"/>
+      <circle class="fan-h" cx="198" cy="422" r="8"/>
+      <circle class="fan-r" cx="268" cy="422" r="28"/>
+      <line class="blade" x1="274.8" y1="423.5" x2="291.5" y2="427.0"/>
+      <line class="blade" x1="271.1" y1="428.3" x2="278.7" y2="443.5"/>
+      <line class="blade" x1="265.1" y1="428.4" x2="257.9" y2="443.8"/>
+      <line class="blade" x1="261.2" y1="423.7" x2="244.7" y2="427.7"/>
+      <line class="blade" x1="262.5" y1="417.7" x2="249.0" y2="407.3"/>
+      <line class="blade" x1="267.9" y1="415.0" x2="267.6" y2="398.0"/>
+      <line class="blade" x1="273.4" y1="417.6" x2="286.5" y2="406.8"/>
+      <circle class="fan-h" cx="268" cy="422" r="8"/>
+      <text class="gpu-t" x="328" y="430">GPU</text>
+      <rect class="mem" x="374" y="398" width="94" height="42" rx="5"/>
+      <text class="mem-t" x="421" y="424" text-anchor="middle">memory</text>
+      <line class="inlink" x1="200" y1="328" x2="200" y2="372" marker-start="url(#c-up)" marker-end="url(#c-dn)"/>
+      <text class="inlink-t" x="220" y="356">direct link inside the box</text>
+
+  <text class="node-n" x="910" y="162" text-anchor="middle">NODE 2</text>
+      <text class="node-s" x="910" y="182" text-anchor="middle">one server computer</text>
+      <rect class="chassis" x="690" y="200" width="440" height="300" rx="10"/>
+      <rect class="lid" x="692" y="202" width="436" height="9" rx="4"/>
+      <path class="bezel" d="M700,200 h42 v300 h-42 a10,10 0 0 1 -10,-10 v-280 a10,10 0 0 1 10,-10 z"/>
+      <circle class="led-on" cx="708" cy="228" r="5"/>
+      <circle class="led-am" cx="726" cy="228" r="5"/>
+      <rect class="vent" x="702" y="262" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="702" y="281" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="702" y="300" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="702" y="319" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="702" y="338" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="702" y="357" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="702" y="376" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="702" y="395" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="702" y="414" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="702" y="433" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="702" y="452" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="715" y="262" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="715" y="281" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="715" y="300" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="715" y="319" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="715" y="338" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="715" y="357" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="715" y="376" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="715" y="395" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="715" y="414" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="715" y="433" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="715" y="452" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="728" y="262" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="728" y="281" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="728" y="300" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="728" y="319" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="728" y="338" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="728" y="357" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="728" y="376" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="728" y="395" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="728" y="414" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="728" y="433" width="8" height="11" rx="2.5"/>
+      <rect class="vent" x="728" y="452" width="8" height="11" rx="2.5"/>
+      <rect class="shroud" x="762" y="236" width="340" height="90" rx="8"/>
+      <rect class="shroud-top" x="768" y="241" width="328" height="6" rx="3"/>
+      <circle class="fan-r" cx="818" cy="284" r="28"/>
+      <line class="blade" x1="824.8" y1="285.5" x2="841.5" y2="289.0"/>
+      <line class="blade" x1="821.1" y1="290.3" x2="828.7" y2="305.5"/>
+      <line class="blade" x1="815.1" y1="290.4" x2="807.9" y2="305.8"/>
+      <line class="blade" x1="811.2" y1="285.7" x2="794.7" y2="289.7"/>
+      <line class="blade" x1="812.5" y1="279.7" x2="799.0" y2="269.3"/>
+      <line class="blade" x1="817.9" y1="277.0" x2="817.6" y2="260.0"/>
+      <line class="blade" x1="823.4" y1="279.6" x2="836.5" y2="268.8"/>
+      <circle class="fan-h" cx="818" cy="284" r="8"/>
+      <circle class="fan-r" cx="888" cy="284" r="28"/>
+      <line class="blade" x1="894.8" y1="285.5" x2="911.5" y2="289.0"/>
+      <line class="blade" x1="891.1" y1="290.3" x2="898.7" y2="305.5"/>
+      <line class="blade" x1="885.1" y1="290.4" x2="877.9" y2="305.8"/>
+      <line class="blade" x1="881.2" y1="285.7" x2="864.7" y2="289.7"/>
+      <line class="blade" x1="882.5" y1="279.7" x2="869.0" y2="269.3"/>
+      <line class="blade" x1="887.9" y1="277.0" x2="887.6" y2="260.0"/>
+      <line class="blade" x1="893.4" y1="279.6" x2="906.5" y2="268.8"/>
+      <circle class="fan-h" cx="888" cy="284" r="8"/>
+      <text class="gpu-t" x="948" y="292">GPU</text>
+      <rect class="mem" x="994" y="260" width="94" height="42" rx="5"/>
+      <text class="mem-t" x="1041" y="286" text-anchor="middle">memory</text>
+      <rect class="shroud" x="762" y="374" width="340" height="90" rx="8"/>
+      <rect class="shroud-top" x="768" y="379" width="328" height="6" rx="3"/>
+      <circle class="fan-r" cx="818" cy="422" r="28"/>
+      <line class="blade" x1="824.8" y1="423.5" x2="841.5" y2="427.0"/>
+      <line class="blade" x1="821.1" y1="428.3" x2="828.7" y2="443.5"/>
+      <line class="blade" x1="815.1" y1="428.4" x2="807.9" y2="443.8"/>
+      <line class="blade" x1="811.2" y1="423.7" x2="794.7" y2="427.7"/>
+      <line class="blade" x1="812.5" y1="417.7" x2="799.0" y2="407.3"/>
+      <line class="blade" x1="817.9" y1="415.0" x2="817.6" y2="398.0"/>
+      <line class="blade" x1="823.4" y1="417.6" x2="836.5" y2="406.8"/>
+      <circle class="fan-h" cx="818" cy="422" r="8"/>
+      <circle class="fan-r" cx="888" cy="422" r="28"/>
+      <line class="blade" x1="894.8" y1="423.5" x2="911.5" y2="427.0"/>
+      <line class="blade" x1="891.1" y1="428.3" x2="898.7" y2="443.5"/>
+      <line class="blade" x1="885.1" y1="428.4" x2="877.9" y2="443.8"/>
+      <line class="blade" x1="881.2" y1="423.7" x2="864.7" y2="427.7"/>
+      <line class="blade" x1="882.5" y1="417.7" x2="869.0" y2="407.3"/>
+      <line class="blade" x1="887.9" y1="415.0" x2="887.6" y2="398.0"/>
+      <line class="blade" x1="893.4" y1="417.6" x2="906.5" y2="406.8"/>
+      <circle class="fan-h" cx="888" cy="422" r="8"/>
+      <text class="gpu-t" x="948" y="430">GPU</text>
+      <rect class="mem" x="994" y="398" width="94" height="42" rx="5"/>
+      <text class="mem-t" x="1041" y="424" text-anchor="middle">memory</text>
+      <line class="inlink" x1="820" y1="328" x2="820" y2="372" marker-start="url(#c-up)" marker-end="url(#c-dn)"/>
+      <text class="inlink-t" x="840" y="356">direct link inside the box</text>
+
+  <text class="cable-t" x="600" y="302" text-anchor="middle">network cable</text>
+  <text class="cable-s" x="600" y="322" text-anchor="middle">joins the two boxes</text>
+  <path class="cable" d="M522,351 Q600,420 678,351"/>
+  <rect class="plug" x="502" y="340" width="22" height="22" rx="4"/>
+  <rect class="plug" x="676" y="340" width="22" height="22" rx="4"/>
+
+  <rect class="mem" x="70" y="556" width="24" height="16" rx="4"/>
+  <text class="lg" x="104" y="569"><tspan class="lg-b">Memory.</tspan> Each GPU holds one slice of the model in its own memory.</text>
+  <line class="inlink" x1="470" y1="564" x2="498" y2="564" marker-end="url(#c-dn)"/>
+  <text class="lg" x="512" y="569"><tspan class="lg-b">Inside a box.</tspan> The GPUs are wired directly together.</text>
+  <path class="cable" d="M810,570 Q824,552 838,570" />
+  <text class="lg" x="856" y="569"><tspan class="lg-b">Between boxes.</tspan> A network cable — a longer trip.</text>
+</svg>
