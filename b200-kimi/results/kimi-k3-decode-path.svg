@@ -1,0 +1,274 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 980" role="img"
+     aria-label="Kimi-K3 decode step across two B200 nodes: the 1,561 GB of weights exceed one node's 1,538 GB of HBM, forcing 16 GPUs in two pipeline stages; NVLink and InfiniBand run under one percent utilised while each GPU's HBM moves 67 GB per step at 23 percent of peak, the binding constraint.">
+  <title>Kimi-K3 decode step: two-node HBM-bound compute and communication path</title>
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path class="ah" d="M0,0 L10,5 L0,10 z"/>
+    </marker>
+    <marker id="ah-hot" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <path class="ah-hot" d="M0,0 L10,5 L0,10 z"/>
+    </marker>
+    <marker id="ah-cool" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path class="ah-cool" d="M0,0 L10,5 L0,10 z"/>
+    </marker>
+  </defs>
+  <style>
+    text { font-family: "IBM Plex Sans", "Segoe UI", Arial, sans-serif; fill: #333F47; }
+    .bg { fill: #FFFFFF; }
+    .eyebrow { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11.5px; letter-spacing: .14em; fill: #5D6970; }
+    .eyebrow.hot { fill: #A8481A; }
+    .h-svg { font-family: Chivo, "Segoe UI", sans-serif; font-size: 18px; font-weight: 700; fill: #151B20; letter-spacing: -.01em; }
+    .body-svg { font-size: 13.5px; fill: #333F47; }
+    .note { font-size: 12.5px; fill: #333F47; }
+    .note-s { font-size: 11.5px; fill: #5D6970; }
+    .over { font-size: 12px; font-weight: 600; fill: #A8481A; }
+    .on-hot { font-size: 13px; font-weight: 600; fill: #2A1408; }
+    .w-bar { fill: #C4571F; }
+    .rt-bar { fill: none; stroke: #C4571F; stroke-width: 1.5; stroke-dasharray: 5 4; }
+    .cap-line { stroke: #151B20; stroke-width: 1.5; stroke-dasharray: 4 4; }
+    .leader { stroke: #C4571F; stroke-width: 1; }
+    .flow { stroke: #151B20; stroke-width: 1.5; }
+    .ah { fill: #151B20; } .ah-hot { fill: #C4571F; } .ah-cool { fill: #12708A; }
+    .panel { fill: #F6F9FA; stroke: #CFD9DD; stroke-width: 1; }
+    .panel-hot { fill: #F7EDE6; stroke: #C4571F; stroke-width: 1.4; }
+    .node-id { font-family: "IBM Plex Mono", monospace; font-size: 13px; font-weight: 500; letter-spacing: .11em; fill: #151B20; }
+    .node-id.hot { fill: #A8481A; }
+    .node-cap { font-family: "IBM Plex Mono", monospace; font-size: 11.5px; fill: #5D6970; }
+    .node-sub { font-size: 12px; fill: #5D6970; }
+    .tile { fill: #FFFFFF; stroke: #CFD9DD; stroke-width: 1; }
+    .tile-hi { fill: #FFFFFF; stroke: #C4571F; stroke-width: 2; }
+    .gpu { font-family: "IBM Plex Mono", monospace; font-size: 11px; fill: #5D6970; }
+    .mem-w { fill: #C4571F; }
+    .mem-kv { fill: #E7B08B; }
+    .mem-free { fill: none; stroke: #CFD9DD; stroke-width: 1; }
+    .nvl-drop { stroke: #8FC4D2; stroke-width: 1.2; }
+    .nvlink-bus { fill: #12708A; }
+    .link-t { font-size: 12.5px; fill: #333F47; }
+    .link-v { font-size: 12.5px; fill: #12708A; }
+    .link-t .b, .link-v .b { font-weight: 600; }
+    .ib { stroke: #12708A; stroke-width: 2.5; stroke-dasharray: 8 5; }
+    .loop { fill: none; stroke: #CFD9DD; stroke-width: 1.5; }
+    .box { fill: #FFFFFF; stroke: #CFD9DD; stroke-width: 1; }
+    .box-t { font-family: Chivo, sans-serif; font-size: 15px; font-weight: 700; fill: #151B20; }
+    .stack { fill: #C4571F; opacity: .28; }
+    .pipe { stroke: #C4571F; stroke-width: 10; stroke-linecap: butt; }
+    .pipe-back { stroke: #5D6970; stroke-width: 1.5; stroke-dasharray: 5 4; }
+    .big-hot { font-family: Chivo, sans-serif; font-size: 17px; font-weight: 700; fill: #A8481A; }
+    .idle-n { font-family: Chivo, sans-serif; font-size: 30px; font-weight: 700; fill: #5D6970; }
+    .seg-1 { fill: #C4571F; } .seg-2 { fill: #E7B08B; }
+    .seg-3 { fill: #12708A; } .seg-4 { fill: #5D6970; }
+    .seg-lab { font-size: 12.5px; font-weight: 600; fill: #2A1408; }
+    .util-l { font-size: 12.5px; fill: #151B20; font-weight: 500; }
+    .util-s { font-size: 11px; fill: #5D6970; font-weight: 400; }
+    .util-track { fill: #E3E9EB; }
+    .util-hot { fill: #C4571F; } .util-cool { fill: #12708A; }
+    .util-v { font-family: "IBM Plex Mono", monospace; font-size: 12.5px; fill: #5D6970; }
+    .util-v.hot { fill: #A8481A; font-weight: 500; }
+    .insight { font-size: 12.5px; font-weight: 600; fill: #A8481A; }
+  </style>
+
+  <rect class="bg" x="0" y="0" width="1200" height="980"/>
+
+  <!-- ================= SCALE 1 : the model ================= -->
+  <text class="eyebrow" x="40" y="30">SCALE 1 &#8212; THE WHOLE MODEL</text>
+  <text class="h-svg" x="40" y="54">2.78 T parameters · 1,561 GB of MXFP4 weights</text>
+
+  <rect class="w-bar" x="40" y="76" width="771" height="30"/>
+  <text class="on-hot" x="54" y="96">1,561 GB weights</text>
+  <rect class="rt-bar" x="811" y="76" width="138" height="30"/>
+  <text class="note" x="958" y="90">+ ~280 GB runtime</text>
+  <text class="note-s" x="958" y="106">KV pool, activations, NCCL buffers</text>
+
+  <line class="cap-line" x1="800" y1="66" x2="800" y2="120"/>
+  <text class="note-s" x="800" y="136" text-anchor="middle">1,538 GB &#8212; all the HBM in one node (8 &#215; 192 GB)</text>
+  <line class="leader" x1="806" y1="74" x2="856" y2="52"/>
+  <text class="over" x="862" y="52">+23 GB over</text>
+
+  <line class="flow" x1="60" y1="150" x2="60" y2="182" marker-end="url(#ah)"/>
+  <text class="body-svg" x="78" y="170">23 GB short of a single node &#8212; so the job spans two, TP = 8 inside each, PP = 2 across the pair.</text>
+
+  <!-- ================= SCALE 2 : 16 GPUs, 2 nodes ================= -->
+  <text class="eyebrow" x="40" y="206">SCALE 2 &#8212; 16 GPUS ACROSS 2 NODES</text>
+
+  <rect class="panel" x="40" y="218" width="470" height="290" rx="10"/>
+      <text class="node-id" x="58" y="245">NODE 0</text>
+      <text class="node-cap" x="492" y="245" text-anchor="end">8 &#215; B200 · 1,538 GB HBM</text>
+      <text class="node-sub" x="58" y="264">pipeline stage 0 &#8212; layers 0 &#8230; 46 · TP = 8</text>
+      <rect class="tile" x="59" y="280" width="46" height="116" rx="4"/>
+      <text class="gpu" x="82" y="295" text-anchor="middle">G0</text>
+      <rect class="mem-w"  x="67" y="302.0" width="30" height="47.7"/>
+      <rect class="mem-kv" x="67" y="349.7" width="30" height="29.1"/>
+      <rect class="mem-free" x="67" y="378.8" width="30" height="11.2"/>
+      <line class="nvl-drop" x1="82" y1="396" x2="82" y2="428"/>
+      <rect class="tile" x="114" y="280" width="46" height="116" rx="4"/>
+      <text class="gpu" x="137" y="295" text-anchor="middle">G1</text>
+      <rect class="mem-w"  x="122" y="302.0" width="30" height="47.7"/>
+      <rect class="mem-kv" x="122" y="349.7" width="30" height="29.1"/>
+      <rect class="mem-free" x="122" y="378.8" width="30" height="11.2"/>
+      <line class="nvl-drop" x1="137" y1="396" x2="137" y2="428"/>
+      <rect class="tile" x="169" y="280" width="46" height="116" rx="4"/>
+      <text class="gpu" x="192" y="295" text-anchor="middle">G2</text>
+      <rect class="mem-w"  x="177" y="302.0" width="30" height="47.7"/>
+      <rect class="mem-kv" x="177" y="349.7" width="30" height="29.1"/>
+      <rect class="mem-free" x="177" y="378.8" width="30" height="11.2"/>
+      <line class="nvl-drop" x1="192" y1="396" x2="192" y2="428"/>
+      <rect class="tile tile-hi" x="224" y="280" width="46" height="116" rx="4"/>
+      <text class="gpu" x="247" y="295" text-anchor="middle">G3</text>
+      <rect class="mem-w"  x="232" y="302.0" width="30" height="47.7"/>
+      <rect class="mem-kv" x="232" y="349.7" width="30" height="29.1"/>
+      <rect class="mem-free" x="232" y="378.8" width="30" height="11.2"/>
+      <line class="nvl-drop" x1="247" y1="396" x2="247" y2="428"/>
+      <rect class="tile" x="279" y="280" width="46" height="116" rx="4"/>
+      <text class="gpu" x="302" y="295" text-anchor="middle">G4</text>
+      <rect class="mem-w"  x="287" y="302.0" width="30" height="47.7"/>
+      <rect class="mem-kv" x="287" y="349.7" width="30" height="29.1"/>
+      <rect class="mem-free" x="287" y="378.8" width="30" height="11.2"/>
+      <line class="nvl-drop" x1="302" y1="396" x2="302" y2="428"/>
+      <rect class="tile" x="334" y="280" width="46" height="116" rx="4"/>
+      <text class="gpu" x="357" y="295" text-anchor="middle">G5</text>
+      <rect class="mem-w"  x="342" y="302.0" width="30" height="47.7"/>
+      <rect class="mem-kv" x="342" y="349.7" width="30" height="29.1"/>
+      <rect class="mem-free" x="342" y="378.8" width="30" height="11.2"/>
+      <line class="nvl-drop" x1="357" y1="396" x2="357" y2="428"/>
+      <rect class="tile" x="389" y="280" width="46" height="116" rx="4"/>
+      <text class="gpu" x="412" y="295" text-anchor="middle">G6</text>
+      <rect class="mem-w"  x="397" y="302.0" width="30" height="47.7"/>
+      <rect class="mem-kv" x="397" y="349.7" width="30" height="29.1"/>
+      <rect class="mem-free" x="397" y="378.8" width="30" height="11.2"/>
+      <line class="nvl-drop" x1="412" y1="396" x2="412" y2="428"/>
+      <rect class="tile" x="444" y="280" width="46" height="116" rx="4"/>
+      <text class="gpu" x="467" y="295" text-anchor="middle">G7</text>
+      <rect class="mem-w"  x="452" y="302.0" width="30" height="47.7"/>
+      <rect class="mem-kv" x="452" y="349.7" width="30" height="29.1"/>
+      <rect class="mem-free" x="452" y="378.8" width="30" height="11.2"/>
+      <line class="nvl-drop" x1="467" y1="396" x2="467" y2="428"/>
+      <rect class="nvlink-bus" x="59" y="428" width="431" height="12" rx="6"/>
+      <text class="link-t" x="59" y="462">NVLink &#8212; TP all-reduce, 2 per layer &#215; 46 layers = <tspan class="b">93 per token</tspan></text>
+      <text class="link-v" x="59" y="481">14 KB per call · 4.16 GB/s per GPU &#8212; <tspan class="b">0.5% of 900 GB/s</tspan></text>
+
+  <rect class="panel" x="690" y="218" width="470" height="290" rx="10"/>
+      <text class="node-id" x="708" y="245">NODE 1</text>
+      <text class="node-cap" x="1142" y="245" text-anchor="end">8 &#215; B200 · 1,538 GB HBM</text>
+      <text class="node-sub" x="708" y="264">pipeline stage 1 &#8212; layers 47 &#8230; 92 · TP = 8</text>
+      <rect class="tile" x="709" y="280" width="46" height="116" rx="4"/>
+      <text class="gpu" x="732" y="295" text-anchor="middle">G8</text>
+      <rect class="mem-w"  x="717" y="302.0" width="30" height="47.7"/>
+      <rect class="mem-kv" x="717" y="349.7" width="30" height="29.1"/>
+      <rect class="mem-free" x="717" y="378.8" width="30" height="11.2"/>
+      <line class="nvl-drop" x1="732" y1="396" x2="732" y2="428"/>
+      <rect class="tile" x="764" y="280" width="46" height="116" rx="4"/>
+      <text class="gpu" x="787" y="295" text-anchor="middle">G9</text>
+      <rect class="mem-w"  x="772" y="302.0" width="30" height="47.7"/>
+      <rect class="mem-kv" x="772" y="349.7" width="30" height="29.1"/>
+      <rect class="mem-free" x="772" y="378.8" width="30" height="11.2"/>
+      <line class="nvl-drop" x1="787" y1="396" x2="787" y2="428"/>
+      <rect class="tile" x="819" y="280" width="46" height="116" rx="4"/>
+      <text class="gpu" x="842" y="295" text-anchor="middle">G10</text>
+      <rect class="mem-w"  x="827" y="302.0" width="30" height="47.7"/>
+      <rect class="mem-kv" x="827" y="349.7" width="30" height="29.1"/>
+      <rect class="mem-free" x="827" y="378.8" width="30" height="11.2"/>
+      <line class="nvl-drop" x1="842" y1="396" x2="842" y2="428"/>
+      <rect class="tile" x="874" y="280" width="46" height="116" rx="4"/>
+      <text class="gpu" x="897" y="295" text-anchor="middle">G11</text>
+      <rect class="mem-w"  x="882" y="302.0" width="30" height="47.7"/>
+      <rect class="mem-kv" x="882" y="349.7" width="30" height="29.1"/>
+      <rect class="mem-free" x="882" y="378.8" width="30" height="11.2"/>
+      <line class="nvl-drop" x1="897" y1="396" x2="897" y2="428"/>
+      <rect class="tile" x="929" y="280" width="46" height="116" rx="4"/>
+      <text class="gpu" x="952" y="295" text-anchor="middle">G12</text>
+      <rect class="mem-w"  x="937" y="302.0" width="30" height="47.7"/>
+      <rect class="mem-kv" x="937" y="349.7" width="30" height="29.1"/>
+      <rect class="mem-free" x="937" y="378.8" width="30" height="11.2"/>
+      <line class="nvl-drop" x1="952" y1="396" x2="952" y2="428"/>
+      <rect class="tile" x="984" y="280" width="46" height="116" rx="4"/>
+      <text class="gpu" x="1007" y="295" text-anchor="middle">G13</text>
+      <rect class="mem-w"  x="992" y="302.0" width="30" height="47.7"/>
+      <rect class="mem-kv" x="992" y="349.7" width="30" height="29.1"/>
+      <rect class="mem-free" x="992" y="378.8" width="30" height="11.2"/>
+      <line class="nvl-drop" x1="1007" y1="396" x2="1007" y2="428"/>
+      <rect class="tile" x="1039" y="280" width="46" height="116" rx="4"/>
+      <text class="gpu" x="1062" y="295" text-anchor="middle">G14</text>
+      <rect class="mem-w"  x="1047" y="302.0" width="30" height="47.7"/>
+      <rect class="mem-kv" x="1047" y="349.7" width="30" height="29.1"/>
+      <rect class="mem-free" x="1047" y="378.8" width="30" height="11.2"/>
+      <line class="nvl-drop" x1="1062" y1="396" x2="1062" y2="428"/>
+      <rect class="tile" x="1094" y="280" width="46" height="116" rx="4"/>
+      <text class="gpu" x="1117" y="295" text-anchor="middle">G15</text>
+      <rect class="mem-w"  x="1102" y="302.0" width="30" height="47.7"/>
+      <rect class="mem-kv" x="1102" y="349.7" width="30" height="29.1"/>
+      <rect class="mem-free" x="1102" y="378.8" width="30" height="11.2"/>
+      <line class="nvl-drop" x1="1117" y1="396" x2="1117" y2="428"/>
+      <rect class="nvlink-bus" x="709" y="428" width="431" height="12" rx="6"/>
+      <text class="link-t" x="709" y="462">NVLink &#8212; TP all-reduce, 2 per layer &#215; 46 layers = <tspan class="b">93 per token</tspan></text>
+      <text class="link-v" x="709" y="481">14 KB per call · 4.16 GB/s per GPU &#8212; <tspan class="b">0.5% of 900 GB/s</tspan></text>
+
+  <!-- inter-node pipeline hop -->
+  <text class="link-t" x="600" y="300" text-anchor="middle">InfiniBand · 8-rail NDR</text>
+  <text class="note-s" x="600" y="318" text-anchor="middle">hidden state, 14 KB / token</text>
+  <line class="ib" x1="516" y1="340" x2="684" y2="340" marker-end="url(#ah-cool)"/>
+  <text class="link-v" x="600" y="366" text-anchor="middle">0.026 GB/s = 0.006%</text>
+  <text class="note-s" x="600" y="388" text-anchor="middle">one network hop added</text>
+  <text class="note-s" x="600" y="404" text-anchor="middle">to every decode step</text>
+
+  <!-- autoregressive loop -->
+  <path class="loop" d="M1050,508 L1050,545 L844,545"/>
+  <path class="loop" d="M356,545 L150,545 L150,512" marker-end="url(#ah)"/>
+  <text class="note-s" x="600" y="549" text-anchor="middle">autoregressive loop &#8212; one token per sequence per step · 35.9 ms at 64 concurrent requests</text>
+
+  <!-- ================= SCALE 3 : inside one GPU ================= -->
+  <text class="eyebrow hot" x="40" y="600">SCALE 3 &#8212; INSIDE ONE GPU · THE BOTTLENECK</text>
+  <rect class="panel-hot" x="40" y="620" width="1120" height="340" rx="10"/>
+  <text class="node-id hot" x="58" y="650">G3 &#8212; ONE DECODE STEP</text>
+  <text class="node-cap" x="1142" y="650" text-anchor="end">identical on all 16 GPUs</text>
+
+  <!-- HBM -->
+  <rect class="box" x="70" y="676" width="190" height="170" rx="6"/>
+  <text class="box-t" x="165" y="704" text-anchor="middle">HBM3e</text>
+  <text class="note-s" x="165" y="723" text-anchor="middle">192 GB · 8.0 TB/s</text>
+  <rect class="stack" x="88" y="740" width="154" height="13"/>
+  <rect class="stack" x="88" y="760" width="154" height="13"/>
+  <rect class="stack" x="88" y="780" width="154" height="13"/>
+  <rect class="stack" x="88" y="800" width="154" height="13"/>
+  <rect class="stack" x="88" y="820" width="154" height="13"/>
+
+  <!-- the hot path -->
+  <text class="big-hot" x="340" y="736" text-anchor="middle">67 GB / step</text>
+  <line class="pipe" x1="272" y1="754" x2="406" y2="754" marker-end="url(#ah-hot)"/>
+  <line class="pipe-back" x1="406" y1="786" x2="274" y2="786" marker-end="url(#ah)"/>
+  <text class="note-s" x="340" y="804" text-anchor="middle">activations back</text>
+  <text class="note-s" x="340" y="826" text-anchor="middle">1,807 GB/s sustained</text>
+
+  <!-- SMs -->
+  <rect class="box" x="420" y="676" width="190" height="170" rx="6"/>
+  <text class="box-t" x="515" y="704" text-anchor="middle">Blackwell SMs</text>
+  <text class="note-s" x="515" y="723" text-anchor="middle">2,250 TFLOP/s BF16</text>
+  <text class="idle-n" x="515" y="792" text-anchor="middle">0.97%</text>
+  <text class="note-s" x="515" y="814" text-anchor="middle">of peak used</text>
+
+  <rect class="seg-1" x="70.0" y="872" width="497.9" height="22"/>
+      <text class="seg-lab" x="82.0" y="887">expert weights (MXFP4)  61.6 GB &#8212; 92.2%</text>
+      <rect class="seg-2" x="567.9" y="872" width="26.5" height="22"/>
+      <rect class="seg-3" x="594.3" y="872" width="14.6" height="22"/>
+      <rect class="seg-4" x="608.9" y="872" width="1.6" height="22"/>
+  <text class="note-s" x="70" y="916">then other weights 3.3 GB · KV cache read 1.8 GB · activations 0.2 GB &#8212; weight traffic is the whole story</text>
+
+  <text class="util-l" x="680" y="726">HBM bandwidth <tspan class="util-s">1,807 of 8,000 GB/s</tspan></text>
+      <rect class="util-track" x="680" y="734" width="340" height="14" rx="7"/>
+      <rect class="util-hot" x="680" y="734" width="78.2" height="14" rx="7"/>
+      <text class="util-v hot" x="1032" y="746">23%</text>
+      <text class="util-l" x="680" y="764">Compute (BF16) <tspan class="util-s">21.8 of 2,250 TFLOP/s</tspan></text>
+      <rect class="util-track" x="680" y="772" width="340" height="14" rx="7"/>
+      <rect class="util-cool" x="680" y="772" width="3.3" height="14" rx="7"/>
+      <text class="util-v" x="1032" y="784">0.97%</text>
+      <text class="util-l" x="680" y="802">NVLink <tspan class="util-s">4.16 of 900 GB/s</tspan></text>
+      <rect class="util-track" x="680" y="810" width="340" height="14" rx="7"/>
+      <rect class="util-cool" x="680" y="810" width="3.0" height="14" rx="7"/>
+      <text class="util-v" x="1032" y="822">0.46%</text>
+      <text class="util-l" x="680" y="840">InfiniBand <tspan class="util-s">0.026 of 400 GB/s</tspan></text>
+      <rect class="util-track" x="680" y="848" width="340" height="14" rx="7"/>
+      <rect class="util-cool" x="680" y="848" width="3.0" height="14" rx="7"/>
+      <text class="util-v" x="1032" y="860">0.006%</text>
+  <text class="insight" x="680" y="892">The bottleneck &#8212; and it is latency-bound, not bandwidth-bound.</text>
+  <text class="note-s" x="680" y="910">610 of 896 experts fire per layer, yet each sees only 1.7 tokens: a matrix&#8211;vector</text>
+  <text class="note-s" x="680" y="926">product cannot keep enough memory requests in flight to fill 8 TB/s.</text>
+</svg>

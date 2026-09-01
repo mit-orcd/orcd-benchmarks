@@ -25,6 +25,10 @@ The parse is **exactly validated**: routed-expert parameters computed from the c
 
 > The routed experts live in a **latent space of 3584**, not on the 7168-wide residual stream. That is the difference between 2.72 T and the ~6.4 T a naive `3 × hidden × expert_width` count would predict, and it is why the exact match above is worth stating.
 
+![Kimi-K3 decode step across two B200 nodes: the checkpoint exceeds one node's HBM, forcing 16 GPUs in two pipeline stages; NVLink and InfiniBand run under 1% utilized while each GPU's HBM moves 67 GB per step at 23% of peak, the binding constraint.](kimi-k3-decode-path.svg)
+
+*One decode step at three scales — the 1,561 GB checkpoint against one node's 1,538 GB of HBM (top), the 16-GPU / 2-node topology with NVLink and InfiniBand traffic (middle), and the 67 GB/step HBM path inside a single GPU that is the actual bottleneck (bottom, §3).*
+
 ---
 
 ## 0. Overview — the short version
