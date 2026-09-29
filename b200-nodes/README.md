@@ -1,109 +1,21 @@
-# B200 node benchmarks
+# b200-nodes
 
-Benchmarks for the B200 test nodes **node5500** and **node5502** (8× NVIDIA B200
-each, NVLink 5.0 / NVSwitch intra-node, NDR 400 Gb/s InfiniBand inter-node).
-Slurm partition: **`mit_testing`**.
+## Introduction
 
-No installation needed — every script loads its own modules
-(`nvhpc/26.1` for NCCL, `apptainer/1.4.2` for gpu-fryer and Megatron) and uses
-prebuilt binaries / SIF images. Run everything as your normal user.
+Benchmarks for the NVIDIA B200 nodes running Rocky 8 (node5500–5502 by default;
+the rail tests also cover node5602/5702/5800/5802-c1): 8 × B200 per node,
+NVLink 5 / NVSwitch inside a node, 8 × NDR 400 Gb/s InfiniBand rails between
+nodes. Slurm partition **`mit_testing`**.
 
-Two ways to run each benchmark:
-- **Slurm** (recommended): `sbatch` or a `./job-*.sh` wrapper — no manual ssh.
-- **Local**: `ssh node5500` first, then `./run-*.sh` on the node.
+| Benchmark | What it measures |
+|---|---|
+| gpu-fryer | Sustained TFLOP/s per GPU, fp32 / bf16 / fp8, 300 s each |
+| NCCL 1-node / 2-node | Collective bus bandwidth over NVLink and over InfiniBand |
+| NCCL SHARP | all_reduce with InfiniBand switch offload (SHARP) vs plain ring |
+| ib_write_bw | Raw RDMA bandwidth per rail, host vs GPU memory, one rail or all 8 at once |
+| Megatron-LM | GPT pre-training TFLOP/s per GPU, 1, 2 or 3 nodes |
 
----
-
-## 1. gpu-fryer (single-node GPU stress / TFLOP·s)
-
-Runs fp32, bf16, fp8 stress (default 300 s each) on all 8 GPUs.
-
-```bash
-# Slurm: one job per node (default: both nodes, 300 s)
-./job-gpu-fryer.sh                     # node5500 + node5502
-./job-gpu-fryer.sh node5500 600        # node5500 only, 600 s/precision
-
-# Local: ssh to the node first
-ssh node5500
-./run-gpu-fryer.sh [seconds]           # default 300
-```
-
-Output → `out-gpu-fryer/`.  Analyze:
-
-```bash
-./analyze-gpu-fryer.py                 # writes out-gpu-fryer/summary.md
-./md-to-pdf.py out-gpu-fryer/summary.md
-```
-
----
-
-## 2. NCCL collective bandwidth (nccl-tests)
-
-Collective names: `sendrecv allreduce allgather reducescatter reduce broadcast
-alltoall gather scatter hypercube` — pass one, a comma list, or `all`.
-Figure of merit is **busbw** (GB/s).
-
-### Single node (intra-node NVLink)
-
-```bash
-# Slurm: one job per node
-./job-nccl-1node.sh                              # both nodes, sendrecv, all GPUs
-./job-nccl-1node.sh node5500 all                 # node5500, every collective
-./job-nccl-1node.sh node5500,node5502 all 8      # both, all collectives, 8 GPUs
-
-# Local
-ssh node5500
-./run-nccl-1node.sh [collectives] [ngpus]        # default: sendrecv, all GPUs
-```
-
-Output → `out-nccl-1node/`.  Analyze:
-
-```bash
-./analyze-nccl-1node.py                # writes out-nccl-1node/summary.md
-./md-to-pdf.py out-nccl-1node/summary.md
-```
-
-### Two nodes (inter-node InfiniBand)
-
-`job-nccl-2node.sh` is an sbatch script pinned to node5500 + node5502.
-
-```bash
-sbatch job-nccl-2node.sh [collectives] [gpus_per_node]   # default: sendrecv, 1
-sbatch job-nccl-2node.sh all 8                            # all collectives, 8 GPUs/node
-```
-
-Output → `out-nccl-2node/`.  Analyze:
-
-```bash
-./analyze-nccl-2node.py                # writes out-nccl-2node/summary.md
-./md-to-pdf.py out-nccl-2node/summary.md
-```
-
----
-
-## 3. Megatron-LM (GPT pretrain, throughput scan)
-
-Scripts live in `/orcd/data/orcd/022/benchmarks/megatron-lm/Megatron-LM/`.
-Each wrapper scans GPUs-per-node **1…8** by default (one job per count) and runs
-the `pytorch_26.02` container. Global batch scales with GPU count (weak scaling).
-
-```bash
-cd /orcd/data/orcd/022/benchmarks/megatron-lm/Megatron-LM
-
-# Single node
-./job-megatron-1node.sh                  # node5500, scan 1..8
-./job-megatron-1node.sh node5502 4       # node5502, just 4 GPUs
-
-# Two nodes
-./job-megatron-2node.sh                          # node5500,node5502, scan 1..8/node
-./job-megatron-2node.sh node5500,node5502 8      # both nodes, 8 GPUs/node
-```
-
-Output → `output/` (throughput on the `--log-throughput` lines, every 20 iters).
-
----
-
-## Same as, or different from, the general benchmark dirs
+Same as, or different from, the general benchmark dirs:
 
 | Here | General dir | Same? |
 |---|---|---|
@@ -111,16 +23,76 @@ Output → `output/` (throughput on the `--log-throughput` lines, every 20 iters
 | NCCL 1-node / 2-node | `../nccl-tests` | **Same test, different build**: CUDA 13 `build-nvhpc-26.1` (B200 needs it) vs `build-nvhpc-24.5-ompi-5.0.8`; 2-node pins the 8 NDR rails |
 | Megatron-LM | `../megatron-lm` | **Different model**: 36 layers / hidden 4096 / FFN 14336 (~7B) here, vs 24/2048/8192 on L40S and 24/4096/16384 on H200, sized to GPU memory. Same container, batch rule and iterations |
 
-`../all-bench/run-all.sh b200-nodes` runs gpu-fryer, NCCL 1-node/2-node and
-Megatron-LM 1-node/2-node on the nodes and GPU count set in `run-all.sh`.
+The ~7B Megatron-LM model matches the AICR B200 reference, so results compare
+directly with it.
 
----
+## Installation
 
-## Notes
+Nothing to build. The scripts load their own modules and use prebuilt pieces
+from the other benchmark dirs:
 
-- Never run gpu-fryer and NCCL on the same node at the same time.
-- Slurm stdout for the `./job-*.sh` wrappers goes to `slurm-logs/`; the parsed
-  benchmark data goes to the `out-*/` dirs.
-- `md-to-pdf.py` uses `reportlab` (already installed for this user).
-- Inter-node GPU RDMA is currently capped (~18.5 GB/s) on these nodes — see
-  `notes.md` for the GPUDirect / nvidia_peermem investigation.
+- NCCL: `../nccl-tests/build-nvhpc-26.1` (module `nvhpc/26.1`, CUDA 13, HPC-X OpenMPI)
+- gpu-fryer: `../gpu-fryer/gpu-fryer_1.1.0.sif` (module `apptainer/1.4.2`)
+- Megatron-LM: `../megatron-lm/Megatron-LM` and `../megatron-lm/imag/pytorch_26.02-py3.sif`
+
+## Usage
+
+### Automated, many runs — `../all-bench/run-all.sh`
+
+```bash
+cd ../all-bench
+# set nodes="5500 5502" gpu_type=b200 gpus=8 at the top, then
+./run-all.sh b200-nodes
+```
+
+This submits gpu-fryer, NCCL 1-node and Megatron-LM 1-node on every node, and
+NCCL 2-node and Megatron-LM 2-node on every node pair.
+
+### Single runs — scripts in this dir
+
+The `job-*.sh` scripts submit to Slurm (one job per node, or per GPU count);
+the `run-*.sh` scripts run directly after `ssh` to a node.
+
+```bash
+./job-gpu-fryer.sh [nodes] [seconds]                    # default node5500 node5502, 300 s
+./job-nccl-1node.sh [nodes] [collectives] [ngpus]       # default sendrecv, all GPUs
+sbatch job-nccl-2node.sh [collectives] [gpus_per_node]  # pinned to node5500,node5502; override with -w
+./job-megatron-1node.sh [node] [ngpus]                  # no ngpus: scan 1..8, one job each
+./job-megatron-2node.sh [node,node] [ngpus]             # same, 2 nodes
+```
+
+Collectives: `sendrecv allreduce allgather reducescatter reduce broadcast
+alltoall gather scatter hypercube`, a comma list, or `all`.
+
+Other tests:
+
+| Script | Purpose |
+|---|---|
+| `job-megatron-3node.sh` | Megatron-LM ~7B on 3 nodes, same batch rule |
+| `job-megatron-1node-max.sh`, `-2node-max.sh` | ~5B model with full recompute for maximum TFLOP/s; `bf16` or `fp8` (not comparable to the reference) |
+| `job-nccl-2node-sharp.sh` | all_reduce, ring vs SHARP, back-to-back in one allocation |
+| `job-nccl-2node-sharp-aicr.sh` | same, with the AICR cluster's SHARP environment |
+| `job-ibwrite-2node.sh`, `-1node.sh` | GPUDirect RDMA `ib_write_bw` on mlx5_4 + GPU0 |
+| `job-ibwrite-rails.sh` | each of the 8 rails in turn, host vs GPU memory |
+| `job-ibwrite-concurrent.sh` | all 8 rails at once, aggregate bandwidth |
+
+Do not run gpu-fryer and NCCL on the same node at the same time. Slurm output
+from the `job-*.sh` wrappers goes to `slurm-logs/`.
+
+## Analysis
+
+| Analyzer | Reads | Writes |
+|---|---|---|
+| `./analyze-gpu-fryer.py` | `out-gpu-fryer/` | `out-gpu-fryer/summary.md` |
+| `./analyze-nccl-1node.py` | `out-nccl-1node/` | `out-nccl-1node/summary.md` |
+| `./analyze-nccl-2node.py` | `out-nccl-2node/` | `out-nccl-2node/summary.md` |
+| `./analyze-nccl-sharp.py` | `out-nccl-2node-sharp/` | `out-nccl-2node-sharp/summary.md`, and whether SHARP actually engaged |
+| `./analyze-megatron.py` | `output-megatron/` | `output-megatron/summary.md` + SVG scaling plot |
+
+The figure of merit is TFLOP/s per GPU (gpu-fryer, Megatron-LM) and bus
+bandwidth `busbw` in GB/s (NCCL). `ib_write_bw` results are printed at the end
+of each `out-ibwrite/*.out` file.
+
+Background and investigations: `notes.md` (inter-node GPUDirect RDMA cap),
+`notes-aicr.md` (comparison with the AICR cluster), `sharp.md`,
+`research-b200.md` (published work and research directions).
