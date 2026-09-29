@@ -103,6 +103,19 @@ Output → `output/` (throughput on the `--log-throughput` lines, every 20 iters
 
 ---
 
+## Same as, or different from, the general benchmark dirs
+
+| Here | General dir | Same? |
+|---|---|---|
+| gpu-fryer | `../gpu-fryer` | **Same**: same image and fp32 / bf16 / fp8 × 300 s; here all 8 GPUs of the node |
+| NCCL 1-node / 2-node | `../nccl-tests` | **Same test, different build**: CUDA 13 `build-nvhpc-26.1` (B200 needs it) vs `build-nvhpc-24.5-ompi-5.0.8`; 2-node pins the 8 NDR rails |
+| Megatron-LM | `../megatron-lm` | **Different model**: 36 layers / hidden 4096 / FFN 14336 (~7B) here, vs 24/2048/8192 on L40S and 24/4096/16384 on H200, sized to GPU memory. Same container, batch rule and iterations |
+
+`../all-bench/run-all.sh b200-nodes` runs gpu-fryer, NCCL 1-node/2-node and
+Megatron-LM 1-node/2-node on the nodes and GPU count set in `run-all.sh`.
+
+---
+
 ## Notes
 
 - Never run gpu-fryer and NCCL on the same node at the same time.
