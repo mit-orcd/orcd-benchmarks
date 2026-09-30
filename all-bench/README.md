@@ -49,6 +49,28 @@ under `/orcd/data/orcd/022/benchmarks`.
 
 All scripts are in this dir.
 
+### Module
+
+Members of group `sched_mit_orcd` can load the scripts as a module (the files
+are not readable outside the group):
+
+```bash
+module use /orcd/compute/orcd/011/team-software/modulefiles
+module load orcd-benchmark     # puts run-all.sh and get-results-*.sh on PATH, sets $BENCH_ROOT
+module help orcd-benchmark
+```
+
+With the module, set the run through `BENCH_*` environment variables instead of
+editing the shared script (unset ones keep the defaults in `run-all.sh`):
+
+```bash
+BENCH_NODES="5500 5502" BENCH_PARTITION=mit_testing BENCH_GPU_TYPE=b200 BENCH_GPUS=8 \
+    run-all.sh b200-nodes
+```
+
+The modulefile is `/orcd/compute/orcd/011/team-software/modulefiles/orcd-benchmark.lua`
+(a copy of `modulefiles/all-bench/1.0.lua` in this dir).
+
 ### Automated, many runs — `run-all.sh`
 
 Set the node and resource variables at the top of `run-all.sh`, then pick the
@@ -60,15 +82,15 @@ benchmarks on the command line or with the `all_bench` default:
 ./run-all.sh b200-nodes               # B200 set, e.g. with nodes="5500 5502" gpus=8
 ```
 
-| Variable | Example | Meaning |
+| Variable (env override) | Example | Meaning |
 |---|---|---|
-| `nodes` | `"3511 3512"` | node numbers (`nodeNNNN`), space separated |
-| `partition` | `mit_normal_gpu` | Slurm partition, also the output dir name |
-| `reservation` | `none` | Slurm reservation; `none` = no reservation |
-| `qos` | `unlimited` | Slurm QOS |
-| `cpus` | `48` | cores per node; sets the openmp / mpi-calc-pi sweep |
-| `gpu_type` | `l40s` | GPU type (`l40s`, `h100`, `h200`, `b200`, …) |
-| `gpus` | `4` | GPUs per node |
+| `nodes` (`BENCH_NODES`) | `"3511 3512"` | node numbers (`nodeNNNN`), space separated |
+| `partition` (`BENCH_PARTITION`) | `mit_normal_gpu` | Slurm partition, also the output dir name |
+| `reservation` (`BENCH_RESERVATION`) | `none` | Slurm reservation; `none` = no reservation |
+| `qos` (`BENCH_QOS`) | `unlimited` | Slurm QOS |
+| `cpus` (`BENCH_CPUS`) | `48` | cores per node; sets the openmp / mpi-calc-pi sweep |
+| `gpu_type` (`BENCH_GPU_TYPE`) | `l40s` | GPU type (`l40s`, `h100`, `h200`, `b200`, …) |
+| `gpus` (`BENCH_GPUS`) | `4` | GPUs per node |
 | `all_bench` | `"nccl-tests"` | default benchmark list, overridden by command-line args |
 
 How each benchmark is launched:

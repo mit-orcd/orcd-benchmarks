@@ -4,6 +4,8 @@
 # Usage: ./run-all.sh [bench ...]
 #   no argument : run the default all_bench list set below
 #   bench ...   : run only these, e.g.  ./run-all.sh gpu-burn-r8 nccl-tests
+#   The variables below can be set from the environment: BENCH_NODES BENCH_PARTITION
+#   BENCH_RESERVATION BENCH_QOS BENCH_CPUS BENCH_GPU_TYPE BENCH_GPUS (module orcd-benchmark)
 #
 # Benchmarks:
 #   openmp mpi-calc-pi mpi-p2p gpu-burn-r8 nvidia-hpc-benchmarks nccl-tests
@@ -15,15 +17,15 @@
 #                  uses its own nodes/reservation from b200-kimi/common/env.sh
 
 # for all nodes
-nodes="3511 3512"          # node numbers, nodeNNNN
-partition=mit_normal_gpu   # pi_mshoulde # pi_qmqi # pi_mshoulde pg_tata #ou_sloan_gpu  # mit_normal # mit_normal_gpu # mit_testing (b200)
-reservation=none #orcd_testing  #none #orcd_testing  #  WareWulf_testing
-qos=unlimited  # normal   # unlimited
-cpus=48  # 48  # 40  #96  # 40  # 88  # all cores on a CPU  node, substract reserved cores on a GPU node
+nodes="${BENCH_NODES:-3511 3512}"   # node numbers, nodeNNNN
+partition=${BENCH_PARTITION:-mit_normal_gpu}   # pi_mshoulde # pi_qmqi # pi_mshoulde pg_tata #ou_sloan_gpu  # mit_normal # mit_normal_gpu # mit_testing (b200)
+reservation=${BENCH_RESERVATION:-none} #orcd_testing  #none #orcd_testing  #  WareWulf_testing
+qos=${BENCH_QOS:-unlimited}  # normal   # unlimited
+cpus=${BENCH_CPUS:-48}  # 48  # 40  #96  # 40  # 88  # all cores on a CPU  node, substract reserved cores on a GPU node
 
 # only for GPU nodes
-gpu_type=l40s # l40s  # a100 #h100 # h200 # l40s # b200
-gpus=4  #2  #8  #4
+gpu_type=${BENCH_GPU_TYPE:-l40s} # l40s  # a100 #h100 # h200 # l40s # b200
+gpus=${BENCH_GPUS:-4}  #2  #8  #4
 
 #all_bench="openmp"
 #all_bench="openmp mpi-calc-pi"  # single CPU node
@@ -40,7 +42,7 @@ all_bench="nccl-tests"
 
 [ $# -gt 0 ] && all_bench="$*"
 
-root_dir=/orcd/data/orcd/022/benchmarks
+root_dir=${BENCH_ROOT:-/orcd/data/orcd/022/benchmarks}
 
 hosts=(); for n in $nodes; do hosts+=(node$n); done
 pairs=()   # every node pair i<j, as nodeA,nodeB

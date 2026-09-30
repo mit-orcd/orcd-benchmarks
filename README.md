@@ -68,6 +68,20 @@ cd all-bench
 ./run-all.sh b200-nodes              # B200 set
 ```
 
+Or load the bash driver as a module (group `sched_mit_orcd` only) and set the
+run through `BENCH_*` environment variables instead of editing the script:
+
+```
+module use /orcd/compute/orcd/011/team-software/modulefiles
+module load orcd-benchmark           # run-all.sh, get-results-*.sh on PATH
+BENCH_NODES="3511 3512" BENCH_PARTITION=mit_normal_gpu \
+    BENCH_GPU_TYPE=l40s BENCH_GPUS=4 run-all.sh gpu-burn-r8 nccl-tests
+get-results-all.sh                   # collect results
+```
+
+Variables: `BENCH_NODES BENCH_PARTITION BENCH_RESERVATION BENCH_QOS BENCH_CPUS
+BENCH_GPU_TYPE BENCH_GPUS`; `module help orcd-benchmark` for details.
+
 Python automation — all benchmarks in `py-all-bench/` in one command:
 
 ```
