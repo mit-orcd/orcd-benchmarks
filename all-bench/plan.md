@@ -1,4 +1,4 @@
-# Plan: consolidate all-bench run scripts into one module file
+# Plan: consolidate all-bench run scripts into one module dir `orcd-benchmarks/`
 
 Status: **plan only — nothing implemented yet.** Existing `run-*.sh` /
 `get-results-*.sh` stay untouched until the new driver is verified.
@@ -28,7 +28,7 @@ Status: **plan only — nothing implemented yet.** Existing `run-*.sh` /
 
 ## 2. Target design
 
-Two files in `all-bench/`:
+Two files in `orcd-benchmarks/` (the renamed `all-bench/`, see step 0 below):
 
 ### 2a. `bench-presets.sh` — the module (data only, sourced)
 One bash function per preset that just sets the variables, plus named
@@ -76,6 +76,20 @@ Driver behaviour:
 
 ## 3. Migration steps
 
+0. **Rename the dir `all-bench/` → `orcd-benchmarks/`** (in the original
+   tree `/orcd/data/orcd/022/benchmarks`). Things that must change with it:
+   - `sync-and-push.sh` `DIRS=` list (line 29) and the dir list in
+     `claude.md` / `readme-sync.md` (sync spec + docs).
+   - Git history in the dest repo `shaohao/orcd-benchmarks`: the synced
+     path becomes `orcd-benchmarks/orcd-benchmarks/` (same name as the repo —
+     acceptable, but note it); old `all-bench/` must be removed there
+     (use `git mv` in dest so history follows).
+   - Any hard-coded `all-bench` paths in scripts/READMEs (grep the top-level
+     `*.sh`/`*.md` only, depth-limited).
+   - bdarek actively uses presets here (files dated Jul 2026) and owns 8
+     private ones — tell them before the move. Optionally leave a symlink
+     `all-bench -> orcd-benchmarks` for a transition period.
+   - Do the rename **before** step 1 so new files are created in the final place.
 1. Write `bench-presets.sh` by extracting the *active* (uncommented) header
    values from each readable `run-*.sh` / `get-results-*.sh` (script it with
    `sed`, then hand-check). Keep preset name = old filename minus `run-`/`.sh`.
@@ -86,13 +100,14 @@ Driver behaviour:
    `get-results` output with the old script.
 5. Move old `run-*.sh` / `get-results-*.sh` into `bak/` (only ours; ask
    bdarek before touching their files).
-6. Update `all-bench/README.md` (Usage/Analysis sections) to the new
+6. Update `orcd-benchmarks/README.md` (Usage/Analysis sections) to the new
    `bench.sh` commands.
 
 ## 4. Open questions
 
+- Rename: keep an `all-bench` → `orcd-benchmarks` symlink for bdarek, or hard cut-over?
 - "Module file" = sourced bash preset file (as planned above), or an
-  **Lmod modulefile** (`module load all-bench/<preset>` setting env vars)?
+  **Lmod modulefile** (`module load orcd-benchmarks/<preset>` setting env vars)?
   The bash approach is simpler and needs no module path; Lmod is possible
   if you want `module load` usage.
 - Keep one function per preset, or collapse to per-hardware-class presets
