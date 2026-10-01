@@ -75,7 +75,7 @@ def table(header, rows, align=None):
 
 # ---------------------------------------------------------------- gpu-fryer
 def section_fryer():
-    L = ["## 1. gpu-fryer — per-GPU matmul throughput (TFLOP/s)", ""]
+    L = ["## 2. gpu-fryer — per-GPU matmul throughput (TFLOP/s)", ""]
     b2 = newest_per_node(glob.glob(os.path.join(B200_DIR, "out-gpu-fryer", "*.out")),
                          fryer.parse_file)
     b3 = newest_per_node(glob.glob(os.path.join(DATA, "out-gpu-fryer", "*.out")),
@@ -124,7 +124,7 @@ def section_fryer():
 
 # ---------------------------------------------------------------- nccl
 def section_nccl():
-    L = ["## 2. NCCL 1-node — intra-node NVLink bus bandwidth (GB/s)", ""]
+    L = ["## 3. NCCL 1-node — intra-node NVLink bus bandwidth (GB/s)", ""]
     b2 = newest_per_node(glob.glob(os.path.join(B200_DIR, "out-nccl-1node", "*.out")),
                          nccl.parse_file)
     b3 = newest_per_node(glob.glob(os.path.join(DATA, "out-nccl-1node", "*.out")),
@@ -208,7 +208,7 @@ def newest(pattern):
 
 
 def section_ib():
-    L = ["## 3. ib_write_bw — GPUDirect RDMA, two rails of one node (Gb/s)", ""]
+    L = ["## 4. ib_write_bw — GPUDirect RDMA, two rails of one node (Gb/s)", ""]
     b2 = newest(os.path.join(B200_DIR, "out-ibwrite", "ibwrite-1node-*.out"))
     b3 = newest(os.path.join(DATA, "out-ibwrite", "ibwrite-1node-*.out"))
     if not b3:
@@ -249,7 +249,7 @@ def megatron_runs(d):
 
 
 def section_megatron():
-    L = ["## 4. Megatron-LM 1-node — reference ~7B GPT (TFLOP/s/GPU)", ""]
+    L = ["## 5. Megatron-LM 1-node — reference ~7B GPT (TFLOP/s/GPU)", ""]
     b2 = {k: v for k, v in megatron_runs(os.path.join(B200_DIR, "output-megatron")).items()
           if k[0] not in B300_NODES}
     b3 = {k: v for k, v in megatron_runs(os.path.join(DATA, "output-megatron")).items()
@@ -308,7 +308,7 @@ def parse_sweep(path):
 
 
 def section_megatron_max():
-    L = ["## 5. Megatron-LM 1-node — tuned max throughput, best per GPU type (TFLOP/s/GPU)", ""]
+    L = ["## 6. Megatron-LM 1-node — tuned max throughput, best per GPU type (TFLOP/s/GPU)", ""]
     runs = {}
     for p in sorted(glob.glob(os.path.join(DATA, "output-max-sweep", "max-*")), key=os.path.getmtime):
         r = parse_sweep(p)
@@ -368,6 +368,63 @@ def section_megatron_max():
     return L
 
 
+# ---------------------------------------------------------------- on paper
+def section_paper():
+    """Static: official NVIDIA specs (checked 2026-10-01), not measured here."""
+    L = ["## 1. On paper — official NVIDIA specs, B300 vs B200", "",
+         "Sources: [NVIDIA HGX platform page](https://www.nvidia.com/en-us/data-center/hgx/) "
+         "(HGX B300 vs HGX B200 table), "
+         "[Inside NVIDIA Blackwell Ultra](https://developer.nvidia.com/blog/inside-nvidia-blackwell-ultra-the-chip-powering-the-ai-factory-era/) "
+         "(NVIDIA technical blog), [DGX B300](https://www.nvidia.com/en-us/data-center/dgx-b300/) and "
+         "[DGX B200](https://www.nvidia.com/en-us/data-center/dgx-b200/) product pages. "
+         "Per-GPU values are the HGX 8-GPU numbers divided by 8; NVIDIA lists tensor-core "
+         "numbers with 2:4 sparsity, and dense = 1/2 sparse except where NVIDIA gives a "
+         "dense number (FP4).", ""]
+    L += table(["Per GPU (HGX, dense)", "B200 (Blackwell)", "B300 (Blackwell Ultra)", "B300 / B200"], [
+        ["FP4 tensor (NVFP4)", "9 PFLOP/s", "13.5 PFLOP/s", "**1.50x**"],
+        ["FP8 / FP6 tensor", "4.5 PFLOP/s", "4.5 PFLOP/s", "1.00x"],
+        ["BF16 / FP16 tensor", "2.25 PFLOP/s", "2.25 PFLOP/s", "1.00x"],
+        ["TF32 tensor", "1.125 PFLOP/s", "1.125 PFLOP/s", "1.00x"],
+        ["FP32 (non-tensor)", "75 TFLOP/s", "75 TFLOP/s", "1.00x"],
+        ["INT8 tensor", "4.5 POP/s", "~0.19 POP/s", "**~0.04x**"],
+        ["FP64 / FP64 tensor", "37 TFLOP/s", "1.25 TFLOP/s", "**~0.03x**"],
+        ["Attention softmax (SFU exp)", "5 T exp/s", "10.7 T exp/s", "**2.14x**"],
+        ["HBM3E capacity", "180 GB (8-high stacks)", "288 GB (8 x 12-high stacks; ~270 GB usable on HGX)", "**1.5x**"],
+        ["HBM bandwidth", "8 TB/s", "8 TB/s", "1.00x"],
+        ["NVLink 5 GPU-to-GPU", "1.8 TB/s", "1.8 TB/s", "1.00x"],
+        ["Scale-out NIC per GPU", "ConnectX-7, 400 Gb/s", "ConnectX-8, 800 Gb/s (PCIe Gen6)", "**2.0x**"],
+        ["Max GPU power (HGX)", "1,000 W", "1,100 W (up to 1,400 W in GB300 systems)", "1.10x"],
+        ["Process / transistors", "TSMC 4NP, 208 B", "TSMC 4NP, 208 B (160 SMs)", "same"],
+    ], align=["---", "---", "---", "---:"])
+    L += ["",
+          "B300 advantages on paper:", "",
+          "- **1.5x memory per GPU** (288 GB vs 180-192 GB). This allows larger models or "
+          "longer contexts per GPU, bigger micro-batches, less activation recompute, and "
+          "bigger KV caches for inference.",
+          "- **1.5x dense FP4 (NVFP4)**, useful for FP4 inference and FP4 training recipes.",
+          "- **~2x attention-layer exponent throughput**, which speeds up softmax-heavy "
+          "attention, mainly at long context.",
+          "- **2x scale-out network per GPU** (ConnectX-8 800 Gb/s vs ConnectX-7 400 Gb/s), "
+          "which helps multi-node training and inference.",
+          "- Higher power limit (1,100 W vs 1,000 W per GPU), so clocks may hold up better under "
+          "sustained load.", "",
+          "B300 disadvantages on paper:", "",
+          "- **FP64 drops ~30x** (37 TFLOP/s to 1.25 TFLOP/s per GPU). B300 is a poor fit for "
+          "double-precision HPC codes (CFD, MD with FP64, dense linear algebra, HPL).",
+          "- **INT8 tensor drops ~24x**. Legacy INT8 inference paths should move to FP8/FP4.",
+          "- **No gain for FP8, BF16, TF32 or FP32 dense math, HBM bandwidth, or NVLink.** "
+          "Standard BF16/FP8 training throughput is expected to be similar to B200. Any gain "
+          "comes from extra memory (bigger batches, no recompute), faster attention, and power "
+          "headroom.",
+          "- More power and heat per GPU (+10% on HGX), plus a newer stack: the CUDA 12.8+/13 "
+          "toolchain, compute capability 10.3, and a newer driver.", "",
+          "What this predicts for the measurements below: gpu-fryer BF16/FP8 and NCCL NVLink "
+          "close to 1.0x; ib_write_bw up to ~2x if the B300 links run at 800 Gb/s; Megatron "
+          "reference config ~1.0x; tuned Megatron somewhat above B200 thanks to the "
+          "larger memory.", ""]
+    return L
+
+
 # ---------------------------------------------------------------- main
 def main():
     L = ["# B200 vs B300 — single-node benchmark comparison", "",
@@ -377,7 +434,7 @@ def main():
          "- Ratios are B300 / B200; > 1.00x means B300 is faster.",
          "- Per-benchmark B300 summaries: `out-gpu-fryer/summary.md`, `out-nccl-1node/summary.md`, "
          "`output-megatron/summary.md`", ""]
-    for sec in (section_fryer, section_nccl, section_ib, section_megatron, section_megatron_max):
+    for sec in (section_paper, section_fryer, section_nccl, section_ib, section_megatron, section_megatron_max):
         try:
             L += sec()
         except Exception as e:

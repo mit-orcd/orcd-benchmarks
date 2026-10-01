@@ -1,11 +1,49 @@
 # B200 vs B300 — single-node benchmark comparison
 
-- Generated: 2026-10-01 13:00:30
+- Generated: 2026-10-01 17:46:57
 - B300 node: node5900-c1 (mit_testing, 8 x B300); B200 data from `../b200-nodes/`
 - Ratios are B300 / B200; > 1.00x means B300 is faster.
 - Per-benchmark B300 summaries: `out-gpu-fryer/summary.md`, `out-nccl-1node/summary.md`, `output-megatron/summary.md`
 
-## 1. gpu-fryer — per-GPU matmul throughput (TFLOP/s)
+## 1. On paper — official NVIDIA specs, B300 vs B200
+
+Sources: [NVIDIA HGX platform page](https://www.nvidia.com/en-us/data-center/hgx/) (HGX B300 vs HGX B200 table), [Inside NVIDIA Blackwell Ultra](https://developer.nvidia.com/blog/inside-nvidia-blackwell-ultra-the-chip-powering-the-ai-factory-era/) (NVIDIA technical blog), [DGX B300](https://www.nvidia.com/en-us/data-center/dgx-b300/) and [DGX B200](https://www.nvidia.com/en-us/data-center/dgx-b200/) product pages. Per-GPU values are the HGX 8-GPU numbers divided by 8; NVIDIA lists tensor-core numbers with 2:4 sparsity, and dense = 1/2 sparse except where NVIDIA gives a dense number (FP4).
+
+| Per GPU (HGX, dense) | B200 (Blackwell) | B300 (Blackwell Ultra) | B300 / B200 |
+|---|---|---|---:|
+| FP4 tensor (NVFP4) | 9 PFLOP/s | 13.5 PFLOP/s | **1.50x** |
+| FP8 / FP6 tensor | 4.5 PFLOP/s | 4.5 PFLOP/s | 1.00x |
+| BF16 / FP16 tensor | 2.25 PFLOP/s | 2.25 PFLOP/s | 1.00x |
+| TF32 tensor | 1.125 PFLOP/s | 1.125 PFLOP/s | 1.00x |
+| FP32 (non-tensor) | 75 TFLOP/s | 75 TFLOP/s | 1.00x |
+| INT8 tensor | 4.5 POP/s | ~0.19 POP/s | **~0.04x** |
+| FP64 / FP64 tensor | 37 TFLOP/s | 1.25 TFLOP/s | **~0.03x** |
+| Attention softmax (SFU exp) | 5 T exp/s | 10.7 T exp/s | **2.14x** |
+| HBM3E capacity | 180 GB (8-high stacks) | 288 GB (8 x 12-high stacks; ~270 GB usable on HGX) | **1.5x** |
+| HBM bandwidth | 8 TB/s | 8 TB/s | 1.00x |
+| NVLink 5 GPU-to-GPU | 1.8 TB/s | 1.8 TB/s | 1.00x |
+| Scale-out NIC per GPU | ConnectX-7, 400 Gb/s | ConnectX-8, 800 Gb/s (PCIe Gen6) | **2.0x** |
+| Max GPU power (HGX) | 1,000 W | 1,100 W (up to 1,400 W in GB300 systems) | 1.10x |
+| Process / transistors | TSMC 4NP, 208 B | TSMC 4NP, 208 B (160 SMs) | same |
+
+B300 advantages on paper:
+
+- **1.5x memory per GPU** (288 GB vs 180-192 GB). This allows larger models or longer contexts per GPU, bigger micro-batches, less activation recompute, and bigger KV caches for inference.
+- **1.5x dense FP4 (NVFP4)**, useful for FP4 inference and FP4 training recipes.
+- **~2x attention-layer exponent throughput**, which speeds up softmax-heavy attention, mainly at long context.
+- **2x scale-out network per GPU** (ConnectX-8 800 Gb/s vs ConnectX-7 400 Gb/s), which helps multi-node training and inference.
+- Higher power limit (1,100 W vs 1,000 W per GPU), so clocks may hold up better under sustained load.
+
+B300 disadvantages on paper:
+
+- **FP64 drops ~30x** (37 TFLOP/s to 1.25 TFLOP/s per GPU). B300 is a poor fit for double-precision HPC codes (CFD, MD with FP64, dense linear algebra, HPL).
+- **INT8 tensor drops ~24x**. Legacy INT8 inference paths should move to FP8/FP4.
+- **No gain for FP8, BF16, TF32 or FP32 dense math, HBM bandwidth, or NVLink.** Standard BF16/FP8 training throughput is expected to be similar to B200. Any gain comes from extra memory (bigger batches, no recompute), faster attention, and power headroom.
+- More power and heat per GPU (+10% on HGX), plus a newer stack: the CUDA 12.8+/13 toolchain, compute capability 10.3, and a newer driver.
+
+What this predicts for the measurements below: gpu-fryer BF16/FP8 and NCCL NVLink close to 1.0x; ib_write_bw up to ~2x if the B300 links run at 800 Gb/s; Megatron reference config ~1.0x; tuned Megatron somewhat above B200 thanks to the larger memory.
+
+## 2. gpu-fryer — per-GPU matmul throughput (TFLOP/s)
 
 B200 = mean over 10 B200 node(s) of the per-node mean (newest run per node); B300 = node5900-c1 (B300 SXM6 AC). Converged value per GPU, 300 s per precision.
 
@@ -30,7 +68,7 @@ Throttling reported on B300: none
 | GPU6 | 794 | 1,507 | 4,226 |
 | GPU7 | 781 | 1,495 | 4,226 |
 
-## 2. NCCL 1-node — intra-node NVLink bus bandwidth (GB/s)
+## 3. NCCL 1-node — intra-node NVLink bus bandwidth (GB/s)
 
 Converged busbw = busbw at the largest message (16 GiB), best of out-of-place / in-place. B200 = mean over the B200 nodes that ran that collective (newest run per node); 8 GPUs, 1 MPI task.
 
@@ -61,7 +99,7 @@ Converged busbw = busbw at the largest message (16 GiB), best of out-of-place / 
 | 4 GiB | 822.5 | 904.4 | **1.10x** |
 | 16 GiB | 833.7 | 913.5 | **1.10x** |
 
-## 3. ib_write_bw — GPUDirect RDMA, two rails of one node (Gb/s)
+## 4. ib_write_bw — GPUDirect RDMA, two rails of one node (Gb/s)
 
 64 MiB RDMA write, 200 iterations. B200: `../b200-nodes/out-ibwrite/ibwrite-1node-20306762.out` (client mlx5_4, server mlx5_7). B300: `out-ibwrite/ibwrite-1node-24550230.out` (client mlx5_0, server mlx5_6).
 
@@ -89,7 +127,7 @@ Converged busbw = busbw at the largest message (16 GiB), best of out-of-place / 
 | 4 MiB | 394.84 | 403.84 | **1.02x** |
 | 8 MiB | 395.08 | 403.84 | **1.02x** |
 
-## 4. Megatron-LM 1-node — reference ~7B GPT (TFLOP/s/GPU)
+## 5. Megatron-LM 1-node — reference ~7B GPT (TFLOP/s/GPU)
 
 Same config on both: 36 layers, hidden 4096, FFN 14336, seq 2048, bf16, micro-batch 4, global batch = 128 x GPUs, 100 iters, no recompute, TP=PP=1. Metric = last-iteration throughput per GPU. B200 = mean over B200 nodes with that GPU count (newest run).
 
@@ -104,7 +142,7 @@ Same config on both: 36 layers, hidden 4096, FFN 14336, seq 2048, bf16, micro-ba
 | 7 | 896 | 968.6 | 1 | — | — | 11,615 | — | — |
 | 8 | 1024 | 968.8 | 3 | — | — | 11,612 | — | — |
 
-## 5. Megatron-LM 1-node — tuned max throughput, best per GPU type (TFLOP/s/GPU)
+## 6. Megatron-LM 1-node — tuned max throughput, best per GPU type (TFLOP/s/GPU)
 
 Each GPU type gets its own grid sweep (8 GPUs, seq 4096, distributed optimizer, overlapped grad-reduce/param-gather, TP=PP=1, grad-acc 4, 20 iters): 5B (24L, h4096) micro 4/8/16 x recompute none/selective/full, and 13B (40L, h5120) micro 2/4/8 x recompute none/full, each in bf16 and fp8. The configs are NOT forced to match: the best point per GPU type and precision is compared. TFLOP/s/GPU is Megatron's model-FLOP throughput (recompute work not counted). Peak memory = max allocated by PyTorch on rank 0.
 
@@ -113,11 +151,40 @@ Each GPU type gets its own grid sweep (8 GPUs, seq 4096, distributed optimizer, 
 | bf16 | — | — | — | — | — | — | — |
 | fp8 | — | — | — | — | — | — | — |
 
-Grid points finished OK: B200 0/0, B300 0/1 (of 30 each).
+Grid points finished OK: B200 0/0, B300 0/30 (of 30 each).
 
 ### Full sweep grid (TFLOP/s/GPU, peak GiB)
 
 | Prec | Model | Micro | Recompute | B200 | B300 | B300 / B200 |
 |---|---|---:|---|---:|---:|---:|
 | bf16 | 5b | 4 | none | — | failed/running | — |
+| bf16 | 5b | 4 | selective | — | failed/running | — |
+| bf16 | 5b | 4 | full | — | failed/running | — |
+| bf16 | 5b | 8 | none | — | failed/running | — |
+| bf16 | 5b | 8 | selective | — | failed/running | — |
+| bf16 | 5b | 8 | full | — | failed/running | — |
+| bf16 | 5b | 16 | none | — | failed/running | — |
+| bf16 | 5b | 16 | selective | — | failed/running | — |
+| bf16 | 5b | 16 | full | — | failed/running | — |
+| bf16 | 13b | 2 | none | — | failed/running | — |
+| bf16 | 13b | 2 | full | — | failed/running | — |
+| bf16 | 13b | 4 | none | — | failed/running | — |
+| bf16 | 13b | 4 | full | — | failed/running | — |
+| bf16 | 13b | 8 | none | — | failed/running | — |
+| bf16 | 13b | 8 | full | — | failed/running | — |
+| fp8 | 5b | 4 | none | — | failed/running | — |
+| fp8 | 5b | 4 | selective | — | failed/running | — |
+| fp8 | 5b | 4 | full | — | failed/running | — |
+| fp8 | 5b | 8 | none | — | failed/running | — |
+| fp8 | 5b | 8 | selective | — | failed/running | — |
+| fp8 | 5b | 8 | full | — | failed/running | — |
+| fp8 | 5b | 16 | none | — | failed/running | — |
+| fp8 | 5b | 16 | selective | — | failed/running | — |
+| fp8 | 5b | 16 | full | — | failed/running | — |
+| fp8 | 13b | 2 | none | — | failed/running | — |
+| fp8 | 13b | 2 | full | — | failed/running | — |
+| fp8 | 13b | 4 | none | — | failed/running | — |
+| fp8 | 13b | 4 | full | — | failed/running | — |
+| fp8 | 13b | 8 | none | — | OOM | — |
+| fp8 | 13b | 8 | full | — | failed/running | — |
 
