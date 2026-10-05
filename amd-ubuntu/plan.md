@@ -146,3 +146,48 @@ None. Benchmarks started 2026-10-01 20:50 UTC.
   numbers line up with ATOM, so recipe numbers will differ from AMD's.
 - Points 64/128/256 are beyond the recipe's matrix (same rule as 44+).
 - `/orcd/data` is NFS: keep heavy build/temp I/O on node-local `/tmp` or `/dev/shm`.
+
+---
+
+## Rerun 2026-10-04/05 (fixes for the failed jobs)
+
+Every GPU job holds the node-local lock `/dev/shm/shaohao-gpu.lock` (2-node: node6100's, then node6101's).
+
+| Job | Root cause | Fix | Status |
+|---|---|---|---|
+| 2-node RCCL (7.2.4 and 7.14) | `run-rccl-2node.sh` line 43: bare `$EXTRA_ENV` under `set -u` → abort in 1 s. Also NCCL INFO lines polluted the result rows | `${EXTRA_ENV:-}`; per-rank NUMA binding (`rccl-tests/numa-bind.sh`); INFO only in a separate probe run; smoke must show `NET/IB` on ionic. `run_part_b_2node_both.sh` runs both stacks under one hold of both locks | Smoke 7.2.4: all_reduce 379 GB/s busbw at 1 GiB (97% of 391 GB/s RDMA), NET/IB on all 8 ionic rails. Full runs done 2026-10-05 02:49-03:06 UTC, both rc=0 (see note below) |
+| ATOM tiers 1-2 (Part D) | Analysis failed after the first run | Fixed analyzer/run (`atom/run_part_d_locked.sh`) | node6100 rerun analyze rc=0; node6101 rerunning |
+| megatron-ref | AITER JIT-builds `module_rope_general_fwd` into the image's package dir, which is on apptainer's 64 MB `--writable-tmpfs` → ENOSPC → all ranks crash. Fused rope then SIGSEGVs on gfx950 (amd-cloud never completed a full-flag run either) | `AITER_JIT_DIR=amd-software/cache/aiter-jit/megatron-lm-v26.1`; `ROPE_FUSION=0` default (`--no-rope-fusion`, same FLOPs) | node6101: 572.5 TF/s/GPU (teardown SIGSEGV after 50 iters is harmless). node6100 queued (`rerun_finish.sh`) |
+| Kimi kimi_2048 | Not a bug: `--max-num-seqs 2048` needs a 107 GB per-request cache vs a 58 GB KV budget. amd-cloud failed identically (logs/atom/kimi_2048_20260820_073255) | None; reported as "does not fit" | Final |
+| Kimi recipe | Points 1-14 and 256 rerun; C=14 worker died during warm-up | C=14 retried (`rerun_finish.sh` on node6101) | 11/12 points; C=14 queued |
+
+`rerun_finish.sh` on node6100 runs `report.py` once all of the above have finished.
+
+### 2-node RCCL result (2026-10-05)
+
+Both stacks finished: 16 ranks (PPN=8) over 8 × ionic RoCEv2 rails with GPU-direct RDMA
+(GDRDMA; 7.14's RCCL shows `NET/IB-CAST`, the AINIC RoCEv2 path), GPU r ↔ ionic_r, no socket fallback.
+Busbw at 16 GiB, ROCm 7.2.4 / 7.14 in GB/s:
+
+- all_reduce 380.9 / 372.6
+- all_gather 376.7 / 372.3
+- reduce_scatter 378.5 / 371.6
+- broadcast 369.9 / 364.6
+
+That is 95-97% of the measured 391 GB/s RDMA ceiling, close to single-node XGMI (386-394).
+
+- **alltoall** (4 GiB): 89.6 / 77.1. Half of every rank's data crosses the fabric, so busbw tops out
+  near 2 × 48 × 15/16 ≈ 91 GB/s. 7.2.4 is at that limit; 7.14 is 14% lower.
+- **sendrecv**: 28.6 / 32.1. Only the rank 7→8 and 15→0 pairs cross nodes, and both are cross-rail
+  (GPU7 → ionic_7 → ionic_0).
+- **PPN scaling** (all_reduce, 7.2.4 / 7.14):
+  - PPN=1: 48.7 / 48.5
+  - PPN=2: 48.7 / 48.9, still one rail's worth
+  - PPN=4: 160 / 177
+  - PPN=8: 381 / 373
+  
+  At PPN=2 the ring crosses the nodes on only one rail. That is an RCCL ring choice, not a fault.
+
+Results: `results/node6100{,/rocm7.14}/rccl_2node.md`, `results/ubuntu/rccl_2node.md`, and
+`results/ubuntu/rocm.md` (2-node section). amd-cloud was single-node, so there is no 2-node comparison
+in `results/vs-amd-cloud/`.

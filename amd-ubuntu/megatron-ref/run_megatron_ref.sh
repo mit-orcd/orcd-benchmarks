@@ -41,6 +41,17 @@
 # run. This makes the run apples-to-apples with Dell on software stack too, not just config
 # -- both sides now execute the same code objects. See megatron-ref/*.log for the failed run.
 #
+# 2026-10-04 (amd-ubuntu, apptainer shim). Two failures, both fixed here:
+#  1. AITER JIT-builds module_rope_general_fwd into /workspace/aiter/aiter/jit, which under the
+#     shim is --writable-tmpfs (64 MB) -> ENOSPC copying the .so -> all ranks die. Fixed with
+#     AITER_JIT_DIR on /orcd/data (below).
+#  2. With that fixed, the fused RoPE path (apex -> aiter.rope_fwd_impl, built for gfx942 under
+#     the 9.4.2 override) SIGSEGVs every rank on the first step -- the same crash that stopped
+#     every amd-cloud run of this script (run_20260820_165647/_190136/_190610). Default is now
+#     ROPE_FUSION=0 (--no-rope-fusion): unfused RoPE, identical model/FLOPs, slightly slower
+#     than Dell's fused path. ROPE_FUSION=1 restores the Dell flag.
+#  Also: all ranks SIGSEGV at exit after training completes (teardown); tolerated, see below.
+#
 # Usage: ./run_megatron_ref.sh [N_GPUS]     (default 8 — the only N with a B200 reference)
 set -uo pipefail
 source /orcd/data/orcd/022/benchmarks/amd-ubuntu/common/env.sh
@@ -165,6 +176,14 @@ timeout --signal=TERM --kill-after=30s 3600 \
     "$IMG" bash /out/cmd.sh >"$LOG" 2>&1
 rc=$?
 say "run rc=$rc log=$LOG"
+# Every rank SIGSEGVs at interpreter exit, AFTER "[after training is done]" (pretrain_gpt.py does
+# not call destroy_process_group(); RCCL/HIP teardown then crashes). The measurement is complete
+# at that point, so a run that logged its last iteration and the done-marker counts as OK.
+if [[ $rc -ne 0 ]] && grep -q "after training is done" "$LOG" \
+   && grep -qE "iteration +$TRAIN_ITERS/ +$TRAIN_ITERS " "$LOG"; then
+  say "rc=$rc is the post-training teardown SIGSEGV (all $TRAIN_ITERS iters + 'after training is done' logged) -> treating as OK"
+  echo "TEARDOWN_SEGV=1" >>"$STATE"; rc=0
+fi
 
 tf=$(grep -oE 'throughput per GPU \(TFLOP/s/GPU\): *[0-9.]+|TFLOP/s/GPU\): *[0-9.]+' "$LOG" 2>/dev/null | tail -1 | grep -oE '[0-9.]+$')
 say "parsed TF/s/GPU = ${tf:-none}"

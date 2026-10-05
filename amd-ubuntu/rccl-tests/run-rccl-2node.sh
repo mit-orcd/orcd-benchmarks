@@ -73,7 +73,7 @@ for PPN in $PPN_LIST; do
           "${XARGS[@]}" -x NCCL_DEBUG=INFO \
           "${LAUNCH[@]}" "$exe" -b 8 -e 64M -f 8 -g 1 -n 2 -w 1 -c 1 >"$info" 2>&1
       { echo "transport: $(grep -a -m1 -oE 'NET/IB : Using.{0,200}' "$info" || echo 'no NET/IB line')"
-        echo "channels : $(grep -a -oE 'via NET/[A-Za-z]+(/[0-9]+)?(/GDRDMA)?' "$info" | sort | uniq -c | tr -s ' ' | tr '\n' ';')"
+        echo "channels : $(grep -a -oE 'via NET/[A-Za-z-]+(/[0-9]+)?(/GDRDMA)?' "$info" | sort | uniq -c | tr -s ' ' | tr '\n' ';')"
         grep -a -q 'via NET/Socket' "$info" && echo "WARNING: NET/Socket fallback (TCP), not RoCE"; } | tee -a "$SUM"
     fi
     timeout 1800 "$MPI_HOME/bin/mpirun" --prefix "$MPI_HOME" -np "$NP" --host "$hostlist" \

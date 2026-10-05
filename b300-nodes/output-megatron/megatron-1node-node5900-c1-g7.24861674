@@ -1,0 +1,3243 @@
+===== node=node5900-c1 gpus_per_node=7 =====
+===== nproc=7 micro=4 global=896 =====
+W1005 12:05:50.500000 31799 torch/distributed/run.py:851] 
+W1005 12:05:50.500000 31799 torch/distributed/run.py:851] *****************************************
+W1005 12:05:50.500000 31799 torch/distributed/run.py:851] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W1005 12:05:50.500000 31799 torch/distributed/run.py:851] *****************************************
+using world size: 7, data-parallel size: 7, context-parallel size: 1, hierarchical context-parallel sizes: None, tensor-model-parallel size: 1, pipeline-model-parallel size: 1
+Number of virtual stages per pipeline stage: None
+accumulate and all-reduce gradients in fp32 for bfloat16 data type.
+using torch.bfloat16 for parameters ...
+------------------------ arguments ------------------------
+/orcd/data/orcd/022/benchmarks/megatron-lm/Megatron-LM/megatron/training/utils.py:411: UserWarning: Overriding default arguments for tokenizer_type:GPT2BPETokenizer with tokenizer_type:NullTokenizer
+  warnings.warn(message)
+/orcd/data/orcd/022/benchmarks/megatron-lm/Megatron-LM/megatron/training/utils.py:411: UserWarning: --tokenizer-hf-use-fast argument is deprecated and will be removed soon. `use_fast` is set to True by default for HF tokenizers.Use --tokenizer-hf-no-use-fast if you want to disable `use_fast`.
+  warnings.warn(message)
+/orcd/data/orcd/022/benchmarks/megatron-lm/Megatron-LM/megatron/training/utils.py:411: UserWarning: --tokenizer-hf-include-special-tokens argument is deprecated and will be removed soon. `include_special_tokens` is set to True by default for HF tokenizers.Use --tokenizer-hf-no-include-special-tokens if you want to disable `include_special_tokens`.
+  warnings.warn(message)
+  account_for_embedding_in_pipeline_split ......... False
+  account_for_loss_in_pipeline_split .............. False
+  accumulate_allreduce_grads_in_fp32 .............. True
+  activation_func_clamp_value ..................... None
+  adam_beta1 ...................................... 0.9
+  adam_beta2 ...................................... 0.95
+  adam_eps ........................................ 1e-08
+  add_bias_linear ................................. True
+  add_position_embedding .......................... True
+  add_qkv_bias .................................... True
+  adlr_autoresume ................................. False
+  adlr_autoresume_interval ........................ 1000
+  align_grad_reduce ............................... True
+  align_param_gather .............................. False
+  allow_ambiguous_pad_tokens ...................... False
+  app_tag_run_name ................................ None
+  app_tag_run_version ............................. 0.0.0
+  apply_query_key_layer_scaling ................... False
+  apply_residual_connection_post_layernorm ........ False
+  apply_rope_fusion ............................... False
+  apply_wd_to_qk_layernorm ........................ False
+  async_ckpt_cpu_priority ......................... 10
+  async_ckpt_io_priority .......................... 3
+  async_save ...................................... False
+  attention_backend ............................... AttnBackend.auto
+  attention_dropout ............................... 0.1
+  attention_output_gate ........................... False
+  attention_softmax_in_fp32 ....................... False
+  auto_detect_ckpt_format ......................... False
+  barrier_with_L1_time ............................ True
+  batch_invariant_mode ............................ False
+  bert_binary_head ................................ True
+  bert_embedder_type .............................. megatron
+  bert_load ....................................... None
+  bf16 ............................................ True
+  bias_dropout_fusion ............................. True
+  bias_gelu_fusion ................................ True
+  bias_swiglu_fusion .............................. True
+  biencoder_projection_dim ........................ 0
+  biencoder_shared_query_context_model ............ False
+  block_data_path ................................. None
+  cache_mla_latents ............................... False
+  calc_ft_timeouts ................................ False
+  calculate_per_token_loss ........................ False
+  check_for_large_grads ........................... False
+  check_for_nan_in_loss_and_grad .................. True
+  check_for_spiky_loss ............................ False
+  check_weight_hash_across_dp_replicas_interval ... None
+  ckpt_assume_constant_structure .................. False
+  ckpt_convert_format ............................. None
+  ckpt_convert_save ............................... None
+  ckpt_convert_update_legacy_dist_opt_format ...... False
+  ckpt_format ..................................... torch_dist
+  ckpt_fully_parallel_load ........................ False
+  ckpt_fully_parallel_load_exchange_algo .......... broadcast
+  ckpt_fully_parallel_load_process_group .......... dp
+  ckpt_fully_parallel_save ........................ True
+  ckpt_fully_parallel_save_deprecated ............. False
+  ckpt_fully_parallel_save_process_group .......... dp
+  ckpt_step ....................................... None
+  classes_fraction ................................ 1.0
+  clip_grad ....................................... 1.0
+  clone_scatter_output_in_embedding ............... True
+  config_logger_dir ............................... 
+  consumed_train_samples .......................... 0
+  consumed_valid_samples .......................... 0
+  context_parallel_size ........................... 1
+  cp_comm_type .................................... ['p2p']
+  cpu_offloading_num_layers ....................... 0
+  create_all_gather_group ......................... False
+  create_attention_mask_in_dataloader ............. True
+  cross_entropy_fusion_impl ....................... native
+  cross_entropy_loss_fusion ....................... False
+  cuda_graph_impl ................................. none
+  cuda_graph_scope ................................ []
+  cuda_graph_warmup_steps ......................... 3
+  data_args_path .................................. None
+  data_cache_path ................................. None
+  data_parallel_random_init ....................... False
+  data_parallel_sharding_strategy ................. no_shard
+  data_parallel_size .............................. 7
+  data_path ....................................... None
+  data_per_class_fraction ......................... 1.0
+  data_sharding ................................... True
+  dataloader_defer_npy_index_mmap ................. False
+  dataloader_fast_cache_load ...................... False
+  dataloader_type ................................. single
+  ddp_average_in_collective ....................... False
+  ddp_bucket_size ................................. None
+  ddp_num_buckets ................................. None
+  ddp_pad_buckets_for_high_nccl_busbw ............. False
+  ddp_reduce_scatter_with_fp32_accumulation ....... False
+  decode_only_cuda_graphs ......................... False
+  decoder_first_pipeline_num_layers ............... None
+  decoder_last_pipeline_num_layers ................ None
+  decoder_num_layers .............................. None
+  decoder_seq_length .............................. None
+  decoupled_lr .................................... None
+  decoupled_min_lr ................................ None
+  decrease_batch_size_if_needed ................... False
+  defer_embedding_wgrad_compute ................... False
+  delay_wgrad_compute ............................. False
+  deprecated_use_mcore_models ..................... False
+  deterministic_mode .............................. False
+  dino_bottleneck_size ............................ 256
+  dino_freeze_last_layer .......................... 1
+  dino_head_hidden_size ........................... 2048
+  dino_local_crops_number ......................... 10
+  dino_local_img_size ............................. 96
+  dino_norm_last_layer ............................ False
+  dino_teacher_temp ............................... 0.07
+  dino_warmup_teacher_temp ........................ 0.04
+  dino_warmup_teacher_temp_epochs ................. 30
+  disable_bf16_reduced_precision_matmul ........... False
+  disable_jit_fuser ............................... False
+  disable_straggler_on_startup .................... False
+  disable_symmetric_registration .................. False
+  dist_ckpt_format_deprecated ..................... None
+  dist_ckpt_optim_fully_reshardable ............... False
+  dist_ckpt_save_pre_mcore_014 .................... False
+  dist_ckpt_strictness ............................ assume_ok_unexpected
+  dist_ckpt_workers ............................... 1
+  distrib_optim_fully_reshardable_mem_efficient ... False
+  distribute_saved_activations .................... False
+  distributed_backend ............................. nccl
+  distributed_timeout_minutes ..................... 10
+  distributed_timeout_seconds_after_init .......... None
+  dsa_indexer_head_dim ............................ None
+  dsa_indexer_loss_coeff .......................... None
+  dsa_indexer_n_heads ............................. None
+  dsa_indexer_topk ................................ None
+  dsa_indexer_use_sparse_loss ..................... False
+  dump_param_to_param_group_map ................... None
+  embedding_init_method_std ....................... None
+  embedding_path .................................. None
+  empty_unused_memory_level ....................... 0
+  enable_chunked_prefill .......................... False
+  enable_cuda_graph ............................... False
+  enable_experimental ............................. False
+  enable_ft_package ............................... False
+  enable_full_sharding_in_hsdp .................... False
+  enable_gloo_process_groups ...................... True
+  enable_gpt_oss .................................. False
+  enable_msc ...................................... True
+  enable_one_logger ............................... True
+  encoder_num_layers .............................. 36
+  encoder_seq_length .............................. 2048
+  end_weight_decay ................................ 0.1
+  eod_mask_loss ................................... False
+  ep_overlap_early_attn_memory_release ............ False
+  error_injection_rate ............................ 0
+  error_injection_type ............................ transient_error
+  eval_interval ................................... 1000000
+  eval_iters ...................................... 100
+  evidence_data_path .............................. None
+  exit_duration_in_mins ........................... None
+  exit_interval ................................... None
+  exit_on_missing_checkpoint ...................... False
+  exit_signal ..................................... 15
+  exit_signal_handler ............................. False
+  exit_signal_handler_for_dataloader .............. False
+  exp_avg_dtype ................................... torch.float32
+  exp_avg_sq_dtype ................................ torch.float32
+  experimental_attention_variant .................. None
+  expert_model_parallel_size ...................... 1
+  expert_tensor_parallel_size ..................... 1
+  export_default_te_spec .......................... False
+  export_force_local_attention .................... False
+  export_kd_cfg ................................... None
+  export_kd_teacher_ckpt_format ................... None
+  export_kd_teacher_load .......................... None
+  export_kd_teacher_model_config .................. None
+  export_kv_cache_quant ........................... none
+  export_legacy_megatron .......................... False
+  export_model_type ............................... GPTModel
+  export_moe_apply_probs_on_input ................. False
+  export_offline_model ............................ False
+  export_qk_l2_norm ............................... False
+  export_quant_cfg ................................ None
+  export_real_quant_cfg ........................... None
+  export_te_mcore_model ........................... False
+  external_cuda_graph ............................. False
+  fake_process_group .............................. False
+  ffn_hidden_size ................................. 14336
+  fim_data ........................................ False
+  fim_eod_token ................................... <|endoftext|>
+  fim_fragment_rate ............................... None
+  fim_middle_token ................................ <fim_middle>
+  fim_no_prefix ................................... None
+  fim_pad_token ................................... <fim_pad>
+  fim_prefix_token ................................ <fim_prefix>
+  fim_rate ........................................ 0.5
+  fim_split_sample ................................ None
+  fim_spm_rate .................................... 0.5
+  fim_suffix_token ................................ <fim_suffix>
+  fine_grained_activation_offloading .............. False
+  finetune ........................................ False
+  finetune_data_split ............................. train
+  finetune_hf_dataset ............................. None
+  first_last_layers_bf16 .......................... False
+  flash_decode .................................... False
+  flight_recorder_dump_on_timeout ................. True
+  flight_recorder_dump_path ....................... None
+  flight_recorder_extra_dump_on_exec .............. True
+  flight_recorder_include_only_active ............. True
+  flight_recorder_include_stack_trace ............. False
+  flight_recorder_trace_buffer_size ............... 2000
+  fp16 ............................................ False
+  fp16_lm_cross_entropy ........................... False
+  fp32_residual_connection ........................ False
+  fp4 ............................................. None
+  fp4_param ....................................... False
+  fp4_quantizer_factory ........................... None
+  fp4_recipe ...................................... nvfp4
+  fp8 ............................................. None
+  fp8_amax_compute_algo ........................... most_recent
+  fp8_amax_history_len ............................ 1
+  fp8_interval .................................... 1
+  fp8_margin ...................................... 0
+  fp8_param_gather ................................ False
+  fp8_quantizer_factory ........................... None
+  fp8_recipe ...................................... delayed
+  fp8_wgrad ....................................... True
+  fsdp_double_buffer .............................. False
+  fsdp_manual_registration ........................ False
+  ft_num_warmup_iters ............................. 5
+  full_validation ................................. False
+  fused_residual_rmsnorm .......................... False
+  global_batch_size ............................... 896
+  glu_linear_offset ............................... 0.0
+  grad_reduce_in_bf16 ............................. False
+  gradient_accumulation_fusion .................... True
+  gradient_reduce_div_fusion ...................... True
+  group_query_attention ........................... False
+  grpo_clamp_eps_lower ............................ 0.01
+  grpo_clamp_eps_upper ............................ 0.01
+  grpo_entropy_term_weight ........................ 0.0
+  grpo_filter_groups_with_same_reward ............. False
+  grpo_group_size ................................. 2
+  grpo_iterations ................................. 2
+  grpo_kl_beta .................................... 0.001
+  grpo_prompts_per_step ........................... 32
+  head_lr_mult .................................... 1.0
+  heterogeneous_layers_config_encoded_json ........ None
+  heterogeneous_layers_config_path ................ None
+  hidden_dropout .................................. 0.1
+  hidden_size ..................................... 4096
+  hierarchical_context_parallel_sizes ............. None
+  high_priority_stream_groups ..................... []
+  hybrid_context_parallel ......................... False
+  hybrid_layer_pattern ............................ None
+  hybrid_override_pattern ......................... None
+  hysteresis ...................................... 2
+  ict_head_size ................................... None
+  ict_load ........................................ None
+  img_h ........................................... 224
+  img_w ........................................... 224
+  indexer_batch_size .............................. 128
+  indexer_log_interval ............................ 1000
+  inference_batch_times_seqlen_threshold .......... -1
+  inference_coordinator_port ...................... None
+  inference_disable_torch_grouped_mm .............. False
+  inference_disable_triton_nvls_kernels ........... False
+  inference_dynamic_batching ...................... False
+  inference_dynamic_batching_block_size ........... 256
+  inference_dynamic_batching_buffer_size_gb ....... 40.0
+  inference_dynamic_batching_cuda_graph_max_tokens  16384
+  inference_dynamic_batching_cuda_graph_mixed_prefill_count  16
+  inference_dynamic_batching_enable_prefix_caching  False
+  inference_dynamic_batching_mamba_memory_ratio ... None
+  inference_dynamic_batching_max_requests ......... None
+  inference_dynamic_batching_max_tokens ........... None
+  inference_dynamic_batching_num_cuda_graphs ...... 16
+  inference_dynamic_batching_paused_buffer_size_gb  None
+  inference_dynamic_batching_prefix_caching_coordinator_policy  first_prefix_block
+  inference_dynamic_batching_prefix_caching_eviction_policy  ref_zero
+  inference_dynamic_batching_track_generated_token_events  False
+  inference_dynamic_batching_track_paused_request_events  False
+  inference_dynamic_batching_unified_memory_level . 0
+  inference_fuse_tp_communication ................. False
+  inference_logging_step_interval ................. 0
+  inference_max_requests .......................... 8
+  inference_max_seq_length ........................ 2560
+  inference_rng_tracker ........................... False
+  inference_text_gen_server_logging ............... False
+  inference_wandb_logging ......................... False
+  init_method_std ................................. 0.02
+  init_method_xavier_uniform ...................... False
+  init_model_with_meta_device ..................... False
+  initial_loss_scale .............................. 4294967296
+  inprocess_active_world_size ..................... 7
+  inprocess_barrier_timeout ....................... 120
+  inprocess_completion_timeout .................... 120
+  inprocess_empty_cuda_cache ...................... False
+  inprocess_granularity ........................... node
+  inprocess_hard_timeout .......................... 90
+  inprocess_heartbeat_interval .................... 30
+  inprocess_heartbeat_timeout ..................... 60
+  inprocess_last_call_wait ........................ 1
+  inprocess_max_iterations ........................ None
+  inprocess_monitor_process_interval .............. 1.0
+  inprocess_monitor_thread_interval ............... 1.0
+  inprocess_progress_watchdog_interval ............ 1.0
+  inprocess_restart ............................... False
+  inprocess_soft_timeout .......................... 60
+  inprocess_termination_grace_time ................ 1
+  is_hybrid_model ................................. False
+  iter_per_epoch .................................. 1250
+  iterations_to_skip .............................. []
+  keep_fp8_transpose_cache ........................ False
+  kitchen_attention_backend ....................... sdpa
+  kv_channels ..................................... 128
+  kv_lora_rank .................................... 32
+  langrl_env_config ............................... None
+  layernorm_epsilon ............................... 1e-05
+  layernorm_zero_centered_gamma ................... False
+  lazy_mpu_init ................................... False
+  linear_attention_freq ........................... None
+  linear_conv_kernel_dim .......................... 4
+  linear_key_head_dim ............................. 128
+  linear_num_key_heads ............................ 16
+  linear_num_value_heads .......................... 32
+  linear_value_head_dim ........................... 128
+  load ............................................ None
+  load_main_params_from_ckpt ...................... False
+  local_rank ...................................... 0
+  log_device_memory_used .......................... False
+  log_energy ...................................... False
+  log_interval .................................... 10
+  log_loss_scale_to_tensorboard ................... True
+  log_max_attention_logit ......................... False
+  log_memory_interval ............................. None
+  log_memory_to_tensorboard ....................... False
+  log_num_zeros_in_grad ........................... False
+  log_params_norm ................................. False
+  log_progress .................................... False
+  log_straggler ................................... False
+  log_throughput .................................. True
+  log_timers_to_tensorboard ....................... False
+  log_validation_ppl_to_tensorboard ............... False
+  log_world_size_to_tensorboard ................... False
+  logging_level ................................... None
+  loss_scale ...................................... None
+  loss_scale_window ............................... 1000
+  lr .............................................. 0.0003
+  lr_decay_iters .................................. 50
+  lr_decay_samples ................................ None
+  lr_decay_style .................................. cosine
+  lr_warmup_fraction .............................. None
+  lr_warmup_init .................................. 0.0
+  lr_warmup_iters ................................. 10
+  lr_warmup_samples ............................... 0
+  lr_wsd_decay_iters .............................. None
+  lr_wsd_decay_samples ............................ None
+  lr_wsd_decay_style .............................. exponential
+  main_grads_dtype ................................ torch.float32
+  main_params_dtype ............................... torch.float32
+  make_vocab_size_divisible_by .................... 128
+  mamba_head_dim .................................. 64
+  mamba_inference_conv_states_dtype ............... torch.bfloat16
+  mamba_inference_ssm_states_dtype ................ torch.bfloat16
+  mamba_num_groups ................................ 8
+  mamba_num_heads ................................. None
+  mamba_state_dim ................................. 128
+  manual_gc ....................................... False
+  manual_gc_eval .................................. True
+  manual_gc_interval .............................. 0
+  mask_factor ..................................... 1.0
+  mask_prob ....................................... 0.15
+  mask_type ....................................... random
+  masked_softmax_fusion ........................... True
+  max_position_embeddings ......................... 2048
+  max_seqlen_per_dp_cp_rank ....................... None
+  max_tokens_to_oom ............................... 12000
+  megatron_fsdp_grad_comm_dtype ................... torch.float32
+  megatron_fsdp_main_grads_dtype .................. torch.float32
+  megatron_fsdp_main_params_dtype ................. torch.float32
+  memory_snapshot_path ............................ snapshot.pickle
+  merge_file ...................................... None
+  micro_batch_size ................................ 4
+  microbatch_group_size_per_vp_stage .............. None
+  mid_level_dataset_surplus ....................... 0.005
+  min_loss_scale .................................. 1.0
+  min_lr .......................................... 3e-05
+  min_offloaded_tensor_size ....................... 1048576
+  mla_down_proj_fusion ............................ False
+  mlp_chunks_for_prefill .......................... 1
+  mmap_bin_files .................................. True
+  mock_data ....................................... True
+  modelopt_enabled ................................ False
+  moe_apply_probs_on_input ........................ False
+  moe_aux_loss_coeff .............................. 0.0
+  moe_deepep_num_sms .............................. 20
+  moe_enable_deepep ............................... False
+  moe_enable_routing_replay ....................... False
+  moe_expert_capacity_factor ...................... None
+  moe_ffn_hidden_size ............................. None
+  moe_flex_dispatcher_backend ..................... deepep
+  moe_grouped_gemm ................................ False
+  moe_hybridep_num_sms ............................ 16
+  moe_input_jitter_eps ............................ None
+  moe_latent_size ................................. None
+  moe_layer_freq .................................. 1
+  moe_layer_recompute ............................. False
+  moe_pad_expert_input_to_capacity ................ False
+  moe_pad_experts_for_cuda_graph_inference ........ False
+  moe_per_layer_logging ........................... False
+  moe_permute_fusion .............................. False
+  moe_router_bias_update_rate ..................... 0.001
+  moe_router_dtype ................................ None
+  moe_router_enable_expert_bias ................... False
+  moe_router_force_load_balancing ................. False
+  moe_router_fusion ............................... False
+  moe_router_group_topk ........................... None
+  moe_router_load_balancing_type .................. aux_loss
+  moe_router_num_groups ........................... None
+  moe_router_padding_for_fp8 ...................... False
+  moe_router_padding_for_quantization ............. False
+  moe_router_pre_softmax .......................... False
+  moe_router_score_function ....................... softmax
+  moe_router_topk ................................. 2
+  moe_router_topk_scaling_factor .................. None
+  moe_shared_expert_gate .......................... False
+  moe_shared_expert_intermediate_size ............. None
+  moe_shared_expert_overlap ....................... False
+  moe_token_dispatcher_type ....................... allgather
+  moe_token_drop_policy ........................... probs
+  moe_upcycling_granularity ....................... 1
+  moe_use_upcycling ............................... False
+  moe_z_loss_coeff ................................ None
+  mrope_section ................................... None
+  mscale .......................................... 1.0
+  mscale_all_dim .................................. 0.0
+  mtp_hybrid_override_pattern ..................... None
+  mtp_loss_scaling_factor ......................... 0.1
+  mtp_num_layers .................................. None
+  mtp_standalone .................................. False
+  mtp_use_repeated_layer .......................... False
+  multi_latent_attention .......................... False
+  multiple_validation_sets ........................ False
+  muon_extra_scale_factor ......................... 1.0
+  muon_fp32_matmul_prec ........................... medium
+  muon_momentum ................................... 0.9
+  muon_num_ns_steps ............................... 5
+  muon_scale_mode ................................. spectral
+  muon_split_qkv .................................. True
+  muon_tp_mode .................................... blockwise
+  muon_use_nesterov ............................... False
+  mup_attn_scale_power ............................ 1.0
+  mup_base_head_dim ............................... None
+  mup_base_hidden_size ............................ None
+  mup_embedding_mult .............................. 1.0
+  mup_output_mult ................................. 1.0
+  mup_width_mult .................................. 1.0
+  nccl_all_reduce_for_prefill ..................... False
+  nccl_communicator_config_path ................... None
+  nccl_ub ......................................... False
+  no_load_optim ................................... None
+  no_load_rng ..................................... None
+  no_persist_layer_norm ........................... False
+  no_rope_freq .................................... None
+  no_save_optim ................................... None
+  no_save_rng ..................................... None
+  no_weight_decay_cond_type ....................... None
+  non_persistent_ckpt_type ........................ None
+  non_persistent_global_ckpt_dir .................. None
+  non_persistent_local_ckpt_algo .................. fully_parallel
+  non_persistent_local_ckpt_dir ................... None
+  non_persistent_save_interval .................... None
+  normalization ................................... LayerNorm
+  num_attention_heads ............................. 32
+  num_channels .................................... 3
+  num_classes ..................................... 1000
+  num_dataset_builder_threads ..................... 1
+  num_distributed_optimizer_instances ............. 1
+  num_experts ..................................... None
+  num_layers ...................................... 36
+  num_layers_at_end_in_bf16 ....................... 1
+  num_layers_at_start_in_bf16 ..................... 1
+  num_layers_per_virtual_pipeline_stage ........... None
+  num_query_groups ................................ 1
+  num_speculative_tokens .......................... 0
+  num_virtual_stages_per_pipeline_rank ............ None
+  num_workers ..................................... 2
+  object_storage_cache_path ....................... None
+  offload_modules ................................. []
+  one_logger_async ................................ False
+  one_logger_project .............................. megatron-lm
+  one_logger_run_name ............................. None
+  onnx_safe ....................................... None
+  openai_gelu ..................................... False
+  optimizer ....................................... adam
+  optimizer_cpu_offload ........................... False
+  optimizer_offload_fraction ...................... 1.0
+  outer_dp_sharding_strategy ...................... no_shard
+  output_bert_embeddings .......................... False
+  overlap_cpu_optimizer_d2h_h2d ................... False
+  overlap_grad_reduce ............................. False
+  overlap_moe_expert_parallel_comm ................ False
+  overlap_p2p_comm ................................ False
+  overlap_p2p_comm_warmup_flush ................... False
+  overlap_param_gather ............................ False
+  overlap_param_gather_with_optimizer_step ........ False
+  override_opt_param_scheduler .................... False
+  padded_vocab_size ............................... None
+  params_dtype .................................... torch.bfloat16
+  patch_dim ....................................... 16
+  per_dataset_sequences_path ...................... None
+  per_split_data_args_path ........................ None
+  perform_initialization .......................... True
+  perform_rl_step ................................. False
+  phase_transition_iterations ..................... None
+  pin_cpu_grads ................................... True
+  pin_cpu_params .................................. True
+  pipeline_model_parallel_comm_backend ............ None
+  pipeline_model_parallel_layout .................. None
+  pipeline_model_parallel_size .................... 1
+  position_embedding_type ......................... learned_absolute
+  pretrained_checkpoint ........................... None
+  profile ......................................... False
+  profile_ranks ................................... []
+  profile_step_end ................................ 12
+  profile_step_start .............................. 10
+  pytorch_profiler_collect_callstack .............. False
+  pytorch_profiler_collect_chakra ................. False
+  pytorch_profiler_collect_shapes ................. False
+  q_lora_rank ..................................... None
+  qk_clip ......................................... False
+  qk_clip_alpha ................................... 0.5
+  qk_clip_threshold ............................... 100
+  qk_head_dim ..................................... 128
+  qk_l2_norm ...................................... False
+  qk_layernorm .................................... False
+  qk_pos_emb_head_dim ............................. 64
+  query_in_block_prob ............................. 0.1
+  quick_geglu ..................................... False
+  rampup_batch_size ............................... None
+  rank ............................................ 0
+  recompute_granularity ........................... None
+  recompute_method ................................ None
+  recompute_modules ............................... None
+  recompute_num_layers ............................ None
+  record_memory_history ........................... False
+  refit_method .................................... gloo
+  relative_attention_max_distance ................. 128
+  relative_attention_num_buckets .................. 32
+  replication ..................................... False
+  replication_factor .............................. 2
+  replication_jump ................................ None
+  rerun_mode ...................................... validate_results
+  reset_attention_mask ............................ False
+  reset_position_ids .............................. False
+  result_rejected_tracker_filename ................ None
+  retriever_report_topk_accuracies ................ []
+  retriever_score_scaling ......................... False
+  reuse_grad_buf_for_mxfp8_param_ag ............... False
+  rl_default_temperature .......................... 1.0
+  rl_default_top_k ................................ -1
+  rl_default_top_p ................................ 0
+  rl_importance_sampling_truncation_coef .......... None
+  rl_inference_expert_model_parallel_size ......... None
+  rl_inference_expert_tensor_model_parallel_size .. None
+  rl_inference_logprobs_is_correction ............. False
+  rl_inference_model_unified_memory_level ......... 0
+  rl_inference_parsers ............................ []
+  rl_inference_pipeline_model_parallel_size ....... None
+  rl_inference_tensor_model_parallel_size ......... None
+  rl_kv_cache_management_mode ..................... persist
+  rl_offload_inference_model_weights_when_idle .... False
+  rl_offload_optimizer_during_inference ........... False
+  rl_parallel_generation_tasks .................... 512
+  rl_partial_rollouts ............................. False
+  rl_persist_cuda_graphs .......................... False
+  rl_prompts_per_eval ............................. 32
+  rl_sequence_packing_algo ........................ fifo
+  rl_sequence_packing_max_sequences_per_bin ....... 50
+  rl_skip_bos_token ............................... False
+  rl_training_cuda_graphs ......................... False
+  rl_use_sequence_packing ......................... False
+  rl_verify_model_weights_swap .................... False
+  rope_scaling_factor ............................. 8.0
+  rope_type ....................................... None
+  rotary_base ..................................... 10000
+  rotary_interleaved .............................. False
+  rotary_percent .................................. 1.0
+  rotary_scaling_factor ........................... 1.0
+  rotary_seq_len_interpolation_factor ............. None
+  run_workload_inspector_server ................... False
+  sample_rate ..................................... 1.0
+  save ............................................ None
+  save_dgrads_interval ............................ None
+  save_interval ................................... 1000000
+  save_retain_interval ............................ None
+  save_wgrads_interval ............................ None
+  scatter_gather_tensors_in_pipeline .............. True
+  seed ............................................ 1234
+  seq_length ...................................... 2048
+  sequence_parallel ............................... False
+  sft ............................................. False
+  sft_tokenizer_prompt_format ..................... nemotron-h-aligned
+  sgd_momentum .................................... 0.9
+  sharp_enabled_group ............................. None
+  short_seq_prob .................................. 0.1
+  skip_train ...................................... False
+  skipped_train_samples ........................... 0
+  softmax_type .................................... vanilla
+  spec ............................................ None
+  split ........................................... None
+  squared_relu .................................... False
+  start_weight_decay .............................. 0.1
+  straggler_ctrlr_port ............................ 65535
+  straggler_minmax_count .......................... 1
+  strict_fsdp_dtensor_load ........................ True
+  suggested_communication_unit_size ............... None
+  swiglu .......................................... False
+  swin_backbone_type .............................. tiny
+  symmetric_ar_type ............................... None
+  te_precision_config_file ........................ None
+  te_rng_tracker .................................. False
+  tensor_model_parallel_size ...................... 1
+  tensorboard_dir ................................. None
+  tensorboard_log_interval ........................ 1
+  tensorboard_queue_size .......................... 1000
+  test_data_path .................................. None
+  test_mode ....................................... False
+  tiktoken_num_special_tokens ..................... 1000
+  tiktoken_pattern ................................ None
+  tiktoken_special_tokens ......................... None
+  timing_log_level ................................ 2
+  timing_log_option ............................... all
+  titles_data_path ................................ None
+  tokenizer_hf_include_special_tokens ............. True
+  tokenizer_hf_no_include_special_tokens .......... False
+  tokenizer_hf_no_use_fast ........................ False
+  tokenizer_hf_use_fast ........................... True
+  tokenizer_metadata .............................. None
+  tokenizer_model ................................. None
+  tokenizer_sentencepiece_legacy .................. False
+  tokenizer_special_tokens ........................ None
+  tokenizer_type .................................. NullTokenizer
+  torch_fsdp2_reshard_after_forward ............... True
+  tp_comm_bootstrap_backend ....................... nccl
+  tp_comm_bulk_dgrad .............................. True
+  tp_comm_bulk_wgrad .............................. True
+  tp_comm_overlap ................................. False
+  tp_comm_overlap_ag .............................. True
+  tp_comm_overlap_cfg ............................. None
+  tp_comm_overlap_rs .............................. True
+  tp_comm_overlap_rs_dgrad ........................ False
+  tp_comm_split_ag ................................ True
+  tp_comm_split_rs ................................ True
+  train_data_path ................................. None
+  train_iters ..................................... 100
+  train_samples ................................... None
+  train_sync_interval ............................. None
+  transformer_impl ................................ transformer_engine
+  transformer_pipeline_model_parallel_size ........ 1
+  trust_remote_code ............................... False
+  untie_embeddings_and_output_weights ............. False
+  use_checkpoint_args ............................. False
+  use_checkpoint_opt_param_scheduler .............. False
+  use_cpu_initialization .......................... None
+  use_dist_ckpt ................................... True
+  use_dist_ckpt_deprecated ........................ False
+  use_distributed_optimizer ....................... False
+  use_flash_attn .................................. False
+  use_fused_weighted_squared_relu ................. False
+  use_kitchen_attention ........................... False
+  use_legacy_models ............................... False
+  use_legacy_static_engine ........................ False
+  use_mamba_mem_eff_path .......................... True
+  use_megatron_fsdp ............................... False
+  use_mp_args_from_checkpoint_args ................ False
+  use_mup ......................................... False
+  use_one_sent_docs ............................... False
+  use_persistent_ckpt_worker ...................... False
+  use_precision_aware_optimizer ................... False
+  use_pytorch_profiler ............................ False
+  use_ring_exchange_p2p ........................... False
+  use_rope_scaling ................................ False
+  use_rotary_position_embeddings .................. False
+  use_sharp ....................................... False
+  use_te_activation_func .......................... False
+  use_tokenizer_model_from_checkpoint_args ........ True
+  use_torch_fsdp2 ................................. False
+  use_torch_optimizer_for_cpu_offload ............. False
+  use_tp_pp_dp_mapping ............................ False
+  v_head_dim ...................................... 128
+  valid_data_path ................................. None
+  variable_seq_lengths ............................ False
+  virtual_pipeline_model_parallel_size ............ None
+  vision_backbone_type ............................ vit
+  vision_pretraining .............................. False
+  vision_pretraining_type ......................... classify
+  vocab_extra_ids ................................. 0
+  vocab_file ...................................... None
+  vocab_size ...................................... 50304
+  wandb_entity .................................... None
+  wandb_exp_name .................................. None
+  wandb_project ................................... None
+  wandb_save_dir .................................. None
+  weight_decay .................................... 0.1
+  weight_decay_incr_style ......................... constant
+  wgrad_deferral_limit ............................ 0
+  window_attn_skip_freq ........................... None
+  window_size ..................................... None
+  world_size ...................................... 7
+  yaml_cfg ........................................ None
+-------------------- end of arguments ---------------------
+INFO:megatron.core.num_microbatches_calculator:setting number of microbatches to constant 32
+INFO:megatron.core.tokenizers.utils.build_tokenizer: > padded vocab (size: 50305) with 127 dummy tokens (new size: 50432)
+WARNING:megatron.core.rerun_state_machine:RerunStateMachine initialized in mode RerunMode.VALIDATE_RESULTS
+> initializing torch distributed ...
+WARNING: one_logger package is required to enable e2e metrics tracking. please go to https://confluence.nvidia.com/display/MLWFO/Package+Repositories for details to install it
+> initialized tensor model parallel with size 1
+> initialized pipeline model parallel with size 1
+> setting random seeds to 1234 ...
+> compiling dataset index builder ...
+make: Entering directory '/orcd/data/orcd/022/benchmarks/megatron-lm/Megatron-LM/megatron/core/datasets'
+make: Nothing to be done for 'default'.
+make: Leaving directory '/orcd/data/orcd/022/benchmarks/megatron-lm/Megatron-LM/megatron/core/datasets'
+>>> done with dataset index builder. Compilation time: 0.306 seconds
+> compiling and loading fused kernels ...
+/usr/local/lib/python3.12/dist-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+  return func(*args, **kwargs)
+[rank0]:[W1005 12:06:09.882571885 ProcessGroupNCCL.cpp:5178] Guessing device ID based on global rank. This can cause a hang if rank to GPU mapping is heterogeneous. You can specify device_id in init_process_group()
+>>> done with compiling and loading fused kernels. Compilation time: 8.518 seconds
+time to initialize megatron (seconds): 19.169
+/usr/local/lib/python3.12/dist-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+  return func(*args, **kwargs)
+[after in-process setup and before initialize_megatron] datetime: 2026-10-05 12:06:07.178138 
+[after in-job setup and before initialize_megatron] datetime: 2026-10-05 12:06:07.209894 
+INFO:megatron.core.timers:times across ranks (ms):
+  startup-program-entry-spread:
+     rank  1: 0.68
+     rank  2: 1.51
+     rank  3: 2.82
+     rank  4: 3.90
+     rank  5: 4.21
+     rank  6: 5.18
+  startup-library-setup:
+     rank  0: 12038.98
+     rank  1: 12039.50
+     rank  2: 12091.08
+     rank  3: 12036.28
+     rank  4: 12035.07
+     rank  5: 12044.39
+     rank  6: 12033.94
+  startup-program-setup:
+     rank  0: 44.12
+     rank  1: 76.25
+     rank  2: 76.36
+     rank  3: 75.62
+     rank  4: 44.23
+     rank  5: 77.62
+     rank  6: 75.40
+  startup-in-process-setup:
+     rank  0: 0.00
+     rank  1: 0.00
+     rank  2: 0.00
+     rank  3: 0.00
+     rank  4: 0.00
+     rank  5: 0.00
+     rank  6: 0.00
+  startup-in-job-setup:
+     rank  0: 31.76
+     rank  1: 59.48
+     rank  2: 59.55
+     rank  3: 60.36
+     rank  4: 31.75
+     rank  5: 60.75
+     rank  6: 59.41
+  startup-initialize-megatron:
+     rank  0: 10456.16
+     rank  1: 10395.07
+     rank  2: 10342.48
+     rank  3: 10395.91
+     rank  4: 10456.03
+     rank  5: 10384.02
+     rank  6: 10397.06
+  startup-set-jit-fusion-options:
+     rank  0: 8553.52
+     rank  1: 8557.01
+     rank  2: 8537.58
+     rank  3: 8546.39
+     rank  4: 8543.03
+     rank  5: 8543.80
+     rank  6: 8535.58
+  all-reduce-start-timestamps-tensor:
+     rank  0: 3.96
+     rank  1: 0.53
+     rank  2: 19.95
+     rank  3: 11.13
+     rank  4: 14.50
+     rank  5: 13.73
+     rank  6: 21.94
+  startup-megatron-init-local:
+     rank  0: 19045.41
+     rank  1: 19012.09
+     rank  2: 18959.56
+     rank  3: 19013.80
+     rank  4: 19045.31
+     rank  5: 19002.30
+     rank  6: 19013.99
+  startup-megatron-init-global:
+     rank  0: 31128.51
+     rank  1: 31128.52
+     rank  2: 31128.51
+     rank  3: 31128.52
+     rank  4: 31128.52
+     rank  5: 31128.52
+     rank  6: 31128.52
+[before library-setup] datetime: 2026-10-05 12:05:55.095033
+[after library-setup] datetime: 2026-10-05 12:06:07.134013
+[before megatron-init] datetime: 2026-10-05 12:06:07.178137
+[after megatron is initialized] datetime: 2026-10-05 12:06:27.047270 
+building GPT model ...
+ > number of parameters on (tensor, pipeline) model parallel rank (0, 0): 6860587008
+INFO:megatron.core.distributed.distributed_data_parallel:Setting up DistributedDataParallel with config DistributedDataParallelConfig(grad_reduce_in_fp32=True, overlap_grad_reduce=False, overlap_param_gather=False, align_param_gather=False, use_distributed_optimizer=False, num_distributed_optimizer_instances=1, check_for_nan_in_grad=True, check_for_large_grads=False, bucket_size=None, pad_buckets_for_high_nccl_busbw=False, reduce_scatter_with_fp32_accumulation=False, average_in_collective=False, fp8_param_gather=False, reuse_grad_buf_for_mxfp8_param_ag=False, use_megatron_fsdp=False, use_custom_fsdp=False, data_parallel_sharding_strategy='no_shard', gradient_reduce_div_fusion=True, suggested_communication_unit_size=None, keep_fp8_transpose_cache=False, nccl_ub=False, fsdp_double_buffer=False, fsdp_db_use_persist_buf_on_alloc_fail=False, fsdp_all_gather_in_start_param_sync=True, outer_dp_sharding_strategy='no_shard', disable_symmetric_registration=False, fsdp_manual_registration=False, delay_wgrad_compute=False)
+INFO:megatron.core.distributed.param_and_grad_buffer:Number of buckets for gradient all-reduce / reduce-scatter: 1
+Params for bucket 1 (6860587008 elements, 6860587008 padded size):
+	module.decoder.layers.32.self_attention.linear_qkv.layer_norm_weight
+	module.decoder.layers.25.mlp.linear_fc1.bias
+	module.decoder.layers.17.mlp.linear_fc2.bias
+	module.decoder.layers.35.self_attention.linear_qkv.weight
+	module.decoder.layers.13.mlp.linear_fc1.layer_norm_bias
+	module.decoder.layers.9.mlp.linear_fc2.bias
+	module.decoder.layers.31.self_attention.linear_qkv.weight
+	module.decoder.layers.33.mlp.linear_fc2.weight
+	module.decoder.layers.29.mlp.linear_fc1.weight
+	module.decoder.layers.27.self_attention.linear_qkv.weight
+	module.decoder.layers.23.self_attention.linear_qkv.layer_norm_bias
+	module.decoder.layers.34.mlp.linear_fc1.layer_norm_weight
+	module.decoder.layers.28.self_attention.linear_proj.bias
+	module.decoder.layers.25.mlp.linear_fc1.weight
+	module.decoder.layers.19.self_attention.linear_qkv.layer_norm_bias
+	module.decoder.layers.21.mlp.linear_fc1.layer_norm_bias
+	module.decoder.layers.4.mlp.linear_fc2.weight
+	module.decoder.layers.1.self_attention.linear_qkv.layer_norm_weight
+	module.decoder.layers.0.self_attention.linear_proj.weight
+	module.decoder.layers.24.self_attention.linear_proj.weight
+	module.decoder.layers.17.mlp.linear_fc1.layer_norm_bias
+	module.decoder.layers.26.mlp.linear_fc1.layer_norm_weight
+	module.decoder.layers.20.self_attention.linear_proj.weight
+	module.decoder.layers.13.mlp.linear_fc1.bias
+	module.decoder.layers.9.mlp.linear_fc1.layer_norm_bias
+	module.decoder.layers.7.self_attention.linear_qkv.layer_norm_bias
+	module.decoder.layers.5.mlp.linear_fc1.layer_norm_bias
+	module.decoder.layers.12.self_attention.linear_proj.weight
+	module.decoder.layers.3.self_attention.linear_proj.weight
+	module.embedding.position_embeddings.weight
+	module.decoder.layers.29.mlp.linear_fc2.weight
+	module.decoder.layers.23.self_attention.linear_qkv.bias
+	module.decoder.layers.8.self_attention.linear_proj.weight
+	module.decoder.layers.28.self_attention.linear_qkv.layer_norm_weight
+	module.decoder.layers.25.mlp.linear_fc2.weight
+	module.decoder.layers.21.mlp.linear_fc2.bias
+	module.decoder.layers.19.self_attention.linear_qkv.bias
+	module.decoder.layers.15.self_attention.linear_qkv.layer_norm_bias
+	module.decoder.layers.17.mlp.linear_fc1.bias
+	module.decoder.layers.11.self_attention.linear_qkv.layer_norm_bias
+	module.decoder.layers.30.mlp.linear_fc1.layer_norm_weight
+	module.decoder.layers.24.self_attention.linear_qkv.layer_norm_weight
+	module.decoder.layers.4.mlp.linear_fc2.bias
+	module.decoder.layers.33.self_attention.linear_proj.bias
+	module.decoder.layers.20.self_attention.linear_qkv.layer_norm_weight
+	module.decoder.layers.16.self_attention.linear_proj.weight
+	module.decoder.layers.13.mlp.linear_fc1.weight
+	module.decoder.layers.9.mlp.linear_fc1.bias
+	module.decoder.layers.7.self_attention.linear_qkv.bias
+	module.decoder.layers.4.mlp.linear_fc1.layer_norm_bias
+	module.decoder.layers.12.self_attention.linear_qkv.layer_norm_weight
+	module.decoder.layers.23.self_attention.linear_qkv.weight
+	module.decoder.layers.8.self_attention.linear_qkv.layer_norm_weight
+	module.decoder.layers.21.mlp.linear_fc1.bias
+	module.decoder.layers.19.self_attention.linear_qkv.weight
+	module.decoder.layers.3.mlp.linear_fc1.weight
+	module.decoder.layers.17.mlp.linear_fc1.weight
+	module.decoder.layers.11.self_attention.linear_qkv.bias
+	module.decoder.layers.13.mlp.linear_fc2.weight
+	module.decoder.layers.29.self_attention.linear_proj.bias
+	module.decoder.layers.26.mlp.linear_fc2.bias
+	module.decoder.layers.16.self_attention.linear_qkv.layer_norm_weight
+	module.decoder.layers.9.mlp.linear_fc1.weight
+	module.decoder.layers.7.self_attention.linear_qkv.weight
+	module.decoder.layers.5.mlp.linear_fc1.bias
+	module.decoder.layers.2.mlp.linear_fc1.layer_norm_bias
+	module.decoder.layers.18.mlp.linear_fc1.layer_norm_weight
+	module.decoder.layers.3.self_attention.linear_proj.bias
+	module.decoder.layers.14.mlp.linear_fc1.layer_norm_weight
+	module.decoder.layers.0.mlp.linear_fc1.layer_norm_weight
+	module.decoder.layers.34.mlp.linear_fc1.layer_norm_bias
+	module.decoder.layers.15.self_attention.linear_qkv.bias
+	module.decoder.layers.6.self_attention.linear_proj.bias
+	module.decoder.layers.30.mlp.linear_fc2.bias
+	module.decoder.layers.17.mlp.linear_fc2.weight
+	module.decoder.layers.11.self_attention.linear_qkv.weight
+	module.decoder.layers.3.mlp.linear_fc1.layer_norm_weight
+	module.decoder.layers.26.mlp.linear_fc1.layer_norm_bias
+	module.decoder.layers.22.mlp.linear_fc1.layer_norm_weight
+	module.decoder.layers.9.mlp.linear_fc2.weight
+	module.decoder.layers.5.mlp.linear_fc1.weight
+	module.decoder.layers.25.self_attention.linear_proj.bias
+	module.decoder.layers.21.self_attention.linear_proj.bias
+	module.decoder.layers.10.mlp.linear_fc1.layer_norm_weight
+	module.decoder.layers.13.self_attention.linear_proj.bias
+	module.decoder.layers.34.mlp.linear_fc2.bias
+	module.decoder.layers.32.self_attention.linear_qkv.layer_norm_bias
+	module.decoder.layers.6.mlp.linear_fc1.layer_norm_weight
+	module.decoder.layers.5.self_attention.linear_proj.bias
+	module.decoder.layers.1.mlp.linear_fc1.layer_norm_bias
+	module.decoder.layers.30.mlp.linear_fc1.layer_norm_bias
+	module.decoder.layers.0.mlp.linear_fc2.weight
+	module.decoder.layers.33.self_attention.linear_proj.weight
+	module.decoder.layers.26.mlp.linear_fc1.bias
+	module.decoder.layers.4.self_attention.linear_qkv.layer_norm_bias
+	module.decoder.layers.18.mlp.linear_fc2.bias
+	module.decoder.layers.1.self_attention.linear_qkv.weight
+	module.decoder.layers.17.self_attention.linear_proj.bias
+	module.decoder.layers.14.mlp.linear_fc2.bias
+	module.decoder.layers.4.mlp.linear_fc1.weight
+	module.decoder.layers.34.mlp.linear_fc1.bias
+	module.decoder.layers.32.self_attention.linear_qkv.bias
+	module.decoder.layers.28.self_attention.linear_qkv.layer_norm_bias
+	module.decoder.layers.9.self_attention.linear_proj.bias
+	module.decoder.layers.30.mlp.linear_fc1.bias
+	module.decoder.layers.0.mlp.linear_fc1.weight
+	module.decoder.layers.33.self_attention.linear_qkv.layer_norm_weight
+	module.decoder.layers.29.self_attention.linear_proj.weight
+	module.decoder.layers.26.mlp.linear_fc1.weight
+	module.decoder.layers.22.mlp.linear_fc2.bias
+	module.decoder.layers.2.self_attention.linear_qkv.layer_norm_bias
+	module.decoder.layers.18.mlp.linear_fc1.layer_norm_bias
+	module.decoder.final_layernorm.bias
+	module.decoder.layers.14.mlp.linear_fc1.layer_norm_bias
+	module.decoder.layers.10.mlp.linear_fc2.bias
+	module.decoder.layers.4.self_attention.linear_qkv.weight
+	module.decoder.layers.32.self_attention.linear_qkv.weight
+	module.decoder.layers.6.mlp.linear_fc2.bias
+	module.decoder.layers.30.mlp.linear_fc1.weight
+	module.decoder.layers.24.self_attention.linear_qkv.layer_norm_bias
+	module.decoder.layers.3.self_attention.linear_qkv.layer_norm_bias
+	module.decoder.layers.35.mlp.linear_fc1.layer_norm_weight
+	module.decoder.layers.29.self_attention.linear_qkv.layer_norm_weight
+	module.decoder.layers.26.mlp.linear_fc2.weight
+	module.decoder.layers.20.self_attention.linear_qkv.layer_norm_bias
+	module.decoder.layers.22.mlp.linear_fc1.layer_norm_bias
+	module.decoder.layers.1.self_attention.linear_proj.bias
+	module.decoder.layers.31.mlp.linear_fc1.layer_norm_weight
+	module.decoder.layers.25.self_attention.linear_proj.weight
+	module.decoder.layers.18.mlp.linear_fc1.bias
+	module.decoder.layers.12.self_attention.linear_qkv.layer_norm_bias
+	module.embedding.word_embeddings.weight
+	module.decoder.layers.34.self_attention.linear_proj.bias
+	module.decoder.layers.27.mlp.linear_fc1.layer_norm_weight
+	module.decoder.layers.21.self_attention.linear_proj.weight
+	module.decoder.layers.14.mlp.linear_fc1.bias
+	module.decoder.layers.10.mlp.linear_fc1.layer_norm_bias
+	module.decoder.layers.8.self_attention.linear_qkv.layer_norm_bias
+	module.decoder.layers.28.self_attention.linear_qkv.bias
+	module.decoder.layers.13.self_attention.linear_proj.weight
+	module.decoder.layers.6.mlp.linear_fc1.layer_norm_bias
+	module.decoder.layers.30.mlp.linear_fc2.weight
+	module.decoder.layers.24.self_attention.linear_qkv.bias
+	module.decoder.layers.22.mlp.linear_fc1.bias
+	module.decoder.layers.20.self_attention.linear_qkv.bias
+	module.decoder.layers.16.self_attention.linear_qkv.layer_norm_bias
+	module.decoder.layers.5.mlp.linear_fc2.weight
+	module.decoder.layers.12.self_attention.linear_qkv.bias
+	module.decoder.layers.18.mlp.linear_fc1.weight
+	module.decoder.layers.10.mlp.linear_fc1.bias
+	module.decoder.final_layernorm.weight
+	module.decoder.layers.21.self_attention.linear_qkv.layer_norm_weight
+	module.decoder.layers.17.self_attention.linear_proj.weight
+	module.decoder.layers.14.mlp.linear_fc1.weight
+	module.decoder.layers.8.self_attention.linear_qkv.bias
+	module.decoder.layers.5.self_attention.linear_qkv.weight
+	module.decoder.layers.26.self_attention.linear_proj.bias
+	module.decoder.layers.13.self_attention.linear_qkv.layer_norm_weight
+	module.decoder.layers.9.self_attention.linear_proj.weight
+	module.decoder.layers.6.mlp.linear_fc1.bias
+	module.decoder.layers.1.mlp.linear_fc1.bias
+	module.decoder.layers.24.self_attention.linear_qkv.weight
+	module.decoder.layers.3.self_attention.linear_qkv.layer_norm_weight
+	module.decoder.layers.35.mlp.linear_fc2.bias
+	module.decoder.layers.22.mlp.linear_fc1.weight
+	module.decoder.layers.20.self_attention.linear_qkv.weight
+	module.decoder.layers.16.self_attention.linear_qkv.bias
+	module.decoder.layers.5.self_attention.linear_proj.weight
+	module.decoder.layers.2.mlp.linear_fc1.bias
+	module.decoder.layers.12.self_attention.linear_qkv.weight
+	module.decoder.layers.31.mlp.linear_fc2.bias
+	module.decoder.layers.18.mlp.linear_fc2.weight
+	module.decoder.layers.30.self_attention.linear_proj.bias
+	module.decoder.layers.27.mlp.linear_fc2.bias
+	module.decoder.layers.23.mlp.linear_fc1.layer_norm_weight
+	module.decoder.layers.17.self_attention.linear_qkv.layer_norm_weight
+	module.decoder.layers.14.mlp.linear_fc2.weight
+	module.decoder.layers.10.mlp.linear_fc1.weight
+	module.decoder.layers.8.self_attention.linear_qkv.weight
+	module.decoder.layers.5.self_attention.linear_qkv.layer_norm_bias
+	module.decoder.layers.19.mlp.linear_fc1.layer_norm_weight
+	module.decoder.layers.9.self_attention.linear_qkv.layer_norm_weight
+	module.decoder.layers.6.mlp.linear_fc1.weight
+	module.decoder.layers.2.self_attention.linear_qkv.layer_norm_weight
+	module.decoder.layers.3.self_attention.linear_qkv.bias
+	module.decoder.layers.35.mlp.linear_fc1.layer_norm_bias
+	module.decoder.layers.22.mlp.linear_fc2.weight
+	module.decoder.layers.16.self_attention.linear_qkv.weight
+	module.decoder.layers.7.mlp.linear_fc1.layer_norm_weight
+	module.decoder.layers.31.mlp.linear_fc1.layer_norm_bias
+	module.decoder.layers.25.self_attention.linear_qkv.layer_norm_weight
+	module.decoder.layers.34.self_attention.linear_proj.weight
+	module.decoder.layers.27.mlp.linear_fc1.layer_norm_bias
+	module.decoder.layers.10.mlp.linear_fc2.weight
+	module.decoder.layers.5.self_attention.linear_qkv.bias
+	module.decoder.layers.15.mlp.linear_fc1.layer_norm_weight
+	module.decoder.layers.6.mlp.linear_fc2.weight
+	module.decoder.layers.18.self_attention.linear_proj.bias
+	module.decoder.layers.11.mlp.linear_fc1.layer_norm_weight
+	module.decoder.layers.14.self_attention.linear_proj.bias
+	module.decoder.layers.35.mlp.linear_fc1.bias
+	module.decoder.layers.33.self_attention.linear_qkv.layer_norm_bias
+	module.decoder.layers.31.mlp.linear_fc1.bias
+	module.decoder.layers.6.self_attention.linear_qkv.layer_norm_weight
+	module.decoder.layers.1.self_attention.linear_qkv.bias
+	module.decoder.layers.34.self_attention.linear_qkv.layer_norm_weight
+	module.decoder.layers.27.mlp.linear_fc1.bias
+	module.decoder.layers.23.mlp.linear_fc2.bias
+	module.decoder.layers.3.self_attention.linear_qkv.weight
+	module.decoder.layers.26.self_attention.linear_proj.weight
+	module.decoder.layers.22.self_attention.linear_proj.bias
+	module.decoder.layers.19.mlp.linear_fc2.bias
+	module.decoder.layers.1.mlp.linear_fc2.bias
+	module.decoder.layers.35.mlp.linear_fc1.weight
+	module.decoder.layers.33.self_attention.linear_qkv.bias
+	module.decoder.layers.29.self_attention.linear_qkv.layer_norm_bias
+	module.decoder.layers.10.self_attention.linear_proj.bias
+	module.decoder.layers.7.mlp.linear_fc2.bias
+	module.decoder.layers.31.mlp.linear_fc1.weight
+	module.decoder.layers.25.self_attention.linear_qkv.layer_norm_bias
+	module.decoder.layers.0.self_attention.linear_qkv.bias
+	module.decoder.layers.30.self_attention.linear_proj.weight
+	module.decoder.layers.27.mlp.linear_fc1.weight
+	module.decoder.layers.23.mlp.linear_fc1.layer_norm_bias
+	module.decoder.layers.5.self_attention.linear_qkv.layer_norm_weight
+	module.decoder.layers.0.self_attention.linear_qkv.layer_norm_weight
+	module.decoder.layers.26.self_attention.linear_qkv.layer_norm_weight
+	module.decoder.layers.19.mlp.linear_fc1.layer_norm_bias
+	module.decoder.layers.15.mlp.linear_fc2.bias
+	module.decoder.layers.1.mlp.linear_fc1.weight
+	module.decoder.layers.11.mlp.linear_fc2.bias
+	module.decoder.layers.3.mlp.linear_fc2.weight
+	module.decoder.layers.35.mlp.linear_fc2.weight
+	module.decoder.layers.33.self_attention.linear_qkv.weight
+	module.decoder.layers.29.self_attention.linear_qkv.bias
+	module.decoder.layers.7.mlp.linear_fc1.layer_norm_bias
+	module.decoder.layers.2.mlp.linear_fc2.weight
+	module.decoder.layers.0.mlp.linear_fc1.layer_norm_bias
+	module.decoder.layers.31.mlp.linear_fc2.weight
+	module.decoder.layers.25.self_attention.linear_qkv.bias
+	module.decoder.layers.0.self_attention.linear_qkv.layer_norm_bias
+	module.decoder.layers.30.self_attention.linear_qkv.layer_norm_weight
+	module.decoder.layers.27.mlp.linear_fc2.weight
+	module.decoder.layers.23.mlp.linear_fc1.bias
+	module.decoder.layers.21.self_attention.linear_qkv.layer_norm_bias
+	module.decoder.layers.15.mlp.linear_fc1.layer_norm_bias
+	module.decoder.layers.32.mlp.linear_fc1.layer_norm_weight
+	module.decoder.layers.19.mlp.linear_fc1.bias
+	module.decoder.layers.13.self_attention.linear_qkv.layer_norm_bias
+	module.decoder.layers.18.self_attention.linear_proj.weight
+	module.decoder.layers.11.mlp.linear_fc1.layer_norm_bias
+	module.decoder.layers.29.self_attention.linear_qkv.weight
+	module.decoder.layers.14.self_attention.linear_proj.weight
+	module.decoder.layers.7.mlp.linear_fc1.bias
+	module.decoder.layers.25.self_attention.linear_qkv.weight
+	module.decoder.layers.1.self_attention.linear_qkv.layer_norm_bias
+	module.decoder.layers.23.mlp.linear_fc1.weight
+	module.decoder.layers.21.self_attention.linear_qkv.bias
+	module.decoder.layers.17.self_attention.linear_qkv.layer_norm_bias
+	module.decoder.layers.35.self_attention.linear_proj.bias
+	module.decoder.layers.28.mlp.linear_fc1.layer_norm_weight
+	module.decoder.layers.22.self_attention.linear_proj.weight
+	module.decoder.layers.19.mlp.linear_fc1.weight
+	module.decoder.layers.13.self_attention.linear_qkv.bias
+	module.decoder.layers.15.mlp.linear_fc1.bias
+	module.decoder.layers.9.self_attention.linear_qkv.layer_norm_bias
+	module.decoder.layers.11.mlp.linear_fc1.bias
+	module.decoder.layers.18.self_attention.linear_qkv.layer_norm_weight
+	module.decoder.layers.27.self_attention.linear_proj.bias
+	module.decoder.layers.14.self_attention.linear_qkv.layer_norm_weight
+	module.decoder.layers.10.self_attention.linear_proj.weight
+	module.decoder.layers.7.mlp.linear_fc1.weight
+	module.decoder.layers.2.self_attention.linear_qkv.weight
+	module.decoder.layers.23.mlp.linear_fc2.weight
+	module.decoder.layers.21.self_attention.linear_qkv.weight
+	module.decoder.layers.17.self_attention.linear_qkv.bias
+	module.decoder.layers.1.mlp.linear_fc1.layer_norm_weight
+	module.decoder.layers.13.self_attention.linear_qkv.weight
+	module.decoder.layers.32.mlp.linear_fc2.bias
+	module.decoder.layers.22.self_attention.linear_qkv.layer_norm_weight
+	module.decoder.layers.19.mlp.linear_fc2.weight
+	module.decoder.layers.15.mlp.linear_fc1.weight
+	module.decoder.layers.9.self_attention.linear_qkv.bias
+	module.decoder.layers.11.mlp.linear_fc1.weight
+	module.decoder.layers.31.self_attention.linear_proj.bias
+	module.decoder.layers.24.mlp.linear_fc1.layer_norm_weight
+	module.decoder.layers.20.mlp.linear_fc1.layer_norm_weight
+	module.decoder.layers.10.self_attention.linear_qkv.layer_norm_weight
+	module.decoder.layers.7.mlp.linear_fc2.weight
+	module.decoder.layers.2.self_attention.linear_qkv.bias
+	module.decoder.layers.0.mlp.linear_fc1.bias
+	module.decoder.layers.12.mlp.linear_fc1.layer_norm_weight
+	module.decoder.layers.1.mlp.linear_fc2.weight
+	module.decoder.layers.34.self_attention.linear_qkv.layer_norm_bias
+	module.decoder.layers.17.self_attention.linear_qkv.weight
+	module.decoder.layers.8.mlp.linear_fc1.layer_norm_weight
+	module.decoder.layers.15.mlp.linear_fc2.weight
+	module.decoder.layers.32.mlp.linear_fc1.layer_norm_bias
+	module.decoder.layers.28.mlp.linear_fc2.bias
+	module.decoder.layers.9.self_attention.linear_qkv.weight
+	module.decoder.layers.11.mlp.linear_fc2.weight
+	module.decoder.layers.23.self_attention.linear_proj.bias
+	module.decoder.layers.16.mlp.linear_fc1.layer_norm_weight
+	module.decoder.layers.4.self_attention.linear_proj.weight
+	module.decoder.layers.19.self_attention.linear_proj.bias
+	module.decoder.layers.34.self_attention.linear_qkv.bias
+	module.decoder.layers.21.mlp.linear_fc1.weight
+	module.decoder.layers.15.self_attention.linear_proj.bias
+	module.decoder.layers.0.self_attention.linear_qkv.weight
+	module.decoder.layers.35.self_attention.linear_proj.weight
+	module.decoder.layers.32.mlp.linear_fc1.bias
+	module.decoder.layers.28.mlp.linear_fc1.layer_norm_bias
+	module.decoder.layers.26.self_attention.linear_qkv.layer_norm_bias
+	module.decoder.layers.24.mlp.linear_fc2.bias
+	module.decoder.layers.2.mlp.linear_fc2.bias
+	module.decoder.layers.27.self_attention.linear_proj.weight
+	module.decoder.layers.20.mlp.linear_fc2.bias
+	module.decoder.layers.2.mlp.linear_fc1.weight
+	module.decoder.layers.12.mlp.linear_fc2.bias
+	module.decoder.layers.11.self_attention.linear_proj.bias
+	module.decoder.layers.30.self_attention.linear_qkv.layer_norm_bias
+	module.decoder.layers.34.self_attention.linear_qkv.weight
+	module.decoder.layers.8.mlp.linear_fc2.bias
+	module.decoder.layers.2.mlp.linear_fc1.layer_norm_weight
+	module.decoder.layers.35.self_attention.linear_qkv.layer_norm_weight
+	module.decoder.layers.32.mlp.linear_fc1.weight
+	module.decoder.layers.28.mlp.linear_fc1.bias
+	module.decoder.layers.26.self_attention.linear_qkv.bias
+	module.decoder.layers.7.self_attention.linear_proj.bias
+	module.decoder.layers.5.mlp.linear_fc1.layer_norm_weight
+	module.decoder.layers.31.self_attention.linear_proj.weight
+	module.decoder.layers.24.mlp.linear_fc1.layer_norm_bias
+	module.decoder.layers.2.self_attention.linear_proj.bias
+	module.decoder.layers.27.self_attention.linear_qkv.layer_norm_weight
+	module.decoder.layers.20.mlp.linear_fc1.layer_norm_bias
+	module.decoder.layers.16.mlp.linear_fc2.bias
+	module.decoder.layers.12.mlp.linear_fc1.layer_norm_bias
+	module.decoder.layers.30.self_attention.linear_qkv.bias
+	module.decoder.layers.8.mlp.linear_fc1.layer_norm_bias
+	module.decoder.layers.4.self_attention.linear_qkv.bias
+	module.decoder.layers.32.mlp.linear_fc2.weight
+	module.decoder.layers.28.mlp.linear_fc1.weight
+	module.decoder.layers.26.self_attention.linear_qkv.weight
+	module.decoder.layers.6.self_attention.linear_proj.weight
+	module.decoder.layers.3.mlp.linear_fc1.bias
+	module.decoder.layers.24.mlp.linear_fc1.bias
+	module.decoder.layers.18.self_attention.linear_qkv.layer_norm_bias
+	module.decoder.layers.16.mlp.linear_fc1.layer_norm_bias
+	module.decoder.layers.33.mlp.linear_fc1.layer_norm_weight
+	module.decoder.layers.23.self_attention.linear_proj.weight
+	module.decoder.layers.20.mlp.linear_fc1.bias
+	module.decoder.layers.14.self_attention.linear_qkv.layer_norm_bias
+	module.decoder.layers.0.self_attention.linear_proj.bias
+	module.decoder.layers.19.self_attention.linear_proj.weight
+	module.decoder.layers.12.mlp.linear_fc1.bias
+	module.decoder.layers.2.self_attention.linear_proj.weight
+	module.decoder.layers.34.mlp.linear_fc1.weight
+	module.decoder.layers.30.self_attention.linear_qkv.weight
+	module.decoder.layers.15.self_attention.linear_proj.weight
+	module.decoder.layers.8.mlp.linear_fc1.bias
+	module.decoder.layers.4.self_attention.linear_qkv.layer_norm_weight
+	module.decoder.layers.28.mlp.linear_fc2.weight
+	module.decoder.layers.22.self_attention.linear_qkv.layer_norm_bias
+	module.decoder.layers.3.mlp.linear_fc1.layer_norm_bias
+	module.decoder.layers.24.mlp.linear_fc1.weight
+	module.decoder.layers.18.self_attention.linear_qkv.bias
+	module.decoder.layers.29.mlp.linear_fc1.layer_norm_weight
+	module.decoder.layers.23.self_attention.linear_qkv.layer_norm_weight
+	module.decoder.layers.20.mlp.linear_fc1.weight
+	module.decoder.layers.14.self_attention.linear_qkv.bias
+	module.decoder.layers.16.mlp.linear_fc1.bias
+	module.decoder.layers.10.self_attention.linear_qkv.layer_norm_bias
+	module.decoder.layers.1.self_attention.linear_proj.weight
+	module.decoder.layers.32.self_attention.linear_proj.bias
+	module.decoder.layers.25.mlp.linear_fc1.layer_norm_weight
+	module.decoder.layers.19.self_attention.linear_qkv.layer_norm_weight
+	module.decoder.layers.12.mlp.linear_fc1.weight
+	module.decoder.layers.6.self_attention.linear_qkv.layer_norm_bias
+	module.decoder.layers.11.self_attention.linear_proj.weight
+	module.decoder.layers.28.self_attention.linear_proj.weight
+	module.decoder.layers.15.self_attention.linear_qkv.layer_norm_weight
+	module.decoder.layers.8.mlp.linear_fc1.weight
+	module.decoder.layers.22.self_attention.linear_qkv.bias
+	module.decoder.layers.7.self_attention.linear_proj.weight
+	module.decoder.layers.4.mlp.linear_fc1.layer_norm_weight
+	module.decoder.layers.31.self_attention.linear_qkv.layer_norm_weight
+	module.decoder.layers.24.mlp.linear_fc2.weight
+	module.decoder.layers.18.self_attention.linear_qkv.weight
+	module.decoder.layers.14.self_attention.linear_qkv.weight
+	module.decoder.layers.33.mlp.linear_fc2.bias
+	module.decoder.layers.20.mlp.linear_fc2.weight
+	module.decoder.layers.16.mlp.linear_fc1.weight
+	module.decoder.layers.10.self_attention.linear_qkv.bias
+	module.decoder.layers.0.mlp.linear_fc2.bias
+	module.decoder.layers.12.mlp.linear_fc2.weight
+	module.decoder.layers.6.self_attention.linear_qkv.bias
+	module.decoder.layers.21.mlp.linear_fc1.layer_norm_weight
+	module.decoder.layers.15.self_attention.linear_qkv.weight
+	module.decoder.layers.11.self_attention.linear_qkv.layer_norm_weight
+	module.decoder.layers.8.mlp.linear_fc2.weight
+	module.decoder.layers.22.self_attention.linear_qkv.weight
+	module.decoder.layers.13.mlp.linear_fc1.layer_norm_weight
+	module.decoder.layers.4.mlp.linear_fc1.bias
+	module.decoder.layers.3.mlp.linear_fc2.bias
+	module.decoder.layers.33.mlp.linear_fc1.layer_norm_bias
+	module.decoder.layers.29.mlp.linear_fc2.bias
+	module.decoder.layers.16.mlp.linear_fc2.weight
+	module.decoder.layers.10.self_attention.linear_qkv.weight
+	module.decoder.layers.25.mlp.linear_fc2.bias
+	module.decoder.layers.6.self_attention.linear_qkv.weight
+	module.decoder.layers.24.self_attention.linear_proj.bias
+	module.decoder.layers.17.mlp.linear_fc1.layer_norm_weight
+	module.decoder.layers.35.self_attention.linear_qkv.layer_norm_bias
+	module.decoder.layers.20.self_attention.linear_proj.bias
+	module.decoder.layers.9.mlp.linear_fc1.layer_norm_weight
+	module.decoder.layers.5.mlp.linear_fc2.bias
+	module.decoder.layers.4.self_attention.linear_proj.bias
+	module.decoder.layers.12.self_attention.linear_proj.bias
+	module.decoder.layers.31.self_attention.linear_qkv.layer_norm_bias
+	module.decoder.layers.33.mlp.linear_fc1.bias
+	module.decoder.layers.29.mlp.linear_fc1.layer_norm_bias
+	module.decoder.layers.27.self_attention.linear_qkv.layer_norm_bias
+	module.decoder.layers.8.self_attention.linear_proj.bias
+	module.decoder.layers.32.self_attention.linear_proj.weight
+	module.decoder.layers.25.mlp.linear_fc1.layer_norm_bias
+	module.decoder.layers.34.mlp.linear_fc2.weight
+	module.decoder.layers.28.self_attention.linear_qkv.weight
+	module.decoder.layers.21.mlp.linear_fc2.weight
+	module.decoder.layers.35.self_attention.linear_qkv.bias
+	module.decoder.layers.16.self_attention.linear_proj.bias
+	module.decoder.layers.13.mlp.linear_fc2.bias
+	module.decoder.layers.7.self_attention.linear_qkv.layer_norm_weight
+	module.decoder.layers.31.self_attention.linear_qkv.bias
+	module.decoder.layers.33.mlp.linear_fc1.weight
+	module.decoder.layers.29.mlp.linear_fc1.bias
+	module.decoder.layers.27.self_attention.linear_qkv.bias
+INFO:megatron.core.optimizer:Setting up optimizer with config AdamOptimizerConfig(lr=0.0003, min_lr=3e-05, decoupled_lr=None, decoupled_min_lr=None, weight_decay=0.1, apply_wd_to_qk_layernorm=False, fp8_recipe='delayed', fp16=False, bf16=True, reuse_grad_buf_for_mxfp8_param_ag=False, params_dtype=torch.bfloat16, use_precision_aware_optimizer=False, store_param_remainders=True, main_grads_dtype=torch.float32, main_params_dtype=torch.float32, exp_avg_dtype=torch.float32, exp_avg_sq_dtype=torch.float32, optimizer='adam', loss_scale=None, initial_loss_scale=4294967296, min_loss_scale=1.0, loss_scale_window=1000, hysteresis=2, adam_beta1=0.9, adam_beta2=0.95, adam_eps=1e-08, decoupled_weight_decay=True, sgd_momentum=0.9, muon_momentum=0.9, muon_split_qkv=True, muon_use_nesterov=False, muon_scale_mode='spectral', muon_fp32_matmul_prec='medium', muon_num_ns_steps=5, muon_tp_mode='blockwise', muon_extra_scale_factor=1.0, use_distributed_optimizer=False, overlap_param_gather=False, overlap_param_gather_with_optimizer_step=False, optimizer_cpu_offload=False, optimizer_offload_fraction=1.0, use_torch_optimizer_for_cpu_offload=False, overlap_cpu_optimizer_d2h_h2d=False, pin_cpu_grads=True, pin_cpu_params=True, clip_grad=1.0, log_num_zeros_in_grad=False, barrier_with_L1_time=True, timers=<megatron.core.timers.Timers object at 0x15002ff0fec0>, config_logger_dir='')
+INFO:megatron.core.optimizer_param_scheduler:> learning rate decay style: cosine
+[after model, optimizer, and learning rate scheduler are built] datetime: 2026-10-05 12:06:27.953308 
+> building train, validation, and test datasets ...
+ > datasets target sizes (minimum size):
+    train:      89600
+    validation: 89600
+    test:       89600
+INFO:megatron.core.datasets.blended_megatron_dataset_config:Let mock = True, as both blend and blend_per_split are None
+INFO:megatron.core.datasets.blended_megatron_dataset_config:Let split = 1,1,1, an arbitrarily even split, as mock is True
+INFO:megatron.core.datasets.blended_megatron_dataset_config:Let split_matrix = [(0, 0.3333333333333333), (0.3333333333333333, 0.6666666666666666), (0.6666666666666666, 1.0)]
+> building train, validation, and test datasets for GPT ...
+INFO:megatron.core.datasets.blended_megatron_dataset_builder:Building MockGPTDataset splits with sizes=(89600, 89600, 89600) and config=GPTDatasetConfig(random_seed=1234, sequence_length=2048, blend=None, blend_per_split=None, multiple_validation_sets=False, full_validation=False, split='1,1,1', split_matrix=[(0, 0.3333333333333333), (0.3333333333333333, 0.6666666666666666), (0.6666666666666666, 1.0)], num_dataset_builder_threads=1, path_to_cache=None, mmap_bin_files=True, mock=True, tokenizer=<megatron.core.tokenizers.text.models.default_tokenizer.DefaultTokenizerText object at 0x14fee854c7a0>, mid_level_dataset_surplus=0.005, allow_ambiguous_pad_tokens=False, fast_cache_load=False, defer_npy_index_mmap=False, reset_position_ids=False, reset_attention_mask=False, eod_mask_loss=False, create_attention_mask=True, drop_last_partial_validation_sequence=True, add_extra_token_to_sequence=True, object_storage_cache_path=None, data_parallel_size=7, sequence_parallel_size=0, hybrid_context_parallel=False, sequences_per_dataset=None, token_dtype_code=8, context_parallel_size=1)
+INFO:megatron.core.datasets.gpt_dataset:Build and save the MockGPTDataset train indices
+WARNING:megatron.core.datasets.gpt_dataset:Unable to save MockGPTDataset indexes because path_to_cache is None
+INFO:megatron.core.datasets.gpt_dataset:> total number of samples: 99888
+INFO:megatron.core.datasets.gpt_dataset:> total number of epochs: 3
+INFO:megatron.core.datasets.gpt_dataset:Build and save the MockGPTDataset valid indices
+WARNING:megatron.core.datasets.gpt_dataset:Unable to save MockGPTDataset indexes because path_to_cache is None
+INFO:megatron.core.datasets.gpt_dataset:> total number of samples: 99843
+INFO:megatron.core.datasets.gpt_dataset:> total number of epochs: 3
+INFO:megatron.core.datasets.gpt_dataset:Build and save the MockGPTDataset test indices
+WARNING:megatron.core.datasets.gpt_dataset:Unable to save MockGPTDataset indexes because path_to_cache is None
+INFO:megatron.core.datasets.gpt_dataset:> total number of samples: 100029
+INFO:megatron.core.datasets.gpt_dataset:> total number of epochs: 3
+> finished creating GPT datasets ...
+[after dataloaders are built] datetime: 2026-10-05 12:06:28.262273 
+done with setup ...
+INFO:megatron.core.timers:times across ranks (ms):
+  model-and-optimizer-setup:
+     rank  0: 905.61
+     rank  1: 905.54
+     rank  2: 905.55
+     rank  3: 905.57
+     rank  4: 905.58
+     rank  5: 905.63
+     rank  6: 905.55
+  train/valid/test-data-iterators-setup:
+     rank  0: 304.25
+     rank  1: 307.78
+     rank  2: 291.36
+     rank  3: 284.67
+     rank  4: 307.88
+     rank  5: 264.72
+     rank  6: 265.04
+training ...
+Overwriting rerun_state_machine.current_iteration from -1 to 0...
+[before the start of training step] datetime: 2026-10-05 12:06:28.348260 
+WARNING:megatron.core.rerun_state_machine:Result validation enabled
+/orcd/data/orcd/022/benchmarks/megatron-lm/Megatron-LM/megatron/core/pipeline_parallel/schedules.py:188: UserWarning: The AccumulateGrad node's stream does not match the stream of the node that produced the incoming gradient. This may incur unnecessary synchronization and break CUDA graph capture if the AccumulateGrad node's stream is the default stream. This mismatch is caused by an AccumulateGrad node created prior to the current iteration being kept alive. This can happen if the autograd graph is still being kept alive by tensors such as the loss, or if you are using DDP, which will stash a reference to the node. To resolve the mismatch, delete all references to the autograd graph or ensure that DDP initialization is performed under the same stream as subsequent forwards. If the mismatch is intentional, you can use torch.autograd.graph.set_warn_on_accumulate_grad_stream_mismatch(False) to suppress this warning. (Triggered internally at /opt/pytorch/pytorch/torch/csrc/autograd/input_buffer.cpp:240.)
+  Variable._execution_engine.run_backward(
+/usr/local/lib/python3.12/dist-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+  return func(*args, **kwargs)
+ [2026-10-05 12:06:54.673488] iteration        1/     100 | consumed samples:          896 | elapsed time per iteration (ms): 26332.3 | throughput per GPU (TFLOP/s/GPU): 427.2 | learning rate: 3.000000E-05 | global batch size:   896 | lm loss: 1.163529E+01 | loss scale: 1.0 | grad norm: 14.674 | number of skipped iterations:   0 | number of nan iterations:   0 |
+Number of parameters in transformer block in billions:  6.64
+Number of parameters in embedding layers in billions: 0.21
+Total number of parameters in billions: 6.85
+Number of parameters in most loaded shard in billions: 6.8509
+compute_activation_memory_without_sp
+Activation memory footprint per transformer layer (precise, without SP): 1088.0 MB
+Theoretical memory footprints: weight and optimizer=117604.27 MB, activation=42054.67 MB, total=159658.93 MB
+
+[Rank 0] (after 1 iterations) memory (MB) | allocated: 118564.97 | max allocated: 118564.99 | reserved: 129022.00 | max reserved: 129022.00
+INFO:megatron.core.timers:times across ranks (ms):
+  forward-backward:
+     rank  0: 2466.33
+     rank  1: 2466.18
+     rank  2: 2466.16
+     rank  3: 2466.14
+     rank  4: 2466.15
+     rank  5: 2466.33
+     rank  6: 2466.33
+  embedding-grads-all-reduce:
+     rank  0: 0.00
+     rank  1: 0.00
+     rank  2: 0.00
+     rank  3: 0.00
+     rank  4: 0.00
+     rank  5: 0.00
+     rank  6: 0.00
+  all-grads-sync:
+     rank  0: 268.73
+     rank  1: 268.74
+     rank  2: 268.73
+     rank  3: 268.74
+     rank  4: 268.74
+     rank  5: 268.74
+     rank  6: 268.74
+  optimizer-copy-to-main-grad:
+     rank  0: 0.07
+     rank  1: 0.07
+     rank  2: 0.06
+     rank  3: 0.07
+     rank  4: 0.07
+     rank  5: 0.07
+     rank  6: 0.06
+  optimizer-inner-step:
+     rank  0: 13.95
+     rank  1: 13.81
+     rank  2: 13.82
+     rank  3: 13.82
+     rank  4: 13.81
+     rank  5: 14.03
+     rank  6: 13.79
+  optimizer-copy-main-to-model-params:
+     rank  0: 0.80
+     rank  1: 0.80
+     rank  2: 0.79
+     rank  3: 0.80
+     rank  4: 0.80
+     rank  5: 0.80
+     rank  6: 0.80
+  optimizer:
+     rank  0: 164.76
+     rank  1: 164.76
+     rank  2: 164.75
+     rank  3: 164.76
+     rank  4: 164.76
+     rank  5: 164.76
+     rank  6: 164.76
+  batch-generator:
+     rank  0: 59.10
+     rank  1: 58.52
+     rank  2: 58.35
+     rank  3: 59.67
+     rank  4: 59.01
+     rank  5: 59.20
+     rank  6: 59.66
+  forward-compute:
+     rank  0: 1291.63
+     rank  1: 1244.35
+     rank  2: 1265.14
+     rank  3: 1260.97
+     rank  4: 1282.74
+     rank  5: 1269.22
+     rank  6: 1294.43
+  backward-compute:
+     rank  0: 903.01
+     rank  1: 928.31
+     rank  2: 921.36
+     rank  3: 920.50
+     rank  4: 907.19
+     rank  5: 911.52
+     rank  6: 896.63
+ [2026-10-05 12:08:33.765169] iteration       10/     100 | consumed samples:         8960 | elapsed time per iteration (ms): 12542.4 | throughput per GPU (TFLOP/s/GPU): 896.9 | learning rate: 3.000000E-04 | global batch size:   896 | lm loss: 9.744360E+00 | loss scale: 1.0 | grad norm: 0.361 | number of skipped iterations:   0 | number of nan iterations:   0 |
+Number of parameters in transformer block in billions:  6.64
+Number of parameters in embedding layers in billions: 0.21
+Total number of parameters in billions: 6.85
+Number of parameters in most loaded shard in billions: 6.8509
+compute_activation_memory_without_sp
+Activation memory footprint per transformer layer (precise, without SP): 1088.0 MB
+Theoretical memory footprints: weight and optimizer=117604.27 MB, activation=42054.67 MB, total=159658.93 MB
+
+[Rank 0] (after 10 iterations) memory (MB) | allocated: 118564.97 | max allocated: 158010.08 | reserved: 158818.00 | max reserved: 158818.00
+INFO:megatron.core.timers:times across ranks (ms):
+  forward-backward:
+     rank  0: 12309.93
+     rank  1: 12309.76
+     rank  2: 12309.71
+     rank  3: 12309.70
+     rank  4: 12309.71
+     rank  5: 12309.91
+     rank  6: 12309.92
+  embedding-grads-all-reduce:
+     rank  0: 0.02
+     rank  1: 0.02
+     rank  2: 0.02
+     rank  3: 0.02
+     rank  4: 0.02
+     rank  5: 0.02
+     rank  6: 0.02
+  all-grads-sync:
+     rank  0: 344.41
+     rank  1: 344.41
+     rank  2: 344.40
+     rank  3: 344.39
+     rank  4: 344.38
+     rank  5: 344.39
+     rank  6: 344.40
+  optimizer-copy-to-main-grad:
+     rank  0: 0.55
+     rank  1: 0.56
+     rank  2: 0.53
+     rank  3: 0.54
+     rank  4: 0.53
+     rank  5: 0.54
+     rank  6: 0.53
+  optimizer-inner-step:
+     rank  0: 49.99
+     rank  1: 49.77
+     rank  2: 49.78
+     rank  3: 49.76
+     rank  4: 49.79
+     rank  5: 50.03
+     rank  6: 49.73
+  optimizer-copy-main-to-model-params:
+     rank  0: 8.14
+     rank  1: 8.16
+     rank  2: 8.16
+     rank  3: 8.16
+     rank  4: 8.16
+     rank  5: 8.15
+     rank  6: 8.14
+  optimizer:
+     rank  0: 223.86
+     rank  1: 223.86
+     rank  2: 223.86
+     rank  3: 223.86
+     rank  4: 223.86
+     rank  5: 223.85
+     rank  6: 223.85
+  batch-generator:
+     rank  0: 103.69
+     rank  1: 104.06
+     rank  2: 103.17
+     rank  3: 105.54
+     rank  4: 104.65
+     rank  5: 104.96
+     rank  6: 104.84
+  forward-compute:
+     rank  0: 4429.03
+     rank  1: 4350.80
+     rank  2: 4385.62
+     rank  3: 4365.94
+     rank  4: 4395.37
+     rank  5: 4358.50
+     rank  6: 4424.32
+  backward-compute:
+     rank  0: 7491.32
+     rank  1: 7446.24
+     rank  2: 7449.01
+     rank  3: 7394.07
+     rank  4: 7429.49
+     rank  5: 7366.29
+     rank  6: 7439.33
+ [2026-10-05 12:10:20.968937] iteration       20/     100 | consumed samples:        17920 | elapsed time per iteration (ms): 10720.4 | throughput per GPU (TFLOP/s/GPU): 1049.4 | learning rate: 2.604594E-04 | global batch size:   896 | lm loss: 8.298857E+00 | loss scale: 1.0 | grad norm: 0.344 | number of skipped iterations:   0 | number of nan iterations:   0 |
+INFO:megatron.core.timers:times across ranks (ms):
+  forward-backward:
+     rank  0: 10652.60
+     rank  1: 10652.59
+     rank  2: 10652.58
+     rank  3: 10652.57
+     rank  4: 10652.61
+     rank  5: 10652.61
+     rank  6: 10652.61
+  embedding-grads-all-reduce:
+     rank  0: 0.02
+     rank  1: 0.02
+     rank  2: 0.02
+     rank  3: 0.02
+     rank  4: 0.02
+     rank  5: 0.02
+     rank  6: 0.02
+  all-grads-sync:
+     rank  0: 82.06
+     rank  1: 82.05
+     rank  2: 82.04
+     rank  3: 82.03
+     rank  4: 82.03
+     rank  5: 82.03
+     rank  6: 82.05
+  optimizer-copy-to-main-grad:
+     rank  0: 0.52
+     rank  1: 0.52
+     rank  2: 0.51
+     rank  3: 0.51
+     rank  4: 0.52
+     rank  5: 0.51
+     rank  6: 0.50
+  optimizer-inner-step:
+     rank  0: 39.47
+     rank  1: 39.40
+     rank  2: 39.38
+     rank  3: 39.39
+     rank  4: 39.41
+     rank  5: 39.45
+     rank  6: 39.37
+  optimizer-copy-main-to-model-params:
+     rank  0: 8.06
+     rank  1: 8.08
+     rank  2: 8.08
+     rank  3: 8.06
+     rank  4: 8.08
+     rank  5: 8.08
+     rank  6: 8.07
+  optimizer:
+     rank  0: 60.74
+     rank  1: 60.74
+     rank  2: 60.74
+     rank  3: 60.72
+     rank  4: 60.74
+     rank  5: 60.75
+     rank  6: 60.74
+  batch-generator:
+     rank  0: 49.29
+     rank  1: 50.13
+     rank  2: 49.25
+     rank  3: 49.74
+     rank  4: 50.05
+     rank  5: 50.47
+     rank  6: 49.65
+  forward-compute:
+     rank  0: 3323.93
+     rank  1: 3283.11
+     rank  2: 3287.49
+     rank  3: 3280.43
+     rank  4: 3282.22
+     rank  5: 3260.58
+     rank  6: 3297.44
+  backward-compute:
+     rank  0: 7208.62
+     rank  1: 7129.59
+     rank  2: 7142.51
+     rank  3: 7097.38
+     rank  4: 7132.06
+     rank  5: 7045.09
+     rank  6: 7165.62
+ [2026-10-05 12:12:10.186953] iteration       30/     100 | consumed samples:        26880 | elapsed time per iteration (ms): 10921.8 | throughput per GPU (TFLOP/s/GPU): 1030.0 | learning rate: 1.650000E-04 | global batch size:   896 | lm loss: 7.624085E+00 | loss scale: 1.0 | grad norm: 1.354 | number of skipped iterations:   0 | number of nan iterations:   0 |
+INFO:megatron.core.timers:times across ranks (ms):
+  forward-backward:
+     rank  0: 10848.45
+     rank  1: 10848.46
+     rank  2: 10848.42
+     rank  3: 10848.44
+     rank  4: 10848.44
+     rank  5: 10848.47
+     rank  6: 10848.48
+  embedding-grads-all-reduce:
+     rank  0: 0.02
+     rank  1: 0.02
+     rank  2: 0.02
+     rank  3: 0.02
+     rank  4: 0.02
+     rank  5: 0.02
+     rank  6: 0.02
+  all-grads-sync:
+     rank  0: 81.62
+     rank  1: 81.62
+     rank  2: 81.61
+     rank  3: 81.60
+     rank  4: 81.60
+     rank  5: 81.60
+     rank  6: 81.61
+  optimizer-copy-to-main-grad:
+     rank  0: 0.51
+     rank  1: 0.51
+     rank  2: 0.49
+     rank  3: 0.50
+     rank  4: 0.51
+     rank  5: 0.51
+     rank  6: 0.50
+  optimizer-inner-step:
+     rank  0: 39.20
+     rank  1: 39.17
+     rank  2: 39.13
+     rank  3: 39.15
+     rank  4: 39.16
+     rank  5: 39.18
+     rank  6: 39.17
+  optimizer-copy-main-to-model-params:
+     rank  0: 8.02
+     rank  1: 8.03
+     rank  2: 8.04
+     rank  3: 8.02
+     rank  4: 8.04
+     rank  5: 8.04
+     rank  6: 8.03
+  optimizer:
+     rank  0: 66.28
+     rank  1: 66.29
+     rank  2: 66.30
+     rank  3: 66.28
+     rank  4: 66.30
+     rank  5: 66.30
+     rank  6: 66.28
+  batch-generator:
+     rank  0: 49.91
+     rank  1: 51.25
+     rank  2: 50.55
+     rank  3: 50.97
+     rank  4: 52.35
+     rank  5: 51.41
+     rank  6: 50.61
+  forward-compute:
+     rank  0: 3425.06
+     rank  1: 3399.57
+     rank  2: 3387.65
+     rank  3: 3392.94
+     rank  4: 3408.58
+     rank  5: 3349.47
+     rank  6: 3418.72
+  backward-compute:
+     rank  0: 7289.14
+     rank  1: 7209.65
+     rank  2: 7208.92
+     rank  3: 7176.05
+     rank  4: 7209.93
+     rank  5: 7122.81
+     rank  6: 7245.59
+ [2026-10-05 12:14:01.472519] iteration       40/     100 | consumed samples:        35840 | elapsed time per iteration (ms): 11128.5 | throughput per GPU (TFLOP/s/GPU): 1010.9 | learning rate: 6.954058E-05 | global batch size:   896 | lm loss: 4.331704E+00 | loss scale: 1.0 | grad norm: 10.838 | number of skipped iterations:   0 | number of nan iterations:   0 |
+INFO:megatron.core.timers:times across ranks (ms):
+  forward-backward:
+     rank  0: 11049.75
+     rank  1: 11049.73
+     rank  2: 11049.71
+     rank  3: 11049.74
+     rank  4: 11049.74
+     rank  5: 11049.73
+     rank  6: 11049.76
+  embedding-grads-all-reduce:
+     rank  0: 0.02
+     rank  1: 0.02
+     rank  2: 0.02
+     rank  3: 0.02
+     rank  4: 0.02
+     rank  5: 0.02
+     rank  6: 0.02
+  all-grads-sync:
+     rank  0: 82.55
+     rank  1: 82.54
+     rank  2: 82.53
+     rank  3: 82.52
+     rank  4: 82.52
+     rank  5: 82.52
+     rank  6: 82.54
+  optimizer-copy-to-main-grad:
+     rank  0: 0.52
+     rank  1: 0.53
+     rank  2: 0.51
+     rank  3: 0.52
+     rank  4: 0.52
+     rank  5: 0.51
+     rank  6: 0.51
+  optimizer-inner-step:
+     rank  0: 39.60
+     rank  1: 39.54
+     rank  2: 39.51
+     rank  3: 39.54
+     rank  4: 39.55
+     rank  5: 39.55
+     rank  6: 39.51
+  optimizer-copy-main-to-model-params:
+     rank  0: 8.13
+     rank  1: 8.12
+     rank  2: 8.12
+     rank  3: 8.11
+     rank  4: 8.12
+     rank  5: 8.12
+     rank  6: 8.11
+  optimizer:
+     rank  0: 71.81
+     rank  1: 71.79
+     rank  2: 71.80
+     rank  3: 71.78
+     rank  4: 71.80
+     rank  5: 71.80
+     rank  6: 71.78
+  batch-generator:
+     rank  0: 51.01
+     rank  1: 52.14
+     rank  2: 51.89
+     rank  3: 51.75
+     rank  4: 52.50
+     rank  5: 51.77
+     rank  6: 51.67
+  forward-compute:
+     rank  0: 3517.03
+     rank  1: 3445.99
+     rank  2: 3464.88
+     rank  3: 3442.40
+     rank  4: 3448.56
+     rank  5: 3401.92
+     rank  6: 3469.96
+  backward-compute:
+     rank  0: 7416.64
+     rank  1: 7330.44
+     rank  2: 7332.41
+     rank  3: 7303.81
+     rank  4: 7327.36
+     rank  5: 7233.68
+     rank  6: 7374.66
+ [2026-10-05 12:15:50.549016] iteration       50/     100 | consumed samples:        44800 | elapsed time per iteration (ms): 10907.6 | throughput per GPU (TFLOP/s/GPU): 1031.4 | learning rate: 3.000000E-05 | global batch size:   896 | lm loss: 1.580669E+00 | loss scale: 1.0 | grad norm: 2.703 | number of skipped iterations:   0 | number of nan iterations:   0 |
+INFO:megatron.core.timers:times across ranks (ms):
+  forward-backward:
+     rank  0: 10829.99
+     rank  1: 10829.99
+     rank  2: 10829.95
+     rank  3: 10829.97
+     rank  4: 10829.95
+     rank  5: 10829.95
+     rank  6: 10829.99
+  embedding-grads-all-reduce:
+     rank  0: 0.02
+     rank  1: 0.02
+     rank  2: 0.02
+     rank  3: 0.02
+     rank  4: 0.02
+     rank  5: 0.02
+     rank  6: 0.02
+  all-grads-sync:
+     rank  0: 81.58
+     rank  1: 81.58
+     rank  2: 81.57
+     rank  3: 81.56
+     rank  4: 81.56
+     rank  5: 81.56
+     rank  6: 81.57
+  optimizer-copy-to-main-grad:
+     rank  0: 0.53
+     rank  1: 0.53
+     rank  2: 0.51
+     rank  3: 0.50
+     rank  4: 0.50
+     rank  5: 0.49
+     rank  6: 0.50
+  optimizer-inner-step:
+     rank  0: 39.01
+     rank  1: 38.95
+     rank  2: 38.95
+     rank  3: 38.97
+     rank  4: 38.97
+     rank  5: 38.98
+     rank  6: 38.95
+  optimizer-copy-main-to-model-params:
+     rank  0: 8.01
+     rank  1: 8.00
+     rank  2: 8.02
+     rank  3: 7.99
+     rank  4: 8.00
+     rank  5: 8.01
+     rank  6: 7.99
+  optimizer:
+     rank  0: 70.81
+     rank  1: 70.80
+     rank  2: 70.81
+     rank  3: 70.79
+     rank  4: 70.80
+     rank  5: 70.80
+     rank  6: 70.78
+  batch-generator:
+     rank  0: 51.02
+     rank  1: 51.77
+     rank  2: 51.13
+     rank  3: 51.11
+     rank  4: 51.53
+     rank  5: 51.45
+     rank  6: 51.15
+  forward-compute:
+     rank  0: 3438.42
+     rank  1: 3401.39
+     rank  2: 3408.69
+     rank  3: 3397.47
+     rank  4: 3403.38
+     rank  5: 3353.37
+     rank  6: 3423.13
+  backward-compute:
+     rank  0: 7259.76
+     rank  1: 7182.93
+     rank  2: 7186.41
+     rank  3: 7157.64
+     rank  4: 7183.92
+     rank  5: 7093.74
+     rank  6: 7230.49
+ [2026-10-05 12:17:42.518306] iteration       60/     100 | consumed samples:        53760 | elapsed time per iteration (ms): 11196.9 | throughput per GPU (TFLOP/s/GPU): 1004.7 | learning rate: 3.000000E-05 | global batch size:   896 | lm loss: 6.448850E-01 | loss scale: 1.0 | grad norm: 1.067 | number of skipped iterations:   0 | number of nan iterations:   0 |
+INFO:megatron.core.timers:times across ranks (ms):
+  forward-backward:
+     rank  0: 11099.16
+     rank  1: 11099.18
+     rank  2: 11099.14
+     rank  3: 11099.14
+     rank  4: 11099.16
+     rank  5: 11099.15
+     rank  6: 11099.17
+  embedding-grads-all-reduce:
+     rank  0: 0.02
+     rank  1: 0.02
+     rank  2: 0.02
+     rank  3: 0.02
+     rank  4: 0.02
+     rank  5: 0.02
+     rank  6: 0.02
+  all-grads-sync:
+     rank  0: 83.46
+     rank  1: 83.47
+     rank  2: 83.45
+     rank  3: 83.44
+     rank  4: 83.44
+     rank  5: 83.44
+     rank  6: 83.46
+  optimizer-copy-to-main-grad:
+     rank  0: 0.52
+     rank  1: 0.54
+     rank  2: 0.53
+     rank  3: 0.52
+     rank  4: 0.51
+     rank  5: 0.52
+     rank  6: 0.51
+  optimizer-inner-step:
+     rank  0: 39.93
+     rank  1: 39.88
+     rank  2: 39.87
+     rank  3: 39.85
+     rank  4: 39.87
+     rank  5: 39.90
+     rank  6: 39.83
+  optimizer-copy-main-to-model-params:
+     rank  0: 8.18
+     rank  1: 8.19
+     rank  2: 8.19
+     rank  3: 8.17
+     rank  4: 8.18
+     rank  5: 26.38
+     rank  6: 8.17
+  optimizer:
+     rank  0: 72.39
+     rank  1: 72.40
+     rank  2: 72.40
+     rank  3: 72.38
+     rank  4: 72.39
+     rank  5: 90.59
+     rank  6: 72.38
+  batch-generator:
+     rank  0: 52.35
+     rank  1: 52.63
+     rank  2: 53.43
+     rank  3: 52.22
+     rank  4: 53.14
+     rank  5: 54.96
+     rank  6: 52.46
+  forward-compute:
+     rank  0: 3550.16
+     rank  1: 3469.47
+     rank  2: 3475.06
+     rank  3: 3467.16
+     rank  4: 3472.16
+     rank  5: 3424.50
+     rank  6: 3498.35
+  backward-compute:
+     rank  0: 7427.83
+     rank  1: 7354.15
+     rank  2: 7359.04
+     rank  3: 7329.77
+     rank  4: 7360.21
+     rank  5: 7264.30
+     rank  6: 7408.14
+ [2026-10-05 12:19:32.843371] iteration       70/     100 | consumed samples:        62720 | elapsed time per iteration (ms): 11032.5 | throughput per GPU (TFLOP/s/GPU): 1019.7 | learning rate: 3.000000E-05 | global batch size:   896 | lm loss: 2.686097E-01 | loss scale: 1.0 | grad norm: 0.333 | number of skipped iterations:   0 | number of nan iterations:   0 |
+INFO:megatron.core.timers:times across ranks (ms):
+  forward-backward:
+     rank  0: 10963.28
+     rank  1: 10963.30
+     rank  2: 10963.26
+     rank  3: 10963.28
+     rank  4: 10963.29
+     rank  5: 10963.26
+     rank  6: 10963.30
+  embedding-grads-all-reduce:
+     rank  0: 0.02
+     rank  1: 0.02
+     rank  2: 0.02
+     rank  3: 0.02
+     rank  4: 0.02
+     rank  5: 0.02
+     rank  6: 0.02
+  all-grads-sync:
+     rank  0: 82.20
+     rank  1: 82.21
+     rank  2: 82.21
+     rank  3: 82.20
+     rank  4: 82.20
+     rank  5: 82.20
+     rank  6: 82.20
+  optimizer-copy-to-main-grad:
+     rank  0: 0.52
+     rank  1: 0.53
+     rank  2: 0.50
+     rank  3: 0.51
+     rank  4: 0.52
+     rank  5: 0.52
+     rank  6: 0.50
+  optimizer-inner-step:
+     rank  0: 39.42
+     rank  1: 39.42
+     rank  2: 39.38
+     rank  3: 39.39
+     rank  4: 39.42
+     rank  5: 39.43
+     rank  6: 39.38
+  optimizer-copy-main-to-model-params:
+     rank  0: 8.08
+     rank  1: 8.08
+     rank  2: 8.09
+     rank  3: 8.08
+     rank  4: 8.10
+     rank  5: 8.08
+     rank  6: 8.08
+  optimizer:
+     rank  0: 62.15
+     rank  1: 62.15
+     rank  2: 62.16
+     rank  3: 62.14
+     rank  4: 62.16
+     rank  5: 62.15
+     rank  6: 62.15
+  batch-generator:
+     rank  0: 51.73
+     rank  1: 52.71
+     rank  2: 52.20
+     rank  3: 51.95
+     rank  4: 52.70
+     rank  5: 53.92
+     rank  6: 52.41
+  forward-compute:
+     rank  0: 3488.38
+     rank  1: 3448.82
+     rank  2: 3435.43
+     rank  3: 3443.84
+     rank  4: 3434.60
+     rank  5: 3415.41
+     rank  6: 3474.62
+  backward-compute:
+     rank  0: 7334.74
+     rank  1: 7258.23
+     rank  2: 7258.53
+     rank  3: 7232.56
+     rank  4: 7264.83
+     rank  5: 7169.81
+     rank  6: 7306.00
+ [2026-10-05 12:21:25.105077] iteration       80/     100 | consumed samples:        71680 | elapsed time per iteration (ms): 11226.2 | throughput per GPU (TFLOP/s/GPU): 1002.1 | learning rate: 3.000000E-05 | global batch size:   896 | lm loss: 1.185968E-01 | loss scale: 1.0 | grad norm: 0.107 | number of skipped iterations:   0 | number of nan iterations:   0 |
+INFO:megatron.core.timers:times across ranks (ms):
+  forward-backward:
+     rank  0: 11158.27
+     rank  1: 11158.30
+     rank  2: 11158.24
+     rank  3: 11158.29
+     rank  4: 11158.29
+     rank  5: 11158.28
+     rank  6: 11158.29
+  embedding-grads-all-reduce:
+     rank  0: 0.02
+     rank  1: 0.02
+     rank  2: 0.02
+     rank  3: 0.02
+     rank  4: 0.02
+     rank  5: 0.02
+     rank  6: 0.02
+  all-grads-sync:
+     rank  0: 83.81
+     rank  1: 83.85
+     rank  2: 83.85
+     rank  3: 83.84
+     rank  4: 83.83
+     rank  5: 83.83
+     rank  6: 83.85
+  optimizer-copy-to-main-grad:
+     rank  0: 0.53
+     rank  1: 0.54
+     rank  2: 0.51
+     rank  3: 0.52
+     rank  4: 0.51
+     rank  5: 0.52
+     rank  6: 0.51
+  optimizer-inner-step:
+     rank  0: 40.24
+     rank  1: 40.16
+     rank  2: 40.15
+     rank  3: 40.15
+     rank  4: 40.18
+     rank  5: 40.20
+     rank  6: 40.13
+  optimizer-copy-main-to-model-params:
+     rank  0: 8.23
+     rank  1: 8.24
+     rank  2: 8.24
+     rank  3: 8.23
+     rank  4: 8.24
+     rank  5: 8.24
+     rank  6: 8.24
+  optimizer:
+     rank  0: 60.79
+     rank  1: 60.79
+     rank  2: 60.79
+     rank  3: 60.77
+     rank  4: 60.79
+     rank  5: 60.78
+     rank  6: 60.78
+  batch-generator:
+     rank  0: 52.91
+     rank  1: 53.85
+     rank  2: 53.35
+     rank  3: 53.23
+     rank  4: 53.99
+     rank  5: 54.61
+     rank  6: 53.68
+  forward-compute:
+     rank  0: 3561.60
+     rank  1: 3500.11
+     rank  2: 3517.14
+     rank  3: 3493.96
+     rank  4: 3519.57
+     rank  5: 3455.62
+     rank  6: 3528.49
+  backward-compute:
+     rank  0: 7474.07
+     rank  1: 7391.67
+     rank  2: 7389.24
+     rank  3: 7364.58
+     rank  4: 7390.54
+     rank  5: 7296.49
+     rank  6: 7436.10
+ [2026-10-05 12:23:12.692680] iteration       90/     100 | consumed samples:        80640 | elapsed time per iteration (ms): 10758.8 | throughput per GPU (TFLOP/s/GPU): 1045.6 | learning rate: 3.000000E-05 | global batch size:   896 | lm loss: 7.877051E-02 | loss scale: 1.0 | grad norm: 0.118 | number of skipped iterations:   0 | number of nan iterations:   0 |
+INFO:megatron.core.timers:times across ranks (ms):
+  forward-backward:
+     rank  0: 10693.85
+     rank  1: 10693.87
+     rank  2: 10693.82
+     rank  3: 10693.86
+     rank  4: 10693.86
+     rank  5: 10693.83
+     rank  6: 10693.86
+  embedding-grads-all-reduce:
+     rank  0: 0.02
+     rank  1: 0.02
+     rank  2: 0.02
+     rank  3: 0.02
+     rank  4: 0.02
+     rank  5: 0.02
+     rank  6: 0.02
+  all-grads-sync:
+     rank  0: 80.11
+     rank  1: 80.12
+     rank  2: 80.12
+     rank  3: 80.11
+     rank  4: 80.10
+     rank  5: 80.11
+     rank  6: 80.12
+  optimizer-copy-to-main-grad:
+     rank  0: 0.50
+     rank  1: 0.52
+     rank  2: 0.49
+     rank  3: 0.49
+     rank  4: 0.48
+     rank  5: 0.48
+     rank  6: 0.48
+  optimizer-inner-step:
+     rank  0: 38.47
+     rank  1: 38.41
+     rank  2: 38.39
+     rank  3: 38.40
+     rank  4: 38.43
+     rank  5: 38.44
+     rank  6: 38.39
+  optimizer-copy-main-to-model-params:
+     rank  0: 7.88
+     rank  1: 7.88
+     rank  2: 7.89
+     rank  3: 7.88
+     rank  4: 7.89
+     rank  5: 7.89
+     rank  6: 7.87
+  optimizer:
+     rank  0: 58.11
+     rank  1: 58.10
+     rank  2: 58.12
+     rank  3: 58.10
+     rank  4: 58.11
+     rank  5: 58.11
+     rank  6: 58.09
+  batch-generator:
+     rank  0: 51.08
+     rank  1: 52.02
+     rank  2: 51.50
+     rank  3: 51.35
+     rank  4: 52.02
+     rank  5: 52.36
+     rank  6: 51.75
+  forward-compute:
+     rank  0: 3408.46
+     rank  1: 3359.80
+     rank  2: 3364.03
+     rank  3: 3352.82
+     rank  4: 3360.84
+     rank  5: 3330.27
+     rank  6: 3387.72
+  backward-compute:
+     rank  0: 7173.05
+     rank  1: 7088.23
+     rank  2: 7090.01
+     rank  3: 7068.15
+     rank  4: 7091.51
+     rank  5: 6999.94
+     rank  6: 7142.40
+ [2026-10-05 12:25:03.164166] iteration      100/     100 | consumed samples:        89600 | elapsed time per iteration (ms): 11047.1 | throughput per GPU (TFLOP/s/GPU): 1018.3 | learning rate: 3.000000E-05 | global batch size:   896 | lm loss: 5.403695E-02 | loss scale: 1.0 | grad norm: 0.142 | number of skipped iterations:   0 | number of nan iterations:   0 |
+INFO:megatron.core.timers:times across ranks (ms):
+  forward-backward:
+     rank  0: 10980.43
+     rank  1: 10980.46
+     rank  2: 10980.42
+     rank  3: 10980.42
+     rank  4: 10980.43
+     rank  5: 10980.42
+     rank  6: 10980.45
+  embedding-grads-all-reduce:
+     rank  0: 0.02
+     rank  1: 0.02
+     rank  2: 0.02
+     rank  3: 0.02
+     rank  4: 0.02
+     rank  5: 0.02
+     rank  6: 0.02
+  all-grads-sync:
+     rank  0: 81.96
+     rank  1: 81.97
+     rank  2: 81.98
+     rank  3: 81.97
+     rank  4: 81.96
+     rank  5: 81.97
+     rank  6: 81.98
+  optimizer-copy-to-main-grad:
+     rank  0: 0.51
+     rank  1: 0.54
+     rank  2: 0.51
+     rank  3: 0.50
+     rank  4: 0.50
+     rank  5: 0.51
+     rank  6: 0.50
+  optimizer-inner-step:
+     rank  0: 39.49
+     rank  1: 39.45
+     rank  2: 39.42
+     rank  3: 39.43
+     rank  4: 39.43
+     rank  5: 39.46
+     rank  6: 39.42
+  optimizer-copy-main-to-model-params:
+     rank  0: 8.09
+     rank  1: 8.10
+     rank  2: 8.12
+     rank  3: 8.11
+     rank  4: 8.10
+     rank  5: 8.11
+     rank  6: 8.10
+  optimizer:
+     rank  0: 59.69
+     rank  1: 59.68
+     rank  2: 59.71
+     rank  3: 59.70
+     rank  4: 59.69
+     rank  5: 59.70
+     rank  6: 59.69
+  batch-generator:
+     rank  0: 52.03
+     rank  1: 53.80
+     rank  2: 52.93
+     rank  3: 52.83
+     rank  4: 53.09
+     rank  5: 53.78
+     rank  6: 53.20
+  forward-compute:
+     rank  0: 3507.62
+     rank  1: 3464.61
+     rank  2: 3463.50
+     rank  3: 3461.53
+     rank  4: 3462.17
+     rank  5: 3402.20
+     rank  6: 3486.12
+  backward-compute:
+     rank  0: 7353.48
+     rank  1: 7270.14
+     rank  2: 7267.10
+     rank  3: 7242.21
+     rank  4: 7270.95
+     rank  5: 7179.30
+     rank  6: 7314.80
+[after training is done] datetime: 2026-10-05 12:25:03.171585 
+WARNING:megatron.core.rerun_state_machine:Setting RerunStateMachine mode RerunMode.DISABLED
+Evaluating on 89600 samples
+Evaluating iter 1/100
+Evaluating iter 2/100
+Evaluating iter 3/100
+Evaluating iter 4/100
+Evaluating iter 5/100
+Evaluating iter 6/100
+Evaluating iter 7/100
+Evaluating iter 8/100
+Evaluating iter 9/100
+Evaluating iter 10/100
+Evaluating iter 11/100
+Evaluating iter 12/100
+Evaluating iter 13/100
+Evaluating iter 14/100
+Evaluating iter 15/100
+Evaluating iter 16/100
+Evaluating iter 17/100
+Evaluating iter 18/100
+Evaluating iter 19/100
+Evaluating iter 20/100
+Evaluating iter 21/100
+Evaluating iter 22/100
+Evaluating iter 23/100
+Evaluating iter 24/100
+Evaluating iter 25/100
+Evaluating iter 26/100
+Evaluating iter 27/100
+Evaluating iter 28/100
+Evaluating iter 29/100
+Evaluating iter 30/100
+Evaluating iter 31/100
+Evaluating iter 32/100
+Evaluating iter 33/100
+Evaluating iter 34/100
+Evaluating iter 35/100
+Evaluating iter 36/100
+Evaluating iter 37/100
+Evaluating iter 38/100
+Evaluating iter 39/100
+Evaluating iter 40/100
+Evaluating iter 41/100
+Evaluating iter 42/100
+Evaluating iter 43/100
+Evaluating iter 44/100
+Evaluating iter 45/100
+Evaluating iter 46/100
+Evaluating iter 47/100
+Evaluating iter 48/100
+Evaluating iter 49/100
+Evaluating iter 50/100
+Evaluating iter 51/100
+Evaluating iter 52/100
+Evaluating iter 53/100
+Evaluating iter 54/100
+Evaluating iter 55/100
+Evaluating iter 56/100
+Evaluating iter 57/100
+Evaluating iter 58/100
+Evaluating iter 59/100
+Evaluating iter 60/100
+Evaluating iter 61/100
+Evaluating iter 62/100
+Evaluating iter 63/100
+Evaluating iter 64/100
+Evaluating iter 65/100
+Evaluating iter 66/100
+Evaluating iter 67/100
+Evaluating iter 68/100
+Evaluating iter 69/100
+Evaluating iter 70/100
+Evaluating iter 71/100
+Evaluating iter 72/100
+Evaluating iter 73/100
+Evaluating iter 74/100
+Evaluating iter 75/100
+Evaluating iter 76/100
+Evaluating iter 77/100
+Evaluating iter 78/100
+Evaluating iter 79/100
+Evaluating iter 80/100
+Evaluating iter 81/100
+Evaluating iter 82/100
+Evaluating iter 83/100
+Evaluating iter 84/100
+Evaluating iter 85/100
+Evaluating iter 86/100
+Evaluating iter 87/100
+Evaluating iter 88/100
+Evaluating iter 89/100
+Evaluating iter 90/100
+Evaluating iter 91/100
+Evaluating iter 92/100
+Evaluating iter 93/100
+Evaluating iter 94/100
+Evaluating iter 95/100
+Evaluating iter 96/100
+Evaluating iter 97/100
+Evaluating iter 98/100
+Evaluating iter 99/100
+Evaluating iter 100/100
+INFO:megatron.core.timers:times across ranks (ms):
+  evaluate:
+     rank  0: 321449.38
+     rank  1: 321447.12
+     rank  2: 321447.09
+     rank  3: 321447.12
+     rank  4: 321447.12
+     rank  5: 321447.09
+     rank  6: 321447.12
+WARNING:megatron.core.rerun_state_machine:Setting RerunStateMachine mode RerunMode.VALIDATE_RESULTS
+-----------------------------------------------------------------------------------------------------------------
+ validation loss at iteration 100 on validation set | lm loss value: 3.135259E-02 | lm loss PPL: 1.031849E+00 | 
+-----------------------------------------------------------------------------------------------------------------
+/usr/local/lib/python3.12/dist-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+  return func(*args, **kwargs)
+WARNING:megatron.core.rerun_state_machine:Setting RerunStateMachine mode RerunMode.DISABLED
+Evaluating on 89600 samples
+Evaluating iter 1/100
+Evaluating iter 2/100
+Evaluating iter 3/100
+Evaluating iter 4/100
+Evaluating iter 5/100
+Evaluating iter 6/100
+Evaluating iter 7/100
+Evaluating iter 8/100
+Evaluating iter 9/100
+Evaluating iter 10/100
+Evaluating iter 11/100
+Evaluating iter 12/100
+Evaluating iter 13/100
+Evaluating iter 14/100
+Evaluating iter 15/100
+Evaluating iter 16/100
+Evaluating iter 17/100
+Evaluating iter 18/100
+Evaluating iter 19/100
+Evaluating iter 20/100
+Evaluating iter 21/100
+Evaluating iter 22/100
+Evaluating iter 23/100
+Evaluating iter 24/100
+Evaluating iter 25/100
+Evaluating iter 26/100
+Evaluating iter 27/100
+Evaluating iter 28/100
+Evaluating iter 29/100
+Evaluating iter 30/100
+Evaluating iter 31/100
+Evaluating iter 32/100
+Evaluating iter 33/100
+Evaluating iter 34/100
+Evaluating iter 35/100
+Evaluating iter 36/100
+Evaluating iter 37/100
+Evaluating iter 38/100
+Evaluating iter 39/100
+Evaluating iter 40/100
+Evaluating iter 41/100
+Evaluating iter 42/100
+Evaluating iter 43/100
+Evaluating iter 44/100
+Evaluating iter 45/100
+Evaluating iter 46/100
+Evaluating iter 47/100
+Evaluating iter 48/100
+Evaluating iter 49/100
+Evaluating iter 50/100
+Evaluating iter 51/100
+Evaluating iter 52/100
+Evaluating iter 53/100
+Evaluating iter 54/100
+Evaluating iter 55/100
+Evaluating iter 56/100
+Evaluating iter 57/100
+Evaluating iter 58/100
+Evaluating iter 59/100
+Evaluating iter 60/100
+Evaluating iter 61/100
+Evaluating iter 62/100
+Evaluating iter 63/100
+Evaluating iter 64/100
+Evaluating iter 65/100
+Evaluating iter 66/100
+Evaluating iter 67/100
+Evaluating iter 68/100
+Evaluating iter 69/100
+Evaluating iter 70/100
+Evaluating iter 71/100
+Evaluating iter 72/100
+Evaluating iter 73/100
+Evaluating iter 74/100
+Evaluating iter 75/100
+Evaluating iter 76/100
+Evaluating iter 77/100
+Evaluating iter 78/100
+Evaluating iter 79/100
+Evaluating iter 80/100
+Evaluating iter 81/100
+Evaluating iter 82/100
+Evaluating iter 83/100
+Evaluating iter 84/100
+Evaluating iter 85/100
+Evaluating iter 86/100
+Evaluating iter 87/100
+Evaluating iter 88/100
+Evaluating iter 89/100
+Evaluating iter 90/100
+Evaluating iter 91/100
+Evaluating iter 92/100
+Evaluating iter 93/100
+Evaluating iter 94/100
+Evaluating iter 95/100
+Evaluating iter 96/100
+Evaluating iter 97/100
+Evaluating iter 98/100
+Evaluating iter 99/100
+Evaluating iter 100/100
+INFO:megatron.core.timers:times across ranks (ms):
+  evaluate:
+     rank  0: 320238.38
+     rank  1: 320236.19
+     rank  2: 320236.19
+     rank  3: 320236.19
+     rank  4: 320236.19
+     rank  5: 320236.19
+     rank  6: 320236.19
+-----------------------------------------------------------------------------------------------------------
+WARNING:megatron.core.rerun_state_machine:Setting RerunStateMachine mode RerunMode.VALIDATE_RESULTS
+ validation loss at iteration 100 on test set | lm loss value: 3.147769E-02 | lm loss PPL: 1.031978E+00 | 
+-----------------------------------------------------------------------------------------------------------
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+OSError: [Errno 16] Device or resource busy: '.nfs00000046804f0d41000002e8'
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+OSError: [Errno 16] Device or resource busy: '.nfs000000470008fd41000002e9'
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: [Errno 16] Device or resource busy: '.nfs0000004b803b81d3000002ed'
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+OSError: [Errno 16] Device or resource busy: '.nfs0000004d00046c83000002e3'
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+OSError: [Errno 16] Device or resource busy: '.nfs0000004c800bf606000002e7'
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+OSError: [Errno 16] Device or resource busy: '.nfs0000004a80299149000002e2'
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+OSError: [Errno 16] Device or resource busy: '.nfs0000004880215702000002ef'
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+OSError: [Errno 16] Device or resource busy: '.nfs0000004a00000176000002e5'
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: [Errno 16] Device or resource busy: '.nfs00000049001a0cc1000002e4'
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: [Errno 16] Device or resource busy: '.nfs00000048000e4d82000002e6'
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+OSError: [Errno 16] Device or resource busy: '.nfs0000004b016b56c4000002ee'
+OSError: [Errno 16] Device or resource busy: '.nfs0000004980913203000002eb'
+OSError: [Errno 16] Device or resource busy: '.nfs00000047801d88c1000002ea'
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+OSError: [Errno 16] Device or resource busy: '.nfs0000004c01113605000002ec'
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+OSError: [Errno 16] Device or resource busy: '.nfs0000004f00039844000002f0'
+OSError: [Errno 16] Device or resource busy: '.nfs0000004e000000af000002f1'
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+Traceback (most recent call last):
+OSError: [Errno 16] Device or resource busy: '.nfs0000004e80a0a50a000002f2'
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+OSError: [Errno 16] Device or resource busy: '.nfs0000004d8021958a000002f3'
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+Traceback (most recent call last):
+OSError: [Errno 16] Device or resource busy: '.nfs000000500014b88b000002f4'
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+OSError: [Errno 16] Device or resource busy: '.nfs0000004f801c8986000002f5'
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+OSError: [Errno 16] Device or resource busy: '.nfs0000005400288782000002f6'
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+OSError: [Errno 16] Device or resource busy: '.nfs00000051001b4750000002f9'
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+OSError: [Errno 16] Device or resource busy: '.nfs0000005381fdbb89000002f8'
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+OSError: [Errno 16] Device or resource busy: '.nfs0000005085b65584000002f7'
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+OSError: [Errno 16] Device or resource busy: '.nfs00000051802bfc89000002fa'
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+OSError: [Errno 16] Device or resource busy: '.nfs00000053002d4b01000002fb'
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+OSError: [Errno 16] Device or resource busy: '.nfs00000052801e1081000002fd'
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+OSError: [Errno 16] Device or resource busy: '.nfs0000005200056082000002fc'
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+OSError: [Errno 16] Device or resource busy: '.nfs0000005600b23749000002ff'
+OSError: [Errno 16] Device or resource busy: '.nfs000000550167c4c1000002fe'
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+OSError: [Errno 16] Device or resource busy: '.nfs0000005581e6b70200000301'
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+OSError: [Errno 16] Device or resource busy: '.nfs00000054802c774100000300'
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+OSError: [Errno 16] Device or resource busy: '.nfs0000005710c59a4400000302'
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+OSError: [Errno 16] Device or resource busy: '.nfs000000578668f94100000303'
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+OSError: [Errno 16] Device or resource busy: '.nfs000000568062864500000305'
+OSError: [Errno 16] Device or resource busy: '.nfs0000005806b02f5200000304'
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+OSError: [Errno 16] Device or resource busy: '.nfs0000005904a71e4300000306'
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+OSError: [Errno 16] Device or resource busy: '.nfs0000005b00a45c8b00000307'
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+OSError: [Errno 16] Device or resource busy: '.nfs0000005a809ad9cd00000308'
+OSError: [Errno 16] Device or resource busy: '.nfs0000005880f79b8100000309'
+OSError: [Errno 16] Device or resource busy: '.nfs00000059801b4d470000030a'
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 303, in _run_finalizers
+    finalizer()
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 227, in __call__
+    res = self._callback(*self._args, **self._kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/multiprocessing/util.py", line 136, in _remove_temp_dir
+    rmtree(tempdir, onerror=onerror)
+  File "/usr/lib/python3.12/shutil.py", line 785, in rmtree
+    _rmtree_safe_fd(fd, path, onexc)
+  File "/usr/lib/python3.12/shutil.py", line 717, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/lib/python3.12/shutil.py", line 764, in onexc
+    return onerror(func, path, exc_info)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 715, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+OSError: [Errno 16] Device or resource busy: '.nfs0000005a0079d8530000030b'
+[rank0]:[W1005 12:35:47.943904284 ProcessGroupNCCL.cpp:1569] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+[rank4]:[W1005 12:35:47.379432842 ProcessGroupNCCL.cpp:1569] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+[rank5]:[W1005 12:35:47.380543923 ProcessGroupNCCL.cpp:1569] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+[rank6]:[W1005 12:35:47.441493144 ProcessGroupNCCL.cpp:1569] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+[rank1]:[W1005 12:35:47.512471209 ProcessGroupNCCL.cpp:1569] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+[rank3]:[W1005 12:35:47.684061069 ProcessGroupNCCL.cpp:1569] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+[rank2]:[W1005 12:35:48.704551359 ProcessGroupNCCL.cpp:1569] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())

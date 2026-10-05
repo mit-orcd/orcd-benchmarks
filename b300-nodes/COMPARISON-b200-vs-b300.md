@@ -1,6 +1,6 @@
 # B200 vs B300 — single-node benchmark comparison
 
-- Generated: 2026-10-04 20:11:06
+- Generated: 2026-10-05 14:15:35
 - B300 node: node5900-c1 (mit_testing, 8 x B300); B200 data from `../b200-nodes/`
 - Ratios are B300 / B200; > 1.00x means B300 is faster.
 - Per-benchmark B300 summaries: `out-gpu-fryer/summary.md`, `out-nccl-1node/summary.md`, `output-megatron/summary.md`
@@ -203,14 +203,14 @@ Same config on both: 36 layers, hidden 4096, FFN 14336, seq 2048, bf16, micro-ba
 
 | #GPUs | GBS | B200 TFLOP/s/GPU | #B200 nodes | B300 TFLOP/s/GPU | B300 aggregate | B200 iter ms | B300 iter ms | B300 / B200 |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| 1 | 128 | 989.0 | 1 | — | — | 11,374 | — | — |
-| 2 | 256 | 982.9 | 1 | — | — | 11,446 | — | — |
-| 3 | 384 | 969.8 | 1 | — | — | 11,599 | — | — |
-| 4 | 512 | 967.0 | 1 | 1,026.8 | 4,107 | 11,634 | 10,956 | **1.06x** |
-| 5 | 640 | 966.7 | 1 | — | — | 11,637 | — | — |
-| 6 | 768 | 969.1 | 1 | — | — | 11,608 | — | — |
-| 7 | 896 | 968.6 | 1 | — | — | 11,615 | — | — |
-| 8 | 1024 | 968.8 | 3 | — | — | 11,612 | — | — |
+| 1 | 128 | 989.0 | 1 | 1,021.2 | 1,021 | 11,374 | 11,016 | **1.03x** |
+| 2 | 256 | 982.9 | 1 | 1,030.8 | 2,062 | 11,446 | 10,913 | **1.05x** |
+| 3 | 384 | 969.8 | 1 | 1,025.3 | 3,076 | 11,599 | 10,972 | **1.06x** |
+| 4 | 512 | 967.0 | 1 | 1,018.3 | 4,073 | 11,634 | 11,048 | **1.05x** |
+| 5 | 640 | 966.7 | 1 | 1,015.0 | 5,075 | 11,637 | 11,084 | **1.05x** |
+| 6 | 768 | 969.1 | 1 | 1,014.2 | 6,085 | 11,608 | 11,092 | **1.05x** |
+| 7 | 896 | 968.6 | 1 | 1,018.3 | 7,128 | 11,615 | 11,047 | **1.05x** |
+| 8 | 1024 | 968.8 | 3 | 1,003.2 | 8,026 | 11,612 | 11,214 | **1.04x** |
 
 ## 7. Megatron-LM 1-node — tuned max throughput, best per GPU type (TFLOP/s/GPU)
 
@@ -218,28 +218,28 @@ Each GPU type gets its own grid sweep (8 GPUs, seq 4096, distributed optimizer, 
 
 | Precision | B200 best | B200 config | B200 mem GiB | B300 best | B300 config | B300 mem GiB | B300 / B200 |
 |---|---:|---|---:|---:|---|---:|---:|
-| bf16 | 1,017.6 | 13b mb2 none | 147 | — | — | — | — |
+| bf16 | 1,017.6 | 13b mb2 none | 147 | 1,080.8 | 5b mb4 none | 92 | **1.06x** |
 | fp8 | 1,499.7 | 13b mb2 none | 151 | — | — | — | — |
 
-Grid points finished OK: B200 21/30, B300 0/30 (of 30 each).
+Grid points finished OK: B200 22/30, B300 9/30 (of 30 each).
 
 ### Full sweep grid (TFLOP/s/GPU, peak GiB)
 
 | Prec | Model | Micro | Recompute | B200 | B300 | B300 / B200 |
 |---|---|---:|---|---:|---:|---:|
-| bf16 | 5b | 4 | none | 1,006.0 (92 GiB) | failed/running | — |
-| bf16 | 5b | 4 | selective | 980.2 (92 GiB) | failed/running | — |
-| bf16 | 5b | 4 | full | 774.5 (44 GiB) | failed/running | — |
-| bf16 | 5b | 8 | none | 1,012.9 (148 GiB) | failed/running | — |
-| bf16 | 5b | 8 | selective | 1,012.2 (148 GiB) | failed/running | — |
-| bf16 | 5b | 8 | full | 782.2 (52 GiB) | failed/running | — |
-| bf16 | 5b | 16 | none | OOM | failed/running | — |
-| bf16 | 5b | 16 | selective | OOM | failed/running | — |
-| bf16 | 5b | 16 | full | 797.7 (68 GiB) | failed/running | — |
+| bf16 | 5b | 4 | none | 1,006.0 (92 GiB) | 1,080.8 (92 GiB) | **1.07x** |
+| bf16 | 5b | 4 | selective | 980.2 (92 GiB) | 1,058.4 (92 GiB) | **1.08x** |
+| bf16 | 5b | 4 | full | 774.5 (44 GiB) | 842.4 (44 GiB) | **1.09x** |
+| bf16 | 5b | 8 | none | 1,012.9 (148 GiB) | 1,011.0 (148 GiB) | **1.00x** |
+| bf16 | 5b | 8 | selective | 1,012.2 (148 GiB) | 1,046.1 (148 GiB) | **1.03x** |
+| bf16 | 5b | 8 | full | 782.2 (52 GiB) | 796.6 (52 GiB) | **1.02x** |
+| bf16 | 5b | 16 | none | OOM | 1,059.1 (260 GiB) | — |
+| bf16 | 5b | 16 | selective | OOM | 1,054.1 (260 GiB) | — |
+| bf16 | 5b | 16 | full | 797.7 (68 GiB) | 830.2 (68 GiB) | **1.04x** |
 | bf16 | 13b | 2 | none | 1,017.6 (147 GiB) | failed/running | — |
 | bf16 | 13b | 2 | full | 793.9 (97 GiB) | failed/running | — |
 | bf16 | 13b | 4 | none | OOM | failed/running | — |
-| bf16 | 13b | 4 | full | partial | failed/running | — |
+| bf16 | 13b | 4 | full | 824.1 (102 GiB) | failed/running | — |
 | bf16 | 13b | 8 | none | OOM | failed/running | — |
 | bf16 | 13b | 8 | full | 833.3 (114 GiB) | failed/running | — |
 | fp8 | 5b | 4 | none | 1,302.7 (89 GiB) | failed/running | — |
