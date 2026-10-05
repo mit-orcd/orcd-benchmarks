@@ -1,0 +1,3 @@
+- **Same ROCm 7.14 on both sides (apple-to-apple): amd-ubuntu matches amd-cloud within 0–5%** for every precision at N=1 and N=8 (fp4 0.96–1.03×, all others 1.00–1.05×). The hardware performs the same.
+- On host ROCm 7.2.4, fp4 differs: 1.44× amd-cloud at N=8 but 0.80× at N=1. This is a ROCm version effect (see `../ubuntu/rocm.md`), not a hardware difference.
+- node6100 runs bf16/fp16/fp8 ≈2–3% faster than node6101 and amd-cloud; within normal part-to-part variation.

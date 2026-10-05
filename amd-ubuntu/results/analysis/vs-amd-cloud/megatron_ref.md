@@ -1,0 +1,2 @@
+- amd-cloud has no comparable GPT-15.6B run with the full flag set, so there is no direct ratio. amd-ubuntu: 578.2 (node6100) and 572.5 (node6101) TF/s/GPU.
+- For context, the earlier Dell Cloud MI355X run of the same configuration reached 790.4 TF/s/GPU; amd-ubuntu is ≈0.73× of that, with fused RoPE turned off here because it crashes on gfx950 (the crash also occurred on amd-cloud).

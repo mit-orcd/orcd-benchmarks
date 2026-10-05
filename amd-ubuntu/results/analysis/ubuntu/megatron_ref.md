@@ -1,0 +1,2 @@
+- **GPT-15.6B on 8 GPUs (Megatron-LM v26.1 image, BF16, MBS 4, GBS 32): 578.2 TF/s/GPU on node6100 and 572.5 on node6101**, within 1% of each other.
+- This is ≈27% below the 790.4 TF/s/GPU recorded earlier on Dell Cloud MI355X with the same model settings. Known differences: fused RoPE is turned off here (`--no-rope-fusion`) because it crashes on gfx950 in this image, and the host stack differs. The gap is worth investigating (e.g. a newer image with working fused RoPE) before using this number as a reference.

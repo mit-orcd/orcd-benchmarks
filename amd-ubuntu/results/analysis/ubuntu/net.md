@@ -1,0 +1,2 @@
+- **All 16 rails (8 per node) run at ≈392 Gb/s, 98% of the 400 Gb/s line rate**, alone and with all 8 at once: ≈391–392 GB/s per node.
+- **NUMA binding is required.** Without it, all 8 rails at once give only 208 GB/s (52%): rails 0–3 hang off NUMA node 0 and 4–7 off NUMA node 1, and traffic crossing sockets halves the throughput. All multi-node jobs (RCCL, MPI) should bind each rank to its NIC's NUMA node; the 2-node RCCL scripts do this.

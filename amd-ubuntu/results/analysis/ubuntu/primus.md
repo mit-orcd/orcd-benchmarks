@@ -1,0 +1,2 @@
+- **GEMM microbench**: 1,400–1,510 TF/s per GPU at every N, flat from 1 to 8 GPUs (independent GEMMs), with node6100 ≈3–5% above node6101, consistent with RVS.
+- **Megatron llama2-7B**: the first run (2026-10-02) failed at every N on both nodes because a compiled extension build ran out of space on the container's 64 MB scratch area. It is being rerun with a persistent per-node overlay (`primus/rerun_megatron_llama.sh`); the table below fills in when it finishes.

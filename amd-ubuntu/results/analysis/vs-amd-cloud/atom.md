@@ -1,0 +1,7 @@
+- **Same images and digests; amd-ubuntu is faster than amd-cloud at every concurrency below 256.**
+  - Llama-3.1-70B-FP8: output throughput 1.14–1.34× (largest at 1–8 users), TPOT 0.74–0.88×, TTFT 0.60–0.90× from 8 users up.
+  - Qwen3-8B-FP8: 1.07–1.16× throughput, TPOT 0.87–0.95×, TTFT 0.55–0.80× (0.27× at 256).
+- At 256 users both systems are equal (1.00–1.04×), where the GPUs are compute-bound.
+- The gain is largest where per-request overhead (CPU, launch latency) matters most, which points at host-side differences (newer OS/kernel, CPU settings) rather than the GPUs.
+- One exception: Llama-70B TTFT at 1–4 users is ≈1.45× slower on amd-ubuntu (≈104 vs 72 ms). Minor in absolute terms; not investigated.
+- Both amd-ubuntu nodes agree within 1%, so the result is reproducible.

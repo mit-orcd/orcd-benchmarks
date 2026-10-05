@@ -1,0 +1,5 @@
+- **N=8 is at the expected XGMI level**: all_reduce 393–394 GB/s, all_gather 388, reduce_scatter 386, alltoall 343 busbw; the two nodes agree within 1%.
+- **N=2..4 scale as expected** (one XGMI link ≈ 60 GB/s per pair).
+- **N=5..7 dip** (all_reduce ≈ 47 GB/s, 72% below N=4/N=8): a known RCCL topology effect for partial meshes on MI355X, identical on both nodes. Jobs should use 1, 2, 4 or 8 GPUs per node for collective-heavy work.
+- sendrecv ≈ 60 GB/s at every N (one point-to-point link), as expected.
+- Config sweep (ring, tree, simple protocol, MSCCL off) changes N=8 results by ≤1%; the defaults are fine.

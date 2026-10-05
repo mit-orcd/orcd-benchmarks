@@ -1,0 +1,4 @@
+- **With 8 GPUs per node, inter-node collectives reach 92–95% of the 400 GB/s network limit**: all_reduce 381 GB/s, reduce_scatter 379, all_gather 377, broadcast 370 busbw. That is close to the single-node XGMI rate (≈390), so the network is not a bottleneck for data-parallel training across these two nodes.
+- RCCL uses the IB/RoCE transport with GPU-direct RDMA on all 8 ionic rails (checked in the probe log).
+- With 1–2 GPUs per node busbw stays at one rail (≈48.7 GB/s), and 4 GPUs per node reach ≈150–160 GB/s: each GPU uses its own rail, as expected.
+- alltoall (90 GB/s, 22%) and sendrecv (29 GB/s) are much lower, which is typical for these patterns across nodes; MoE expert-parallel traffic across nodes will be limited by this.

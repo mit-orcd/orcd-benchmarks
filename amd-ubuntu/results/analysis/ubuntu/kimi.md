@@ -1,0 +1,4 @@
+- **Model weights**: complete copy at `/scratch/Kimi-K3` on both nodes (verified before the runs).
+- **ATOM** (same images as amd-cloud): ≈45 tok/s at 1 user up to ≈2,600 tok/s at 256 (best config `maxseqs`).
+- **AMD vLLM recipe** (DSpark speculative decoding up to C=14, DCP 8 + CPU KV offload above): **1.56× ATOM at 1 user, 1.39× at 4, 1.24× at 8**, with 19–29% lower TPOT; 1.05× at 64, about equal at 128–256 (0.97× at 256). The recipe is the better choice for latency-sensitive, low-concurrency serving; ATOM is equal or slightly better at high concurrency.
+- `max-num-seqs 2048` does not fit: each request needs ≈107 GB of cache against a 58 GB KV budget. Not a node problem; the configuration is too large for 8 × MI355X.

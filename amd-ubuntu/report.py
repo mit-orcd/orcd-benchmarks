@@ -323,10 +323,11 @@ def primus_tables(path):
                 out.setdefault(sec, {})[int(c[0])] = float(c[2] if sec == "megatron" else c[1])
             except (ValueError, IndexError):
                 pass
-    if "### 1.2" in txt:
-        m = re.search(r"\|\s*8\s*\|\s*[\d.]+\s*\|\s*\**([\d.]+)\**\s*\|", txt.split("### 1.2", 1)[1])
-        if m:
-            out["megatron_ref"] = {8: float(m.group(1))}
+    # §1.2's first table is the static Dell Cloud reference (790.4), not this host;
+    # this host's own run is the "amd-ubuntu MI355X" row of the auto-generated §1.2a.
+    m = re.search(r"\|\s*\**amd-ubuntu MI355X\**\s*\|\s*\**([\d.]+)\**\s*\|", txt)
+    if m:
+        out["megatron_ref"] = {8: float(m.group(1))}
     return out
 
 
@@ -619,6 +620,13 @@ def guard(fn, *a):
         return [f"*Report failed: {type(e).__name__}: {e}*"]
 
 
+def analysis(kind, f):
+    """Hand-written conclusions kept outside the generated files (results/analysis/<kind>/<f>),
+    so regenerating the tables never loses them. Placed before the tables."""
+    p = ROOT / "analysis" / kind / f
+    return [("Analysis", p.read_text().rstrip().splitlines())] if p.exists() else []
+
+
 def main():
     U = [("rvs.md", "RVS gst TFLOPS", rvs_u, ()),
          ("rccl.md", "RCCL collectives, single node (XGMI)", rccl_u, ()),
@@ -636,9 +644,9 @@ def main():
          ("atom.md", "ATOM serving: amd-ubuntu vs amd-cloud", atom_c, ()),
          ("kimi.md", "Kimi-K3: amd-ubuntu vs amd-cloud", kimi_c, ())]
     for f, title, fn, a in U:
-        write(OUT_U / f, f"amd-ubuntu — {title}", SYSTEM_U, [("Results", guard(fn, *a))])
+        write(OUT_U / f, f"amd-ubuntu — {title}", SYSTEM_U, analysis("ubuntu", f) + [("Results", guard(fn, *a))])
     for f, title, fn, a in C:
-        write(OUT_C / f, title, SYSTEM_C, [("Results", guard(fn, *a))])
+        write(OUT_C / f, title, SYSTEM_C, analysis("vs-amd-cloud", f) + [("Results", guard(fn, *a))])
     links = lambda lst: [f"- [{t}]({f})" for f, t, *_ in lst]
     write(OUT_U / "README.md", "amd-ubuntu benchmark results", SYSTEM_U,
           [("Status", status()), ("Reports", links(U)),

@@ -1,0 +1,2 @@
+- **GEMM microbench: amd-ubuntu is 0.97–1.05× amd-cloud** (node6100 1.01–1.05×, node6101 0.97–1.02×); same image digest, so the GPUs match.
+- **Megatron llama2-7B**: amd-cloud measured ≈1,070–1,160 compute TF/s/GPU for N=1..8. amd-ubuntu's first run failed (extension build ran out of space in the 64 MB container scratch area); the rerun with a persistent overlay is in progress and the comparison fills in when it finishes.

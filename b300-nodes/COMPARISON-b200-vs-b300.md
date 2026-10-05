@@ -1,6 +1,6 @@
 # B200 vs B300 — single-node benchmark comparison
 
-- Generated: 2026-10-05 14:15:35
+- Generated: 2026-10-05 14:22:02
 - B300 node: node5900-c1 (mit_testing, 8 x B300); B200 data from `../b200-nodes/`
 - Ratios are B300 / B200; > 1.00x means B300 is faster.
 - Per-benchmark B300 summaries: `out-gpu-fryer/summary.md`, `out-nccl-1node/summary.md`, `output-megatron/summary.md`
@@ -221,7 +221,7 @@ Each GPU type gets its own grid sweep (8 GPUs, seq 4096, distributed optimizer, 
 | bf16 | 1,017.6 | 13b mb2 none | 147 | 1,080.8 | 5b mb4 none | 92 | **1.06x** |
 | fp8 | 1,499.7 | 13b mb2 none | 151 | — | — | — | — |
 
-Grid points finished OK: B200 22/30, B300 9/30 (of 30 each).
+Grid points finished OK: B200 22/30, B300 10/30 (of 30 each).
 
 ### Full sweep grid (TFLOP/s/GPU, peak GiB)
 
@@ -236,7 +236,7 @@ Grid points finished OK: B200 22/30, B300 9/30 (of 30 each).
 | bf16 | 5b | 16 | none | OOM | 1,059.1 (260 GiB) | — |
 | bf16 | 5b | 16 | selective | OOM | 1,054.1 (260 GiB) | — |
 | bf16 | 5b | 16 | full | 797.7 (68 GiB) | 830.2 (68 GiB) | **1.04x** |
-| bf16 | 13b | 2 | none | 1,017.6 (147 GiB) | failed/running | — |
+| bf16 | 13b | 2 | none | 1,017.6 (147 GiB) | 1,062.4 (147 GiB) | **1.04x** |
 | bf16 | 13b | 2 | full | 793.9 (97 GiB) | failed/running | — |
 | bf16 | 13b | 4 | none | OOM | failed/running | — |
 | bf16 | 13b | 4 | full | 824.1 (102 GiB) | failed/running | — |

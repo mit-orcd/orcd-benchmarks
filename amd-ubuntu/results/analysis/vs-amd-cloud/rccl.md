@@ -1,0 +1,3 @@
+- **N=8: amd-ubuntu equals amd-cloud within 1–3% on every collective**, on both 7.2.4 and 7.14. The XGMI fabric performs the same.
+- N=2..4: identical within 1–2%.
+- N=5..7 dip is present on both systems. With the same 7.14 stack the N=5 numbers match within 1% except gather (0.90–0.94×) and scatter (1.09–1.10×). On host 7.2.4, alltoallv at N=5 is half the amd-cloud value (0.48–0.51×); 7.14 fixes that.

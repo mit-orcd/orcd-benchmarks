@@ -1,0 +1,13 @@
+collective,ppn,ranks,status,min_size,lat_us,peak_busbw,peak_size,max_size,busbw_max_size,busbw_1M,busbw_64M,busbw_1G,busbw_16G,log
+all_gather,8,16,ok,0,0.05,376.8,1073741824,17179869184,376.67,16.81,270.39,376.8,376.67,/orcd/data/orcd/022/benchmarks/amd-ubuntu/logs/node6100/rccl/rccl_2node_all_20261005_025019/all_gather_ppn8_np16.log
+all_reduce,8,16,ok,8,31.17,380.95,17179869184,17179869184,380.95,32.52,301.09,378.46,380.95,/orcd/data/orcd/022/benchmarks/amd-ubuntu/logs/node6100/rccl/rccl_2node_all_20261005_025019/all_reduce_ppn8_np16.log
+alltoall,8,16,ok,0,0.04,89.56,4294967296,4294967296,89.56,16.61,82.74,88.97,,/orcd/data/orcd/022/benchmarks/amd-ubuntu/logs/node6100/rccl/rccl_2node_all_20261005_025019/alltoall_ppn8_np16.log
+broadcast,8,16,ok,8,19.18,369.93,17179869184,17179869184,369.93,19.09,224.86,330.12,369.93,/orcd/data/orcd/022/benchmarks/amd-ubuntu/logs/node6100/rccl/rccl_2node_all_20261005_025019/broadcast_ppn8_np16.log
+reduce_scatter,8,16,ok,0,0.1,378.51,17179869184,17179869184,378.51,14.99,277.62,372.5,378.51,/orcd/data/orcd/022/benchmarks/amd-ubuntu/logs/node6100/rccl/rccl_2node_all_20261005_025019/reduce_scatter_ppn8_np16.log
+sendrecv,8,16,ok,8,24.7,29.22,2147483648,17179869184,28.55,18.8,28.73,29.17,28.55,/orcd/data/orcd/022/benchmarks/amd-ubuntu/logs/node6100/rccl/rccl_2node_all_20261005_025019/sendrecv_ppn8_np16.log
+all_gather,1,2,ok,0,0.1,48.31,17179869184,17179869184,48.31,10.76,40.62,47.59,48.31,/orcd/data/orcd/022/benchmarks/amd-ubuntu/logs/node6100/rccl/rccl_2node_ppn_20261005_025420/all_gather_ppn1_np2.log
+all_gather,2,4,ok,0,0.11,48.05,17179869184,17179869184,48.05,10.75,45.82,47.91,48.05,/orcd/data/orcd/022/benchmarks/amd-ubuntu/logs/node6100/rccl/rccl_2node_ppn_20261005_025420/all_gather_ppn2_np4.log
+all_gather,4,8,ok,0,0.05,148.07,17179869184,17179869184,148.07,16.96,145.24,137.56,148.07,/orcd/data/orcd/022/benchmarks/amd-ubuntu/logs/node6100/rccl/rccl_2node_ppn_20261005_025420/all_gather_ppn4_np8.log
+all_reduce,1,2,ok,8,22.65,48.71,17179869184,17179869184,48.71,11.97,44.45,48.07,48.71,/orcd/data/orcd/022/benchmarks/amd-ubuntu/logs/node6100/rccl/rccl_2node_ppn_20261005_025420/all_reduce_ppn1_np2.log
+all_reduce,2,4,ok,8,22.71,48.71,17179869184,17179869184,48.71,14.83,47.34,48.43,48.71,/orcd/data/orcd/022/benchmarks/amd-ubuntu/logs/node6100/rccl/rccl_2node_ppn_20261005_025420/all_reduce_ppn2_np4.log
+all_reduce,4,8,ok,8,25.23,164.15,67108864,17179869184,159.78,20.14,164.15,152.38,159.78,/orcd/data/orcd/022/benchmarks/amd-ubuntu/logs/node6100/rccl/rccl_2node_ppn_20261005_025420/all_reduce_ppn4_np8.log

@@ -1,0 +1,4 @@
+- **Both nodes healthy and matched.** Every precision is within 3% between node6100 and node6101; fp32/fp64 are identical to 1%.
+- **Scaling is linear on host ROCm 7.2.4**: N=8 gives 99–104% of 8 × N=1 for all nine precisions, so there is no node-level power or thermal limit when all 8 GPUs run GEMMs at once.
+- Headline N=8 aggregate (node6100): fp8 30.3 PF, bf8 26.9 PF, fp4 25.6 PF, bf16 13.6 PF, fp64 617 TF.
+- fp4 under ROCm 7.14 behaves differently (higher single-GPU, lower 8-GPU); see `rocm.md`.
