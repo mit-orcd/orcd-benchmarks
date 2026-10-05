@@ -149,6 +149,36 @@ def section_cublaslt():
         L.append(x)
     if L[-1] != "":
         L.append("")
+    L += ["### Why FP4 is 1.20x measured but 1.5x on paper", "",
+          "(Explanation written from the 2026-10-01 cuBLASLt run; the numbers below are from the "
+          "tables above.)", "",
+          "The gap is mainly the power limit. Both GPUs hit their power cap during the FP4 test, "
+          "and B300 then has to run at a much lower clock. NVIDIA's spec-sheet numbers assume "
+          "full clocks.", "",
+          "1. **Both GPUs are power-capped.** In the sustained FP4 run B200 drew 993 W against its "
+          "1,000 W limit and B300 drew 1,091 W against its 1,100 W limit. At the cap the GPU "
+          "lowers its clock.",
+          "2. **B300 loses more clock than B200.** The 1.5x gain comes from 1.5x more FP4 math per "
+          "clock cycle, which also costs more energy per cycle. B300 has only 10% more power than "
+          "B200, so it slows down further.", ""]
+    L += table(["FP4, sustained", "B200", "B300"], [
+        ["SM clock", "1,314 MHz", "1,099 MHz (0.84x of B200)"],
+        ["Share of the unthrottled clock (~1,965 / ~2,032 MHz, from the FP64 run)", "67%", "54%"],
+        ["Share of spec-sheet FP4 peak", "63%", "51%"],
+        ["FP4 work per watt (TFLOP/s per W)", "5.75", "6.30 (1.10x)"],
+    ])
+    L += ["",
+          "3. **The numbers add up.** 1.5x per clock x 0.84x clock = ~1.25x, close to the measured "
+          "1.20x. Both GPUs reach about 94% of what their actual clock allows (63/67 and 51/54), "
+          "so the GEMM kernels are not the limit. Equivalently: 1.10x more work per watt x 1.10x "
+          "more power = ~1.2x.",
+          "4. **Spec-sheet context.** NVIDIA's 15 PFLOP/s dense FP4 figure for Blackwell Ultra is "
+          "for parts running at up to 1,400 W (GB300-class systems), not this 1,100 W HGX board.",
+          "5. **Other precisions.** FP4 is the only precision where B300 has more peak compute per "
+          "clock. In BF16, FP8 and TF32 both GPUs have the same peak and run at similar clocks, so "
+          "they measure about 1.0x.",
+          "6. **What would change it.** A higher GPU power limit should narrow the gap; that is "
+          "set by the node administrators, not by user jobs.", ""]
     return L
 
 

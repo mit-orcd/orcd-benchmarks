@@ -1,6 +1,6 @@
 # B200 vs B300 — single-node benchmark comparison
 
-- Generated: 2026-10-04 20:06:01
+- Generated: 2026-10-04 20:11:06
 - B300 node: node5900-c1 (mit_testing, 8 x B300); B200 data from `../b200-nodes/`
 - Ratios are B300 / B200; > 1.00x means B300 is faster.
 - Per-benchmark B300 summaries: `out-gpu-fryer/summary.md`, `out-nccl-1node/summary.md`, `output-megatron/summary.md`
@@ -117,6 +117,27 @@ NVIDIA HGX B200 / B300 dense figures per GPU (half the "with sparsity" numbers);
 | FP64 | 37 | 97% | 1.25 | 88% |
 | INT8 (TOPS) | 4,500 | 65% | - | - |
 
+### Why FP4 is 1.20x measured but 1.5x on paper
+
+(Explanation written from the 2026-10-01 cuBLASLt run; the numbers below are from the tables above.)
+
+The gap is mainly the power limit. Both GPUs hit their power cap during the FP4 test, and B300 then has to run at a much lower clock. NVIDIA's spec-sheet numbers assume full clocks.
+
+1. **Both GPUs are power-capped.** In the sustained FP4 run B200 drew 993 W against its 1,000 W limit and B300 drew 1,091 W against its 1,100 W limit. At the cap the GPU lowers its clock.
+2. **B300 loses more clock than B200.** The 1.5x gain comes from 1.5x more FP4 math per clock cycle, which also costs more energy per cycle. B300 has only 10% more power than B200, so it slows down further.
+
+| FP4, sustained | B200 | B300 |
+|---|---:|---:|
+| SM clock | 1,314 MHz | 1,099 MHz (0.84x of B200) |
+| Share of the unthrottled clock (~1,965 / ~2,032 MHz, from the FP64 run) | 67% | 54% |
+| Share of spec-sheet FP4 peak | 63% | 51% |
+| FP4 work per watt (TFLOP/s per W) | 5.75 | 6.30 (1.10x) |
+
+3. **The numbers add up.** 1.5x per clock x 0.84x clock = ~1.25x, close to the measured 1.20x. Both GPUs reach about 94% of what their actual clock allows (63/67 and 51/54), so the GEMM kernels are not the limit. Equivalently: 1.10x more work per watt x 1.10x more power = ~1.2x.
+4. **Spec-sheet context.** NVIDIA's 15 PFLOP/s dense FP4 figure for Blackwell Ultra is for parts running at up to 1,400 W (GB300-class systems), not this 1,100 W HGX board.
+5. **Other precisions.** FP4 is the only precision where B300 has more peak compute per clock. In BF16, FP8 and TF32 both GPUs have the same peak and run at similar clocks, so they measure about 1.0x.
+6. **What would change it.** A higher GPU power limit should narrow the gap; that is set by the node administrators, not by user jobs.
+
 ## 4. NCCL 1-node — intra-node NVLink bus bandwidth (GB/s)
 
 Converged busbw = busbw at the largest message (16 GiB), best of out-of-place / in-place. B200 = mean over the B200 nodes that ran that collective (newest run per node); 8 GPUs, 1 MPI task.
@@ -200,7 +221,7 @@ Each GPU type gets its own grid sweep (8 GPUs, seq 4096, distributed optimizer, 
 | bf16 | 1,017.6 | 13b mb2 none | 147 | — | — | — | — |
 | fp8 | 1,499.7 | 13b mb2 none | 151 | — | — | — | — |
 
-Grid points finished OK: B200 18/25, B300 0/30 (of 30 each).
+Grid points finished OK: B200 21/30, B300 0/30 (of 30 each).
 
 ### Full sweep grid (TFLOP/s/GPU, peak GiB)
 
@@ -212,13 +233,13 @@ Grid points finished OK: B200 18/25, B300 0/30 (of 30 each).
 | bf16 | 5b | 8 | none | 1,012.9 (148 GiB) | failed/running | — |
 | bf16 | 5b | 8 | selective | 1,012.2 (148 GiB) | failed/running | — |
 | bf16 | 5b | 8 | full | 782.2 (52 GiB) | failed/running | — |
-| bf16 | 5b | 16 | none | — | failed/running | — |
-| bf16 | 5b | 16 | selective | — | failed/running | — |
+| bf16 | 5b | 16 | none | OOM | failed/running | — |
+| bf16 | 5b | 16 | selective | OOM | failed/running | — |
 | bf16 | 5b | 16 | full | 797.7 (68 GiB) | failed/running | — |
 | bf16 | 13b | 2 | none | 1,017.6 (147 GiB) | failed/running | — |
-| bf16 | 13b | 2 | full | — | failed/running | — |
-| bf16 | 13b | 4 | none | — | failed/running | — |
-| bf16 | 13b | 4 | full | — | failed/running | — |
+| bf16 | 13b | 2 | full | 793.9 (97 GiB) | failed/running | — |
+| bf16 | 13b | 4 | none | OOM | failed/running | — |
+| bf16 | 13b | 4 | full | partial | failed/running | — |
 | bf16 | 13b | 8 | none | OOM | failed/running | — |
 | bf16 | 13b | 8 | full | 833.3 (114 GiB) | failed/running | — |
 | fp8 | 5b | 4 | none | 1,302.7 (89 GiB) | failed/running | — |
@@ -233,7 +254,7 @@ Grid points finished OK: B200 18/25, B300 0/30 (of 30 each).
 | fp8 | 13b | 2 | none | 1,499.7 (151 GiB) | failed/running | — |
 | fp8 | 13b | 2 | full | 1,129.5 (108 GiB) | failed/running | — |
 | fp8 | 13b | 4 | none | OOM | failed/running | — |
-| fp8 | 13b | 4 | full | partial | failed/running | — |
+| fp8 | 13b | 4 | full | 1,205.7 (114 GiB) | failed/running | — |
 | fp8 | 13b | 8 | none | OOM | OOM | — |
-| fp8 | 13b | 8 | full | failed/running | failed/running | — |
+| fp8 | 13b | 8 | full | 1,229.2 (125 GiB) | failed/running | — |
 
