@@ -6,6 +6,11 @@ export TRITON_LIBCUDA_PATH=/.singularity.d/libs
 export LD_LIBRARY_PATH=/.singularity.d/libs:$LD_LIBRARY_PATH
 export TORCH_EXTENSIONS_DIR=$PWD/torch_extensions
 export XDG_CACHE_HOME=$PWD/xdg_cache
+# per-job temp/cache dirs under the user scratch dir (set by the job script)
+if [ -n "$SCR" ]; then
+   export TMPDIR=$SCR/tmp TORCHINDUCTOR_CACHE_DIR=$SCR/inductor TRITON_CACHE_DIR=$SCR/triton
+   export XDG_CACHE_HOME=$SCR/xdg_cache
+fi
 
 # Apples-to-apple with ~/data022/aicr-benchmarks/Benchmark_WG/megatron-lm (B200):
 # same ~7B GPT model, micro-batch 4, global batch = 128 x total_GPUs, bf16,

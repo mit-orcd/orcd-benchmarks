@@ -1,6 +1,6 @@
 # Megatron-LM 1-node GPU sweep — B200
 
-- Generated: 2026-10-01 13:00:30
+- Generated: 2026-10-04 20:00:41
 - Nodes: node5900-c1 (single node each, data-parallel, TP=1, PP=1)
 - Model: ~7B GPT — 36 layers, hidden 4096, FFN 14336, 32 heads, seq 2048, bf16
 - Per run: micro-batch 4, global batch = 128 x total_GPUs, 100 iters, no activation recompute

@@ -21,11 +21,17 @@ mkdir -p output-max-sweep
 
 GPU_TYPE="${1:?usage: $0 b300|b200 [node]}"
 if [ "$GPU_TYPE" = "b300" ]; then NODE="${2:-node5900-c1}"; else NODE="${2:-any}"; fi
-if [ "$NODE" = "any" ]; then NODE_OPT=(); TAG=%N; else NODE_OPT=(-w "$NODE"); TAG=$NODE; fi
+if [ "$NODE" = "any" ]; then NODE_OPT=(-x "${EXCLUDE:-node5800-c1}"); TAG=%N;  # node5800-c1: jobs fail to launch (2026-10-04)
+   else NODE_OPT=(-w "$NODE"); TAG=$NODE; fi
 
 submit () {  # model micro recompute prec
    local model=$1 mb=$2 rc=$3 prec=$4
    local name="max-$GPU_TYPE-$model-mb$mb-$rc-$prec"
+   # skip grid points that already finished all 20 iterations (any node)
+   if grep -qlE 'iteration +20/' output-max-sweep/max-$GPU_TYPE-*-$model-mb$mb-$rc-$prec.* 2>/dev/null; then
+      echo "Skipped $name: already done"; return
+   fi
+   [ -n "$ONLY" ] && [ "$ONLY" != "$model-mb$mb-$rc-$prec" ] && return   # ONLY=5b-mb4-none-bf16 for a test
    jid=$(sbatch --parsable \
       -p mit_testing "${NODE_OPT[@]}" -N 1 -n 1 --exclusive \
       --gpus-per-node=$GPU_TYPE:8 --mem=0 -t 00:45:00 \
@@ -37,12 +43,23 @@ module load apptainer/1.4.2 2>/dev/null || echo "apptainer module failed; using 
 MEG=/orcd/data/orcd/022/benchmarks/megatron-lm
 cd "$MEG/Megatron-LM"
 echo "===== node=$SLURMD_NODENAME args=$ARGS ====="
+# All temp files (container /tmp, torch inductor / triton caches) go to the
+# user scratch dir, never /tmp: the B300 node's container /tmp filled up
+# ("No space left on device") during torch.compile in the first runs.
+SCR=$(readlink -f "$HOME/orcd/scratch")/tmp/megatron-$SLURM_JOB_ID
+mkdir -p "$SCR/tmp" "$SCR/apptainer"
+export APPTAINER_TMPDIR=$SCR/apptainer APPTAINERENV_SCR=$SCR
 srun -n 1 apptainer exec \
     --nv --contain --cleanenv \
+    --workdir "$SCR" \
     --bind "$MEG" \
     --bind "$DIR" \
+    --bind "$SCR" \
     "$MEG/imag/pytorch_26.02-py3.sif" \
     "$DIR/run-1node-max-tuned.sh" $ARGS
+rm -rf "$SCR"
+# analyze as soon as this job ends (flock: jobs may finish together)
+flock "$DIR/.analyze.lock" "$DIR/analyze-all.sh" > /dev/null 2>&1
 EOF
 )
    echo "Submitted $name on $NODE: job $jid"

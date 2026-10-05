@@ -38,12 +38,23 @@ module load apptainer/1.4.2 2>/dev/null || echo "apptainer module failed; using 
 MEG=/orcd/data/orcd/022/benchmarks/megatron-lm
 cd "$MEG/Megatron-LM"
 echo "===== node=$SLURMD_NODENAME gpus_per_node=$NG ====="
+# All temp files (container /tmp, torch inductor / triton caches) go to the
+# user scratch dir, never /tmp: the B300 node's container /tmp filled up
+# ("No space left on device") during torch.compile in the first runs.
+SCR=$(readlink -f "$HOME/orcd/scratch")/tmp/megatron-$SLURM_JOB_ID
+mkdir -p "$SCR/tmp" "$SCR/apptainer"
+export APPTAINER_TMPDIR=$SCR/apptainer APPTAINERENV_SCR=$SCR
 srun -n 1 apptainer exec \
     --nv --contain --cleanenv \
+    --workdir "$SCR" \
     --bind "$MEG" \
     --bind "$DIR" \
+    --bind "$SCR" \
     "$MEG/imag/pytorch_26.02-py3.sif" \
     "$DIR/run-1node-b300.sh" "$NG"
+rm -rf "$SCR"
+# analyze as soon as this job ends (flock: jobs may finish together)
+flock "$DIR/.analyze.lock" "$DIR/analyze-all.sh" > /dev/null 2>&1
 EOF
 )
    echo "Submitted megatron 1-node on $NODE, $N GPU(s): job $jid"

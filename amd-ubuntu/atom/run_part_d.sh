@@ -1,0 +1,159 @@
+#!/usr/bin/env bash
+# PART D driver: gate -> tier-1 (8B, TP1) -> tier-2 (70B, TP8) -> analysis.
+#
+# Strictly sequential, one server at a time. Designed to run under nohup and survive
+# logout, like run_part_a.sh. Every stage refuses rather than forces: if the GPUs are
+# busy or a foreign ATOM server is up, it stops instead of stomping.
+#
+# Usage: ./run_part_d.sh ["tier1 tier2 tier3"|all]   (any subset; default: all)
+set -uo pipefail
+source /orcd/data/orcd/022/benchmarks/amd-ubuntu/common/env.sh
+cd "$(dirname "$0")"
+
+WHICH="${1:-all}"
+IMG="${ATOM_IMG:-rocm/atom-dev:latest}"
+M8B="${M8B:-$MODELS/Qwen3-8B-FP8}"
+M70B="${M70B:-$MODELS/Llama-3.1-70B-Instruct-FP8}"
+MKIMI="${MKIMI:-$KIMI_MODEL}"
+CONC="${CONC:-1 2 4 8 16 32 64 128 256}"
+ISL="${ISL:-1024}"; OSL="${OSL:-1024}"
+# Server readiness timeout (s). run_atom_server.sh defaults to 600, which is too short on
+# node6100/6101: weights stream from /orcd/data at ~50-100 MB/s cold (Qwen3-8B 2 shards took
+# ~170 s, Llama-70B 15 shards ~12 min) and then torch.compile + CUDA-graph capture follow.
+# The 2026-10-02 run timed out on both tiers on both nodes for exactly this reason.
+export READY_TIMEOUT="${READY_TIMEOUT:-3000}"
+
+# Kimi-K3 launch flags, taken verbatim from ATOM/recipes/Kimi-K3.md. These are not
+# optional tuning knobs:
+#   -tp 8            : required for the 1.56 TB model to fit at all
+#   gpu-mem-util .93 : so the CUDA-graph pool fits beside the KDA per-request state cache
+#   no prefix caching: the KDA recurrent state is per-request and cannot be rebuilt from
+#                      the paged MLA cache, so prefix reuse would be incorrect
+#   online_quant_config: PTPC-FP8 for attention/dense; the routed MoE experts are already
+#                      MXFP4 in the checkpoint and are excluded here
+KIMI_QUANT='{"global_quant_config": "ptpc_fp8", "exclude_layer": ["lm_head", "model.embed_tokens", "*self_attn.[qkv]_conv1d*", "*block_sparse_moe.experts*", "*block_sparse_moe.routed_expert_*", "*vision_tower*", "*mm_projector*"]}'
+KIMI_ARGS=(
+  --max-model-len 16384
+  --max-num-batched-tokens 16384
+  --block-size 128
+  --no-enable_prefix_caching
+  --online_quant_config "'$KIMI_QUANT'"
+)
+
+TS=$(date +%Y%m%d_%H%M%S)
+DRV=$LOG_ROOT/atom/part_d_$TS; mkdir -p "$DRV"
+STATE=$DRV/STATE.txt
+say() { echo "[$(date -Iseconds)] $*" | tee -a "$STATE"; }
+
+say "PART D start (which=$WHICH, driver log: $DRV)"
+
+# ---- guard ---------------------------------------------------------------------
+busy=$(rocm-smi --showuse 2>/dev/null | awk '/GPU use/ {print $NF}' | grep -cv '^0$')
+if [[ "${busy:-0}" -ne 0 ]]; then
+  say "ABORT: $busy GPU(s) busy — another benchmark is running. Part D must not overlap A-C."
+  exit 1
+fi
+if pgrep -af 'atom.entrypoints' >/dev/null 2>&1; then
+  say "ABORT: a foreign ATOM server is already running on this host."
+  exit 1
+fi
+say "GPUs idle, no foreign ATOM server"
+
+# ---- stage 0: image gate --------------------------------------------------------
+# NOT a `gfx950 in torch.cuda.get_arch_list()` string check. rocm/atom-dev ships torch
+# built for gfx942 only, yet measured 1309.6 TF/s BF16 4096^3 here vs 1323.2 TF/s for the
+# gfx950-native rocm/primus:v26.5 image on the SAME microbenchmark -- 99%, within noise.
+# Reason: PyTorch matmul dispatches to hipBLASLt, which carries its own gfx950-tuned
+# kernels independently of torch's compiled arch list, so arch_list is the wrong signal.
+# Gate on what actually matters instead: the device is really gfx950, all 8 are visible,
+# a real matmul produces correct results, and throughput clears a floor.
+say "STAGE 0 functional + throughput gate"
+docker run --rm $(dgpu_args) "$IMG" python -c "
+import torch, time
+props = torch.cuda.get_device_properties(0)
+print('torch', torch.__version__)
+print('arch_list', torch.cuda.get_arch_list())
+print('gcnArchName', props.gcnArchName)
+print('devices', torch.cuda.device_count())
+a = torch.randn(4096, 4096, device='cuda', dtype=torch.bfloat16)
+b = torch.randn(4096, 4096, device='cuda', dtype=torch.bfloat16)
+ref = (a.float() @ b.float())
+c = a @ b
+err = (c.float() - ref).abs().max().item() / ref.abs().max().item()
+print('rel_err %.3e' % err)
+for _ in range(20): c = a @ b
+torch.cuda.synchronize()
+n = 200; t0 = time.perf_counter()
+for _ in range(n): c = a @ b
+torch.cuda.synchronize()
+tf = 2 * 4096**3 * n / (time.perf_counter() - t0) / 1e12
+print('TFLOPS %.1f' % tf)
+" >"$DRV/gate.log" 2>&1
+rc=$?
+gcn=$(grep -oP 'gcnArchName \K\S+' "$DRV/gate.log" | head -1)
+ndev=$(grep -oP '^devices \K[0-9]+' "$DRV/gate.log" | head -1)
+tflops=$(grep -oP '^TFLOPS \K[0-9.]+' "$DRV/gate.log" | head -1)
+relerr=$(grep -oP '^rel_err \K\S+' "$DRV/gate.log" | head -1)
+ok=1
+[[ $rc -ne 0 ]] && ok=0
+[[ "$gcn" == gfx950* ]] || ok=0
+[[ "${ndev:-0}" -eq 8 ]] || ok=0
+# 1000 TF/s floor: ~75% of the 1323 TF/s gfx950-native reference on this shape. Well
+# clear of noise, but low enough that it only trips on a genuinely broken kernel path.
+awk -v t="${tflops:-0}" 'BEGIN{exit !(t>1000)}' || ok=0
+if [[ $ok -ne 1 ]]; then
+  say "ABORT: gate failed (rc=$rc gcn=$gcn devices=$ndev tflops=$tflops rel_err=$relerr)"
+  tail -10 "$DRV/gate.log" | tee -a "$STATE"
+  exit 1
+fi
+say "gate OK: $gcn, $ndev devices, ${tflops} TF/s BF16, rel_err=$relerr"
+
+run_tier() {
+  local tag=$1 model=$2 tp=$3 port=$4 conc=$5; shift 5
+  local extra=("$@")
+  if [[ ! -d "$model" ]]; then
+    say "SKIP $tag: model dir missing ($model)"
+    return 0
+  fi
+  say "----- $tag: $(basename "$model") TP=$tp port=$port -----"
+  ./run_atom_server.sh "$model" "$tp" "$port" "${extra[@]}" >"$DRV/${tag}_server.log" 2>&1
+  if [[ $? -ne 0 ]]; then
+    say "$tag: server failed to start — see $DRV/${tag}_server.log"
+    tail -20 "$DRV/${tag}_server.log" | tee -a "$STATE"
+    ./stop_atom_server.sh >/dev/null 2>&1
+    FAILED_TIERS="${FAILED_TIERS:-} $tag"
+    return 1
+  fi
+  say "$tag: server up"
+  ./run_atom_bench.sh "$model" "$port" "$ISL" "$OSL" "$conc" >"$DRV/${tag}_bench.log" 2>&1
+  local brc=$?
+  say "$tag: bench rc=$brc sweep=$(cat "$LOG_ROOT/atom/CURRENT_SWEEP_DIR.txt" 2>/dev/null)"
+  ./stop_atom_server.sh >"$DRV/${tag}_stop.log" 2>&1
+  say "$tag: server stopped"
+  if [[ $brc -ne 0 ]]; then
+    say "$tag: FAILED — see $DRV/${tag}_bench.log"
+    tail -6 "$DRV/${tag}_bench.log" | tee -a "$STATE"
+    FAILED_TIERS="${FAILED_TIERS:-} $tag"
+  fi
+  sleep 10   # let VRAM drain before the next tier
+}
+
+[[ "$WHICH" == "all" || " $WHICH " == *" tier1 "* ]] && run_tier tier1 "$M8B"  1 8000 "$CONC"
+[[ "$WHICH" == "all" || " $WHICH " == *" tier2 "* ]] && run_tier tier2 "$M70B" 8 8001 "$CONC"
+# Kimi-K3: max-num-seqs 64 per the recipe, so the concurrency list is capped there --
+# driving past max-num-seqs measures queueing, not the engine.
+if [[ "$WHICH" == "all" || " $WHICH " == *" tier3 "* ]]; then
+  MAX_NUM_SEQS=64 GPU_MEM_UTIL=0.93 READY_TIMEOUT=2400 \
+    run_tier tier3 "$MKIMI" 8 8002 "${KIMI_CONC:-1 2 4 8 16 32 64}" "${KIMI_ARGS[@]}"
+fi
+
+# ---- analysis -------------------------------------------------------------------
+if [[ -n "${FAILED_TIERS:-}" ]]; then
+  say "WARNING: tier(s) failed:${FAILED_TIERS}. Analysing only the sweeps that produced"
+  say "         data (the analyzer exits 1 if there is none rather than writing 0.00 rows)."
+fi
+
+say "STAGE analysis"
+$PY analyze_atom.py "$LOG_ROOT"/atom/sweep_* -o "$RESULTS" >"$DRV/analyze.log" 2>&1
+say "analyze rc=$? -> $RESULTS/atom.{md,csv}"
+say "PART D DONE"

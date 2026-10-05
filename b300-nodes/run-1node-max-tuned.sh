@@ -6,6 +6,11 @@ export TRITON_LIBCUDA_PATH=/.singularity.d/libs
 export LD_LIBRARY_PATH=/.singularity.d/libs:$LD_LIBRARY_PATH
 export TORCH_EXTENSIONS_DIR=$PWD/torch_extensions
 export XDG_CACHE_HOME=$PWD/xdg_cache
+# per-job temp/cache dirs under the user scratch dir (set by the job script)
+if [ -n "$SCR" ]; then
+   export TMPDIR=$SCR/tmp TORCHINDUCTOR_CACHE_DIR=$SCR/inductor TRITON_CACHE_DIR=$SCR/triton
+   export XDG_CACHE_HOME=$SCR/xdg_cache
+fi
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 
 # Tuned "max throughput" single-node Megatron point, one per job. The sweep

@@ -1,6 +1,6 @@
 # nccl-tests 1-node collective summary
 
-- Generated: 2026-10-01 13:00:30
+- Generated: 2026-10-04 20:00:41
 - Nodes: node5900-c1 (each 8 x NVIDIA B300 SXM6 AC, single node, intra-node NVLink)
 - Config: 1 thread, 1 MiB-16 GiB, 5 warmup + 20 iters
 - Collectives: sendrecv, reduce, broadcast, gather, scatter, reduce_scatter, all_gather, all_reduce, alltoall, hypercube
