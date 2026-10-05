@@ -1,6 +1,6 @@
 # B200 vs B300 — single-node benchmark comparison
 
-- Generated: 2026-10-04 20:00:41
+- Generated: 2026-10-04 20:06:01
 - B300 node: node5900-c1 (mit_testing, 8 x B300); B200 data from `../b200-nodes/`
 - Ratios are B300 / B200; > 1.00x means B300 is faster.
 - Per-benchmark B300 summaries: `out-gpu-fryer/summary.md`, `out-nccl-1node/summary.md`, `output-megatron/summary.md`
@@ -68,7 +68,56 @@ Throttling reported on B300: none
 | GPU6 | 794 | 1,507 | 4,226 |
 | GPU7 | 781 | 1,495 | 4,226 |
 
-## 3. NCCL 1-node — intra-node NVLink bus bandwidth (GB/s)
+## 3. cuBLASLt GEMM — per-GPU throughput incl. FP4 (TFLOP/s)
+
+From `../cuBLASLt/summary.md` (separate benchmark: `../cuBLASLt/job-lt-bench.sh`, 8 GPUs at once, tuned shape per GPU type; full method and per-shape results there).
+- Generated: 2026-10-01 18:45:10
+- Nodes: node5802-c1 (NVIDIA B200), node5900-c1 (NVIDIA B300 SXM6 AC)
+- Library: cuBLASLt 13.8.0 (CUDA 13.4 redist, `install.sh`); program `src/lt-bench.c`
+
+### Peak and sustained throughput per GPU (TFLOP/s)
+
+Peak = tuned shape, 3 s run after the warm-up. Sustained = tuned shape for 60 s, first 10 s dropped, what a long job gets.
+
+| Precision | B200 peak | B200 sustained | B300 peak | B300 sustained | peak B300/B200 | sustained B300/B200 |
+|---|---:|---:|---:|---:|---:|---:|
+| FP4 (NVFP4) | 5,734 | 5,708 | 6,883 | 6,877 | **1.20x** | **1.20x** |
+| FP8 (E4M3) | 2,535 | 2,524 | 2,519 | 2,524 | **0.99x** | **1.00x** |
+| BF16 | 1,396 | 1,396 | 1,432 | 1,437 | **1.03x** | **1.03x** |
+| FP16 | 1,323 | 1,322 | 1,332 | 1,333 | **1.01x** | **1.01x** |
+| TF32 | 722 | 720 | 754 | 756 | **1.04x** | **1.05x** |
+| FP64 | 36 | 36 | 1.10 | 1.10 | **0.03x** | **0.03x** |
+| INT8 (TOPS) | 2,935 | 2,931 | 151 | 151 | **0.05x** | **0.05x** |
+
+### Clocks and power during the sustained run
+
+Mean over the GPUs of the sustained run (nvidia-smi, 1 s samples, GPU utilization >= 90%).
+
+| Precision | B200 SM MHz | B200 W | B200 max °C | B300 SM MHz | B300 W | B300 max °C |
+|---|---:|---:|---:|---:|---:|---:|
+| FP4 (NVFP4) | 1,314 | 993 | 73 | 1,099 | 1,091 | 74 |
+| FP8 (E4M3) | 1,131 | 994 | 74 | 1,114 | 1,086 | 75 |
+| BF16 | 1,299 | 991 | 74 | 1,241 | 1,091 | 76 |
+| FP16 | 1,193 | 994 | 74 | 1,172 | 1,088 | 76 |
+| TF32 | 1,360 | 990 | 74 | 1,402 | 1,089 | 75 |
+| FP64 | 1,965 | 751 | 65 | 2,032 | 276 | 42 |
+| INT8 (TOPS) | 1,291 | 991 | 73 | 2,032 | 371 | 47 |
+
+### Against the datasheet (dense, approximate)
+
+NVIDIA HGX B200 / B300 dense figures per GPU (half the "with sparsity" numbers); the B300 INT8 figure is not listed here. % = sustained / datasheet.
+
+| Precision | B200 datasheet | B200 sustained % | B300 datasheet | B300 sustained % |
+|---|---:|---:|---:|---:|
+| FP4 (NVFP4) | 9,000 | 63% | 13,500 | 51% |
+| FP8 (E4M3) | 4,500 | 56% | 4,500 | 56% |
+| BF16 | 2,250 | 62% | 2,250 | 64% |
+| FP16 | 2,250 | 59% | 2,250 | 59% |
+| TF32 | 1,100 | 65% | 1,100 | 69% |
+| FP64 | 37 | 97% | 1.25 | 88% |
+| INT8 (TOPS) | 4,500 | 65% | - | - |
+
+## 4. NCCL 1-node — intra-node NVLink bus bandwidth (GB/s)
 
 Converged busbw = busbw at the largest message (16 GiB), best of out-of-place / in-place. B200 = mean over the B200 nodes that ran that collective (newest run per node); 8 GPUs, 1 MPI task.
 
@@ -99,7 +148,7 @@ Converged busbw = busbw at the largest message (16 GiB), best of out-of-place / 
 | 4 GiB | 822.5 | 904.4 | **1.10x** |
 | 16 GiB | 833.7 | 913.5 | **1.10x** |
 
-## 4. ib_write_bw — GPUDirect RDMA, two rails of one node (Gb/s)
+## 5. ib_write_bw — GPUDirect RDMA, two rails of one node (Gb/s)
 
 64 MiB RDMA write, 200 iterations. B200: `../b200-nodes/out-ibwrite/ibwrite-1node-20306762.out` (client mlx5_4, server mlx5_7). B300: `out-ibwrite/ibwrite-1node-24550230.out` (client mlx5_0, server mlx5_6).
 
@@ -127,7 +176,7 @@ Converged busbw = busbw at the largest message (16 GiB), best of out-of-place / 
 | 4 MiB | 394.84 | 403.84 | **1.02x** |
 | 8 MiB | 395.08 | 403.84 | **1.02x** |
 
-## 5. Megatron-LM 1-node — reference ~7B GPT (TFLOP/s/GPU)
+## 6. Megatron-LM 1-node — reference ~7B GPT (TFLOP/s/GPU)
 
 Same config on both: 36 layers, hidden 4096, FFN 14336, seq 2048, bf16, micro-batch 4, global batch = 128 x GPUs, 100 iters, no recompute, TP=PP=1. Metric = last-iteration throughput per GPU. B200 = mean over B200 nodes with that GPU count (newest run).
 
@@ -142,16 +191,16 @@ Same config on both: 36 layers, hidden 4096, FFN 14336, seq 2048, bf16, micro-ba
 | 7 | 896 | 968.6 | 1 | — | — | 11,615 | — | — |
 | 8 | 1024 | 968.8 | 3 | — | — | 11,612 | — | — |
 
-## 6. Megatron-LM 1-node — tuned max throughput, best per GPU type (TFLOP/s/GPU)
+## 7. Megatron-LM 1-node — tuned max throughput, best per GPU type (TFLOP/s/GPU)
 
 Each GPU type gets its own grid sweep (8 GPUs, seq 4096, distributed optimizer, overlapped grad-reduce/param-gather, TP=PP=1, grad-acc 4, 20 iters): 5B (24L, h4096) micro 4/8/16 x recompute none/selective/full, and 13B (40L, h5120) micro 2/4/8 x recompute none/full, each in bf16 and fp8. The configs are NOT forced to match: the best point per GPU type and precision is compared. TFLOP/s/GPU is Megatron's model-FLOP throughput (recompute work not counted). Peak memory = max allocated by PyTorch on rank 0.
 
 | Precision | B200 best | B200 config | B200 mem GiB | B300 best | B300 config | B300 mem GiB | B300 / B200 |
 |---|---:|---|---:|---:|---|---:|---:|
 | bf16 | 1,017.6 | 13b mb2 none | 147 | — | — | — | — |
-| fp8 | 1,404.0 | 5b mb8 none | 138 | — | — | — | — |
+| fp8 | 1,499.7 | 13b mb2 none | 151 | — | — | — | — |
 
-Grid points finished OK: B200 15/18, B300 0/30 (of 30 each).
+Grid points finished OK: B200 18/25, B300 0/30 (of 30 each).
 
 ### Full sweep grid (TFLOP/s/GPU, peak GiB)
 
@@ -179,12 +228,12 @@ Grid points finished OK: B200 15/18, B300 0/30 (of 30 each).
 | fp8 | 5b | 8 | selective | 1,390.6 (132 GiB) | failed/running | — |
 | fp8 | 5b | 8 | full | 1,104.4 (57 GiB) | failed/running | — |
 | fp8 | 5b | 16 | none | OOM | failed/running | — |
-| fp8 | 5b | 16 | selective | failed/running | failed/running | — |
-| fp8 | 5b | 16 | full | — | failed/running | — |
-| fp8 | 13b | 2 | none | — | failed/running | — |
-| fp8 | 13b | 2 | full | — | failed/running | — |
-| fp8 | 13b | 4 | none | — | failed/running | — |
-| fp8 | 13b | 4 | full | — | failed/running | — |
-| fp8 | 13b | 8 | none | — | OOM | — |
-| fp8 | 13b | 8 | full | — | failed/running | — |
+| fp8 | 5b | 16 | selective | OOM | failed/running | — |
+| fp8 | 5b | 16 | full | 1,120.6 (73 GiB) | failed/running | — |
+| fp8 | 13b | 2 | none | 1,499.7 (151 GiB) | failed/running | — |
+| fp8 | 13b | 2 | full | 1,129.5 (108 GiB) | failed/running | — |
+| fp8 | 13b | 4 | none | OOM | failed/running | — |
+| fp8 | 13b | 4 | full | partial | failed/running | — |
+| fp8 | 13b | 8 | none | OOM | OOM | — |
+| fp8 | 13b | 8 | full | failed/running | failed/running | — |
 

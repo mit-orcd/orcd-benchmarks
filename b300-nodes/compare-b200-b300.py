@@ -122,9 +122,39 @@ def section_fryer():
     return L
 
 
+# ---------------------------------------------------------------- cublaslt
+CUBLASLT_MD = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "cuBLASLt", "summary.md")
+
+
+def section_cublaslt():
+    """Pull sections 1, 3 and 4 of ../cuBLASLt/summary.md (its own analyzer, own jobs)."""
+    L = ["## 3. cuBLASLt GEMM — per-GPU throughput incl. FP4 (TFLOP/s)", ""]
+    if not os.path.exists(CUBLASLT_MD):
+        return L + ["No results yet (`../cuBLASLt/summary.md` missing).", ""]
+    lines = open(CUBLASLT_MD).read().splitlines()
+    head = [x for x in lines if x.startswith(("- Generated", "- Nodes", "- Library"))]
+    L += ["From `../cuBLASLt/summary.md` (separate benchmark: `../cuBLASLt/job-lt-bench.sh`, "
+          "8 GPUs at once, tuned shape per GPU type; full method and per-shape results there)."]
+    L += head + [""]
+    keep, cur = {"1", "3", "4"}, None
+    for x in lines:
+        m = re.match(r"## (\d+)\. (.*)", x)
+        if m:
+            cur = m.group(1)
+            if cur in keep:
+                L.append("### " + m.group(2))
+            continue
+        if x.startswith("# ") or cur not in keep:
+            continue
+        L.append(x)
+    if L[-1] != "":
+        L.append("")
+    return L
+
+
 # ---------------------------------------------------------------- nccl
 def section_nccl():
-    L = ["## 3. NCCL 1-node — intra-node NVLink bus bandwidth (GB/s)", ""]
+    L = ["## 4. NCCL 1-node — intra-node NVLink bus bandwidth (GB/s)", ""]
     b2 = newest_per_node(glob.glob(os.path.join(B200_DIR, "out-nccl-1node", "*.out")),
                          nccl.parse_file)
     b3 = newest_per_node(glob.glob(os.path.join(DATA, "out-nccl-1node", "*.out")),
@@ -208,7 +238,7 @@ def newest(pattern):
 
 
 def section_ib():
-    L = ["## 4. ib_write_bw — GPUDirect RDMA, two rails of one node (Gb/s)", ""]
+    L = ["## 5. ib_write_bw — GPUDirect RDMA, two rails of one node (Gb/s)", ""]
     b2 = newest(os.path.join(B200_DIR, "out-ibwrite", "ibwrite-1node-*.out"))
     b3 = newest(os.path.join(DATA, "out-ibwrite", "ibwrite-1node-*.out"))
     if not b3:
@@ -249,7 +279,7 @@ def megatron_runs(d):
 
 
 def section_megatron():
-    L = ["## 5. Megatron-LM 1-node — reference ~7B GPT (TFLOP/s/GPU)", ""]
+    L = ["## 6. Megatron-LM 1-node — reference ~7B GPT (TFLOP/s/GPU)", ""]
     b2 = {k: v for k, v in megatron_runs(os.path.join(B200_DIR, "output-megatron")).items()
           if k[0] not in B300_NODES}
     b3 = {k: v for k, v in megatron_runs(os.path.join(DATA, "output-megatron")).items()
@@ -308,7 +338,7 @@ def parse_sweep(path):
 
 
 def section_megatron_max():
-    L = ["## 6. Megatron-LM 1-node — tuned max throughput, best per GPU type (TFLOP/s/GPU)", ""]
+    L = ["## 7. Megatron-LM 1-node — tuned max throughput, best per GPU type (TFLOP/s/GPU)", ""]
     runs = {}
     for p in sorted(glob.glob(os.path.join(DATA, "output-max-sweep", "max-*")), key=os.path.getmtime):
         r = parse_sweep(p)
@@ -434,7 +464,7 @@ def main():
          "- Ratios are B300 / B200; > 1.00x means B300 is faster.",
          "- Per-benchmark B300 summaries: `out-gpu-fryer/summary.md`, `out-nccl-1node/summary.md`, "
          "`output-megatron/summary.md`", ""]
-    for sec in (section_paper, section_fryer, section_nccl, section_ib, section_megatron, section_megatron_max):
+    for sec in (section_paper, section_fryer, section_cublaslt, section_nccl, section_ib, section_megatron, section_megatron_max):
         try:
             L += sec()
         except Exception as e:

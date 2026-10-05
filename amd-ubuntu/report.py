@@ -421,6 +421,15 @@ KIMI = [
     ("single_stream: latency arms", "kimi-k3-single-stream.csv", ["arm", "concurrency"],
      [("median_tpot_ms", "TPOT ms", 2), ("aggregate_tok_s", "tok/s", 1)], None),
 ]
+# Experiments that cannot produce data, with the reason (shown instead of a silently missing table).
+KIMI_NOTE = {
+    "kimi-k3-maxseqs2048.csv":
+        "*Not runnable on 8 × MI355X at TP8, on amd-cloud (2026-08-20) and amd-ubuntu (2026-10-02, "
+        "2026-10-04) alike.* ATOM reserves Kimi-K3's KDA recurrent state (FP32) per sequence slot "
+        "before the paged KV cache: 107 GiB per GPU for 2048 slots, against ~58 GiB left after the "
+        "190 GiB of weights and activations at `--gpu-memory-utilization 0.93` (ATOM: \"would need "
+        "1.10\"). max-num-seqs 1024 (54 GiB of state) is the largest power of two that fits.",
+}
 # 1024/1024 sweeps searched for the best ATOM result at a given concurrency.
 ATOM_1K = [("atom.csv", "max_concurrency", "output_throughput", "median_tpot_ms", lambda d: d[d.model == "Kimi-K3"]),
            ("kimi-k3-maxseqs.csv", "conc", "tps", "tpot", None), ("kimi-k3-mad.csv", "conc", "tps", "tpot", None),
@@ -536,6 +545,8 @@ def kimi_u():
                     labs.append(lab)
             if df is not None:
                 L += [f"#### {exp}", ""] + table(df.sort_values(keys), keys, labs, nd=1) + [""]
+            elif csv in KIMI_NOTE:
+                L += [f"#### {exp}", "", KIMI_NOTE[csv], ""]
         r = repeats_frame(dc)
         if r is not None:
             L += ["#### repeats: run-to-run spread (tok/s, c=256)", "", "| config | mean | std | n |",
@@ -568,6 +579,8 @@ def kimi_c():
                                                     nd=nd, ratios=[("ubuntu/cloud", "amd-ubuntu", "amd-cloud")]) + [""]
             if parts:
                 L += [f"#### {exp}", ""] + parts
+            elif csv in KIMI_NOTE:
+                L += [f"#### {exp}", "", KIMI_NOTE[csv], ""]
         c, u = repeats_frame(CLOUD), repeats_frame(dc)
         if c is not None and u is not None:
             def cell(r, cfg):
