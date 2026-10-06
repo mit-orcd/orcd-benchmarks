@@ -51,7 +51,20 @@ the `-x` default in `job-megatron-max-sweep.sh`.
 1.20x faster than B200 at FP4, but NVIDIA's datasheet says 1.5x (13.5 vs 9 PFLOP/s dense per GPU).
 B300 reaches only 51% of its datasheet FP4 peak, while B200 reaches 63% of its own.
 
-**Cause: both GPUs run at their power limit, and B300 has to lower its clock more.**
+**Cause: when a GPU is at its power limit, its speed is set by power x efficiency, and B300 is
+only 1.10x better than B200 on each.**
+
+- **Where the 1.5x comes from.** Speed = work per clock x clock rate. B300 does 1.5x more FP4 work
+  per clock than B200. The datasheet assumes both run at full clock, which gives 1.5x.
+- **Why the clocks are not the same.** Both GPUs reach their power limit during FP4 (993 of 1,000 W
+  and 1,091 of 1,100 W) and lower their clocks to stay under it. B300 does 1.5x more work in each
+  clock, so each clock uses more energy, but B300 has only 10% more power. It therefore has to run
+  at a lower clock than B200: 1,099 vs 1,314 MHz (0.84x).
+- **The result.** 1.5x work per clock x 0.84x clock = ~1.25x, close to the measured 1.20x.
+- **The same thing viewed through power.** Under a power limit, speed = power x work per watt.
+  B300 has 1.10x the power (1,100 vs 1,000 W) and does 1.10x the FP4 work per watt (6.30 vs 5.75
+  TFLOP/s per W). 1.10 x 1.10 = 1.21x, matching the measurement. To reach 1.5x at the same work per
+  watt, B300 would need about 1.5 / 1.10 = 1.36x B200's power, i.e. ~1,360 W per GPU instead of 1,100 W.
 
 | FP4, sustained 60 s | B200 (node5802-c1) | B300 (node5900-c1) |
 |---|---:|---:|
@@ -63,9 +76,7 @@ B300 reaches only 51% of its datasheet FP4 peak, while B200 reaches 63% of its o
 | Max GPU temperature | 73 °C | 74 °C |
 | Measured FP4 | 5,708 TFLOP/s | 6,877 TFLOP/s (1.20x) |
 
-B300 does 1.5x more FP4 math per clock, but that uses more energy per clock, and it has only 10%
-more power than B200. 1.5x per clock x 0.84x clock = ~1.25x, close to the measured 1.20x. The GEMM
-kernels reach ~94% of what the actual clock allows on both GPUs, so the software is not the limit.
+The GEMM kernels reach ~94% of what the actual clock allows on both GPUs, so the software is not the limit.
 Temperatures are moderate, so this is a power limit, not a thermal limit. The other precisions
 (BF16, FP8, TF32) measure ~1.0x because B300 has the same peak per clock as B200 there.
 
