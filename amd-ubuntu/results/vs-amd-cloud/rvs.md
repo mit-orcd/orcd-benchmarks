@@ -1,6 +1,6 @@
 # RVS gst TFLOPS: amd-ubuntu vs amd-cloud
 
-Generated 2026-10-05 18:26 by `report.py`.
+Generated 2026-10-06 00:30 by `report.py`.
 
 - **amd-cloud**: one 8 × MI355X node, ROCm 7.14, Ubuntu 22.04.5, docker ([results](../../../amd-benchmarks/amd-cloud/results/SUMMARY.md)).
 - **amd-ubuntu**: node6100 and node6101, 8 × MI355X each, same amdgpu driver and CPUs, host ROCm 7.2.4, Ubuntu 24.04.5, apptainer. Same scripts, analyzers and (for the containers) the same image digests.
@@ -10,7 +10,7 @@ Generated 2026-10-05 18:26 by `report.py`.
 ## Analysis
 
 - **Same ROCm 7.14 on both sides (apple-to-apple): amd-ubuntu matches amd-cloud within 0–5%** for every precision at N=1 and N=8 (fp4 0.96–1.03×, all others 1.00–1.05×). The hardware performs the same.
-- On host ROCm 7.2.4, fp4 differs: 1.44× amd-cloud at N=8 but 0.80× at N=1. This is a ROCm version effect (see `../ubuntu/rocm.md`), not a hardware difference.
+- On host ROCm 7.2.4, fp4 differs: 1.44× amd-cloud at N=8 but 0.80× at N=1. This is a ROCm version effect, not a hardware difference: 7.14's fp4 kernel is ≈28% faster, but when one RVS process drives all 8 GPUs it slows down on 7.14 (amd-cloud included). Run as 8 separate processes, 7.14 reaches ≈4,100 TFLOPS on every GPU (see `../ubuntu/rocm.md`).
 - node6100 runs bf16/fp16/fp8 ≈2–3% faster than node6101 and amd-cloud; within normal part-to-part variation.
 
 ## Results

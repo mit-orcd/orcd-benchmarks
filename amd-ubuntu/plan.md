@@ -191,3 +191,6 @@ That is 95-97% of the measured 391 GB/s RDMA ceiling, close to single-node XGMI 
 Results: `results/node6100{,/rocm7.14}/rccl_2node.md`, `results/ubuntu/rccl_2node.md`, and
 `results/ubuntu/rocm.md` (2-node section). amd-cloud was single-node, so there is no 2-node comparison
 in `results/vs-amd-cloud/`.
+
+### Primus llama2-7B rerun (2026-10-05)
+First run (10-02) failed at every N on both nodes: apex `fused_weight_gradient_mlp_cuda` JIT build hit ENOSPC on the 64 MB `--writable-tmpfs`. Fixed by `primus/rerun_megatron_llama.sh` (persistent per-node overlay `CTR_OVERLAY=primus-v26.5-<node>`, node GPU lock). All 16 runs OK; 8 GPUs: node6100 1,170.5, node6101 1,134.8 compute TF/s/GPU vs amd-cloud 1,135.2. Also fixed `report.py` megatron-ref parser (was reading the static Dell 790.4 row) and added hand-written analysis sections (`results/analysis/`).

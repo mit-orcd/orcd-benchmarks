@@ -1,6 +1,6 @@
 # gpu-fryer summary
 
-- Generated: 2026-10-05 14:22:02
+- Generated: 2026-10-05 16:34:41
 - Nodes: node5900-c1 (8 x B300 SXM6 AC)
 - Precisions: FP32, BF16, FP8
 - Reference (MIT aicr-benchmarks, `gpu-fryer/summary.md`, b0025, **B200**): per-GPU mean TFLOP/s — FP32 772, BF16 1500, FP8 4115

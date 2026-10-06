@@ -1,6 +1,8 @@
 - **Same driver, two user spaces: ROCm 7.14 matches 7.2.4 within ±3% for nearly everything** (RVS bf16/fp16/fp8/fp32/fp64, single-node RCCL at N=8).
-- **fp4 is the exception.** On 7.14 a single GPU is 1.26–1.28× faster (≈4,080 vs 3,190 TFLOPS), but with all 8 GPUs at once the per-GPU rate falls to ≈2,130, so the 8-GPU aggregate is 0.67× of 7.2.4. On 7.2.4 fp4 scales linearly. The same 8-GPU fall-off appears in the amd-cloud run (also 7.14), so it comes with the 7.14 fp4 path, not with these nodes.
+- **fp4 is the exception.** On 7.14 a single GPU is 1.26–1.28× faster (≈4,080 vs 3,190 TFLOPS), but in the standard RVS run with all 8 GPUs the per-GPU rate falls to ≈2,130, so the 8-GPU sum is 0.67× of 7.2.4.
+  - **Cause (tested 2026-10-05, `work-rocmval/fp4_multiproc_test.sh`): RVS drives all 8 GPUs from one process.** Run as 8 separate one-GPU processes at the same time, ROCm 7.14 gives **4,041–4,175 TFLOPS on every GPU, 32,784 in total** (1.28× of 7.2.4's 25,603). The same-day single-process control reproduced the drop (1,781–3,457 per GPU, 20,081 total). So the 8 GPUs can all run the faster 7.14 fp4 kernel at once; the slowdown comes from contention inside one process on 7.14's fp4 path, not from power, heat or the hardware.
+  - Real workloads normally run one process per GPU, so they get the 7.14 fp4 speed-up. amd-cloud (also 7.14, single process) shows the same drop for the same reason.
 - bf6/fp6 are ≈3% lower on 7.14.
 - **N=5 RCCL**: 7.14 fixes alltoallv (≈45 vs ≈22 GB/s on 7.2.4).
 - **2-node RCCL**: all_reduce at PPN=8 is ≈381–385 GB/s on both stacks; alltoall is ≈14% lower on 7.14 (77 vs 90 GB/s); sendrecv slightly higher on 7.14 (32 vs 29).
-- Recommendation: either stack is fine for training; prefer 7.2.4 for 8-GPU fp4 GEMM work until the 7.14 fp4 scaling is understood.
+- Recommendation: either stack is fine. For fp4 GEMM work 7.14 is ≈28% faster per GPU, as long as each GPU is driven by its own process (the usual setup).

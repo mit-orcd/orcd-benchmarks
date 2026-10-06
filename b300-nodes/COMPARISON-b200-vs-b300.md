@@ -1,6 +1,6 @@
 # B200 vs B300 — single-node benchmark comparison
 
-- Generated: 2026-10-05 14:22:02
+- Generated: 2026-10-05 16:34:41
 - B300 node: node5900-c1 (mit_testing, 8 x B300); B200 data from `../b200-nodes/`
 - Ratios are B300 / B200; > 1.00x means B300 is faster.
 - Per-benchmark B300 summaries: `out-gpu-fryer/summary.md`, `out-nccl-1node/summary.md`, `output-megatron/summary.md`
@@ -218,10 +218,10 @@ Each GPU type gets its own grid sweep (8 GPUs, seq 4096, distributed optimizer, 
 
 | Precision | B200 best | B200 config | B200 mem GiB | B300 best | B300 config | B300 mem GiB | B300 / B200 |
 |---|---:|---|---:|---:|---|---:|---:|
-| bf16 | 1,017.6 | 13b mb2 none | 147 | 1,080.8 | 5b mb4 none | 92 | **1.06x** |
-| fp8 | 1,499.7 | 13b mb2 none | 151 | — | — | — | — |
+| bf16 | 1,017.6 | 13b mb2 none | 147 | 1,135.7 | 13b mb4 none | 202 | **1.12x** |
+| fp8 | 1,499.7 | 13b mb2 none | 151 | 1,697.5 | 13b mb2 none | 151 | **1.13x** |
 
-Grid points finished OK: B200 22/30, B300 10/30 (of 30 each).
+Grid points finished OK: B200 22/30, B300 28/30 (of 30 each).
 
 ### Full sweep grid (TFLOP/s/GPU, peak GiB)
 
@@ -237,24 +237,24 @@ Grid points finished OK: B200 22/30, B300 10/30 (of 30 each).
 | bf16 | 5b | 16 | selective | OOM | 1,054.1 (260 GiB) | — |
 | bf16 | 5b | 16 | full | 797.7 (68 GiB) | 830.2 (68 GiB) | **1.04x** |
 | bf16 | 13b | 2 | none | 1,017.6 (147 GiB) | 1,062.4 (147 GiB) | **1.04x** |
-| bf16 | 13b | 2 | full | 793.9 (97 GiB) | failed/running | — |
-| bf16 | 13b | 4 | none | OOM | failed/running | — |
-| bf16 | 13b | 4 | full | 824.1 (102 GiB) | failed/running | — |
-| bf16 | 13b | 8 | none | OOM | failed/running | — |
-| bf16 | 13b | 8 | full | 833.3 (114 GiB) | failed/running | — |
-| fp8 | 5b | 4 | none | 1,302.7 (89 GiB) | failed/running | — |
-| fp8 | 5b | 4 | selective | 1,307.4 (86 GiB) | failed/running | — |
-| fp8 | 5b | 4 | full | 1,083.4 (49 GiB) | failed/running | — |
-| fp8 | 5b | 8 | none | 1,404.0 (138 GiB) | failed/running | — |
-| fp8 | 5b | 8 | selective | 1,390.6 (132 GiB) | failed/running | — |
-| fp8 | 5b | 8 | full | 1,104.4 (57 GiB) | failed/running | — |
-| fp8 | 5b | 16 | none | OOM | failed/running | — |
-| fp8 | 5b | 16 | selective | OOM | failed/running | — |
-| fp8 | 5b | 16 | full | 1,120.6 (73 GiB) | failed/running | — |
-| fp8 | 13b | 2 | none | 1,499.7 (151 GiB) | failed/running | — |
-| fp8 | 13b | 2 | full | 1,129.5 (108 GiB) | failed/running | — |
-| fp8 | 13b | 4 | none | OOM | failed/running | — |
-| fp8 | 13b | 4 | full | 1,205.7 (114 GiB) | failed/running | — |
+| bf16 | 13b | 2 | full | 793.9 (97 GiB) | 814.4 (97 GiB) | **1.03x** |
+| bf16 | 13b | 4 | none | OOM | 1,135.7 (202 GiB) | — |
+| bf16 | 13b | 4 | full | 824.1 (102 GiB) | 856.2 (102 GiB) | **1.04x** |
+| bf16 | 13b | 8 | none | OOM | OOM | — |
+| bf16 | 13b | 8 | full | 833.3 (114 GiB) | 880.9 (114 GiB) | **1.06x** |
+| fp8 | 5b | 4 | none | 1,302.7 (89 GiB) | 1,325.1 (89 GiB) | **1.02x** |
+| fp8 | 5b | 4 | selective | 1,307.4 (86 GiB) | 1,272.6 (86 GiB) | **0.97x** |
+| fp8 | 5b | 4 | full | 1,083.4 (49 GiB) | 1,218.1 (49 GiB) | **1.12x** |
+| fp8 | 5b | 8 | none | 1,404.0 (138 GiB) | 1,493.7 (138 GiB) | **1.06x** |
+| fp8 | 5b | 8 | selective | 1,390.6 (132 GiB) | 1,427.5 (132 GiB) | **1.03x** |
+| fp8 | 5b | 8 | full | 1,104.4 (57 GiB) | 1,201.0 (57 GiB) | **1.09x** |
+| fp8 | 5b | 16 | none | OOM | 1,476.6 (235 GiB) | — |
+| fp8 | 5b | 16 | selective | OOM | 1,524.1 (223 GiB) | — |
+| fp8 | 5b | 16 | full | 1,120.6 (73 GiB) | 1,194.0 (73 GiB) | **1.07x** |
+| fp8 | 13b | 2 | none | 1,499.7 (151 GiB) | 1,697.5 (151 GiB) | **1.13x** |
+| fp8 | 13b | 2 | full | 1,129.5 (108 GiB) | 1,175.9 (108 GiB) | **1.04x** |
+| fp8 | 13b | 4 | none | OOM | 1,585.6 (199 GiB) | — |
+| fp8 | 13b | 4 | full | 1,205.7 (114 GiB) | 1,280.8 (114 GiB) | **1.06x** |
 | fp8 | 13b | 8 | none | OOM | OOM | — |
-| fp8 | 13b | 8 | full | 1,229.2 (125 GiB) | failed/running | — |
+| fp8 | 13b | 8 | full | 1,229.2 (125 GiB) | 1,276.2 (125 GiB) | **1.04x** |
 

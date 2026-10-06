@@ -1,2 +1,4 @@
-- **GEMM microbench: amd-ubuntu is 0.97–1.05× amd-cloud** (node6100 1.01–1.05×, node6101 0.97–1.02×); same image digest, so the GPUs match.
-- **Megatron llama2-7B**: amd-cloud measured ≈1,070–1,160 compute TF/s/GPU for N=1..8. amd-ubuntu's first run failed (extension build ran out of space in the 64 MB container scratch area); the rerun with a persistent overlay is in progress and the comparison fills in when it finishes.
+- **Megatron llama2-7B (same image digest): amd-ubuntu matches amd-cloud, node6100 1.01–1.04×, node6101 0.99–1.00× compute TF/s/GPU** at every N from 1 to 8 (8 GPUs: 1,170.5 and 1,134.8 vs 1,135.2). Both systems show the same small N=5–7 dip.
+- **GEMM microbench: 0.97–1.05×** (node6100 1.01–1.05×, node6101 0.97–1.02×).
+- Wall-clock TF/s is lower on amd-ubuntu (≈170–270 vs ≈295–375) because that metric includes container start and the first-time apex extension build in the new overlay; it is not a GPU difference.
+- Conclusion: for Primus training the GPUs and single-node fabric perform the same as amd-cloud.

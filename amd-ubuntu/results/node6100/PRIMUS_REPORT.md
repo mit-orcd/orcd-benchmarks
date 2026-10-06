@@ -29,14 +29,14 @@ This is the deliberate opposite of Part D (ATOM inference), which runs **TP=8** 
 
 | N | GBS | compute TF/s/GPU | wall-clock TF/s/GPU | mean TF/s/GPU | last iter (ms) | notes |
 |--:|----:|-----------------:|--------------------:|--------------:|---------------:|:------|
-| 1 | — | — | — | — | — | FAILED |
-| 2 | — | — | — | — | — | FAILED |
-| 3 | — | — | — | — | — | FAILED |
-| 4 | — | — | — | — | — | FAILED |
-| 5 | — | — | — | — | — | FAILED |
-| 6 | — | — | — | — | — | FAILED |
-| 7 | — | — | — | — | — | FAILED |
-| 8 | — | — | — | — | — | FAILED |
+| 1 | 32 | 1177.90 | 169.70 | 131.80 | 4770.20 |  |
+| 2 | 64 | 1152.70 | 252.80 | 197.65 | 4874.50 |  |
+| 3 | 96 | 1156.00 | 269.60 | 211.45 | 4860.50 |  |
+| 4 | 128 | 1170.50 | 260.00 | 203.40 | 4800.10 |  |
+| 5 | 160 | 1113.70 | 262.30 | 205.75 | 5044.90 |  |
+| 6 | 192 | 1110.30 | 168.50 | 129.95 | 5060.40 |  |
+| 7 | 224 | 1107.40 | 208.40 | 161.90 | 5073.80 |  |
+| 8 | 256 | 1170.50 | 194.80 | 150.70 | 4800.40 |  |
 
 ### 1.1a Dell Cloud Primus vs amd-ubuntu Primus (same llama2-7B path)
 
@@ -44,14 +44,18 @@ Both hosts are 8 x MI355X running the same Primus -> Megatron-LM llama2-7B BF16 
 
 | N | GBS Dell | GBS AMD | Dell compute TF/s/GPU | AMD compute TF/s/GPU | AMD/Dell | comparable? |
 |--:|--------:|--------:|---------------------:|--------------------:|--------:|:------------|
-| 1 | 256 | — | 1160.60 | — | — | no — AMD has no data |
-| 2 | 256 | — | 1146.00 | — | — | no — AMD has no data |
-| 3 | 252 | — | 1143.60 | — | — | no — AMD has no data |
-| 4 | 256 | — | 1139.10 | — | — | no — AMD has no data |
-| 5 | — | — | — (run failed) | — | — | no — Dell has no data |
-| 6 | — | — | — (run failed) | — | — | no — Dell has no data |
-| 7 | — | — | — (run failed) | — | — | no — Dell has no data |
-| 8 | 256 | — | 1132.00 | — | — | no — AMD has no data |
+| 1 | 256 | 32 | 1160.60 | 1177.90 | **1.01x** | no — GBS differs (256 vs 32) |
+| 2 | 256 | 64 | 1146.00 | 1152.70 | **1.01x** | no — GBS differs (256 vs 64) |
+| 3 | 252 | 96 | 1143.60 | 1156.00 | **1.01x** | no — GBS differs (252 vs 96) |
+| 4 | 256 | 128 | 1139.10 | 1170.50 | **1.03x** | no — GBS differs (256 vs 128) |
+| 5 | — | 160 | — (run failed) | 1113.70 | — | no — Dell has no data |
+| 6 | — | 192 | — (run failed) | 1110.30 | — | no — Dell has no data |
+| 7 | — | 224 | — (run failed) | 1107.40 | — | no — Dell has no data |
+| 8 | 256 | 256 | 1132.00 | 1170.50 | **1.03x** | **YES — matched GBS** |
+
+**Only N=8 is a valid head-to-head** — it is the one point where both runs used GBS=256 (ours as 32x8, theirs fixed). There the two machines are **1.03x** apart: 1132.0 vs 1170.5 TF/s/GPU. Same silicon, essentially identical result — which is the expected outcome and a good cross-machine validation.
+
+At N=1..4 the GBS differs (Dell fixed 256; ours 32N = 32/64/96/128), so those rows are not comparable — a smaller global batch means fewer tokens per iteration and different efficiency. At N=5/6/7 Dell has no data at all: fixed GBS=256 is not divisible by MBS(4) x DP(N) for those arities, which is exactly the failure our per-N `GBS=32N` scheme was designed to avoid. **Our sweep is 8/8; theirs is 5/8.**
 
 > **Metric warning — two different TFLOP/s/GPU numbers exist.** The Megatron iteration line emits both `compute per GPU` (kernel-time throughput) and `throughput per GPU` (wall-clock, includes pipeline bubbles and idle). They differ by ~4x on this workload. Dell Cloud's REPORT.md section 1.1 column is the **compute** figure; a naive parse of the newer v26.5 log picks up the **wall-clock** figure instead. Comparing one against the other manufactures a spurious ~3.8x regression that does not exist. Section 1.1 above now reports both, explicitly labelled.
 
@@ -174,8 +178,55 @@ All-reduce bandwidth sweep across message sizes (1K..128M, log2 sweep). Peak bus
 | 7 | 45.46 | 17.14 | 18 |
 | 8 | 357.44 | 87.64 | 18 |
 
+## 6a. Megatron vs the GEMM ceilings (N=8, BF16, same host)
+
+How much of the achievable matrix-multiply rate does real training actually realize? Each row is a progressively more realistic ceiling, so each gap attributes a specific loss.
+
+| Ceiling | TF/s/GPU | Megatron as % | What the gap costs |
+|---|---:|---:|---|
+| RVS `gst` bf16 — silicon, no framework (Part A) | 1694.56 | **69%** | PyTorch/framework dispatch, then everything below |
+| Primus `gemm` — square 4096^3 | 1504.24 | **78%** | off-peak shapes + everything non-GEMM |
+| Primus `gemm-dense` — dense-model shape mix | 1358.09 | **86%** | non-GEMM work only (shape penalty already priced in) |
+| Megatron llama2-7B (compute per GPU) | **1170.50** | 100% | — |
+
+**`gemm-dense` is the right baseline.** It runs a dense-transformer shape mix — the kind of QKV / O / FFN-gate / up / down GEMMs Megatron issues — so the 86% figure isolates *non-GEMM* overhead: attention, RMSNorm, RoPE, optimizer, and the gradient all-reduce. The square-GEMM row is a looser ceiling because 4096^3 is a shape Megatron never actually runs.
+
+**`gemm-deepseek` is deliberately excluded.** Those are MoE expert shapes with small, skewed K-dimensions; llama2-7B is dense and never issues them, so a percentage against it would be meaningless.
+
+**RVS `gst` vs Primus `gemm` — what actually differs.** Both measure BF16 matrix multiply on this same host, and the 11% gap between them (1694.56 -> 1504.24) is worth understanding, because it is *not* only shape:
+
+| | RVS `gst` (Part A) | Primus `gemm` (Part C) |
+|---|---|---|
+| Stack | hipBLASLt called **directly from C++** | **PyTorch** -> hipBLASLt |
+| Shape | 8192 x 8192 x 16384 | 4096 x 4096 x 4096 |
+| Cache defeat | `rotating: 512` buffers | 2 GB rotating buffer |
+| Metric | **peak** across log intervals | **mean** across ranks |
+| Duration | 30 s | 10 s |
+
+Two effects dominate. **Framework dispatch**: RVS has no Python, no autograd, no tensor wrapper — it is the closest thing to a pure library number. **Matrix size**: RVS' GEMM is 8x larger in K and 4x in M/N, so fixed per-call overhead amortizes far better. The *peak-vs-mean* metric choice also flatters RVS slightly. So the RVS row is a genuine silicon ceiling, but it is a deliberately favourable one — the Primus rows are closer to what any real framework can reach.
+
+> **Note on the name — "dense" means dense *model*, not dense *matrix*.** The contrast is with its sibling `gemm-deepseek` (a MoE / sparse-expert model), not with sparse matrices — all of these GEMMs are fully dense. So plain `gemm` is not "denser" than `gemm-dense` despite the name; it is simply one arbitrary shape (`--M --N --K`, here 4096^3) rather than a model-derived set. Caveat: that `gemm-dense` specifically uses *llama* shapes is an inference from the dense-vs-DeepSeek pairing, not verified against Primus' source — what is certain is that it is a dense-transformer shape set, which is what makes it the right ceiling for llama2-7B.
+
+> **Three caveats.** (1) Megatron's TFLOPs are an *analytical* count (~6·params·tokens), not measured FLOPs — so this is model-FLOPs utilization, not a literal hardware efficiency. (2) The microbenches are pure compute with no collectives; Megatron includes a gradient all-reduce per step. (3) Both numbers must be kernel-time (`compute per GPU`); mixing in the wall-clock figure invalidates the ratio entirely.
+
+## 6b. Where the remaining gap goes — attention
+
+Attention is **not** compared as a percentage of Megatron: it measures a *component*, not a substitute workload, so "Megatron as % of attention" would be a category error. It is reported here because it is the leading explanation for why end-to-end training lands below the GEMM ceiling above.
+
+| Kernel class (N=8) | TF/s/GPU | vs `gemm-dense` |
+|---|---:|---:|
+| `gemm-dense` (the GEMM path) | 1358.09 | 100% |
+| attention **forward** | 751.24 | 55% |
+| attention **backward** | 220.68 | 16% |
+
+Attention forward runs at roughly half the GEMM rate and **backward at 29% of forward** (220.68 vs 751.24 TF/s/GPU). Backward is dominated by gradient recomputation plus extra matmuls, and the asymmetry matches what is reported for flash-attention-class kernels generally.
+
+Since a transformer step spends a substantial fraction of its time in attention — and backward is ~2x the cost of forward in a training step — a kernel class running at 16% of GEMM rate is sufficient on its own to explain most of the residual between the `gemm-dense` ceiling and measured end-to-end throughput. Attention is also flat across N (each rank runs independently, no collective), so this is a per-GPU kernel property, not a scaling effect.
+
 ## 7. Analysis
 
+- **Megatron weak-scaling (llama2-7B BF16, turbo ON):** N=1: 170 TF/s/GPU (100 % of N=1), N=2: 253 TF/s/GPU (149 % of N=1), N=3: 270 TF/s/GPU (159 % of N=1), N=4: 260 TF/s/GPU (153 % of N=1), N=5: 262 TF/s/GPU (155 % of N=1), N=6: 168 TF/s/GPU (99 % of N=1), N=7: 208 TF/s/GPU (123 % of N=1), N=8: 195 TF/s/GPU (115 % of N=1). Per-GPU throughput is essentially flat (≤ 38 % spread between best and worst N), so the all-reduce overhead at MBS·N grad-accum is small relative to the model's compute. The lower N=1 / higher N=8 iter-time scales linearly with GBS as expected for weak-scaling.
+- **Primus-turbo vs reference image at N=8:** Primus (llama2-7B, turbo ON) hits **195 TF/s/GPU**; the `rocm/megatron-lm:v26.1` image on the same hardware (GPT-15.6B, no turbo, §3 tuned) tops out at **790.4 TF/s/GPU** — a **0.25× per-GPU jump**. Workloads differ (smaller model, different GEMM shapes, primus-turbo attention/grouped-MLP fused kernels), so this is *not* a pure kernel-vs-kernel speedup; it captures the combined win of (i) llama2-7B being more GEMM-dense than GPT-15.6B, (ii) primus-turbo replacing unfused softmax/RMSNorm/attention with gfx950-native kernels, and (iii) Primus' MFU-tuned argument set. Use as the new headline number for this hardware on a llama-family workload.
 - **GEMM per-GPU consistency:** mean TF/s/GPU ranges 1479.9..1511.0 across all N (2.1 % spread). Each rank runs the same 4Kx4Kx4K BF16 shape independently with no collectives, so a flat curve confirms there's no thermal/PCIe/power contention as N grows. This is the per-GPU compute ceiling on this hardware for square FP16/BF16 matmul.
 - **Shape sensitivity:** square 4Kx4Kx4K hits 1499 TF/s/GPU; the **llama-shape mix** (gemm-dense) drops to 1353 (90 % of peak); the **deepseek MoE shape mix** falls to 1013 (68 %). The MoE drop is shape-driven (small / skewed K-dim in the expert path), not a hardware issue.
 - **Attention fwd/bwd asymmetry:** fwd ≈ 745 TF/s/GPU, bwd ≈ 221 TF/s/GPU (bwd / fwd = 30 %). Backward is dominated by gradient recomputation + extra matmuls; the gap matches what's reported for flash-attention class kernels. Both are stable across N (each rank runs independently — no all-reduce in this bench).
@@ -298,4 +349,22 @@ Finished   : 2026-10-02T01:29:50+00:00
 ----- megatron N=8 GBS=256 MBS=4 devs=0,1,2,3,4,5,6,7 2026-10-02T01:44:56+00:00 -----
   FAIL(rc=1) duration=70s log=/orcd/data/orcd/022/benchmarks/amd-ubuntu/logs/node6100/primus/sweep-20261002-003720/megatron-llama2_7B-bf16_N8.log
 [megatron] 2026-10-02T01:46:06+00:00 DONE
+================ MEGATRON 2026-10-05T18:22:32+00:00 image=rocm/primus:v26.5 exp=examples/megatron/configs/MI355X/llama2_7B-BF16-pretrain.yaml ================
+----- megatron N=1 GBS=32 MBS=4 devs=0 2026-10-05T18:22:32+00:00 -----
+  OK duration=1943s log=/orcd/data/orcd/022/benchmarks/amd-ubuntu/logs/node6100/primus/sweep-20261002-003720/megatron-llama2_7B-bf16_N1.log
+----- megatron N=2 GBS=64 MBS=4 devs=0,1 2026-10-05T18:54:55+00:00 -----
+  OK duration=328s log=/orcd/data/orcd/022/benchmarks/amd-ubuntu/logs/node6100/primus/sweep-20261002-003720/megatron-llama2_7B-bf16_N2.log
+----- megatron N=3 GBS=96 MBS=4 devs=0,1,2 2026-10-05T19:00:23+00:00 -----
+  OK duration=325s log=/orcd/data/orcd/022/benchmarks/amd-ubuntu/logs/node6100/primus/sweep-20261002-003720/megatron-llama2_7B-bf16_N3.log
+----- megatron N=4 GBS=128 MBS=4 devs=0,1,2,3 2026-10-05T19:05:48+00:00 -----
+  OK duration=332s log=/orcd/data/orcd/022/benchmarks/amd-ubuntu/logs/node6100/primus/sweep-20261002-003720/megatron-llama2_7B-bf16_N4.log
+----- megatron N=5 GBS=160 MBS=4 devs=0,1,2,3,4 2026-10-05T19:11:20+00:00 -----
+  OK duration=339s log=/orcd/data/orcd/022/benchmarks/amd-ubuntu/logs/node6100/primus/sweep-20261002-003720/megatron-llama2_7B-bf16_N5.log
+----- megatron N=6 GBS=192 MBS=4 devs=0,1,2,3,4,5 2026-10-05T19:17:00+00:00 -----
+  OK duration=438s log=/orcd/data/orcd/022/benchmarks/amd-ubuntu/logs/node6100/primus/sweep-20261002-003720/megatron-llama2_7B-bf16_N6.log
+----- megatron N=7 GBS=224 MBS=4 devs=0,1,2,3,4,5,6 2026-10-05T19:24:18+00:00 -----
+  OK duration=372s log=/orcd/data/orcd/022/benchmarks/amd-ubuntu/logs/node6100/primus/sweep-20261002-003720/megatron-llama2_7B-bf16_N7.log
+----- megatron N=8 GBS=256 MBS=4 devs=0,1,2,3,4,5,6,7 2026-10-05T19:30:30+00:00 -----
+  OK duration=403s log=/orcd/data/orcd/022/benchmarks/amd-ubuntu/logs/node6100/primus/sweep-20261002-003720/megatron-llama2_7B-bf16_N8.log
+[megatron] 2026-10-05T19:37:14+00:00 DONE
 ```

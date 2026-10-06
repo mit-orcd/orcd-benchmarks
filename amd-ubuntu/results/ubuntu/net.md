@@ -1,6 +1,6 @@
 # amd-ubuntu — Network: RDMA per ionic rail
 
-Generated 2026-10-05 18:26 by `report.py`.
+Generated 2026-10-06 00:30 by `report.py`.
 
 System: node6100 and node6101, each 8 × AMD Instinct MI355X (gfx950), 2 × EPYC 9575F, 2.2 TiB RAM, Ubuntu 24.04.5, amdgpu 6.19.14, host ROCm 7.2.4 (RVS, rccl-tests), containers under apptainer (Primus, Megatron-LM, ATOM). Nodes linked by 8 × 400G AMD Pollara (ionic) RoCEv2 rails.
 
