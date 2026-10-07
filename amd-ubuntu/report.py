@@ -100,13 +100,17 @@ def write(path, title, intro, sections):
     L = [f"# {title}", "", f"Generated {NOW} by `report.py`.", ""] + intro
     for h, body in sections:
         L += ["", f"## {h}", ""] + body
-    path.write_text("\n".join(L) + "\n")
+    text = "\n".join(L) + "\n"
+    # spell out RVS the first time it appears in each file
+    if "ROCm Validation Suite" not in text:
+        text = re.sub(r"\bRVS\b", "RVS (ROCm Validation Suite)", text, count=1)
+    path.write_text(text)
     return path
 
 
 PENDING = ["*Pending: no results yet.*"]
 SYSTEM_U = ["System: node6100 and node6101, each 8 × AMD Instinct MI355X (gfx950), 2 × EPYC 9575F, "
-            "2.2 TiB RAM, Ubuntu 24.04.5, amdgpu 6.19.14, host ROCm 7.2.4 (RVS, rccl-tests), "
+            "2.2 TiB RAM, Ubuntu 24.04.5, amdgpu 6.19.14, host ROCm 7.2.4 for RVS and rccl-tests, "
             "containers under apptainer (Primus, Megatron-LM, ATOM). Nodes linked by 8 × 400G "
             "AMD Pollara (ionic) RoCEv2 rails.", ""]
 SYSTEM_C = ["- **amd-cloud**: one 8 × MI355X node, ROCm 7.14, Ubuntu 22.04.5, docker "
@@ -188,6 +192,8 @@ STACK_COLS = [(n, f"{n[-4:]} ROCm 7.2.4") for n in NODES] + [(f"{n} r7.14", f"{n
 def cloud_table(df, keys, nd=1):
     """amd-cloud column + every amd-ubuntu stack column, each with a ratio to amd-cloud."""
     cols = [(c, l) for c, l in STACK_COLS if c in df.columns]
+    # apple-to-apple ROCm 7.14 columns first, host ROCm 7.2.4 after
+    cols = sorted(cols, key=lambda cl: "r7.14" not in cl[0])
     return table(df, keys, ["cloud"] + [c for c, _ in cols], ["amd-cloud (7.14)"] + [l for _, l in cols], nd,
                  [(f"{l.replace('ROCm ', '')}/cloud", c, "cloud") for c, l in cols])
 

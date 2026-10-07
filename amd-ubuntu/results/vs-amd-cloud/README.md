@@ -1,6 +1,6 @@
 # amd-ubuntu vs amd-cloud
 
-Generated 2026-10-06 00:30 by `report.py`.
+Generated 2026-10-07 20:01 by `report.py`.
 
 - **amd-cloud**: one 8 × MI355X node, ROCm 7.14, Ubuntu 22.04.5, docker ([results](../../../amd-benchmarks/amd-cloud/results/SUMMARY.md)).
 - **amd-ubuntu**: node6100 and node6101, 8 × MI355X each, same amdgpu driver and CPUs, host ROCm 7.2.4, Ubuntu 24.04.5, apptainer. Same scripts, analyzers and (for the containers) the same image digests.
@@ -11,7 +11,7 @@ Generated 2026-10-06 00:30 by `report.py`.
 
 | Benchmark | node6100 | node6101 |
 |---|---|---|
-| RVS gst TFLOPS | ✅ 10-01 23:13 | ✅ 10-01 23:13 |
+| RVS (ROCm Validation Suite) gst TFLOPS | ✅ 10-01 23:13 | ✅ 10-01 23:13 |
 | RCCL single node | ✅ 10-02 00:13 | ✅ 10-02 00:26 |
 | RVS gst TFLOPS, ROCm 7.14 | ✅ 10-02 16:17 | ✅ 10-02 10:29 |
 | RCCL single node, ROCm 7.14 | ✅ 10-02 17:12 | ✅ 10-02 11:24 |
