@@ -626,11 +626,30 @@ def guard(fn, *a):
         return [f"*Report failed: {type(e).__name__}: {e}*"]
 
 
+AFTER_RESULTS = "<!-- after-results -->"
+
+
 def analysis(kind, f):
     """Hand-written conclusions kept outside the generated files (results/analysis/<kind>/<f>),
-    so regenerating the tables never loses them. Placed before the tables."""
+    so regenerating the tables never loses them. Returns (before, after): text above the
+    AFTER_RESULTS marker goes before the tables; text below it goes after them, its first
+    heading becoming the section title."""
     p = ROOT / "analysis" / kind / f
-    return [("Analysis", p.read_text().rstrip().splitlines())] if p.exists() else []
+    if not p.exists():
+        return [], []
+    head, _, tail = p.read_text().partition(AFTER_RESULTS)
+    before = [("Analysis", head.rstrip().splitlines())] if head.strip() else []
+    after = []
+    tail = tail.strip().splitlines()
+    if tail:
+        h = tail[0].lstrip("#").strip() if tail[0].startswith("#") else "Notes"
+        after = [(h, tail[1:] if tail[0].startswith("#") else tail)]
+    return before, after
+
+
+def sections(kind, f, fn, a):
+    before, after = analysis(kind, f)
+    return before + [("Results", guard(fn, *a))] + after
 
 
 def main():
@@ -650,9 +669,9 @@ def main():
          ("atom.md", "ATOM serving: amd-ubuntu vs amd-cloud", atom_c, ()),
          ("kimi.md", "Kimi-K3: amd-ubuntu vs amd-cloud", kimi_c, ())]
     for f, title, fn, a in U:
-        write(OUT_U / f, f"amd-ubuntu — {title}", SYSTEM_U, analysis("ubuntu", f) + [("Results", guard(fn, *a))])
+        write(OUT_U / f, f"amd-ubuntu — {title}", SYSTEM_U, sections("ubuntu", f, fn, a))
     for f, title, fn, a in C:
-        write(OUT_C / f, title, SYSTEM_C, analysis("vs-amd-cloud", f) + [("Results", guard(fn, *a))])
+        write(OUT_C / f, title, SYSTEM_C, sections("vs-amd-cloud", f, fn, a))
     links = lambda lst: [f"- [{t}]({f})" for f, t, *_ in lst]
     write(OUT_U / "README.md", "amd-ubuntu benchmark results", SYSTEM_U,
           [("Status", status()), ("Reports", links(U)),
