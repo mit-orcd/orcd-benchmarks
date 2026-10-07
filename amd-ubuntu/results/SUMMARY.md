@@ -14,17 +14,29 @@ Detail: [`ubuntu/`](ubuntu/README.md) (our nodes only), [`vs-amd-cloud/`](vs-amd
 
 | # | Benchmark | Compared | Result |
 |---|---|---|---|
-| 1 | [RVS (ROCm Validation Suite) GEMM](#1-rvs-rocm-validation-suite-gemm-tflops) | ours 7.14 vs amd-cloud 7.14; ours 7.2.4 vs ours 7.14 | almost the same as amd-cloud; 7.2.4 = 7.14 except fp4 (and fp6/bf6 −3%) |
-| 2 | [RCCL, one node](#2-rccl-one-node) | ours 7.14 vs amd-cloud 7.14; ours 7.2.4 vs ours 7.14 | almost the same as amd-cloud; 7.2.4 = 7.14 at 8 GPUs |
-| 3 | [Network and RCCL, two nodes](#3-network-and-rccl-two-nodes-our-nodes-only) | our nodes only: vs line rate; 7.2.4 vs 7.14 | 98% of line rate per rail; collectives 92–95% of 400 GB/s |
-| 4 | [Primus training](#4-primus-megatron-llama2-7b-training) | ours vs amd-cloud, same image | the same (0.99–1.04×) |
-| 5 | [Megatron-LM GPT-15.6B](#5-megatron-lm-gpt-156b-megatron-ref) | our nodes only (no amd-cloud run) | 578 / 573 TF/s/GPU |
-| 6 | [ATOM serving](#6-atom-serving-llama-31-70b-qwen3-8b) | ours vs amd-cloud, same images | ours faster below 256 users (1.07–1.34×), equal at 256 |
-| 7 | [Kimi-K3](#7-kimi-k3-inference) | ours vs amd-cloud (ATOM, same images); vLLM recipe vs ATOM | the same up to 128 users; recipe faster at low load |
+| 2 | [RVS (ROCm Validation Suite) GEMM](#2-rvs-rocm-validation-suite-gemm-tflops) | ours 7.14 vs amd-cloud 7.14; ours 7.2.4 vs ours 7.14 | almost the same as amd-cloud; 7.2.4 = 7.14 except fp4 (and fp6/bf6 −3%) |
+| 3 | [RCCL, one node](#3-rccl-one-node) | ours 7.14 vs amd-cloud 7.14; ours 7.2.4 vs ours 7.14 | almost the same as amd-cloud; 7.2.4 = 7.14 at 8 GPUs |
+| 4 | [Network and RCCL, two nodes](#4-network-and-rccl-two-nodes-our-nodes-only) | our nodes only: vs line rate; 7.2.4 vs 7.14 | 98% of line rate per rail; collectives 92–95% of 400 GB/s |
+| 5 | [Primus training](#5-primus-megatron-llama2-7b-training) | ours vs amd-cloud, same image | the same (0.99–1.04×) |
+| 6 | [Megatron-LM GPT-15.6B](#6-megatron-lm-gpt-156b-megatron-ref) | our nodes only (no amd-cloud run) | 578 / 573 TF/s/GPU |
+| 7 | [ATOM serving](#7-atom-serving-llama-31-70b-qwen3-8b) | ours vs amd-cloud, same images | ours faster below 256 users (1.07–1.34×), equal at 256 |
+| 8 | [Kimi-K3](#8-kimi-k3-inference) | ours vs amd-cloud (ATOM, same images); vLLM recipe vs ATOM | the same up to 128 users; recipe faster at low load |
 
 ---
 
-## 1. RVS (ROCm Validation Suite), GEMM TFLOPS
+## 1. Quick summary
+
+**Our nodes vs amd-cloud (same ROCm 7.14, same container images):** RVS GEMM, single-node RCCL, Primus training and Kimi-K3 with ATOM up to 128 users are almost the same (within a few percent).
+
+**Different:** ATOM serving of Llama-3.1-70B and Qwen3-8B is 7–34% faster on our nodes below 256 users (host side, not the GPUs); Kimi-K3 with ATOM is 5–26% faster from 256 users up; at 5 GPUs, RCCL gather and scatter differ by ≈10%.
+
+**Our nodes, ROCm 7.2.4 vs 7.14:**
+
+**Same:** RVS for all precisions except fp4 and fp6/bf6; RCCL at 8 GPUs in one node, and the ring collectives across two nodes (within ±2%).
+
+**Different:** fp4 is 1.28× faster per GPU on 7.14, but 0.67× when one RVS process drives all 8 GPUs; fp6/bf6 are 3% slower on 7.14; RCCL alltoallv at 5 GPUs is 2× faster on 7.14; across two nodes alltoall is 0.86× and sendrecv 1.12× on 7.14.
+
+## 2. RVS (ROCm Validation Suite), GEMM TFLOPS
 
 **Compared: (a) our nodes on ROCm 7.14 vs amd-cloud on ROCm 7.14; (b) our nodes, ROCm 7.2.4 vs ROCm 7.14.** Same test (gst, hipBLASLt), same configs, 1 and 8 GPUs. Detail: [vs-amd-cloud/rvs.md](vs-amd-cloud/rvs.md), [ubuntu/rocm.md](ubuntu/rocm.md).
 
@@ -46,7 +58,7 @@ Detail: [`ubuntu/`](ubuntu/README.md) (our nodes only), [`vs-amd-cloud/`](vs-amd
 
 Headline on our nodes (ROCm 7.2.4, 8 GPUs, node6100): fp8 30.3 PF, bf8 26.9 PF, fp4 25.6 PF, bf16 13.6 PF, fp64 617 TF; scaling 1 → 8 GPUs is linear (99–104%).
 
-## 2. RCCL, one node
+## 3. RCCL, one node
 
 **Compared: (a) our nodes on ROCm 7.14 vs amd-cloud on ROCm 7.14; (b) our nodes, ROCm 7.2.4 vs ROCm 7.14.** rccl-tests, 2–8 GPUs inside one node (XGMI). Detail: [vs-amd-cloud/rccl.md](vs-amd-cloud/rccl.md), [ubuntu/rccl.md](ubuntu/rccl.md), [ubuntu/rocm.md](ubuntu/rocm.md).
 
@@ -61,7 +73,7 @@ Headline on our nodes (ROCm 7.2.4, 8 GPUs, node6100): fp8 30.3 PF, bf8 26.9 PF, 
 
 Use 1, 2, 4 or 8 GPUs per node for collective-heavy work: with 5–7 GPUs busbw drops to ≈47 GB/s (a known partial-mesh effect, same on amd-cloud).
 
-## 3. Network and RCCL, two nodes (our nodes only)
+## 4. Network and RCCL, two nodes (our nodes only)
 
 **Compared: our nodes only — measured bandwidth vs the network's line rate, and ROCm 7.2.4 vs ROCm 7.14.** amd-cloud was a single node, so there is nothing to compare there. node6100 + node6101, 8 × 400G Pollara RoCEv2 rails per node = 400 GB/s per node. Detail: [ubuntu/net.md](ubuntu/net.md), [ubuntu/rccl_2node.md](ubuntu/rccl_2node.md), [ubuntu/rocm.md](ubuntu/rocm.md).
 
@@ -88,7 +100,7 @@ Use 1, 2, 4 or 8 GPUs per node for collective-heavy work: with 5–7 GPUs busbw 
 |---|---|---|
 | Collectives | all_reduce, all_gather, reduce_scatter, broadcast within ±2% (≈365–381 GB/s) | alltoall 0.86× on 7.14 (77 vs 90 GB/s); sendrecv 1.12× (32 vs 29 GB/s) |
 
-## 4. Primus (Megatron llama2-7B training)
+## 5. Primus (Megatron llama2-7B training)
 
 **Compared: our nodes vs amd-cloud, same Primus v26.5 image (same digest).** llama2-7B BF16, 1–8 GPUs. Detail: [vs-amd-cloud/primus.md](vs-amd-cloud/primus.md), [ubuntu/primus.md](ubuntu/primus.md).
 
@@ -97,7 +109,7 @@ Use 1, 2, 4 or 8 GPUs per node for collective-heavy work: with 5–7 GPUs busbw 
 | Setup | image, model, batch sizes, 1–8 GPUs | apptainer + persistent overlay instead of docker |
 | Result | **compute TF/s/GPU 0.99–1.04×** at every N (8 GPUs: 1,170 / 1,135 vs 1,135); GEMM microbench 0.97–1.05× | wall-clock TF/s lower (≈170–270 vs ≈295–375): it includes container start and a one-time extension build, not GPU speed |
 
-## 5. Megatron-LM GPT-15.6B (megatron-ref)
+## 6. Megatron-LM GPT-15.6B (megatron-ref)
 
 **Compared: our nodes only** — amd-cloud has no comparable run. 8 GPUs, Megatron-LM v26.1 image. Detail: [ubuntu/megatron_ref.md](ubuntu/megatron_ref.md).
 
@@ -107,7 +119,7 @@ Use 1, 2, 4 or 8 GPUs per node for collective-heavy work: with 5–7 GPUs busbw 
 
 For context only: Dell Cloud MI355X reached 790.4 with the same model; ours is ≈0.73× of that, with fused RoPE turned off (it crashes on gfx950).
 
-## 6. ATOM serving (Llama-3.1-70B, Qwen3-8B)
+## 7. ATOM serving (Llama-3.1-70B, Qwen3-8B)
 
 **Compared: our nodes vs amd-cloud, same ATOM images (same digests), same models and workloads, 1–256 users.** Ratio = ours / amd-cloud. Detail: [vs-amd-cloud/atom.md](vs-amd-cloud/atom.md), [ubuntu/atom.md](ubuntu/atom.md).
 
@@ -119,7 +131,7 @@ For context only: Dell Cloud MI355X reached 790.4 with the same model; ours is �
 - At 256 users both are equal (1.00–1.04×), where the GPUs are the limit.
 - The gain is largest at low load, where host overhead matters, so it points to the host (newer OS/kernel, CPU settings), not the GPUs. Both of our nodes agree within 1%.
 
-## 7. Kimi-K3 inference
+## 8. Kimi-K3 inference
 
 **Compared: (a) our nodes vs amd-cloud with ATOM, same images; (b) on our nodes, AMD's vLLM recipe vs the best ATOM result.** ISL/OSL 1024/1024, 8 GPUs (TP8). Detail: [vs-amd-cloud/kimi.md](vs-amd-cloud/kimi.md), [ubuntu/kimi.md](ubuntu/kimi.md).
 
