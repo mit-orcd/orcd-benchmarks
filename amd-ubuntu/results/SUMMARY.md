@@ -14,7 +14,7 @@ Detail: [`ubuntu/`](ubuntu/README.md) (our nodes only), [`vs-amd-cloud/`](vs-amd
 
 | # | Benchmark | Compared | Result |
 |---|---|---|---|
-| 2 | [RVS (ROCm Validation Suite) GEMM](#2-rvs-rocm-validation-suite-gemm-tflops) | ours 7.14 vs amd-cloud 7.14; ours 7.2.4 vs ours 7.14 | almost the same as amd-cloud; 7.2.4 = 7.14 except fp4 (and fp6/bf6 −3%) |
+| 2 | [RVS (ROCm Validation Suite) GEMM](#2-rvs-rocm-validation-suite-gemm-tflops) | ours 7.14 vs amd-cloud 7.14; ours 7.2.4 vs ours 7.14 | almost the same as amd-cloud; 7.2.4 = 7.14 except fp4 |
 | 3 | [RCCL, one node](#3-rccl-one-node) | ours 7.14 vs amd-cloud 7.14; ours 7.2.4 vs ours 7.14 | almost the same as amd-cloud; 7.2.4 = 7.14 at 8 GPUs |
 | 4 | [Network and RCCL, two nodes](#4-network-and-rccl-two-nodes-our-nodes-only) | our nodes only: vs line rate; 7.2.4 vs 7.14 | 98% of line rate per rail; collectives 92–95% of 400 GB/s |
 | 5 | [Primus training](#5-primus-megatron-llama2-7b-training) | ours vs amd-cloud, same image | the same (0.99–1.04×) |
@@ -28,13 +28,13 @@ Detail: [`ubuntu/`](ubuntu/README.md) (our nodes only), [`vs-amd-cloud/`](vs-amd
 
 **Our nodes vs amd-cloud (same ROCm 7.14, same container images):** RVS GEMM, single-node RCCL, Primus training and Kimi-K3 with ATOM up to 128 users are almost the same (within a few percent).
 
-**Different:** ATOM serving of Llama-3.1-70B and Qwen3-8B is 7–34% faster on our nodes below 256 users (host side, not the GPUs); Kimi-K3 with ATOM is 5–26% faster from 256 users up; at 5 GPUs, RCCL gather and scatter differ by ≈10%.
+**Different:** ATOM serving of Llama-3.1-70B and Qwen3-8B is 7–34% faster on our nodes below 256 users (host side, not the GPUs); Kimi-K3 with ATOM is 5–26% faster from 256 users up; at 5 GPUs, RCCL gather is 6–10% slower and scatter 9–10% faster on our nodes than on amd-cloud.
 
 **Our nodes, ROCm 7.2.4 vs 7.14:**
 
-**Same:** RVS for all precisions except fp4 and fp6/bf6; RCCL at 8 GPUs in one node, and the ring collectives across two nodes (within ±2%).
+**Same:** RVS for all precisions except fp4 (within ±3%); RCCL at 8 GPUs in one node, and the ring collectives across two nodes (within ±2%).
 
-**Different:** fp4 is 1.28× faster per GPU on 7.14, but 0.67× when one RVS process drives all 8 GPUs; fp6/bf6 are 3% slower on 7.14; RCCL alltoallv at 5 GPUs is 2× faster on 7.14; across two nodes alltoall is 0.86× and sendrecv 1.12× on 7.14.
+**Different:** with fp4 on 1 GPU, ROCm 7.14 is 1.28× faster than 7.2.4, but when one RVS process drives all 8 GPUs, 7.14 is slower than 7.2.4 (0.67×, i.e. 33% slower); RCCL alltoallv at 5 GPUs is 2× faster on 7.14 than on 7.2.4; across two nodes, alltoall is 14% slower and sendrecv 12% faster on 7.14 than on 7.2.4.
 
 ## 2. RVS (ROCm Validation Suite), GEMM TFLOPS
 
@@ -46,7 +46,7 @@ Detail: [`ubuntu/`](ubuntu/README.md) (our nodes only), [`vs-amd-cloud/`](vs-amd
 
 | | Same | Different |
 |---|---|---|
-| Precisions | bf16, bf8, fp8, fp16, fp32, fp64: within ±2% | fp4 (table); fp6/bf6 ≈3% lower on 7.14 |
+| Precisions | all except fp4: within ±3% (bf16, bf8, fp8, fp16, fp32, fp64 ±2%; fp6/bf6 −3%) | fp4 (table) |
 
 | fp4 TFLOPS per GPU (node6100 / node6101) | ROCm 7.2.4 | ROCm 7.14 | 7.14 / 7.2.4 |
 |---|---:|---:|---:|
