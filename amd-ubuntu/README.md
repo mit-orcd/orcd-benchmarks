@@ -103,6 +103,13 @@ Each driver ends by running its analysis into `results/<node>/`:
 
 Raw logs (`STATE.txt` per driver run, per-test logs) are in `logs/<node>/<part>/`.
 
+**Start with [`results/SUMMARY.md`](results/SUMMARY.md)**: a one-page summary of all results, one
+section per benchmark, each saying what is compared with what (our nodes vs amd-cloud on the same
+ROCm 7.14, our ROCm 7.2.4 vs 7.14, two-node network/RCCL on our nodes). It is hand-written in
+`results/analysis/SUMMARY.md` and copied by `report.py`, like the "Analysis" sections of the other
+reports (`results/analysis/<set>/<report>.md`). The B200 comparison is in
+[`results/mi355x-vs-b200.md`](results/mi355x-vs-b200.md).
+
 `report.py` turns those into two md files per benchmark, re-run by `auto_run.sh` after every stage:
 
 - [`results/ubuntu/`](results/ubuntu/README.md): amd-ubuntu only, as if no other system existed
@@ -110,10 +117,7 @@ Raw logs (`STATE.txt` per driver run, per-test logs) are in `logs/<node>/<part>/
   ATOM at each concurrency).
 - [`results/vs-amd-cloud/`](results/vs-amd-cloud/README.md): side by side with amd-cloud (Kimi-K3:
   same image digests apple-to-apple, and the recipe vs amd-cloud's best ATOM result).
-  Start with [`results/vs-amd-cloud/SUMMARY.md`](results/vs-amd-cloud/SUMMARY.md): one section per
-  benchmark on what is the same and what differs. It is hand-written in
-  `results/analysis/vs-amd-cloud/SUMMARY.md` and copied by `report.py`, like the "Analysis"
-  sections of the other reports (`results/analysis/<set>/<report>.md`).
+
 
 The per-node analyzer reports in `results/<node>/` are the ported amd-cloud analyzers; their system
 strings are relabelled but some fixed narrative still describes the amd-cloud campaign, so read the

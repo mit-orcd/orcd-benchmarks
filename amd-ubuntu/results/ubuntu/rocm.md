@@ -1,6 +1,6 @@
 # amd-ubuntu — Host ROCm 7.2.4 vs ROCm 7.14 (RVS (ROCm Validation Suite), RCCL)
 
-Generated 2026-10-07 20:37 by `report.py`.
+Generated 2026-10-07 20:46 by `report.py`.
 
 System: node6100 and node6101, each 8 × AMD Instinct MI355X (gfx950), 2 × EPYC 9575F, 2.2 TiB RAM, Ubuntu 24.04.5, amdgpu 6.19.14, host ROCm 7.2.4 for RVS and rccl-tests, containers under apptainer (Primus, Megatron-LM, ATOM). Nodes linked by 8 × 400G AMD Pollara (ionic) RoCEv2 rails.
 

@@ -673,18 +673,21 @@ def main():
     for f, title, fn, a in C:
         write(OUT_C / f, title, SYSTEM_C, sections("vs-amd-cloud", f, fn, a))
     links = lambda lst: [f"- [{t}]({f})" for f, t, *_ in lst]
+    # hand-written one-page summary of all results (what vs what, per benchmark):
+    # results/analysis/SUMMARY.md -> results/SUMMARY.md
+    summ = ROOT / "analysis" / "SUMMARY.md"
+    if summ.exists():
+        (ROOT / "SUMMARY.md").write_text(summ.read_text())
+    (OUT_C / "SUMMARY.md").unlink(missing_ok=True)      # was here before 2026-10-07
+    top = (["- [**Summary of all results (what vs what, per benchmark)**](../SUMMARY.md)"]
+           if summ.exists() else [])
     write(OUT_U / "README.md", "amd-ubuntu benchmark results", SYSTEM_U,
-          [("Status", status()), ("Reports", links(U)),
+          [("Status", status()), ("Reports", top + links(U)),
            ("Raw", ["Per-node analyzer reports, CSVs and plots: `results/<node>/`; Kimi-K3 per image set: "
                     "`results/<node>/kimi-<set>/`; logs: `logs/<node>/`."])])
-    # hand-written one-page summary (same vs different, per benchmark), kept in results/analysis/
-    summ = ROOT / "analysis" / "vs-amd-cloud" / "SUMMARY.md"
-    if summ.exists():
-        (OUT_C / "SUMMARY.md").write_text(summ.read_text())
     write(OUT_C / "README.md", "amd-ubuntu vs amd-cloud", SYSTEM_C,
           [("Status", status()),
-           ("Reports", (["- [**Summary: what is the same and what differs, per benchmark**](SUMMARY.md)"]
-                        if summ.exists() else []) + links(C)),
+           ("Reports", top + links(C)),
            ("Not compared", ["RDMA per rail and 2-node RCCL: amd-cloud was a single node. See "
                              "[`../ubuntu/net.md`](../ubuntu/net.md), [`../ubuntu/rccl_2node.md`](../ubuntu/rccl_2node.md)."])])
     old = ROOT / "COMPARISON.md"
