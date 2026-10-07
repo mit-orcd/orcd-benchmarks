@@ -75,19 +75,21 @@ From `../cuBLASLt/summary.md` (separate benchmark: `../cuBLASLt/job-lt-bench.sh`
 - Nodes: node5802-c1 (NVIDIA B200), node5900-c1 (NVIDIA B300 SXM6 AC)
 - Library: cuBLASLt 13.8.0 (CUDA 13.4 redist, `install.sh`); program `src/lt-bench.c`
 
-### Peak and sustained throughput per GPU (TFLOP/s)
+### Sustained throughput per GPU (TFLOP/s)
 
-Peak = tuned shape, 3 s run after the warm-up. Sustained = tuned shape for 60 s, first 10 s dropped, what a long job gets.
+Sustained = tuned shape for 60 s, first 10 s dropped, what a long job gets.
 
-| Precision | B200 peak | B200 sustained | B300 peak | B300 sustained | peak B300/B200 | sustained B300/B200 |
-|---|---:|---:|---:|---:|---:|---:|
-| FP4 (NVFP4) | 5,734 | 5,708 | 6,883 | 6,877 | **1.20x** | **1.20x** |
-| FP8 (E4M3) | 2,535 | 2,524 | 2,519 | 2,524 | **0.99x** | **1.00x** |
-| BF16 | 1,396 | 1,396 | 1,432 | 1,437 | **1.03x** | **1.03x** |
-| FP16 | 1,323 | 1,322 | 1,332 | 1,333 | **1.01x** | **1.01x** |
-| TF32 | 722 | 720 | 754 | 756 | **1.04x** | **1.05x** |
-| FP64 | 36 | 36 | 1.10 | 1.10 | **0.03x** | **0.03x** |
-| INT8 (TOPS) | 2,935 | 2,931 | 151 | 151 | **0.05x** | **0.05x** |
+| Precision | B200 | B300 | B300 / B200 |
+|---|---:|---:|---:|
+| FP4 (NVFP4) | 5,708 | 6,877 | **1.20x** |
+| FP8 (E4M3) | 2,524 | 2,524 | **1.00x** |
+| BF16 | 1,396 | 1,437 | **1.03x** |
+| FP16 | 1,322 | 1,333 | **1.01x** |
+| TF32 | 720 | 756 | **1.05x** |
+| FP64 | 36 | 1.10 | **0.03x** |
+| INT8 (TOPS) | 2,931 | 151 | **0.05x** |
+
+Peak (tuned shape, 3 s run after the warm-up) is very close to sustained: within 0.5% for every precision on both GPUs.
 
 ### Clocks and power during the sustained run
 
