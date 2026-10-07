@@ -110,6 +110,10 @@ Raw logs (`STATE.txt` per driver run, per-test logs) are in `logs/<node>/<part>/
   ATOM at each concurrency).
 - [`results/vs-amd-cloud/`](results/vs-amd-cloud/README.md): side by side with amd-cloud (Kimi-K3:
   same image digests apple-to-apple, and the recipe vs amd-cloud's best ATOM result).
+  Start with [`results/vs-amd-cloud/SUMMARY.md`](results/vs-amd-cloud/SUMMARY.md): one section per
+  benchmark on what is the same and what differs. It is hand-written in
+  `results/analysis/vs-amd-cloud/SUMMARY.md` and copied by `report.py`, like the "Analysis"
+  sections of the other reports (`results/analysis/<set>/<report>.md`).
 
 The per-node analyzer reports in `results/<node>/` are the ported amd-cloud analyzers; their system
 strings are relabelled but some fixed narrative still describes the amd-cloud campaign, so read the

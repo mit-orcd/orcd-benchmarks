@@ -677,8 +677,14 @@ def main():
           [("Status", status()), ("Reports", links(U)),
            ("Raw", ["Per-node analyzer reports, CSVs and plots: `results/<node>/`; Kimi-K3 per image set: "
                     "`results/<node>/kimi-<set>/`; logs: `logs/<node>/`."])])
+    # hand-written one-page summary (same vs different, per benchmark), kept in results/analysis/
+    summ = ROOT / "analysis" / "vs-amd-cloud" / "SUMMARY.md"
+    if summ.exists():
+        (OUT_C / "SUMMARY.md").write_text(summ.read_text())
     write(OUT_C / "README.md", "amd-ubuntu vs amd-cloud", SYSTEM_C,
-          [("Status", status()), ("Reports", links(C)),
+          [("Status", status()),
+           ("Reports", (["- [**Summary: what is the same and what differs, per benchmark**](SUMMARY.md)"]
+                        if summ.exists() else []) + links(C)),
            ("Not compared", ["RDMA per rail and 2-node RCCL: amd-cloud was a single node. See "
                              "[`../ubuntu/net.md`](../ubuntu/net.md), [`../ubuntu/rccl_2node.md`](../ubuntu/rccl_2node.md)."])])
     old = ROOT / "COMPARISON.md"
