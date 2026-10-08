@@ -1,6 +1,6 @@
 # MI355X (amd-ubuntu) vs NVIDIA B200
 
-Written 2026-10-07, updated 2026-10-08. Every ratio is **MI355X / B200**: above 1 means MI355X is higher. For latency (TPOT) a ratio above 1 means MI355X is **slower**.
+Written 2026-10-07, updated 2026-10-08. Every ratio is **MI355X / B200**: above 1 means MI355X is higher. For latency (TPOT = time per output token) a ratio above 1 means MI355X is **slower**.
 
 $\color{red}{\textsf{Red}}$ = a result far from what the specs on paper predict; each is explained in the **Quick summary** at the end of the file. (Red text renders on GitHub; other viewers show the `$\color{red}...$` code.)
 

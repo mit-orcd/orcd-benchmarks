@@ -8,6 +8,8 @@ Our runs already use this same recipe: vLLM recipe 2 from `amd-kimi-k3-recipe.pd
 
 Total tok/s per GPU = total_token_throughput / 8 (the PDF's metric). Ours: node6100. Apple-to-apple: same image, server flags and client settings; different machine.
 
+TPOT = time per output token.
+
 | C | ours total tok/s/GPU | PDF total tok/s/GPU | ours / PDF | out tok/s | TTFT med ms | TPOT med ms |
 |---:|---:|---:|---:|---:|---:|---:|
 | 1 | 487 | 874 | **0.56x** | 34.4 | 9,522 | 19.26 |

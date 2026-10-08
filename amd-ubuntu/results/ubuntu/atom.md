@@ -1,6 +1,6 @@
 # amd-ubuntu — ATOM LLM serving (Qwen3-8B, Llama-3.1-70B)
 
-Generated 2026-10-08 21:41 by `report.py`.
+Generated 2026-10-08 21:47 by `report.py`.
 
 System: node6100 and node6101, each 8 × AMD Instinct MI355X (gfx950), 2 × EPYC 9575F, 2.2 TiB RAM, Ubuntu 24.04.5, amdgpu 6.19.14, host ROCm 7.2.4 for RVS (ROCm Validation Suite) and rccl-tests, containers under apptainer (Primus, Megatron-LM, ATOM). Nodes linked by 8 × 400G AMD Pollara (ionic) RoCEv2 rails.
 
@@ -8,7 +8,7 @@ System: node6100 and node6101, each 8 × AMD Instinct MI355X (gfx950), 2 × EPYC
 ## Analysis
 
 - **node6100 and node6101 agree within 1%** at every concurrency for both models.
-- Llama-3.1-70B-FP8 (TP 8): ≈135 tok/s at 1 user, ≈9,700 tok/s at 256; TPOT 7.3 ms at 1 user.
+- Llama-3.1-70B-FP8 (TP 8): ≈135 tok/s at 1 user, ≈9,700 tok/s at 256; TPOT (time per output token) 7.3 ms at 1 user.
 - Qwen3-8B-FP8: ≈180 tok/s at 1 user, ≈15,000 tok/s at 256; TTFT stays ≈30 ms up to 64 users.
 - Throughput rises smoothly with concurrency and TTFT/TPOT grow only at 128–256 users; no errors or outliers.
 

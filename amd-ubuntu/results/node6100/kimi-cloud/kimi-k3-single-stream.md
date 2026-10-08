@@ -3,7 +3,7 @@
 Source run: `kimi_single_stream_20261002_103749`. Low-concurrency sweep across kernel-path configurations,
 all on the MAD-pinned image, TP=8, ISL/OSL 1024/1024.
 
-**Primary metric is per-request tok/s (`1000 / median TPOT`)** — the decode rate one user
+**Primary metric is per-request tok/s (`1000 / median TPOT`, TPOT = time per output token)** — the decode rate one user
 experiences — not aggregate throughput. This is the only experiment in the Kimi-K3 set
 that targets it; every other one measured aggregate tok/s, where batching dominates.
 

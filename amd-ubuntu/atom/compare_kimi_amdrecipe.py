@@ -144,17 +144,23 @@ def main():
               "DCP 8 + CPU KV offload above, server re-tuned per C). ATOM: best of base / max-num-seqs 256 / 512 "
               "(`results/node6100/kimi-cloud/`). Ratios are vLLM recipe 2 / the other recipe: tok/s above 1 and TPOT below 1 favour vLLM recipe 2; "
               "bold = more than 5%.", "",
-              "| C | tok/s (vLLM recipe 2) | tok/s (vLLM recipe 1) | tok/s (ATOM, config) | tok/s ratio (recipe 2 / recipe 1) | tok/s ratio (recipe 2 / ATOM) | TPOT ms (vLLM recipe 2) | TPOT ms (vLLM recipe 1) | TPOT ms (ATOM) | TPOT ratio (recipe 2 / recipe 1) | TPOT ratio (recipe 2 / ATOM) | TTFT ms (vLLM recipe 2) |",
-              "|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|"]
-        for c in sorted(set(b) | set(rec) | set(atom)):
-            x, y, z = b.get(c, {}), rec.get(c, {}), atom.get(c, {})
-            if not x:
-                continue
+              "### Throughput (output tokens per second, higher is better)", "",
+              "| Users (C) | vLLM recipe 2 | vLLM recipe 1 | ATOM (config) | recipe 2 / recipe 1 | recipe 2 / ATOM |",
+              "|---:|---:|---:|---:|---:|---:|"]
+        rows = [c for c in sorted(set(b) | set(rec) | set(atom)) if b.get(c)]
+        for c in rows:
+            x, y, z = b[c], rec.get(c, {}), atom.get(c, {})
             xt, yt, zt = num(x, "tps"), num(y, "tps"), num(z, "tps")
-            xp, yp, zp = num(x, "tpot"), num(y, "tpot"), num(z, "tpot")
             C.append(f"| {c} | {f(xt)} | {f(yt)} | {f(zt)}{' (' + z['cfg'] + ')' if z else ''} | "
-                     f"{ratio(xt, yt)} | {ratio(xt, zt)} | {f(xp,2)} | {f(yp,2)} | {f(zp,2)} | "
-                     f"{ratio(xp, yp)} | {ratio(xp, zp)} | {f(num(x,'ttft'))} |")
+                     f"{ratio(xt, yt)} | {ratio(xt, zt)} |")
+        C += ["", "### Latency (median, ms, lower is better)", "",
+              "| Users (C) | TPOT (vLLM recipe 2) | TPOT (vLLM recipe 1) | TPOT (ATOM) | TPOT recipe 2 / recipe 1 | TPOT recipe 2 / ATOM | TTFT (vLLM recipe 2) |",
+              "|---:|---:|---:|---:|---:|---:|---:|"]
+        for c in rows:
+            x, y, z = b[c], rec.get(c, {}), atom.get(c, {})
+            xp, yp, zp = num(x, "tpot"), num(y, "tpot"), num(z, "tpot")
+            C.append(f"| {c} | {f(xp,2)} | {f(yp,2)} | {f(zp,2)} | {ratio(xp, yp)} | {ratio(xp, zp)} | "
+                     f"{f(num(x,'ttft'))} |")
         C += ["", "C = 256 is above vLLM recipe 2's `max-num-seqs 128`, so half the requests queue; it is kept to line up with ATOM.", ""]
 
     L += ["## Is this apple-to-apple?", "",
@@ -173,6 +179,8 @@ def main():
         C += CMP_NOTES
         OUT_CMP.write_text("\n".join(C) + "\n")
         print(f"wrote {OUT_CMP}")
+    import subprocess, sys
+    subprocess.run([sys.executable, "/orcd/data/orcd/022/benchmarks/amd-ubuntu/common/expand_terms.py", str(OUT), str(OUT_CMP)], check=False)
 
 
 if __name__ == "__main__":

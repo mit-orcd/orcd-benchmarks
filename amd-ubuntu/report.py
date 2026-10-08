@@ -694,6 +694,10 @@ def main():
     if old.exists():
         old.unlink()   # superseded by vs-amd-cloud/
     print(f"wrote {OUT_U}/ and {OUT_C}/")
+    # spell out TPOT where it first appears in each results md file
+    import subprocess
+    subprocess.run([sys.executable, "/orcd/data/orcd/022/benchmarks/amd-ubuntu/common/expand_terms.py",
+                    "/orcd/data/orcd/022/benchmarks/amd-ubuntu/results"], check=False)
 
 
 if __name__ == "__main__":

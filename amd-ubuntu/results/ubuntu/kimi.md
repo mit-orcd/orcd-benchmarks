@@ -1,6 +1,6 @@
 # amd-ubuntu — Kimi-K3 serving: ATOM and vLLM recipe 1
 
-Generated 2026-10-08 21:41 by `report.py`.
+Generated 2026-10-08 21:47 by `report.py`.
 
 System: node6100 and node6101, each 8 × AMD Instinct MI355X (gfx950), 2 × EPYC 9575F, 2.2 TiB RAM, Ubuntu 24.04.5, amdgpu 6.19.14, host ROCm 7.2.4 for RVS (ROCm Validation Suite) and rccl-tests, containers under apptainer (Primus, Megatron-LM, ATOM). Nodes linked by 8 × 400G AMD Pollara (ionic) RoCEv2 rails.
 
@@ -9,7 +9,7 @@ System: node6100 and node6101, each 8 × AMD Instinct MI355X (gfx950), 2 × EPYC
 
 - **Model weights**: complete copy at `/scratch/Kimi-K3` on both nodes (verified before the runs).
 - **ATOM** (same images as amd-cloud): ≈45 tok/s at 1 user up to ≈2,600 tok/s at 256 (best config `maxseqs`).
-- **vLLM recipe 1** (DSpark speculative decoding up to C=14, DCP 8 + CPU KV offload above): **1.56× ATOM at 1 user, 1.39× at 4, 1.24× at 8**, with 19–29% lower TPOT; 1.05× at 64, about equal at 128–256 (0.97× at 256). The recipe is the better choice for latency-sensitive, low-concurrency serving; ATOM is equal or slightly better at high concurrency.
+- **vLLM recipe 1** (DSpark speculative decoding up to C=14, DCP 8 + CPU KV offload above): **1.56× ATOM at 1 user, 1.39× at 4, 1.24× at 8**, with 19–29% lower TPOT (time per output token); 1.05× at 64, about equal at 128–256 (0.97× at 256). The recipe is the better choice for latency-sensitive, low-concurrency serving; ATOM is equal or slightly better at high concurrency.
 - `max-num-seqs 2048` does not fit: each request needs ≈107 GB of cache against a 58 GB KV budget. Not a node problem; the configuration is too large for 8 × MI355X.
 - **vLLM recipe 2** (`amd-kimi-k3-recipe.pdf`: `vllm/vllm-openai-rocm:v0.29.0`, TP8, `max-num-seqs 128`, no speculative decoding; run 2026-10-07/08). Detail: [kimi-amd-recipe.md](kimi-amd-recipe.md).
   - **AMD's own workload (ISL/OSL 128K/1K, node6100) vs AMD's published numbers** (our run uses this same recipe; the published numbers are the PDF's results table): 0.56× at 1 user, 0.73× at 2, 0.82× at 4, then **equal at 8–16 users (1.01×) and 1.07–1.10× better at 32–128**. At high load our nodes match or beat AMD's published result; at 1–4 users they are slower (not explained yet; the PDF's machine and warm-up may differ).

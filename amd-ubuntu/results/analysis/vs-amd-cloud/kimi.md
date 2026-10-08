@@ -1,4 +1,4 @@
-- **ATOM, same images (apple-to-apple): amd-ubuntu matches amd-cloud within ±2% up to 128 users** for every config (TPOT within ±1%), so per-token GPU work is the same on both systems. Differences appear only at high load or in end-to-end throughput:
+- **ATOM, same images (apple-to-apple): amd-ubuntu matches amd-cloud within ±2% up to 128 users** for every config (TPOT, time per output token, within ±1%), so per-token GPU work is the same on both systems. Differences appear only at high load or in end-to-end throughput:
   - 256–512 users: amd-ubuntu 1.05× throughput, 0.94–0.95× TPOT.
   - `max-num-seqs 1024`: amd-ubuntu 1.15–1.26× throughput; TPOT 0.91× at 256 but 1.16–1.17× at 512–1024; not investigated.
   - Single-stream arms at 8 users: 1.14–1.15× tok/s with identical TPOT, so the gain is in prefill/scheduling, not decode.

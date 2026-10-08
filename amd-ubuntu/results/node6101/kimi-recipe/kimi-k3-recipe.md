@@ -3,6 +3,8 @@
 Image: `vllm/vllm-openai-rocm:nightly-rocm100 -> sha256:e76a953fa2c317e5e0913fab946887ae498629c8e57fb6b2dc633dadd4098b61`. TP8 on one node, MXFP4 experts, FP8 KV cache, prefix caching, one server per concurrency point with the recipe's per-point settings (DSpark speculative decoding up to C=14, decode-context-parallel 8 + CPU KV offload above). Workload: random ISL/OSL 1024/1024, `--ignore-eos`, 10×C prompts, `vllm bench serve`.
 Raw logs: `kimi_recipe_20261002_024747, kimi_recipe_20261005_001645, kimi_recipe_20261005_030557`.
 
+TPOT = time per output token.
+
 | C | draft K | max-num-seqs | DCP | KV offload | out tok/s | tok/s per user | TTFT med (ms) | TPOT med (ms) | TPOT p99 (ms) | accept len | completed |
 |---:|---:|---:|---:|---|---:|---:|---:|---:|---:|---:|---:|
 | 1 | 7 | 2 | 1 | no | 71 | 65.1 | 199 | 15.36 | 15.79 | 1.30 | 10 |

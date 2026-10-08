@@ -20,6 +20,8 @@ Both runs use the identical validated recipe flag set; the **only** difference i
 - Baseline (TP-only): `tp_only`
 - EP enabled: `ep`
 
+TPOT = time per output token.
+
 | Concurrency | tok/s TP-only | tok/s EP | EP/TP | TPOT TP-only (ms) | TPOT EP (ms) | TTFT TP-only (ms) | TTFT EP (ms) |
 |---:|---:|---:|---:|---:|---:|---:|---:|
 | 64 | 1,212.5 | 996.1 | **0.82x** | 51.74 | 56.19 | 261.4 | 271.1 |

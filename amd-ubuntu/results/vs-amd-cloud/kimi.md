@@ -1,15 +1,15 @@
 # Kimi-K3: amd-ubuntu vs amd-cloud
 
-Generated 2026-10-08 21:41 by `report.py`.
+Generated 2026-10-08 21:47 by `report.py`.
 
 - **amd-cloud**: one 8 × MI355X node, ROCm 7.14, Ubuntu 22.04.5, docker ([results](../../../amd-benchmarks/amd-cloud/results/SUMMARY.md)).
 - **amd-ubuntu**: node6100 and node6101, 8 × MI355X each, same amdgpu driver and CPUs, host ROCm 7.2.4, Ubuntu 24.04.5, apptainer. Same scripts, analyzers and (for the containers) the same image digests.
-- ratio = amd-ubuntu / amd-cloud; **bold** = more than 5% off. For latency (TTFT, TPOT) below 1 is better.
+- ratio = amd-ubuntu / amd-cloud; **bold** = more than 5% off. For latency (TTFT, TPOT = time per output token) below 1 is better.
 
 
 ## Analysis
 
-- **ATOM, same images (apple-to-apple): amd-ubuntu matches amd-cloud within ±2% up to 128 users** for every config (TPOT within ±1%), so per-token GPU work is the same on both systems. Differences appear only at high load or in end-to-end throughput:
+- **ATOM, same images (apple-to-apple): amd-ubuntu matches amd-cloud within ±2% up to 128 users** for every config (TPOT, time per output token, within ±1%), so per-token GPU work is the same on both systems. Differences appear only at high load or in end-to-end throughput:
   - 256–512 users: amd-ubuntu 1.05× throughput, 0.94–0.95× TPOT.
   - `max-num-seqs 1024`: amd-ubuntu 1.15–1.26× throughput; TPOT 0.91× at 256 but 1.16–1.17× at 512–1024; not investigated.
   - Single-stream arms at 8 users: 1.14–1.15× tok/s with identical TPOT, so the gain is in prefill/scheduling, not decode.

@@ -8,19 +8,35 @@
 - **vLLM recipe 1:** AMD's earlier vLLM (ROCm) recipe for Kimi-K3 from recipes.vllm.ai (`atom/run_kimi_recipe.sh`). Uses DSpark speculative decoding up to 14 users, and DCP 8 with CPU KV-cache offload above; the server is restarted with settings tuned for each load. Detail: [kimi.md](kimi.md).
 - **vLLM recipe 2:** AMD's newer Kimi-K3 recipe from `amd-kimi-k3-recipe.pdf` (2026-10): the stock `vllm/vllm-openai-rocm:v0.29.0` image (its own ROCm 7.2.3) with AMD's AITER kernels, one server for the whole sweep, `max-num-seqs` 128, `max-num-batched-tokens` 4096, no speculative decoding. Detail: [kimi-amd-recipe.md](kimi-amd-recipe.md).
 
-vLLM recipe 2: node6101, range ratio 0.8 and 10 × C prompts like the earlier Kimi runs. vLLM recipe 1: `results/node6101/kimi-recipe/` (DSpark speculative decoding up to C=14, DCP 8 + CPU KV offload above, server re-tuned per C). ATOM: best of base / max-num-seqs 256 / 512 (`results/node6100/kimi-cloud/`). Ratios are vLLM recipe 2 / the other recipe: tok/s above 1 and TPOT below 1 favour vLLM recipe 2; bold = more than 5%.
+vLLM recipe 2: node6101, range ratio 0.8 and 10 × C prompts like the earlier Kimi runs. vLLM recipe 1: `results/node6101/kimi-recipe/` (DSpark speculative decoding up to C=14, DCP 8 + CPU KV offload above, server re-tuned per C). ATOM: best of base / max-num-seqs 256 / 512 (`results/node6100/kimi-cloud/`). Ratios are vLLM recipe 2 / the other recipe: tok/s above 1 and TPOT (time per output token) below 1 favour vLLM recipe 2; bold = more than 5%.
 
-| C | tok/s (vLLM recipe 2) | tok/s (vLLM recipe 1) | tok/s (ATOM, config) | tok/s ratio (recipe 2 / recipe 1) | tok/s ratio (recipe 2 / ATOM) | TPOT ms (vLLM recipe 2) | TPOT ms (vLLM recipe 1) | TPOT ms (ATOM) | TPOT ratio (recipe 2 / recipe 1) | TPOT ratio (recipe 2 / ATOM) | TTFT ms (vLLM recipe 2) |
-|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| 1 | 54 | 71 | 45 (base) | **0.76x** | **1.18x** | 18.15 | 15.36 | 21.76 | **1.18x** | **0.83x** | 186 |
-| 2 | 100 | — | 87 (base) | — | **1.16x** | 19.02 | — | 22.80 | — | **0.83x** | 403 |
-| 4 | 183 | 212 | 153 (base) | **0.86x** | **1.20x** | 20.72 | 18.79 | 25.23 | **1.10x** | **0.82x** | 405 |
-| 8 | 315 | 353 | 285 (base) | **0.89x** | **1.10x** | 23.84 | 22.00 | 27.26 | **1.08x** | **0.87x** | 408 |
-| 16 | 523 | — | 506 (base) | — | 1.03x | 28.48 | — | 30.79 | — | **0.92x** | 410 |
-| 32 | 852 | — | 831 (base) | — | 1.03x | 35.20 | — | 37.51 | — | **0.94x** | 412 |
-| 64 | 1,228 | 1,344 | 1,282 (base) | **0.91x** | 0.96x | 49.67 | 45.56 | 49.05 | **1.09x** | 1.01x | 425 |
-| 128 | 1,735 | 1,865 | 1,845 (max-num-seqs 256) | **0.93x** | **0.94x** | 71.75 | 66.90 | 68.87 | **1.07x** | 1.04x | 450 |
-| 256 | 1,747 | 2,522 | 2,602 (max-num-seqs 256) | **0.69x** | **0.67x** | 71.75 | 100.43 | 98.49 | **0.71x** | **0.73x** | 73,180 |
+### Throughput (output tokens per second, higher is better)
+
+| Users (C) | vLLM recipe 2 | vLLM recipe 1 | ATOM (config) | recipe 2 / recipe 1 | recipe 2 / ATOM |
+|---:|---:|---:|---:|---:|---:|
+| 1 | 54 | 71 | 45 (base) | **0.76x** | **1.18x** |
+| 2 | 100 | — | 87 (base) | — | **1.16x** |
+| 4 | 183 | 212 | 153 (base) | **0.86x** | **1.20x** |
+| 8 | 315 | 353 | 285 (base) | **0.89x** | **1.10x** |
+| 16 | 523 | — | 506 (base) | — | 1.03x |
+| 32 | 852 | — | 831 (base) | — | 1.03x |
+| 64 | 1,228 | 1,344 | 1,282 (base) | **0.91x** | 0.96x |
+| 128 | 1,735 | 1,865 | 1,845 (max-num-seqs 256) | **0.93x** | **0.94x** |
+| 256 | 1,747 | 2,522 | 2,602 (max-num-seqs 256) | **0.69x** | **0.67x** |
+
+### Latency (median, ms, lower is better)
+
+| Users (C) | TPOT (vLLM recipe 2) | TPOT (vLLM recipe 1) | TPOT (ATOM) | TPOT recipe 2 / recipe 1 | TPOT recipe 2 / ATOM | TTFT (vLLM recipe 2) |
+|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 18.15 | 15.36 | 21.76 | **1.18x** | **0.83x** | 186 |
+| 2 | 19.02 | — | 22.80 | — | **0.83x** | 403 |
+| 4 | 20.72 | 18.79 | 25.23 | **1.10x** | **0.82x** | 405 |
+| 8 | 23.84 | 22.00 | 27.26 | **1.08x** | **0.87x** | 408 |
+| 16 | 28.48 | — | 30.79 | — | **0.92x** | 410 |
+| 32 | 35.20 | — | 37.51 | — | **0.94x** | 412 |
+| 64 | 49.67 | 45.56 | 49.05 | **1.09x** | 1.01x | 425 |
+| 128 | 71.75 | 66.90 | 68.87 | **1.07x** | 1.04x | 450 |
+| 256 | 71.75 | 100.43 | 98.49 | **0.71x** | **0.73x** | 73,180 |
 
 C = 256 is above vLLM recipe 2's `max-num-seqs 128`, so half the requests queue; it is kept to line up with ATOM.
 

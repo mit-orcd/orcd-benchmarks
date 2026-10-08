@@ -1,16 +1,16 @@
 # ATOM serving: amd-ubuntu vs amd-cloud
 
-Generated 2026-10-08 21:41 by `report.py`.
+Generated 2026-10-08 21:47 by `report.py`.
 
 - **amd-cloud**: one 8 × MI355X node, ROCm 7.14, Ubuntu 22.04.5, docker ([results](../../../amd-benchmarks/amd-cloud/results/SUMMARY.md)).
 - **amd-ubuntu**: node6100 and node6101, 8 × MI355X each, same amdgpu driver and CPUs, host ROCm 7.2.4, Ubuntu 24.04.5, apptainer. Same scripts, analyzers and (for the containers) the same image digests.
-- ratio = amd-ubuntu / amd-cloud; **bold** = more than 5% off. For latency (TTFT, TPOT) below 1 is better.
+- ratio = amd-ubuntu / amd-cloud; **bold** = more than 5% off. For latency (TTFT, TPOT = time per output token) below 1 is better.
 
 
 ## Analysis
 
 - **Same images and digests; amd-ubuntu is faster than amd-cloud at every concurrency below 256.**
-  - Llama-3.1-70B-FP8: output throughput 1.14–1.34× (largest at 1–8 users), TPOT 0.74–0.88×, TTFT 0.60–0.90× from 8 users up.
+  - Llama-3.1-70B-FP8: output throughput 1.14–1.34× (largest at 1–8 users), TPOT (time per output token) 0.74–0.88×, TTFT 0.60–0.90× from 8 users up.
   - Qwen3-8B-FP8: 1.07–1.16× throughput, TPOT 0.87–0.95×, TTFT 0.55–0.80× (0.27× at 256).
 - At 256 users both systems are equal (1.00–1.04×), where the GPUs are compute-bound.
 - The gain is largest where per-request overhead (CPU, launch latency) matters most, which points at host-side differences (newer OS/kernel, CPU settings) rather than the GPUs.

@@ -33,7 +33,7 @@ hidden 7168; MoE with **896 routed experts, top-16 + 2 shared**, expert hidden
 
 ## 0. Overview — the short version
 
-**§1 Compute** — **2,601.5 tok/s** peak at c=256 (TPOT 98.49 ms, TTFT 434.4 ms). Achieved **437.1 TFLOP/s aggregate = 54.6/GPU = 2.2% of BF16 peak**.
+**§1 Compute** — **2,601.5 tok/s** peak at c=256 (TPOT = time per output token: 98.49 ms, TTFT 434.4 ms). Achieved **437.1 TFLOP/s aggregate = 54.6/GPU = 2.2% of BF16 peak**.
 
 **§2 Memory** — per GPU: **190.4 GB weights** + **57.8 GB KV pool**. KV is 13.5 KB/token — only the 24 MLA layers keep a paged cache; the 69 KDA layers hold fixed recurrent state.
 
