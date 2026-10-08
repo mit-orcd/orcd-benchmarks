@@ -1,10 +1,16 @@
-# amd-ubuntu — Kimi-K3: old recipes vs the new AMD recipe 2026-10
+# amd-ubuntu — Kimi-K3: ATOM vs vLLM recipe 1 vs vLLM recipe 2
 
-**Compared: the new AMD recipe 2026-10 (`amd-kimi-k3-recipe.pdf`, vLLM v0.29.0, no speculative decoding) vs the two old recipes (the vLLM recipe with speculative decoding, and ATOM), all on our nodes, ISL/OSL 1K/1K, 8 GPUs (TP8).** Recipe vs recipe, not hardware. New-recipe results alone: [kimi-amd-recipe.md](kimi-amd-recipe.md).
+**Compared: the three Kimi-K3 serving recipes run on our nodes, all with ISL/OSL 1K/1K on one node of 8 × MI355X (TP8).** Recipe vs recipe, not hardware.
 
-new AMD recipe 2026-10: node6101, range ratio 0.8 and 10 × C prompts like the earlier Kimi runs. Old vLLM recipe: `results/node6101/kimi-recipe/` (DSpark speculative decoding up to C=14, DCP 8 + CPU KV offload above, server re-tuned per C). ATOM: best of base / max-num-seqs 256 / 512 (`results/node6100/kimi-cloud/`). Ratios are new AMD recipe 2026-10 / old recipe: tok/s above 1 and TPOT below 1 favour the new AMD recipe 2026-10; bold = more than 5%.
+## The three recipes
 
-| C | new tok/s | old vLLM recipe tok/s | ATOM tok/s (config) | new / old vLLM recipe | new / ATOM | new TPOT ms | old vLLM recipe TPOT ms | ATOM TPOT ms | TPOT new / old vLLM recipe | TPOT new / ATOM | new TTFT ms |
+- **ATOM:** AMD's ATOM inference engine (not vLLM), run with the same container images (same digests) as amd-cloud and the MAD benchmark recipe. Base setting `max-num-seqs` 64; variants with 256 and 512 for heavy load. No speculative decoding. Detail: [kimi.md](kimi.md).
+- **vLLM recipe 1:** AMD's earlier vLLM (ROCm) recipe for Kimi-K3 from recipes.vllm.ai (`atom/run_kimi_recipe.sh`). Uses DSpark speculative decoding up to 14 users, and DCP 8 with CPU KV-cache offload above; the server is restarted with settings tuned for each load. Detail: [kimi.md](kimi.md).
+- **vLLM recipe 2:** AMD's newer Kimi-K3 recipe from `amd-kimi-k3-recipe.pdf` (2026-10): the stock `vllm/vllm-openai-rocm:v0.29.0` image (its own ROCm 7.2.3) with AMD's AITER kernels, one server for the whole sweep, `max-num-seqs` 128, `max-num-batched-tokens` 4096, no speculative decoding. Detail: [kimi-amd-recipe.md](kimi-amd-recipe.md).
+
+vLLM recipe 2: node6101, range ratio 0.8 and 10 × C prompts like the earlier Kimi runs. vLLM recipe 1: `results/node6101/kimi-recipe/` (DSpark speculative decoding up to C=14, DCP 8 + CPU KV offload above, server re-tuned per C). ATOM: best of base / max-num-seqs 256 / 512 (`results/node6100/kimi-cloud/`). Ratios are vLLM recipe 2 / the other recipe: tok/s above 1 and TPOT below 1 favour vLLM recipe 2; bold = more than 5%.
+
+| C | recipe 2 tok/s | recipe 1 tok/s | ATOM tok/s (config) | recipe 2 / recipe 1 | recipe 2 / ATOM | recipe 2 TPOT ms | recipe 1 TPOT ms | ATOM TPOT ms | TPOT recipe 2 / recipe 1 | TPOT recipe 2 / ATOM | recipe 2 TTFT ms |
 |---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | 1 | 54 | 71 | 45 (base) | **0.76x** | **1.18x** | 18.15 | 15.36 | 21.76 | **1.18x** | **0.83x** | 186 |
 | 2 | 100 | — | 87 (base) | — | **1.16x** | 19.02 | — | 22.80 | — | **0.83x** | 403 |
@@ -16,16 +22,16 @@ new AMD recipe 2026-10: node6101, range ratio 0.8 and 10 × C prompts like the e
 | 128 | 1,735 | 1,865 | 1,845 (max-num-seqs 256) | **0.93x** | **0.94x** | 71.75 | 66.90 | 68.87 | **1.07x** | 1.04x | 450 |
 | 256 | 1,747 | 2,522 | 2,602 (max-num-seqs 256) | **0.69x** | **0.67x** | 71.75 | 100.43 | 98.49 | **0.71x** | **0.73x** | 73,180 |
 
-C = 256 is above the new AMD recipe 2026-10's `max-num-seqs 128`, so half the requests queue; it is kept to line up with ATOM.
+C = 256 is above vLLM recipe 2's `max-num-seqs 128`, so half the requests queue; it is kept to line up with ATOM.
 
 ## Is this apple-to-apple?
 
-**No, recipe vs recipe.** Same hardware, model, ISL/OSL, concurrency and prompt count, but each recipe has its own vLLM/ATOM version and server settings (the old vLLM recipe uses speculative decoding, the new AMD recipe 2026-10 does not; ATOM is a different engine).
+**No, recipe vs recipe.** Same hardware, model, ISL/OSL, concurrency and prompt count, but each recipe has its own vLLM/ATOM version and server settings (vLLM recipe 1 uses speculative decoding, vLLM recipe 2 does not; ATOM is a different engine).
 
 ## Reading
 
-- **Old vLLM recipe vs new AMD recipe 2026-10: the old vLLM recipe is faster at every load where both ran** (new / old 0.76x at 1 user, 0.86–0.93x at 4–128, 0.69x at 256); its speculative decoding gives the largest gain at low load.
-- **ATOM vs new AMD recipe 2026-10: the new AMD recipe 2026-10 is faster up to 32 users** (1.10–1.20x at 1–8 users, 1.03x at 16–32) and slightly slower at 64–128 (0.94–0.96x).
-- **At 256 users the new AMD recipe 2026-10 falls behind both (0.67–0.69x)**: its `max-num-seqs 128` makes half the requests wait.
-- **Fastest per load on our nodes:** old vLLM recipe at 1, 4, 8, 64 and 128 users; new AMD recipe 2026-10 at 2, 16 and 32 (the old vLLM recipe was not run there); ATOM (`max-num-seqs` 256–512) at 256 users and above.
-- **Suggested setup:** the old vLLM recipe for interactive use (1–128 users); ATOM with `max-num-seqs` 256–512 for 256 users or more. The new AMD recipe 2026-10 is a good single setting for 2–32 users without speculative decoding; raise its `max-num-seqs` above 128 for heavier load.
+- **vLLM recipe 1 vs vLLM recipe 2: vLLM recipe 1 is faster at every load where both ran** (recipe 2 / recipe 1: 0.76x at 1 user, 0.86–0.93x at 4–128, 0.69x at 256); its speculative decoding gives the largest gain at low load.
+- **ATOM vs vLLM recipe 2: vLLM recipe 2 is faster up to 32 users** (1.10–1.20x at 1–8 users, 1.03x at 16–32) and slightly slower at 64–128 (0.94–0.96x).
+- **At 256 users vLLM recipe 2 falls behind both (0.67–0.69x)**: its `max-num-seqs 128` makes half the requests wait.
+- **Fastest per load on our nodes:** vLLM recipe 1 at 1, 4, 8, 64 and 128 users; vLLM recipe 2 at 2, 16 and 32 (vLLM recipe 1 was not run there); ATOM (`max-num-seqs` 256–512) at 256 users and above.
+- **Suggested setup:** vLLM recipe 1 for interactive use (1–128 users); ATOM with `max-num-seqs` 256–512 for 256 users or more. vLLM recipe 2 is a good single setting for 2–32 users without speculative decoding; raise its `max-num-seqs` above 128 for heavier load.

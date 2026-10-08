@@ -7,7 +7,7 @@
 #   isl128k  AMD's own workload: ISL/OSL 128000/1000, range ratio 0.2, C = 1..128, 10*C prompts
 #            -> reproduces the PDF's table (874-1235 total tok/s/GPU).
 #   isl1k    same server, our workload: ISL/OSL 1024/1024, range ratio 0.8, C = 1..256, 10*C prompts
-#            -> compares with the current vLLM recipe (atom/run_kimi_recipe.sh) and ATOM.
+#            -> compares with the current vLLM recipe 1 (atom/run_kimi_recipe.sh) and ATOM.
 #
 #   ./launch.sh node6100 atom/run_kimi_amdrecipe.sh isl128k
 #   ./launch.sh node6101 atom/run_kimi_amdrecipe.sh isl1k

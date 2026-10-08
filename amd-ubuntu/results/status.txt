@@ -6,19 +6,19 @@ comes from root kernel threads, not jobs.)
 
 Runs
 ----
-1. Kimi-K3, new AMD recipe 2026-10, input/output 128K/1K -- node6100, finished Oct 8 06:07 UTC
+1. Kimi-K3, vLLM recipe 2, input/output 128K/1K -- node6100, finished Oct 8 06:07 UTC
    Done, all 8 concurrency levels (C=1-128) ran without errors.
-   Our run uses the new AMD recipe 2026-10 itself. Compared with AMD's
+   Our run uses vLLM recipe 2 itself. Compared with AMD's
    published numbers (the PDF's table): 0.56x at C=1 rising to 0.82x at C=4,
    about the same at C=8-16, and 1.07-1.10x at C=32-128.
    Result: results/ubuntu/kimi-amd-recipe.md (section 1)
 
-2. Kimi-K3, new AMD recipe 2026-10, input/output 1K/1K -- node6101, finished Oct 7 23:18 UTC
+2. Kimi-K3, vLLM recipe 2, input/output 1K/1K -- node6101, finished Oct 7 23:18 UTC
    Done, all 9 levels (C=1-256) ran without errors.
    54 tok/s at 1 user up to 1,735 tok/s at 128 users (TPOT 18-72 ms).
    At C=256 throughput stays at 1,747 and TTFT jumps to 73 s: the recipe
    caps the server at 128 requests at once (max-num-seqs 128).
-   Comparison with the old recipes: results/ubuntu/kimi-recipe-old-vs-new.md
+   Comparison with ATOM and vLLM recipe 1: results/ubuntu/kimi-recipe-old-vs-new.md
    Result: results/ubuntu/kimi-amd-recipe.md (section 2)
 
 3. fp4 recheck and profile -- node6101, finished Oct 8 00:16 UTC
@@ -43,15 +43,14 @@ Runs
 Summaries -- updated 2026-10-08
 -------------------------------
 - results/SUMMARY.md (source analysis/SUMMARY.md): fp4 recheck result, sendrecv
-  fix, new Kimi section 8(c) for new AMD recipe 2026-10.
+  fix, new Kimi section 8(c) for vLLM recipe 2.
 - results/vs-amd-cloud/rvs.md, results/ubuntu/rocm.md: fp4 profile result.
 - results/ubuntu/rccl_2node.md, results/ubuntu/sendrecv-check.md: sendrecv
   cause and fix (NCCL_NCHANNELS_PER_NET_PEER=4).
-- results/ubuntu/kimi.md: new AMD recipe 2026-10 results.
-- results/mi355x-vs-b200.md: new section 6.3 (new AMD recipe 2026-10 vs B200),
+- results/ubuntu/kimi.md: vLLM recipe 2 results.
+- results/mi355x-vs-b200.md: new section 6.3 (vLLM recipe 2 vs B200),
   sendrecv fix (0.96x of B200), fp4 clocks/power and profile.
 - NEW results/kimi-summary.md: all Kimi-K3 runs on one page.
-- NEW results/ubuntu/kimi-recipe-old-vs-new.md: old Kimi recipes (vLLM recipe,
-  ATOM) vs the new one (new AMD recipe 2026-10); other files give only new-recipe results.
+- NEW results/ubuntu/kimi-recipe-old-vs-new.md: the three Kimi recipes (ATOM, vLLM recipe 1, vLLM recipe 2); other files give only vLLM recipe 2 results.
 
 Nothing failed, so nothing needs rerunning.

@@ -39,7 +39,7 @@ TS=$(date +%Y%m%d_%H%M%S)
 OUT=$LOG_ROOT/atom/kimi_recipe_$TS; mkdir -p "$OUT" "$RESULTS"
 STATE=$OUT/STATE.txt
 say() { echo "[$(date -Iseconds)] $*" | tee -a "$STATE"; }
-say "Kimi-K3 vLLM recipe sweep start: image=$IMG conc='$CONC' ISL/OSL=$ISL/$OSL out=$OUT"
+say "Kimi-K3 vLLM recipe 1 sweep start: image=$IMG conc='$CONC' ISL/OSL=$ISL/$OSL out=$OUT"
 
 busy=$(rocm-smi --showuse 2>/dev/null | awk '/GPU use/ {print $NF}' | grep -cv '^0$')
 [[ "${busy:-0}" -eq 0 ]] || { say "ABORT: $busy GPU(s) busy."; exit 1; }

@@ -2,5 +2,5 @@
   - 256–512 users: amd-ubuntu 1.05× throughput, 0.94–0.95× TPOT.
   - `max-num-seqs 1024`: amd-ubuntu 1.15–1.26× throughput; TPOT 0.91× at 256 but 1.16–1.17× at 512–1024; not investigated.
   - Single-stream arms at 8 users: 1.14–1.15× tok/s with identical TPOT, so the gain is in prefill/scheduling, not decode.
-- **AMD vLLM recipe on amd-ubuntu vs amd-cloud's best ATOM**: 1.54× at 1 user, 1.38× at 4, 1.23× at 8, 1.07× at 64, 1.04× at 128, 1.00× at 256; TPOT 0.72–0.99×. The improvement comes from speculative decoding (DSpark) at low concurrency and decode-context-parallel + CPU KV offload above; it also uses a newer stack (vLLM nightly, ROCm 10.0 user space).
+- **vLLM recipe 1 on amd-ubuntu vs amd-cloud's best ATOM**: 1.54× at 1 user, 1.38× at 4, 1.23× at 8, 1.07× at 64, 1.04× at 128, 1.00× at 256; TPOT 0.72–0.99×. The improvement comes from speculative decoding (DSpark) at low concurrency and decode-context-parallel + CPU KV offload above; it also uses a newer stack (vLLM nightly, ROCm 10.0 user space).
 - `max-num-seqs 2048` failed identically on both systems (does not fit in GPU memory).

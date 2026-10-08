@@ -24,7 +24,7 @@ $\color{red}{\textsf{Red}}$ = a result far from what the specs on paper predict;
 | Training, 7B, 1–8 GPUs | 1.12–1.19x | ❌ different model/settings |
 | Kimi-K3, per GPU | 1.05–1.51x (matched), up to 2.43x (best configs) | ⚠️ 8 vs 16 GPUs |
 | Kimi-K3, single-user speed (TPOT) | B200 1.4–1.9x faster | ⚠️ 8 vs 16 GPUs |
-| Kimi-K3, new AMD recipe 2026-10 (vLLM v0.29.0) | per GPU 1.21–1.45x; B200 1.4–1.6x faster per user | ⚠️ 8 vs 16 GPUs, different `max-num-seqs` |
+| Kimi-K3, vLLM recipe 2 (vLLM v0.29.0) | per GPU 1.21–1.45x; B200 1.4–1.6x faster per user | ⚠️ 8 vs 16 GPUs, different `max-num-seqs` |
 
 ---
 
@@ -259,7 +259,7 @@ Per-GPU ratio = (MI355X tok/s / 8) / (B200 tok/s / 16). No % of paper column her
 
 ### 6.2 Best result of each system at the same number of users
 
-MI355X: AMD vLLM recipe (speculative decoding) up to 64 users, ATOM with larger `max-num-seqs` above. B200: vLLM baseline up to 64 users, `max-num-seqs` 256 / 512 above (speculative decoding does not start on B200 because it does not work with pipeline parallelism).
+MI355X: vLLM recipe 1 (speculative decoding) up to 64 users, ATOM with larger `max-num-seqs` above. B200: vLLM baseline up to 64 users, `max-num-seqs` 256 / 512 above (speculative decoding does not start on B200 because it does not work with pipeline parallelism).
 
 | Users | MI355X tok/s (config) | B200 tok/s (config) | total ratio | **per-GPU ratio** | MI355X TPOT ms | B200 TPOT ms |
 |---:|---:|---:|---:|---:|---:|---:|
@@ -271,7 +271,7 @@ MI355X: AMD vLLM recipe (speculative decoding) up to 64 users, ATOM with larger 
 | 256 | 2,602 (ATOM, 256) | 2,308.5 (cap 256) | **1.13x** | 2.25x | $\color{red}{\textsf{98.5}}$ | 110.2 |
 | 512 | 3,562 (ATOM, 512) | 2,929.4 (cap 512) | **1.22x** | 2.43x | $\color{red}{\textsf{143.5}}$ | 167.0 |
 
-### 6.3 New AMD recipe 2026-10 (vLLM v0.29.0) vs B200
+### 6.3 vLLM recipe 2 (vLLM v0.29.0) vs B200
 
 MI355X = AMD's Kimi-K3 recipe from `amd-kimi-k3-recipe.pdf` (`vllm/vllm-openai-rocm:v0.29.0`, TP8, `max-num-seqs` 128, no speculative decoding), run on node6101 on 2026-10-07. B200 = the same vLLM baseline as in 6.1 (TP8 × PP2, `max-num-seqs` 64). ISL/OSL 1024/1024. Detail: `ubuntu/kimi-amd-recipe.md`.
 
@@ -285,15 +285,15 @@ MI355X = AMD's Kimi-K3 recipe from `amd-kimi-k3-recipe.pdf` (`vllm/vllm-openai-r
 | 32 | 852 | 1,209.3 | 0.70x | 1.41x | 35.2 | 25.3 | $\color{red}{\textsf{1.39x}}$ |
 | 64 | 1,228 | 1,696.4 | 0.72x | 1.45x | 49.7 | 35.9 | $\color{red}{\textsf{1.38x}}$ |
 
-- **Per GPU, MI355X with new AMD recipe 2026-10 serves 1.21–1.45x more tokens than B200**; in total one MI355X node gives 0.61–0.72x of two B200 nodes.
+- **Per GPU, MI355X with vLLM recipe 2 serves 1.21–1.45x more tokens than B200**; in total one MI355X node gives 0.61–0.72x of two B200 nodes.
 - **One user's answer streams 1.4–1.6x faster on B200** (TPOT); the reason is the same as in 6.1.
-- The comparison of this new AMD recipe 2026-10 with the older MI355X recipes (vLLM recipe, ATOM) is in `ubuntu/kimi-recipe-old-vs-new.md`.
+- The comparison of this vLLM recipe 2 with the older MI355X recipes (vLLM recipe 1, ATOM) is in `ubuntu/kimi-recipe-old-vs-new.md`.
 - AMD's own workload in the PDF (ISL/OSL 128K/1K) was also run on node6100 with this same recipe (0.56–0.82x of AMD's published numbers at 1–4 users, equal or better from 8 users), but there is no B200 run of it.
 
 **Apple-to-apple: partly.**
 - Same: model and weights, input/output lengths, `max-num-seqs` (table 6.1), KV-cache type, prefix caching off, median TPOT.
 - Different and unavoidable: **8 GPUs vs 16 GPUs**. B200 needs two nodes and pipeline parallelism, which adds a network hop per token and blocks speculative decoding.
-- Different by choice: engine (ATOM / vLLM recipe on MI355X, vLLM on B200), software versions.
+- Different by choice: engine (ATOM / vLLM recipe 1 on MI355X, vLLM on B200), software versions.
 - Reading: **one user's answer streams ≈1.4–1.9x faster on B200** (lower TPOT). **Per GPU, MI355X serves 1.05–2.4x more tokens**, and with 256 users or more one MI355X node beats two B200 nodes in total.
 
 ---

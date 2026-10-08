@@ -68,7 +68,7 @@ def main():
         for r in rows:
             w.writerow({k: r.get(k, "") for k in COLS})
     image = (out / "images.txt").read_text().strip() if (out / "images.txt").exists() else "?"
-    L = ["# Kimi-K3 — AMD vLLM recipe (recipes.vllm.ai, MI355X, 2026-09-25)", "",
+    L = ["# Kimi-K3 — vLLM recipe 1 (recipes.vllm.ai, MI355X, 2026-09-25)", "",
          f"Image: `{image}`. TP8 on one node, MXFP4 experts, FP8 KV cache, prefix caching, "
          "one server per concurrency point with the recipe's per-point settings (DSpark "
          "speculative decoding up to C=14, decode-context-parallel 8 + CPU KV offload above). "

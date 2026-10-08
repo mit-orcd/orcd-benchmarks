@@ -1,6 +1,6 @@
 # amd-ubuntu benchmark results
 
-Generated 2026-10-08 15:30 by `report.py`.
+Generated 2026-10-08 21:41 by `report.py`.
 
 System: node6100 and node6101, each 8 × AMD Instinct MI355X (gfx950), 2 × EPYC 9575F, 2.2 TiB RAM, Ubuntu 24.04.5, amdgpu 6.19.14, host ROCm 7.2.4 for RVS (ROCm Validation Suite) and rccl-tests, containers under apptainer (Primus, Megatron-LM, ATOM). Nodes linked by 8 × 400G AMD Pollara (ionic) RoCEv2 rails.
 
@@ -19,7 +19,7 @@ System: node6100 and node6101, each 8 × AMD Instinct MI355X (gfx950), 2 × EPYC
 | Primus / Megatron | ✅ 10-05 19:37 | ✅ 10-05 19:37 |
 | ATOM tiers 1-2 | ✅ 10-05 01:41 | ✅ 10-05 02:49 |
 | Kimi-K3 ATOM (Aug-2026 images) | ✅ 10-05 01:41 | — |
-| Kimi-K3 vLLM recipe | — | ✅ 10-05 03:19 |
+| Kimi-K3 vLLM recipe 1 | — | ✅ 10-05 03:19 |
 
 ## Reports
 
@@ -32,7 +32,7 @@ System: node6100 and node6101, each 8 × AMD Instinct MI355X (gfx950), 2 × EPYC
 - [Primus: Megatron-LM llama2-7B and GEMM microbench](primus.md)
 - [Megatron-LM GPT-15.6B](megatron_ref.md)
 - [ATOM LLM serving (Qwen3-8B, Llama-3.1-70B)](atom.md)
-- [Kimi-K3 serving: ATOM and the AMD vLLM recipe](kimi.md)
+- [Kimi-K3 serving: ATOM and vLLM recipe 1](kimi.md)
 
 ## Raw
 

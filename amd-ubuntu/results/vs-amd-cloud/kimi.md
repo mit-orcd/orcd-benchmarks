@@ -1,6 +1,6 @@
 # Kimi-K3: amd-ubuntu vs amd-cloud
 
-Generated 2026-10-08 15:30 by `report.py`.
+Generated 2026-10-08 21:41 by `report.py`.
 
 - **amd-cloud**: one 8 × MI355X node, ROCm 7.14, Ubuntu 22.04.5, docker ([results](../../../amd-benchmarks/amd-cloud/results/SUMMARY.md)).
 - **amd-ubuntu**: node6100 and node6101, 8 × MI355X each, same amdgpu driver and CPUs, host ROCm 7.2.4, Ubuntu 24.04.5, apptainer. Same scripts, analyzers and (for the containers) the same image digests.
@@ -13,15 +13,15 @@ Generated 2026-10-08 15:30 by `report.py`.
   - 256–512 users: amd-ubuntu 1.05× throughput, 0.94–0.95× TPOT.
   - `max-num-seqs 1024`: amd-ubuntu 1.15–1.26× throughput; TPOT 0.91× at 256 but 1.16–1.17× at 512–1024; not investigated.
   - Single-stream arms at 8 users: 1.14–1.15× tok/s with identical TPOT, so the gain is in prefill/scheduling, not decode.
-- **AMD vLLM recipe on amd-ubuntu vs amd-cloud's best ATOM**: 1.54× at 1 user, 1.38× at 4, 1.23× at 8, 1.07× at 64, 1.04× at 128, 1.00× at 256; TPOT 0.72–0.99×. The improvement comes from speculative decoding (DSpark) at low concurrency and decode-context-parallel + CPU KV offload above; it also uses a newer stack (vLLM nightly, ROCm 10.0 user space).
+- **vLLM recipe 1 on amd-ubuntu vs amd-cloud's best ATOM**: 1.54× at 1 user, 1.38× at 4, 1.23× at 8, 1.07× at 64, 1.04× at 128, 1.00× at 256; TPOT 0.72–0.99×. The improvement comes from speculative decoding (DSpark) at low concurrency and decode-context-parallel + CPU KV offload above; it also uses a newer stack (vLLM nightly, ROCm 10.0 user space).
 - `max-num-seqs 2048` failed identically on both systems (does not fit in GPU memory).
 
 ## Results
 
 - **apple-to-apple**: amd-cloud vs amd-ubuntu ATOM with **the same image digests** (`atom-dev:nightly_202608111555` (most experiments), `nightly_202608191459` (isl4096, repeats arm A), MAD `rocm7.2.4_..._20260727_kimi_k3` (mad, single_stream, repeats arm B, ep_matched)), same weights, flags and workload.
-- **recipe**: amd-ubuntu with AMD's vLLM recipe (recipes.vllm.ai, 2026-09-25): `vllm/vllm-openai-rocm:nightly-rocm100` (digest e76a953f), DSpark speculative decoding up to C=14, decode-context-parallel 8 + CPU KV offload above, server re-tuned per concurrency, vs amd-cloud's best ATOM result at the same concurrency.
+- **recipe**: amd-ubuntu with AMD's vLLM recipe 1 (recipes.vllm.ai, 2026-09-25): `vllm/vllm-openai-rocm:nightly-rocm100` (digest e76a953f), DSpark speculative decoding up to C=14, decode-context-parallel 8 + CPU KV offload above, server re-tuned per concurrency, vs amd-cloud's best ATOM result at the same concurrency.
 
-### vLLM recipe (amd-ubuntu) vs best ATOM (amd-cloud)
+### vLLM recipe 1 (amd-ubuntu) vs best ATOM (amd-cloud)
 
 | C | recipe tok/s | amd-cloud ATOM best tok/s (sweep) | tok/s ratio | recipe TPOT ms | amd-cloud ATOM TPOT ms | TPOT ratio |
 |---:|---:|---:|---:|---:|---:|---:|

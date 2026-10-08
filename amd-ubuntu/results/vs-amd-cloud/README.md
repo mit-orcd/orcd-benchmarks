@@ -1,6 +1,6 @@
 # amd-ubuntu vs amd-cloud
 
-Generated 2026-10-08 15:30 by `report.py`.
+Generated 2026-10-08 21:41 by `report.py`.
 
 - **amd-cloud**: one 8 × MI355X node, ROCm 7.14, Ubuntu 22.04.5, docker ([results](../../../amd-benchmarks/amd-cloud/results/SUMMARY.md)).
 - **amd-ubuntu**: node6100 and node6101, 8 × MI355X each, same amdgpu driver and CPUs, host ROCm 7.2.4, Ubuntu 24.04.5, apptainer. Same scripts, analyzers and (for the containers) the same image digests.
@@ -21,7 +21,7 @@ Generated 2026-10-08 15:30 by `report.py`.
 | Primus / Megatron | ✅ 10-05 19:37 | ✅ 10-05 19:37 |
 | ATOM tiers 1-2 | ✅ 10-05 01:41 | ✅ 10-05 02:49 |
 | Kimi-K3 ATOM (Aug-2026 images) | ✅ 10-05 01:41 | — |
-| Kimi-K3 vLLM recipe | — | ✅ 10-05 03:19 |
+| Kimi-K3 vLLM recipe 1 | — | ✅ 10-05 03:19 |
 
 ## Reports
 

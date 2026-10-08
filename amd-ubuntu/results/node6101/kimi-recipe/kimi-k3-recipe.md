@@ -1,4 +1,4 @@
-# Kimi-K3 — AMD vLLM recipe (recipes.vllm.ai, MI355X, 2026-09-25)
+# Kimi-K3 — vLLM recipe 1 (recipes.vllm.ai, MI355X, 2026-09-25)
 
 Image: `vllm/vllm-openai-rocm:nightly-rocm100 -> sha256:e76a953fa2c317e5e0913fab946887ae498629c8e57fb6b2dc633dadd4098b61`. TP8 on one node, MXFP4 experts, FP8 KV cache, prefix caching, one server per concurrency point with the recipe's per-point settings (DSpark speculative decoding up to C=14, decode-context-parallel 8 + CPU KV offload above). Workload: random ISL/OSL 1024/1024, `--ignore-eos`, 10×C prompts, `vllm bench serve`.
 Raw logs: `kimi_recipe_20261002_024747, kimi_recipe_20261005_001645, kimi_recipe_20261005_030557`.

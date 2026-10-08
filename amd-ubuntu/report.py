@@ -3,12 +3,12 @@
 
   results/ubuntu/         amd-ubuntu only (node6100, node6101), written as if no other system
                           existed: absolute numbers, node-to-node agreement, scaling, and for
-                          Kimi-K3 what AMD's vLLM recipe improves over ATOM.
+                          Kimi-K3 what AMD's vLLM recipe 1 improves over ATOM.
   results/vs-amd-cloud/   the same benchmarks side by side with ../amd-benchmarks/amd-cloud.
 
 Reads whatever exists, so it can run after every stage (auto_run.sh does). Inputs are the CSVs
 and PRIMUS_REPORT.md tables the ported analyzers write under results/<node>/ and, for Kimi-K3,
-results/<node>/kimi-cloud/ (ATOM, amd-cloud's exact images) and kimi-recipe/ (vLLM recipe).
+results/<node>/kimi-cloud/ (ATOM, amd-cloud's exact images) and kimi-recipe/ (vLLM recipe 1).
 
     $PY report.py
 """
@@ -28,7 +28,7 @@ NOW = f"{datetime.datetime.now():%Y-%m-%d %H:%M}"
 ATOM_IMAGES = ("`atom-dev:nightly_202608111555` (most experiments), `nightly_202608191459` "
                "(isl4096, repeats arm A), MAD `rocm7.2.4_..._20260727_kimi_k3` (mad, single_stream, "
                "repeats arm B, ep_matched)")
-RECIPE = ("AMD's vLLM recipe (recipes.vllm.ai, 2026-09-25): `vllm/vllm-openai-rocm:nightly-rocm100` "
+RECIPE = ("AMD's vLLM recipe 1 (recipes.vllm.ai, 2026-09-25): `vllm/vllm-openai-rocm:nightly-rocm100` "
           "(digest e76a953f), DSpark speculative decoding up to C=14, decode-context-parallel 8 + CPU KV "
           "offload above, server re-tuned per concurrency")
 
@@ -520,11 +520,11 @@ def kimi_u():
     L = ["Kimi-K3 on 8 × MI355X, TP8, weights from node-local `/scratch/Kimi-K3`, ISL/OSL 1024/1024 "
          "unless noted. Two stacks:", "",
          f"- **ATOM** (`kimi-cloud`, {dc.parent.name if dc else 'not run yet'}): {ATOM_IMAGES}.",
-         f"- **vLLM recipe** (`kimi-recipe`, {dr.parent.name if dr else 'not run yet'}): {RECIPE}.", ""]
+         f"- **vLLM recipe 1** (`kimi-recipe`, {dr.parent.name if dr else 'not run yet'}): {RECIPE}.", ""]
     if not dc and not dr:
         return L + PENDING
     rec = recipe_rows(dr)
-    L += ["### What improved: vLLM recipe vs best ATOM result at the same concurrency", ""]
+    L += ["### What improved: vLLM recipe 1 vs best ATOM result at the same concurrency", ""]
     if rec is not None and dc:
         L += recipe_vs_atom(rec, best_atom(dc), "ATOM") + [
             "", "tok/s ratio above 1 and TPOT ratio below 1 favour the recipe; bold = more than 5%. "
@@ -533,7 +533,7 @@ def kimi_u():
     else:
         L += ["*Needs both the ATOM and the recipe runs.*", ""]
     if rec is not None:
-        L += ["### vLLM recipe sweep", "", f"Detail: `{dr.relative_to(ROOT)}/kimi-k3-recipe.md`.", "",
+        L += ["### vLLM recipe 1 sweep", "", f"Detail: `{dr.relative_to(ROOT)}/kimi-k3-recipe.md`.", "",
               "| C | draft K | DCP | out tok/s | TPOT med ms | TTFT med ms | completed |",
               "|---:|---:|---:|---:|---:|---:|---:|"]
         for _, r in rec.iterrows():
@@ -572,7 +572,7 @@ def kimi_c():
         return L + PENDING
     rec = recipe_rows(dr)
     if rec is not None:
-        L += ["### vLLM recipe (amd-ubuntu) vs best ATOM (amd-cloud)", ""]
+        L += ["### vLLM recipe 1 (amd-ubuntu) vs best ATOM (amd-cloud)", ""]
         L += recipe_vs_atom(rec, best_atom(CLOUD), "amd-cloud ATOM") + [""]
     if dc:
         L += ["### Apple-to-apple: same images", ""]
@@ -604,7 +604,7 @@ STATUS = [("RVS gst TFLOPS", "rvs_tflops.csv"), ("RCCL single node", "rccl.csv")
           ("RCCL 2-node, ROCm 7.14", "rocm7.14/rccl_2node.csv"),
           ("RDMA per rail", "ib_bw.md"), ("RCCL 2-node", "rccl_2node.csv"),
           ("Primus / Megatron", "PRIMUS_REPORT.md"), ("ATOM tiers 1-2", "atom.csv"),
-          ("Kimi-K3 ATOM (Aug-2026 images)", "kimi-cloud/images.txt"), ("Kimi-K3 vLLM recipe", "kimi-recipe/kimi-k3-recipe.csv")]
+          ("Kimi-K3 ATOM (Aug-2026 images)", "kimi-cloud/images.txt"), ("Kimi-K3 vLLM recipe 1", "kimi-recipe/kimi-k3-recipe.csv")]
 
 
 def status():
@@ -661,7 +661,7 @@ def main():
          ("primus.md", "Primus: Megatron-LM llama2-7B and GEMM microbench", primus_u, (PRIMUS_SECS[:2],)),
          ("megatron_ref.md", "Megatron-LM GPT-15.6B", primus_u, (PRIMUS_SECS[2:],)),
          ("atom.md", "ATOM LLM serving (Qwen3-8B, Llama-3.1-70B)", atom_u, ()),
-         ("kimi.md", "Kimi-K3 serving: ATOM and the AMD vLLM recipe", kimi_u, ())]
+         ("kimi.md", "Kimi-K3 serving: ATOM and vLLM recipe 1", kimi_u, ())]
     C = [("rvs.md", "RVS gst TFLOPS: amd-ubuntu vs amd-cloud", rvs_c, ()),
          ("rccl.md", "RCCL single node: amd-ubuntu vs amd-cloud", rccl_c, ()),
          ("primus.md", "Primus: amd-ubuntu vs amd-cloud", primus_c, (PRIMUS_SECS[:2],)),
