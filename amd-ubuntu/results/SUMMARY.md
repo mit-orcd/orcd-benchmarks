@@ -10,6 +10,8 @@ Detail: [`ubuntu/`](ubuntu/README.md) (our nodes only), [`vs-amd-cloud/`](vs-amd
 | OS / ROCm | Ubuntu 24.04.5, host ROCm 7.2.4, plus a ROCm 7.14 user space for RVS and RCCL | Ubuntu 22.04.5, ROCm 7.14 |
 | Containers | apptainer, **same image digests** as amd-cloud | docker |
 
+ROCm 7.14 is newer than ROCm 7.2.4 (our host version), so we compare our 7.14 only with amd-cloud's 7.14 and our 7.2.4 only with our 7.14.
+
 **Rules used throughout:** our nodes are compared with amd-cloud only on the same ROCm 7.14; our ROCm 7.2.4 is compared only with ROCm 7.14 on our nodes, never with amd-cloud directly.
 
 | # | Benchmark | Compared | Result |

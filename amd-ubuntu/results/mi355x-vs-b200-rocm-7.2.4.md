@@ -8,8 +8,8 @@ $\color{red}{\textsf{Red}}$ = a result far from what the specs on paper predict;
 |---|---|---|
 | Nodes | node6100, node6101: 8 × MI355X (288 GB) each | node5500–5502, node5600–5802: 8 × B200 (192 GB) each |
 | Network | 8 × 400G AMD Pollara RoCEv2 per node (400 GB/s) | 8 × 400G NDR InfiniBand per node (400 GB/s) |
-| Software | ROCm 7.14 (user-space install, the same version as amd-cloud) for RVS (ROCm Validation Suite) and RCCL; apptainer containers (Primus, Megatron-LM, ATOM, vLLM) | CUDA 13.x, NGC containers, vLLM |
-| Sources | ROCm 7.14 columns of `results/vs-amd-cloud/{rvs,rccl}.md` and `results/ubuntu/rocm.md`; `results/vs-amd-cloud/rvs-fp4-recheck.md`; `results/ubuntu/{primus,megatron_ref,kimi,kimi-amd-recipe}.md` | `../b200-nodes/out-gpu-fryer/`, `../cuBLASLt/summary.md`, `../b200-nodes/out-nccl-{1node,2node}/`, `../b200-nodes/output-megatron/`, `../b200-kimi/results/` |
+| Software | host ROCm 7.2.4 for RVS (ROCm Validation Suite) and RCCL; apptainer containers (Primus, Megatron-LM, ATOM, vLLM) | CUDA 13.x, NGC containers, vLLM |
+| Sources | `results/ubuntu/{rvs,rccl,rccl_2node,sendrecv-check,primus,megatron_ref,kimi,kimi-amd-recipe}.md` | `../b200-nodes/out-gpu-fryer/`, `../cuBLASLt/summary.md`, `../b200-nodes/out-nccl-{1node,2node}/`, `../b200-nodes/output-megatron/`, `../b200-kimi/results/` |
 
 ## Summary
 
@@ -17,7 +17,7 @@ $\color{red}{\textsf{Red}}$ = a result far from what the specs on paper predict;
 |---|---|---|
 | BF16 GEMM | 1.15–1.20x | ❌ |
 | FP8 GEMM | 0.93x (vs gpu-fryer) or 1.48x (vs cuBLASLt) | ❌ |
-| FP4 GEMM | 0.72x | ❌ |
+| FP4 GEMM | 0.56x (ROCm 7.2.4), 0.72x (ROCm 7.14) | ❌ |
 | FP64 GEMM | 2.14x | ❌ |
 | Collectives inside one node | 0.47–0.59x (sendrecv 0.09x) | ⚠️ close |
 | Collectives across 2 nodes | 0.99–1.03x; all_reduce 1.63x; alltoall 1.83x; sendrecv 0.59x (0.96x with `NCCL_NCHANNELS_PER_NET_PEER=4`) | ✅ nearly |
@@ -30,12 +30,12 @@ $\color{red}{\textsf{Red}}$ = a result far from what the specs on paper predict;
 
 ## 1. RVS vs gpu-fryer (GEMM stress test, all 8 GPUs at once)
 
-TFLOP/s per GPU. MI355X = RVS `gst` on ROCm 7.14, N = 8, mean of node6100 and node6101 (aggregate / 8). B200 = gpu-fryer mean of node5500–5502 (the 7 newer nodes are within 1%).
+TFLOP/s per GPU. MI355X = RVS `gst`, N = 8, mean of node6100 and node6101 (aggregate / 8). B200 = gpu-fryer mean of node5500–5502 (the 7 newer nodes are within 1%).
 
 | Precision | MI355X (RVS) | MI355X on paper | MI355X % of paper | B200 (gpu-fryer) | B200 on paper | B200 % of paper | MI355X / B200 |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | BF16 | 1,672 | 2,516 | 66% | 1,450 | 2,250 | 64% | **1.15x** |
-| FP8 | 3,725 | 5,033 | 74% | 4,018 | 4,500 | 89% | **0.93x** |
+| FP8 | 3,748 | 5,033 | 74% | 4,018 | 4,500 | 89% | **0.93x** |
 | FP32 (MI355X) / TF32 (B200) | 154 | 157.3 | 98% | 751 | 1,100 | 68% | 0.20x *(not comparable: B200 uses TF32 tensor cores, MI355X runs true FP32)* |
 
 On paper = vendor datasheet peak per GPU, dense (no sparsity), TFLOP/s.
@@ -52,61 +52,61 @@ TFLOP/s per GPU. MI355X = RVS `gst` N = 8 as above. B200 = `../cuBLASLt` **susta
 
 | Precision | MI355X (RVS) | MI355X on paper | MI355X % of paper | B200 (cuBLASLt) | B200 on paper | B200 % of paper | MI355X / B200, measured | MI355X / B200, on paper |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| FP4, one RVS process per GPU¹ | ≈4,100 | 10,066 | $\color{red}{\textsf{41\\%}}$ | 5,708 | 9,000 | 63% | $\color{red}{\textbf{0.72x}}$ | 1.12x |
-| FP8 | 3,725 | 5,033 | 74% | 2,524 | 4,500 | $\color{red}{\textsf{56\\%}}$ | $\color{red}{\textbf{1.48x}}$ | 1.12x |
+| FP4 | 3,195 | 10,066 | $\color{red}{\textsf{32\\%}}$ | 5,708 | 9,000 | 63% | $\color{red}{\textbf{0.56x}}$ | 1.12x |
+| FP4, ROCm 7.14, one process per GPU | ≈4,100 | 10,066 | $\color{red}{\textsf{41\\%}}$ | 5,708 | 9,000 | 63% | $\color{red}{\textbf{0.72x}}$ | 1.12x |
+| FP8 | 3,748 | 5,033 | 74% | 2,524 | 4,500 | $\color{red}{\textsf{56\\%}}$ | $\color{red}{\textbf{1.48x}}$ | 1.12x |
 | BF16 | 1,672 | 2,516 | 66% | 1,396 | 2,250 | 62% | **1.20x** | 1.12x |
-| FP16 | 1,578 | 2,516 | 63% | 1,322 | 2,250 | 59% | **1.19x** | 1.12x |
+| FP16 | 1,572 | 2,516 | 62% | 1,322 | 2,250 | 59% | **1.19x** | 1.12x |
 | FP64 | 77 | 78.6 | 98% | 36 | 37 | 97% | **2.14x** | 2.12x |
 | FP32 (MI355X) / TF32 (B200) | 154 | 157.3 | 98% | 720 | 1,100 | 65% | 0.21x *(not comparable)* | — |
-| FP6 | 1,240 | 10,066 | $\color{red}{\textsf{12\\%}}$ | — | — | — | — *(not run on B200)* | — |
+| FP6 | 1,283 | 10,066 | $\color{red}{\textsf{13\\%}}$ | — | — | — | — *(not run on B200)* | — |
 
 On paper = vendor datasheet peak per GPU, dense (no sparsity), TFLOP/s. MI355X FP6 runs at the FP4 rate on paper.
-
-¹ FP4 on ROCm 7.14 needs one process per GPU: 8 separate one-GPU RVS processes at once give 4,041–4,175 per GPU (32,784 total, test 2026-10-05). The standard RVS run, one process for all 8 GPUs, gives only ≈2,130 per GPU; a profile (2026-10-08) shows the FP4 kernel runs at full speed, but the GPUs sit idle 37–70% of the time because one process cannot launch work fast enough (`vs-amd-cloud/rvs-fp4-recheck.md`). Real workloads run one process per GPU.
 
 **Apple-to-apple: no.**
 - cuBLASLt is **tuned**: it tries 28 shapes and up to 8 algorithms per shape and keeps the fastest. RVS runs one fixed shape with the library's default choice. This favours B200.
 - The two B200 tools disagree on FP8: gpu-fryer gives 4,018 and cuBLASLt 2,524 (56% of datasheet). The FP8 ratio therefore depends on which B200 number is used (0.93x vs 1.48x).
 - FP4 formats differ: MI355X uses MXFP4 (32-element blocks), B200 uses NVFP4 (16-element blocks).
+- MI355X FP4 on ROCm 7.14 is ≈28% faster than on 7.2.4 when each GPU has its own process (see `vs-amd-cloud/rvs.md`). With one RVS process for all 8 GPUs, 7.14 drops to ≈2,280 per GPU: a profile (2026-10-08) shows the FP4 kernel runs at full speed, but the GPUs sit idle 37–70% of the time because one process cannot launch work fast enough (`vs-amd-cloud/rvs-fp4-recheck.md`).
 
 **Results far from paper** (in the order of the table at the end of the file):
 
-- **Why MI355X FP4 is far below paper (0.72x measured vs 1.12x on paper):** MI355X reaches only 41% of its FP4 peak (B200: 63%). Its FP8 reaches 74% and BF16 66% in the same test. **The likely cause is the ROCm software: the FP4 GEMM kernels in ROCm's hipBLASLt library are less mature than its FP8/BF16 kernels, not the hardware.** **It is not power or clocks:** in the fp4 recheck (2026-10-08) the GPUs ran at 1.6–2.1 GHz and 260–800 W during FP4, well below MI355X's 1,400 W limit (`vs-amd-cloud/rvs-fp4-recheck.md`).
+- **Why MI355X FP4 is far below paper (0.56x measured vs 1.12x on paper):** MI355X reaches only 32% of its FP4 peak (B200: 63%). Its FP8 reaches 74% and BF16 66% in the same test. **The likely cause is the ROCm software: the FP4 GEMM kernels in ROCm's hipBLASLt library are less mature than its FP8/BF16 kernels, not the hardware.** Evidence: upgrading ROCm alone (7.2.4 → 7.14) lifts FP4 from 32% to ≈41% (≈4,100) on the same GPUs. **It is not power or clocks:** in the fp4 recheck (2026-10-08) the GPUs ran at 1.6–2.1 GHz and 260–800 W during FP4, well below MI355X's 1,400 W limit (`vs-amd-cloud/rvs-fp4-recheck.md`).
   - The test favours B200: cuBLASLt picks the best of many shapes and algorithms; RVS runs one fixed shape.
-- **Why MI355X FP6 is only 13% of paper:** on paper FP6 runs at the FP4 rate, but RVS measures it at 30% of FP4 (1,240 vs ≈4,100). **The likely cause is the same as for FP4, the ROCm software: hipBLASLt's FP6 GEMM kernels are even less mature than its FP4 ones, not the hardware.** Evidence: fp6 and bf6 give the same number (not profiled).
+- **Why MI355X FP6 is only 13% of paper:** on paper FP6 runs at the FP4 rate, but RVS measures it at 40% of FP4 (1,283 vs 3,195). **The likely cause is the same as for FP4, the ROCm software: hipBLASLt's FP6 GEMM kernels are even less mature than its FP4 ones, not the hardware.** Evidence: fp6 and bf6 give the same number, and ROCm 7.14 does not improve it (not profiled).
 - **Why B200 FP8 is only 56% of paper with cuBLASLt:** **all tensor-core precisions run at the ≈1,000 W power limit, and FP8 uses the most power per clock cycle, so it gets the lowest clock** (1,131 MHz, 58% of the 1,965 MHz maximum; FP4, BF16 and TF32 run at 1,300–1,360 MHz; `../cuBLASLt/summary.md` §3). Per clock, the FP8 kernel is efficient (≈97% of paper), so the low number is the clock, not a bad kernel. gpu-fryer reaches 89% on FP8, which at the same power would need ≈1,750 MHz; its clocks were not logged, so this is unexplained. Check jobs are queued (`../cuBLASLt/job-fp8-check.sh`): clocks and power for gpu-fryer FP8, and cuBLASLt FP8 with zero-filled instead of random data.
 
 > [!NOTE]
-> **Author's comment:** In my test, MI355X FP4 GEMM is only 0.72x of B200, against 1.12x on paper. The likely reason is that ROCm's FP4 libraries are not fully optimized yet, so a newer ROCm release is worth testing. In the other precisions MI355X is faster than B200, as expected; FP64 is 2.14x faster.
+> **Author's comment:** In my test, MI355X FP4 GEMM (ROCm 7.14) is only 0.72x of B200, against 1.12x on paper. The likely reason is that ROCm's FP4 libraries are not fully optimized yet, so a newer ROCm release is worth testing. In the other precisions MI355X is faster than B200, as expected; FP64 is 2.14x faster.
 
 ## 3. RCCL vs NCCL — one node, 8 GPUs
 
 > **On paper, the B200 node is better than the MI355X node for GPU-to-GPU traffic inside one node: 900 vs 537.6 GB/s per GPU (1.67×), and any two B200 GPUs can use all of it, while two MI355X GPUs share one 76.8 GB/s link.**
 
-busbw (GB/s) at the largest message size, **8 GPUs in one node on both systems** (one rank per GPU, the GPUs talk over XGMI / NVLink only). MI355X = RCCL on ROCm 7.14, mean of node6100 and node6101 (max 8 GB; alltoall 4 GB). B200 = mean of 10 nodes (max 16 GiB).
+busbw (GB/s) at the largest message size, **8 GPUs in one node on both systems** (one rank per GPU, the GPUs talk over XGMI / NVLink only). MI355X = mean of node6100 and node6101 (max 8 GB; alltoall 4 GB). B200 = mean of 10 nodes (max 16 GiB).
 
 | Collective | GPUs (each system) | MI355X (RCCL) | MI355X on paper | MI355X % of paper | B200 (NCCL) | B200 on paper | B200 % of paper | MI355X / B200 |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| all_reduce | 8 (1 node) | 396.9 | 537.6 | 74% | 839.4 | 900 | 93% | **0.47x** |
-| all_gather | 8 (1 node) | 389.4 | 537.6 | 72% | 681.6 | 900 | 76% | **0.57x** |
-| reduce_scatter | 8 (1 node) | 388.7 | 537.6 | 72% | 691.6 | 900 | 77% | **0.56x** |
-| broadcast | 8 (1 node) | 389.4 | 537.6 | 72% | 682.1 | 900 | 76% | **0.57x** |
-| reduce | 8 (1 node) | 325.3 | 537.6 | 61% | 687.5 | 900 | 76% | **0.47x** |
-| gather | 8 (1 node) | 423.8 | 537.6 | 79% | 718.0 | 900 | 80% | **0.59x** |
-| scatter | 8 (1 node) | 395.9 | 537.6 | 74% | 731.2 | 900 | 81% | **0.54x** |
-| alltoall | 8 (1 node) | 347.6 | 537.6 | 65% | 658.1 | 900 | 73% | **0.53x** |
-| sendrecv | 8 (1 node) | 60.4 | 76.8 | 79% | 668.6 | 900 | 74% | **0.09x** |
+| all_reduce | 8 (1 node) | 393.8 | 537.6 | 73% | 839.4 | 900 | 93% | **0.47x** |
+| all_gather | 8 (1 node) | 388.0 | 537.6 | 72% | 681.6 | 900 | 76% | **0.57x** |
+| reduce_scatter | 8 (1 node) | 386.5 | 537.6 | 72% | 691.6 | 900 | 77% | **0.56x** |
+| broadcast | 8 (1 node) | 386.9 | 537.6 | 72% | 682.1 | 900 | 76% | **0.57x** |
+| reduce | 8 (1 node) | 328.3 | 537.6 | 61% | 687.5 | 900 | 76% | **0.48x** |
+| gather | 8 (1 node) | 425.0 | 537.6 | 79% | 718.0 | 900 | 80% | **0.59x** |
+| scatter | 8 (1 node) | 397.1 | 537.6 | 74% | 731.2 | 900 | 81% | **0.54x** |
+| alltoall | 8 (1 node) | 342.9 | 537.6 | 64% | 658.1 | 900 | 73% | **0.52x** |
+| sendrecv | 8 (1 node) | 60.5 | 76.8 | 79% | 668.6 | 900 | 74% | **0.09x** |
 
 On paper = vendor peak per GPU, one direction, GB/s:
 - **MI355X**: 7 Infinity Fabric (XGMI) links × 76.8 GB/s = **537.6 GB/s** per GPU; **sendrecv** uses one GPU pair = one link = **76.8 GB/s**.
 - **B200**: NVLink 5 through NVSwitch = **900 GB/s** per GPU, for every collective (a pair can use all of it, so also for sendrecv).
-- **Note on all_reduce (expected):** B200 reaches 93% of its link peak, above its ≈76% on the other collectives, because **NVLink SHARP** (the NVSwitch adds the data up inside the switch) can improve all_reduce on B200 nodes; NCCL uses it by default when available (not checked in the B200 logs). MI355X has no switch and no such feature, so its 74% is normal for it, and the ratio (0.47x) falls a little below the 0.60x link ratio on paper.
+- **Note on all_reduce (expected):** B200 reaches 93% of its link peak, above its ≈76% on the other collectives, because **NVLink SHARP** (the NVSwitch adds the data up inside the switch) can improve all_reduce on B200 nodes; NCCL uses it by default when available (not checked in the B200 logs). MI355X has no switch and no such feature, so its 73% is normal for it, and the ratio (0.47x) falls a little below the 0.60x link ratio on paper.
 
 **Apple-to-apple: close, not exact.**
 - Same test design: one process driving 8 GPUs, 20 iterations after 5 warm-up, busbw at the largest size.
 - Largest message differs (8 GB vs 16 GiB). Both curves are flat at that point, so the effect is small.
 - The ratio reflects the hardware: MI355X connects the GPUs in a full mesh of XGMI links (537.6 GB/s per GPU in total, 76.8 GB/s per pair on paper). B200 connects all GPUs through NVSwitch (900 GB/s per GPU, any pair can use all of it). That is why sendrecv, which uses one pair of GPUs, is 0.09x.
-- MI355X with 5–7 GPUs drops to ≈47 GB/s (see `ubuntu/rocm.md`); B200 has no such dip.
+- MI355X with 5–7 GPUs drops to ≈47 GB/s (see `ubuntu/rccl.md`); B200 has no such dip.
 
 > [!NOTE]
 > **Author's comment:** Inside one node, NVIDIA NVLink with NVSwitch is faster: AMD Infinity Fabric reaches only 0.47–0.59x of its collective bandwidth.
@@ -126,8 +126,8 @@ Vendor specs ("on paper") for the links between the 8 GPUs inside one node. Meas
 | One GPU pair can use | one link: **76.8 GB/s** | all of it: **900 GB/s** |
 | Reduction inside the fabric | none | NVLink SHARP in the NVSwitch |
 | GPUs in one link domain | 8 | 8 |
-| Measured, one pair (sendrecv) | 60.4 GB/s = 79% of one link | 668.6 GB/s = 74% of 900 |
-| Measured, all_reduce, 8 GPUs | 396.9 GB/s = 74% of 537.6 | 839.4 GB/s = 93% of 900 |
+| Measured, one pair (sendrecv) | 60.5 GB/s = 79% of one link | 668.6 GB/s = 74% of 900 |
+| Measured, all_reduce, 8 GPUs | 393.8 GB/s = 73% of 537.6 | 839.4 GB/s = 93% of 900 |
 
 **Same on paper:** 8 GPUs in one link domain, GPU-to-GPU traffic never leaves the node. **Different:** B200 has 1.67× the link bandwidth per GPU, any pair of B200 GPUs can use all of it (MI355X: one link per pair, 1/7 of the total), and only B200 can reduce data inside the fabric. This is why MI355X is 0.47–0.59× on collectives and 0.09× on sendrecv in one node.
 
@@ -306,7 +306,7 @@ On paper, MI355X / B200 is 1.12x for FP4/FP8/BF16 compute, 2.12x for FP64, 0.60x
 
 - **1. RVS vs gpu-fryer:** BF16 1.15x vs 1.12x on paper; both GPUs ≈65% of peak.
 - **2. RVS vs cuBLASLt:** BF16 1.20x and FP16 1.19x vs 1.12x; FP64 2.14x vs 2.12x (both ≈97–98% of peak).
-- **3. RCCL vs NCCL, one node:** Most collectives 0.53–0.59x vs 0.60x link bandwidth on paper; both GPUs 61–81% of their link peak. all_reduce and reduce 0.47x are also expected: B200 is helped by NVLink SHARP (in-switch reduction).
+- **3. RCCL vs NCCL, one node:** Most collectives 0.48–0.59x vs 0.60x link bandwidth on paper; both GPUs 61–81% of their link peak. all_reduce 0.47x is also expected: B200 is helped by NVLink SHARP (in-switch reduction).
 - **4. RCCL vs NCCL, two nodes:** all_gather, reduce_scatter, broadcast 0.99–1.03x vs 1.00x network; both 90–96% of 400 GB/s.
 - **5. Training:** 7B models 1.12–1.19x vs 1.12x BF16; both use 43–46% of BF16 peak.
 - **6. Kimi-K3:** Model fits in one MI355X node but needs two B200 nodes, as 288 vs 192 GB per GPU predicts; per-GPU throughput at 1–4 users 1.05–1.09x vs 1.00x memory bandwidth.
@@ -315,8 +315,8 @@ On paper, MI355X / B200 is 1.12x for FP4/FP8/BF16 compute, 2.12x for FP64, 0.60x
 
 | Result | Which GPU is off | Measured | On paper | Likely reason (one sentence) |
 |---|---|---|---|---|
-| **FP4 GEMM** (§2) | MI355X (low) | MI355X 41% of its peak, B200 63%; ratio **0.72x** | 1.12x | ROCm software: the FP4 kernels in ROCm's hipBLASLt are less mature than its FP8/BF16 kernels (74%/66% of peak), and cuBLASLt was tuned while RVS was not. |
-| **FP6 GEMM** (§2) | MI355X (low) | MI355X 12% of its peak | — (not on B200) | Same ROCm software cause as FP4: the FP6 kernels are even less developed. |
+| **FP4 GEMM** (§2) | MI355X (low) | MI355X 32% of its peak, B200 63%; ratio **0.56x** | 1.12x | ROCm software: the FP4 kernels in ROCm's hipBLASLt are less mature (ROCm 7.14 alone lifts MI355X to 41%), and cuBLASLt was tuned while RVS was not. |
+| **FP6 GEMM** (§2) | MI355X (low) | MI355X 13% of its peak | — (not on B200) | Same ROCm software cause as FP4: the FP6 kernels are even less developed. |
 | **FP8 GEMM on B200 with cuBLASLt** (§2) | B200 (low) | B200 56% of peak (gpu-fryer: 89%); ratio **1.48x** | 1.12x | Power limit: all precisions run at the ≈1,000 W cap, and FP8 uses the most power per cycle, so it gets the lowest clock (1,131 MHz); the kernel itself is ≈97% efficient per clock. Why gpu-fryer gets 89% is being checked. |
 | **all_reduce across 2 nodes** (§4) | B200 (low) | MI355X 95%, B200 58% of 400 GB/s; ratio **1.63x** | 1.00x | Likely NCCL's all_reduce algorithm, not the network (other NCCL collectives reach 92–96%). SHARP should help but is not enabled on the fabric (no `sharp_am`). |
 | **sendrecv across 2 nodes** (§4) | MI355X (low) | MI355X 57%, B200 98% of one 50 GB/s link; ratio **0.59x** | 1.00x RCCL setting (tested): by default RCCL uses too few channels per network peer for point-to-point; `NCCL_NCHANNELS_PER_NET_PEER=4` lifts it to 94% (0.96x of B200). |
