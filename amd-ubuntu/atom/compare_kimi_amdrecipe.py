@@ -144,7 +144,7 @@ def main():
               "DCP 8 + CPU KV offload above, server re-tuned per C). ATOM: best of base / max-num-seqs 256 / 512 "
               "(`results/node6100/kimi-cloud/`). Ratios are vLLM recipe 2 / the other recipe: tok/s above 1 and TPOT below 1 favour vLLM recipe 2; "
               "bold = more than 5%.", "",
-              "| C | recipe 2 tok/s | recipe 1 tok/s | ATOM tok/s (config) | recipe 2 / recipe 1 | recipe 2 / ATOM | recipe 2 TPOT ms | recipe 1 TPOT ms | ATOM TPOT ms | TPOT recipe 2 / recipe 1 | TPOT recipe 2 / ATOM | recipe 2 TTFT ms |",
+              "| C | tok/s (vLLM recipe 2) | tok/s (vLLM recipe 1) | tok/s (ATOM, config) | tok/s ratio (recipe 2 / recipe 1) | tok/s ratio (recipe 2 / ATOM) | TPOT ms (vLLM recipe 2) | TPOT ms (vLLM recipe 1) | TPOT ms (ATOM) | TPOT ratio (recipe 2 / recipe 1) | TPOT ratio (recipe 2 / ATOM) | TTFT ms (vLLM recipe 2) |",
               "|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|"]
         for c in sorted(set(b) | set(rec) | set(atom)):
             x, y, z = b.get(c, {}), rec.get(c, {}), atom.get(c, {})

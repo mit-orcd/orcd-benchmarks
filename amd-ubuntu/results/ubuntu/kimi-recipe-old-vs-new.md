@@ -10,7 +10,7 @@
 
 vLLM recipe 2: node6101, range ratio 0.8 and 10 × C prompts like the earlier Kimi runs. vLLM recipe 1: `results/node6101/kimi-recipe/` (DSpark speculative decoding up to C=14, DCP 8 + CPU KV offload above, server re-tuned per C). ATOM: best of base / max-num-seqs 256 / 512 (`results/node6100/kimi-cloud/`). Ratios are vLLM recipe 2 / the other recipe: tok/s above 1 and TPOT below 1 favour vLLM recipe 2; bold = more than 5%.
 
-| C | recipe 2 tok/s | recipe 1 tok/s | ATOM tok/s (config) | recipe 2 / recipe 1 | recipe 2 / ATOM | recipe 2 TPOT ms | recipe 1 TPOT ms | ATOM TPOT ms | TPOT recipe 2 / recipe 1 | TPOT recipe 2 / ATOM | recipe 2 TTFT ms |
+| C | tok/s (vLLM recipe 2) | tok/s (vLLM recipe 1) | tok/s (ATOM, config) | tok/s ratio (recipe 2 / recipe 1) | tok/s ratio (recipe 2 / ATOM) | TPOT ms (vLLM recipe 2) | TPOT ms (vLLM recipe 1) | TPOT ms (ATOM) | TPOT ratio (recipe 2 / recipe 1) | TPOT ratio (recipe 2 / ATOM) | TTFT ms (vLLM recipe 2) |
 |---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | 1 | 54 | 71 | 45 (base) | **0.76x** | **1.18x** | 18.15 | 15.36 | 21.76 | **1.18x** | **0.83x** | 186 |
 | 2 | 100 | — | 87 (base) | — | **1.16x** | 19.02 | — | 22.80 | — | **0.83x** | 403 |
