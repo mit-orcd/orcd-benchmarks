@@ -1,6 +1,6 @@
 # amd-ubuntu — RCCL across two nodes
 
-Generated 2026-10-07 21:14 by `report.py`.
+Generated 2026-10-08 15:03 by `report.py`.
 
 System: node6100 and node6101, each 8 × AMD Instinct MI355X (gfx950), 2 × EPYC 9575F, 2.2 TiB RAM, Ubuntu 24.04.5, amdgpu 6.19.14, host ROCm 7.2.4 for RVS (ROCm Validation Suite) and rccl-tests, containers under apptainer (Primus, Megatron-LM, ATOM). Nodes linked by 8 × 400G AMD Pollara (ionic) RoCEv2 rails.
 
@@ -10,7 +10,8 @@ System: node6100 and node6101, each 8 × AMD Instinct MI355X (gfx950), 2 × EPYC
 - **With 8 GPUs per node, inter-node collectives reach 92–95% of the 400 GB/s network limit**: all_reduce 381 GB/s, reduce_scatter 379, all_gather 377, broadcast 370 busbw. That is close to the single-node XGMI rate (≈390), so the network is not a bottleneck for data-parallel training across these two nodes.
 - RCCL uses the IB/RoCE transport with GPU-direct RDMA on all 8 ionic rails (checked in the probe log).
 - With 1–2 GPUs per node busbw stays at one rail (≈48.7 GB/s), and 4 GPUs per node reach ≈150–160 GB/s: each GPU uses its own rail, as expected.
-- alltoall (90 GB/s, 22%) and sendrecv (29 GB/s) are much lower, which is typical for these patterns across nodes; MoE expert-parallel traffic across nodes will be limited by this.
+- alltoall (90 GB/s, 22%) is much lower, which is typical for this pattern across nodes; MoE expert-parallel traffic across nodes will be limited by it.
+- **sendrecv (29 GB/s, 57% of one rail) is an RCCL default, fixed by one setting** (tested 2026-10-08, [sendrecv-check.md](sendrecv-check.md)): with `NCCL_NCHANNELS_PER_NET_PEER=4` (or 8) it reaches **46.9 GB/s = 94% of one rail**. More queue pairs, a larger chunk size or PXN did not help; raw RDMA reaches 98% per rail. Set it for point-to-point heavy work across nodes (pipeline parallelism, KV-cache transfer); its effect on the other collectives was not tested.
 
 ## Results
 

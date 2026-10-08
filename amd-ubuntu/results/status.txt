@@ -1,0 +1,56 @@
+AMD nodes (node6100, node6101) run status -- checked 2026-10-08
+
+Every run on the AMD nodes has finished. Both nodes are idle: 0% use on all
+16 GPUs, and no jobs from us or anyone else. (The load average of about 32
+comes from root kernel threads, not jobs.)
+
+Runs
+----
+1. Kimi-K3, AMD's recipe, input/output 128K/1K -- node6100, finished Oct 8 06:07 UTC
+   Done, all 8 concurrency levels (C=1-128) ran without errors.
+   Compared with AMD's recipe document: 0.56x at C=1 rising to 0.82x at C=4,
+   about the same at C=8-16, and 1.07-1.10x at C=32-128.
+   Result: results/ubuntu/kimi-amd-recipe.md (section 1)
+
+2. Kimi-K3, AMD's recipe, input/output 1K/1K -- node6101, finished Oct 7 23:18 UTC
+   Done, all 9 levels (C=1-256) ran without errors.
+   54 tok/s at 1 user up to 1,735 tok/s at 128 users (TPOT 18-72 ms).
+   At C=256 throughput stays at 1,747 and TTFT jumps to 73 s: the recipe
+   caps the server at 128 requests at once (max-num-seqs 128).
+   Comparison with the old recipes: results/ubuntu/kimi-recipe-old-vs-new.md
+   Result: results/ubuntu/kimi-amd-recipe.md (section 2)
+
+3. fp4 recheck and profile -- node6101, finished Oct 8 00:16 UTC
+   The drop is real (CONFIRMED). Per GPU, ROCm 7.14:
+     1 GPU                     3,984 TFLOPS
+     8 GPUs, one process       2,284 TFLOPS (0.57x)
+     8 GPUs, one process/GPU   4,029 TFLOPS (1.01x)
+   ROCm 7.2.4 holds about 3,190 TFLOPS in every case.
+   The profile (rocprofv3) shows the GEMM kernel itself runs at full speed.
+   The cause is on the host side: one RVS (ROCm Validation Suite) process
+   cannot feed 8 GPUs fast enough, so they sit idle 37-70% of the time
+   (on 1 GPU: 9%).
+   Result: results/vs-amd-cloud/rvs-fp4-recheck.md
+
+4. sendrecv check, 2 nodes -- node6100, finished Oct 8 06:23 UTC
+   Done. Default: 28.5 GB/s, 57% of one network link.
+   NCCL_NCHANNELS_PER_NET_PEER=8 raises it to 46.8 GB/s (94%).
+   Adding queue pairs, changing the chunk size or enabling PXN did not help
+   (about 57%).
+   Result: results/ubuntu/sendrecv-check.md
+
+Summaries -- updated 2026-10-08
+-------------------------------
+- results/SUMMARY.md (source analysis/SUMMARY.md): fp4 recheck result, sendrecv
+  fix, new Kimi section 8(c) for AMD's recipe PDF.
+- results/vs-amd-cloud/rvs.md, results/ubuntu/rocm.md: fp4 profile result.
+- results/ubuntu/rccl_2node.md, results/ubuntu/sendrecv-check.md: sendrecv
+  cause and fix (NCCL_NCHANNELS_PER_NET_PEER=4).
+- results/ubuntu/kimi.md: AMD's recipe PDF results.
+- results/mi355x-vs-b200.md: new section 6.3 (AMD's recipe PDF vs B200),
+  sendrecv fix (0.96x of B200), fp4 clocks/power and profile.
+- NEW results/kimi-summary.md: all Kimi-K3 runs on one page.
+- NEW results/ubuntu/kimi-recipe-old-vs-new.md: old Kimi recipes (vLLM recipe,
+  ATOM) vs the new one (AMD recipe PDF); other files give only new-recipe results.
+
+Nothing failed, so nothing needs rerunning.

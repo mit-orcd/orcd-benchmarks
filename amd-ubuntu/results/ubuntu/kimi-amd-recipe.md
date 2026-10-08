@@ -4,29 +4,39 @@ Recipe: `amd-kimi-k3-recipe.pdf` — `vllm/vllm-openai-rocm:v0.29.0`, TP8, one s
 
 ## 1. AMD's workload (ISL/OSL 128K/1K): ours vs the PDF
 
-*Pending: the `isl128k` arm has not produced results yet.*
+Total tok/s per GPU = total_token_throughput / 8 (the PDF's metric). Ours: node6100. Apple-to-apple: same image, server flags and client settings; different machine.
 
-## 2. Our workload (ISL/OSL 1K/1K): AMD PDF recipe vs current recipes
+| C | ours total tok/s/GPU | PDF total tok/s/GPU | ours / PDF | out tok/s | TTFT med ms | TPOT med ms |
+|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 487 | 874 | **0.56x** | 34.4 | 9,522 | 19.26 |
+| 2 | 791 | 1,090 | **0.73x** | 47.3 | 11,189 | 30.36 |
+| 4 | 1,015 | 1,235 | **0.82x** | 64.3 | 11,865 | 49.59 |
+| 8 | 1,212 | 1,199 | 1.01x | 75.4 | 12,467 | 90.11 |
+| 16 | 1,189 | 1,179 | 1.01x | 73.6 | 45,426 | 171.72 |
+| 32 | 1,227 | 1,118 | **1.10x** | 76.3 | 254,051 | 162.69 |
+| 64 | 1,191 | 1,096 | **1.09x** | 73.3 | 694,693 | 173.36 |
+| 128 | 1,188 | 1,110 | **1.07x** | 73.6 | 1,572,110 | 172.52 |
 
-PDF recipe: node6101, range ratio 0.8 and 10 × C prompts like the earlier Kimi runs. Current vLLM recipe: `results/node6101/kimi-recipe/` (DSpark speculative decoding up to C=14, DCP 8 + CPU KV offload above, server re-tuned per C). ATOM: best of base / max-num-seqs 256 / 512 (`results/node6100/kimi-cloud/`). Ratios are PDF recipe / other: tok/s above 1 and TPOT below 1 favour the PDF recipe; bold = more than 5%.
+## 2. Our workload (ISL/OSL 1K/1K)
 
-| C | PDF tok/s | vLLM recipe tok/s | ATOM tok/s (config) | PDF / vLLM recipe | PDF / ATOM | PDF TPOT ms | vLLM recipe TPOT ms | ATOM TPOT ms | TPOT PDF / vLLM recipe | TPOT PDF / ATOM | PDF TTFT ms |
-|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| 1 | 54 | 71 | 45 (base) | **0.76x** | **1.18x** | 18.15 | 15.36 | 21.76 | **1.18x** | **0.83x** | 186 |
-| 2 | 100 | — | 87 (base) | — | **1.16x** | 19.02 | — | 22.80 | — | **0.83x** | 403 |
-| 4 | 183 | 212 | 153 (base) | **0.86x** | **1.20x** | 20.72 | 18.79 | 25.23 | **1.10x** | **0.82x** | 405 |
-| 8 | 315 | 353 | 285 (base) | **0.89x** | **1.10x** | 23.84 | 22.00 | 27.26 | **1.08x** | **0.87x** | 408 |
-| 16 | 523 | — | 506 (base) | — | 1.03x | 28.48 | — | 30.79 | — | **0.92x** | 410 |
-| 32 | 852 | — | 831 (base) | — | 1.03x | 35.20 | — | 37.51 | — | **0.94x** | 412 |
-| 64 | 1,228 | 1,344 | 1,282 (base) | **0.91x** | 0.96x | 49.67 | 45.56 | 49.05 | **1.09x** | 1.01x | 425 |
-| 128 | 1,735 | 1,865 | 1,845 (max-num-seqs 256) | **0.93x** | **0.94x** | 71.75 | 66.90 | 68.87 | **1.07x** | 1.04x | 450 |
-| 256 | 1,747 | 2,522 | 2,602 (max-num-seqs 256) | **0.69x** | **0.67x** | 71.75 | 100.43 | 98.49 | **0.71x** | **0.73x** | 73,180 |
+node6101, range ratio 0.8 and 10 × C prompts like the earlier Kimi runs. Comparison with the old recipes: [kimi-recipe-old-vs-new.md](kimi-recipe-old-vs-new.md).
 
-C = 256 is above the PDF recipe's `max-num-seqs 128`, so half the requests queue; it is kept to line up with ATOM.
+| C | out tok/s | total tok/s | TTFT med ms | TTFT p99 ms | TPOT med ms | TPOT p99 ms |
+|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 54 | 86 | 186 | 2,210 | 18.15 | 18.36 |
+| 2 | 100 | 217 | 403 | 548 | 19.02 | 19.41 |
+| 4 | 183 | 352 | 405 | 1,283 | 20.72 | 21.33 |
+| 8 | 315 | 627 | 408 | 770 | 23.84 | 25.67 |
+| 16 | 523 | 1,051 | 410 | 1,479 | 28.48 | 30.59 |
+| 32 | 852 | 1,695 | 412 | 2,547 | 35.20 | 39.32 |
+| 64 | 1,228 | 2,494 | 425 | 4,566 | 49.67 | 53.81 |
+| 128 | 1,735 | 3,474 | 450 | 9,166 | 71.75 | 76.66 |
+| 256 | 1,747 | 3,548 | 73,180 | 97,734 | 71.75 | 77.76 |
+
+C = 256 is above the recipe's `max-num-seqs 128`, so half the requests queue (TTFT jumps).
 
 ## Is this apple-to-apple?
 
 - **§1 (vs the PDF): nearly.** Same image, server flags and client settings on the same GPU type. Differences: this machine, apptainer instead of docker, weights from local disk, and one short warm-up before the sweep.
-- **§2 (vs current recipes): no, recipe vs recipe.** Same hardware, model, ISL/OSL, concurrency and prompt count, but each recipe has its own vLLM/ATOM version and server settings (the current vLLM recipe uses speculative decoding, the PDF recipe does not; ATOM is a different engine).
 
 Per-arm detail: `results/<node>/kimi-amd-recipe/{isl128k,isl1k}.md`; logs: `logs/<node>/kimi-amd-recipe/atom/kimi_amdrecipe_<arm>_<ts>/`.

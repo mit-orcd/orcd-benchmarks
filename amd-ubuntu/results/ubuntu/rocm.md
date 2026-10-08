@@ -1,6 +1,6 @@
 # amd-ubuntu — Host ROCm 7.2.4 vs ROCm 7.14 (RVS (ROCm Validation Suite), RCCL)
 
-Generated 2026-10-07 21:14 by `report.py`.
+Generated 2026-10-08 15:03 by `report.py`.
 
 System: node6100 and node6101, each 8 × AMD Instinct MI355X (gfx950), 2 × EPYC 9575F, 2.2 TiB RAM, Ubuntu 24.04.5, amdgpu 6.19.14, host ROCm 7.2.4 for RVS and rccl-tests, containers under apptainer (Primus, Megatron-LM, ATOM). Nodes linked by 8 × 400G AMD Pollara (ionic) RoCEv2 rails.
 
@@ -10,6 +10,7 @@ System: node6100 and node6101, each 8 × AMD Instinct MI355X (gfx950), 2 × EPYC
 - **Same driver, two user spaces: ROCm 7.14 matches 7.2.4 within ±3% for nearly everything** (RVS bf16/fp16/fp8/fp32/fp64, single-node RCCL at N=8).
 - **fp4 is the exception.** On 7.14 a single GPU is 1.26–1.28× faster (≈4,080 vs 3,190 TFLOPS), but in the standard RVS run with all 8 GPUs the per-GPU rate falls to ≈2,130, so the 8-GPU sum is 0.67× of 7.2.4.
   - **Cause (tested 2026-10-05, `work-rocmval/fp4_multiproc_test.sh`): RVS drives all 8 GPUs from one process.** Run as 8 separate one-GPU processes at the same time, ROCm 7.14 gives **4,041–4,175 TFLOPS on every GPU, 32,784 in total** (1.28× of 7.2.4's 25,603). The same-day single-process control reproduced the drop (1,781–3,457 per GPU, 20,081 total). So the 8 GPUs can all run the faster 7.14 fp4 kernel at once; the slowdown comes from contention inside one process on 7.14's fp4 path, not from power, heat or the hardware.
+  - **Profile (2026-10-08, `work-rocmval/fp4_recheck_and_profile.sh`) confirms it:** with 8 GPUs in one process the FP4 kernel itself runs at full speed (0.96–1.02× of the 1-GPU kernel), but each GPU is busy only 30–63% of the time (1 GPU: 91%); the one process does not launch work fast enough. Detail: `../vs-amd-cloud/rvs-fp4-recheck.md`.
   - Real workloads normally run one process per GPU, so they get the 7.14 fp4 speed-up. amd-cloud (also 7.14, single process) shows the same drop for the same reason.
 - bf6/fp6 are ≈3% lower on 7.14.
 - **N=5 RCCL**: 7.14 fixes alltoallv (≈45 vs ≈22 GB/s on 7.2.4).

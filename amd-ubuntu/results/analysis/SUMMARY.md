@@ -1,8 +1,8 @@
 # amd-ubuntu results — summary
 
-Hand-written (source `results/analysis/SUMMARY.md`, copied to `results/SUMMARY.md` by `report.py`); last edited 2026-10-07. Covers every benchmark on our two MI355X nodes. Each section starts with what is compared with what. Ratios: for latency (TPOT, TTFT) below 1 is better.
+Hand-written (source `results/analysis/SUMMARY.md`, copied to `results/SUMMARY.md` by `report.py`); last edited 2026-10-08. Covers every benchmark on our two MI355X nodes. Each section starts with what is compared with what. Ratios: for latency (TPOT, TTFT) below 1 is better.
 
-Detail: [`ubuntu/`](ubuntu/README.md) (our nodes only), [`vs-amd-cloud/`](vs-amd-cloud/README.md) (vs amd-cloud), [`mi355x-vs-b200.md`](mi355x-vs-b200.md) (vs NVIDIA B200).
+Detail: [`ubuntu/`](ubuntu/README.md) (our nodes only), [`vs-amd-cloud/`](vs-amd-cloud/README.md) (vs amd-cloud), [`mi355x-vs-b200.md`](mi355x-vs-b200.md) (vs NVIDIA B200), [`kimi-summary.md`](kimi-summary.md) (all Kimi-K3 runs on one page).
 
 | | our nodes (amd-ubuntu) | amd-cloud |
 |---|---|---|
@@ -16,11 +16,11 @@ Detail: [`ubuntu/`](ubuntu/README.md) (our nodes only), [`vs-amd-cloud/`](vs-amd
 |---|---|---|---|
 | 2 | [RVS (ROCm Validation Suite) GEMM](#2-rvs-rocm-validation-suite-gemm-tflops) | ours 7.14 vs amd-cloud 7.14; ours 7.2.4 vs ours 7.14 | almost the same as amd-cloud; 7.2.4 = 7.14 except fp4 |
 | 3 | [RCCL, one node](#3-rccl-one-node) | ours 7.14 vs amd-cloud 7.14; ours 7.2.4 vs ours 7.14 | almost the same as amd-cloud; 7.2.4 = 7.14 at 8 GPUs |
-| 4 | [Network and RCCL, two nodes](#4-network-and-rccl-two-nodes-our-nodes-only) | our nodes only: vs line rate; 7.2.4 vs 7.14 | 98% of line rate per rail; collectives 92–95% of 400 GB/s |
+| 4 | [Network and RCCL, two nodes](#4-network-and-rccl-two-nodes-our-nodes-only) | our nodes only: vs line rate; 7.2.4 vs 7.14 | 98% of line rate per rail; collectives 92–95% of 400 GB/s; sendrecv 94% with one RCCL setting |
 | 5 | [Primus training](#5-primus-megatron-llama2-7b-training) | ours vs amd-cloud, same image | the same (0.99–1.04×) |
 | 6 | [Megatron-LM GPT-15.6B](#6-megatron-lm-gpt-156b-megatron-ref) | our nodes only (no amd-cloud run) | 578 / 573 TF/s/GPU |
 | 7 | [ATOM serving](#7-atom-serving-llama-31-70b-qwen3-8b) | ours vs amd-cloud, same images | ours faster below 256 users (1.07–1.34×), equal at 256 |
-| 8 | [Kimi-K3](#8-kimi-k3-inference) | ours vs amd-cloud (ATOM, same images); vLLM recipe vs ATOM | the same up to 128 users; recipe faster at low load |
+| 8 | [Kimi-K3](#8-kimi-k3-inference) | ours vs amd-cloud (ATOM, same images); vLLM recipe vs ATOM; AMD's recipe PDF vs its published numbers | the same up to 128 users; recipe faster at low load; PDF recipe matches AMD's numbers from 8 users |
 
 ---
 
@@ -39,10 +39,15 @@ Detail: [`ubuntu/`](ubuntu/README.md) (our nodes only), [`vs-amd-cloud/`](vs-amd
 
 **Different** (all ROCm 7.14 vs 7.2.4 on our nodes):
 - fp4 on 1 GPU: 7.14 is 1.28× faster than 7.2.4.
-- fp4 on 8 GPUs driven by one RVS process: 7.14 is 33% slower than 7.2.4 (0.67×).
+- fp4 on 8 GPUs driven by one RVS process: 7.14 is 33% slower than 7.2.4 (0.67×). Profiled: the GPUs wait for the one process, the kernel itself is fast.
 - RCCL alltoallv at 5 GPUs: 7.14 is 2× faster than 7.2.4.
 - Across two nodes, alltoall: 7.14 is 14% slower than 7.2.4.
 - Across two nodes, sendrecv: 7.14 is 12% faster than 7.2.4.
+
+**Our nodes only, fixes found:**
+- 2-node sendrecv: `NCCL_NCHANNELS_PER_NET_PEER=4` raises it from 57% to 94% of one rail (28.5 → 46.9 GB/s).
+
+**Kimi-K3, AMD's recipe PDF on our nodes:** with AMD's own workload (128K/1K) our nodes match the PDF at 8–16 users and are 7–10% faster at 32–128, but 18–44% slower at 1–4 users. On the 1K/1K workload it gives 54 tok/s at 1 user up to 1,735 tok/s at 128 users.
 
 ## 2. RVS (ROCm Validation Suite), GEMM TFLOPS
 
@@ -62,7 +67,7 @@ Detail: [`ubuntu/`](ubuntu/README.md) (our nodes only), [`vs-amd-cloud/`](vs-amd
 | 8 GPUs, one RVS process (standard run) | 3,200 / 3,191 | 2,128 / 2,137 | **0.67× / 0.67×** |
 | 8 GPUs, 8 separate processes (test 2026-10-05, node6100) | ≈3,200 | ≈4,100 | **1.28×** |
 
-7.14 has a faster fp4 kernel; with one RVS process driving 8 GPUs it drops (amd-cloud shows the same drop), with one process per GPU it does not. A recheck and profile is queued: [vs-amd-cloud/rvs-fp4-recheck.md](vs-amd-cloud/rvs-fp4-recheck.md) (written when it finishes).
+7.14 has a faster fp4 kernel; with one RVS process driving 8 GPUs it drops (amd-cloud shows the same drop), with one process per GPU it does not. **Recheck and profile (2026-10-08) confirm it:** 3,984 per GPU on 1 GPU, 2,284 with 8 GPUs in one process, 4,029 with one process per GPU. The FP4 kernel runs at the same speed in all cases, but with one process each GPU is busy only 30–63% of the time (1 GPU: 91%), so **the cause is the single host process, not the GPUs**. Detail: [vs-amd-cloud/rvs-fp4-recheck.md](vs-amd-cloud/rvs-fp4-recheck.md).
 
 Headline on our nodes (ROCm 7.2.4, 8 GPUs, node6100): fp8 30.3 PF, bf8 26.9 PF, fp4 25.6 PF, bf16 13.6 PF, fp64 617 TF; scaling 1 → 8 GPUs is linear (99–104%).
 
@@ -100,7 +105,8 @@ Use 1, 2, 4 or 8 GPUs per node for collective-heavy work: with 5–7 GPUs busbw 
 | all_reduce | 2 (2 × 1) / 4 (2 × 2) / 8 (2 × 4) | 48.7 / 48.7 / 159.8 | 50 / 100 / 200 | 97% / 49% / 80% |
 
 - With 8 GPUs per node the ring collectives reach 92–95% of the network, close to the single-node XGMI rate (≈390 GB/s): the network is not a bottleneck for data-parallel training across the two nodes.
-- alltoall and sendrecv are well below their ceilings, so traffic like MoE expert-parallel across nodes will be limited by them.
+- alltoall is well below its ceiling, so traffic like MoE expert-parallel across nodes will be limited by it.
+- **sendrecv is fixed by one RCCL setting** (tested 2026-10-08, ROCm 7.2.4, [ubuntu/sendrecv-check.md](ubuntu/sendrecv-check.md)): `NCCL_NCHANNELS_PER_NET_PEER=4` (or 8) raises it from 28.5 to **46.9 GB/s = 94% of one rail**. The default gives each network peer too few channels; more queue pairs, a larger chunk size or PXN did not help.
 
 **ROCm 7.2.4 vs 7.14 (8 GPUs per node):**
 
@@ -141,7 +147,7 @@ For context only: Dell Cloud MI355X reached 790.4 with the same model; ours is �
 
 ## 8. Kimi-K3 inference
 
-**Compared: (a) our nodes vs amd-cloud with ATOM, same images; (b) on our nodes, AMD's vLLM recipe vs the best ATOM result.** ISL/OSL 1024/1024, 8 GPUs (TP8). Detail: [vs-amd-cloud/kimi.md](vs-amd-cloud/kimi.md), [ubuntu/kimi.md](ubuntu/kimi.md).
+**Compared: (a) our nodes vs amd-cloud with ATOM, same images; (b) on our nodes, AMD's vLLM recipe vs the best ATOM result; (c) AMD's recipe PDF: our nodes vs AMD's published numbers, and its results on our workload.** ISL/OSL 1024/1024 (plus 128K/1K in (c)), 8 GPUs (TP8). Detail: [vs-amd-cloud/kimi.md](vs-amd-cloud/kimi.md), [ubuntu/kimi.md](ubuntu/kimi.md).
 
 **(a) ATOM, ours vs amd-cloud:**
 
@@ -155,4 +161,10 @@ For context only: Dell Cloud MI355X reached 790.4 with the same model; ours is �
 |---|---:|---:|---:|---:|---:|---:|
 | vLLM recipe / best ATOM, tok/s | 1.56× | 1.39× | 1.24× | 1.05× | 1.01× | 0.97× |
 
-The recipe's speculative decoding helps at low load; at high load both are equal. AMD's newer recipe from `amd-kimi-k3-recipe.pdf` is running now; results go to [ubuntu/kimi-amd-recipe.md](ubuntu/kimi-amd-recipe.md).
+The recipe's speculative decoding helps at low load; at high load both are equal.
+
+**(c) AMD's recipe PDF on our nodes** (`amd-kimi-k3-recipe.pdf`: vLLM v0.29.0, TP8, `max-num-seqs 128`, no speculative decoding). Detail: [ubuntu/kimi-amd-recipe.md](ubuntu/kimi-amd-recipe.md), all Kimi-K3 results on one page: [kimi-summary.md](kimi-summary.md).
+
+- **Our nodes vs AMD's published numbers, AMD's workload (ISL/OSL 128K/1K), same image and settings:** our nodes are the same as AMD's at 8–16 users (1.01×) and faster at 32–128 (1.07–1.10×); at 1–4 users they are slower (0.56–0.82×).
+- **Results on our workload (1K/1K, node6101):** 54 tok/s at 1 user (TPOT 18.1 ms), 315 at 8, 1,228 at 64 and 1,735 at 128 (TPOT 71.8 ms), TTFT under 0.5 s up to 128 users. At 256 users throughput stays at 1,747 and TTFT jumps to 73 s, because `max-num-seqs 128` makes half the requests wait.
+- The comparison with the old recipes (vLLM recipe, ATOM) is in its own file: [ubuntu/kimi-recipe-old-vs-new.md](ubuntu/kimi-recipe-old-vs-new.md).
