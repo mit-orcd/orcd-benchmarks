@@ -12,6 +12,12 @@ Detail: [ubuntu/kimi.md](ubuntu/kimi.md) (ATOM and the vLLM recipe), [ubuntu/kim
 | **vLLM recipe** (old) | AMD vLLM (ROCm) recipe | DSpark speculative decoding up to 14 users; DCP 8 + CPU KV offload above; server re-tuned per load | 1K/1K, 1–256 users |
 | **New AMD recipe 2026-10** | `vllm/vllm-openai-rocm:v0.29.0` (`amd-kimi-k3-recipe.pdf`) | one server for the sweep, `max-num-seqs` 128, `max-num-batched-tokens` 4096, no speculative decoding | 128K/1K, 1–128 users (node6100); 1K/1K, 1–256 users (node6101) |
 
+**Conclusion (throughput, output tokens per second, same nodes, ISL/OSL 1K/1K):**
+- **Old vLLM recipe is the fastest up to 128 users:** 1.56× ATOM and 1.31× the new AMD recipe 2026-10 at 1 user; 1.08–1.16× the new recipe at 4–128 users. Its speculative decoding helps most at low load.
+- **New AMD recipe 2026-10 is faster than ATOM up to 32 users** (1.10–1.20× at 1–8 users, 1.03× at 16–32) and slightly slower at 64–128 users (0.94–0.96×).
+- **ATOM is the fastest at 256 users and above** (with `max-num-seqs` 256–512): 1.5× the new recipe at 256 users, where the new recipe's `max-num-seqs` 128 makes half the requests wait.
+- Detail: [ubuntu/kimi-recipe-old-vs-new.md](ubuntu/kimi-recipe-old-vs-new.md).
+
 ## 1. Our nodes vs amd-cloud (ATOM, same images)
 
 **Compared: our nodes vs amd-cloud, both ATOM on the same images, same ISL/OSL 1K/1K and user counts.**

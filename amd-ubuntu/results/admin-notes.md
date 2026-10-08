@@ -12,7 +12,7 @@ Written 2026-10-08 from all results in this directory. Details: [SUMMARY.md](SUM
 
 | # | What | Why (measured) | Suggested action |
 |---|---|---|---|
-| 1 | RCCL default for point-to-point across nodes | 2-node sendrecv reaches 57% of one rail by default and 94% with `NCCL_NCHANNELS_PER_NET_PEER=4` (`ubuntu/sendrecv-check.md`) | Add `NCCL_NCHANNELS_PER_NET_PEER=4` to `/etc/nccl.conf` on both nodes, or document it for users. Check the ring collectives once with it set (not tested yet). |
+| 1 | RCCL settings for point-to-point across nodes | 2-node sendrecv reaches 57–64% of one rail by default. `NCCL_NCHANNELS_PER_NET_PEER=4` lifts it to 94–99%, but lowers alltoall by about 30%. On ROCm 7.14, RCCL's new `IB-CAST` network transport makes alltoall and sendrecv slower; `NCCL_NET=IB` restores them (`ubuntu/sendrecv-check.md`) | Document for users: on ROCm 7.14 set `NCCL_NET=IB` for multi-node jobs; add `NCCL_NCHANNELS_PER_NET_PEER=4` only for sendrecv-heavy jobs (not in `/etc/nccl.conf`, since it hurts alltoall). |
 | 2 | NUMA binding for the RDMA NICs | Without binding, 8 rails at once reach only 52% of line rate (98% with binding) | Document the mapping (rails 0–3 → NUMA 0, rails 4–7 → NUMA 1), or provide a small wrapper for users. |
 | 3 | Scheduling | The nodes are ssh-only and not in Slurm; jobs from different users can collide on the GPUs | Add the nodes to Slurm (GPU GRES), or provide a shared lock or reservation method. |
 | 4 | GPU access for new users | GPU tests fail until the user is in the `render` and `video` groups | Add GPU users to `render` and `video` by default. |

@@ -43,3 +43,22 @@ Baseline `default` run: 28.5 GB/s (57% of one rail).
 - **The cause is RCCL's default number of channels per network peer** for point-to-point traffic: each channel moves only part of a rail, and the default opens too few. More queue pairs per connection (`qps2`, `qps4`), a 1 MiB chunk size and PXN routing all stay at 57–58%, so the limit is per channel, not per connection, and rail crossing is not the cause (PXN does not help).
 - With one GPU per node (`default_ppn1`, same rail) the default is even lower (44%), consistent with too few channels per peer.
 - **Suggestion:** set `NCCL_NCHANNELS_PER_NET_PEER=4` for point-to-point heavy work across nodes (pipeline parallelism, KV-cache transfer, MoE expert parallelism). Its effect on the ring collectives (already 92–95%) was not tested.
+
+## ROCm 7.14: network transport test (2026-10-08)
+
+Compared: ROCm 7.14 on our nodes with different RCCL network settings (2 nodes, 16 GPUs, busbw at the largest size: alltoall 4 GB, sendrecv 16 GiB). ROCm 7.14 ships RCCL 2.30.4, which uses a new network transport (`IB-CAST`); the host ROCm 7.2.4 ships RCCL 2.27.7 with the plain `IB` transport. Logs: `logs/node6100/rocm7.14/rccl/p2p_transport_714_*` and `rccl_2node_p2p714_*`. Script: `rccl-tests/run_p2p_transport_714.sh`.
+
+| setting (ROCm 7.14) | transport | alltoall GB/s (% of 93.75) | sendrecv GB/s (% of 50) |
+|---|---|---:|---:|
+| default | IB-CAST | 73.7 (79%) | 32.1 (64%) |
+| `NCCL_NCHANNELS_PER_NET_PEER=4` | IB-CAST | 56.6 (60%) | 40.1 (80%) |
+| `NCCL_NET=IB` | IB | **89.6 (96%)** | 38.5 (77%) |
+| `NCCL_NET=IB NCCL_NCHANNELS_PER_NET_PEER=4` | IB | 54.0 (58%) | **49.4 (99%)** |
+| `NCCL_IB_QP_SCHED_ENABLE=1` | IB-CAST | 73.6 (79%) | 29.5 (59%) |
+| `NCCL_IB_QP_SCHED_ENABLE=1 NCCL_NCHANNELS_PER_NET_PEER=4` | IB-CAST | 52.4 (56%) | 39.8 (80%) |
+
+- **The new `IB-CAST` transport in ROCm 7.14's RCCL is why point-to-point is slower on 7.14 than on 7.2.4.** With `NCCL_NET=IB` (the old transport), ROCm 7.14 gives alltoall 89.6 GB/s, the same as 7.2.4, and sendrecv with 4 channels per peer reaches 49.4 GB/s = 99% of one rail (7.2.4: 46.9; B200: 48.8).
+- Turning the queue-pair scheduler back on (`NCCL_IB_QP_SCHED_ENABLE=1`) does not help.
+- **`NCCL_NCHANNELS_PER_NET_PEER=4` helps sendrecv but hurts alltoall** (73.7 → 56.6 GB/s with IB-CAST, 89.6 → 54.0 with IB). So it should not be set globally; set it only for jobs dominated by sendrecv-style traffic (e.g. pipeline parallelism).
+- Suggested on ROCm 7.14: `NCCL_NET=IB` for all multi-node jobs; add `NCCL_NCHANNELS_PER_NET_PEER=4` only for sendrecv-heavy jobs. The ring collectives (all_reduce etc.) were not rerun with `NCCL_NET=IB`.
+- Single runs; the default alltoall here (73.7) is 4% below the earlier 7.14 run (77.1), which gives the run-to-run spread.
