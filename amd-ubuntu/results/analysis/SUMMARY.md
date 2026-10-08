@@ -20,7 +20,7 @@ Detail: [`ubuntu/`](ubuntu/README.md) (our nodes only), [`vs-amd-cloud/`](vs-amd
 | 5 | [Primus training](#5-primus-megatron-llama2-7b-training) | ours vs amd-cloud, same image | the same (0.99–1.04×) |
 | 6 | [Megatron-LM GPT-15.6B](#6-megatron-lm-gpt-156b-megatron-ref) | our nodes only (no amd-cloud run) | 578 / 573 TF/s/GPU |
 | 7 | [ATOM serving](#7-atom-serving-llama-31-70b-qwen3-8b) | ours vs amd-cloud, same images | ours faster below 256 users (1.07–1.34×), equal at 256 |
-| 8 | [Kimi-K3](#8-kimi-k3-inference) | ours vs amd-cloud (ATOM, same images); vLLM recipe vs ATOM; AMD's recipe PDF vs its published numbers | the same up to 128 users; recipe faster at low load; PDF recipe matches AMD's numbers from 8 users |
+| 8 | [Kimi-K3](#8-kimi-k3-inference) | ours vs amd-cloud (ATOM, same images); vLLM recipe vs ATOM; new AMD recipe 2026-10 vs its published numbers | the same up to 128 users; recipe faster at low load; new AMD recipe 2026-10 matches AMD's numbers from 8 users |
 
 ---
 
@@ -47,7 +47,7 @@ Detail: [`ubuntu/`](ubuntu/README.md) (our nodes only), [`vs-amd-cloud/`](vs-amd
 **Our nodes only, fixes found:**
 - 2-node sendrecv: `NCCL_NCHANNELS_PER_NET_PEER=4` raises it from 57% to 94% of one rail (28.5 → 46.9 GB/s).
 
-**Kimi-K3, AMD's recipe PDF on our nodes:** with AMD's own workload (128K/1K) our nodes match the PDF at 8–16 users and are 7–10% faster at 32–128, but 18–44% slower at 1–4 users. On the 1K/1K workload it gives 54 tok/s at 1 user up to 1,735 tok/s at 128 users.
+**Kimi-K3, new AMD recipe 2026-10 on our nodes:** with AMD's own workload (128K/1K), running that same recipe, our nodes match AMD's published numbers at 8–16 users and are 7–10% faster at 32–128, but 18–44% slower at 1–4 users. On the 1K/1K workload it gives 54 tok/s at 1 user up to 1,735 tok/s at 128 users.
 
 ## 2. RVS (ROCm Validation Suite), GEMM TFLOPS
 
@@ -147,7 +147,7 @@ For context only: Dell Cloud MI355X reached 790.4 with the same model; ours is �
 
 ## 8. Kimi-K3 inference
 
-**Compared: (a) our nodes vs amd-cloud with ATOM, same images; (b) on our nodes, AMD's vLLM recipe vs the best ATOM result; (c) AMD's recipe PDF: our nodes vs AMD's published numbers, and its results on our workload.** ISL/OSL 1024/1024 (plus 128K/1K in (c)), 8 GPUs (TP8). Detail: [vs-amd-cloud/kimi.md](vs-amd-cloud/kimi.md), [ubuntu/kimi.md](ubuntu/kimi.md).
+**Compared: (a) our nodes vs amd-cloud with ATOM, same images; (b) on our nodes, AMD's vLLM recipe vs the best ATOM result; (c) new AMD recipe 2026-10: our nodes vs AMD's published numbers, and its results on our workload.** ISL/OSL 1024/1024 (plus 128K/1K in (c)), 8 GPUs (TP8). Detail: [vs-amd-cloud/kimi.md](vs-amd-cloud/kimi.md), [ubuntu/kimi.md](ubuntu/kimi.md).
 
 **(a) ATOM, ours vs amd-cloud:**
 
@@ -163,8 +163,8 @@ For context only: Dell Cloud MI355X reached 790.4 with the same model; ours is �
 
 The recipe's speculative decoding helps at low load; at high load both are equal.
 
-**(c) AMD's recipe PDF on our nodes** (`amd-kimi-k3-recipe.pdf`: vLLM v0.29.0, TP8, `max-num-seqs 128`, no speculative decoding). Detail: [ubuntu/kimi-amd-recipe.md](ubuntu/kimi-amd-recipe.md), all Kimi-K3 results on one page: [kimi-summary.md](kimi-summary.md).
+**(c) New AMD recipe 2026-10 on our nodes** (`amd-kimi-k3-recipe.pdf`: vLLM v0.29.0, TP8, `max-num-seqs 128`, no speculative decoding). Detail: [ubuntu/kimi-amd-recipe.md](ubuntu/kimi-amd-recipe.md), all Kimi-K3 results on one page: [kimi-summary.md](kimi-summary.md).
 
-- **Our nodes vs AMD's published numbers, AMD's workload (ISL/OSL 128K/1K), same image and settings:** our nodes are the same as AMD's at 8–16 users (1.01×) and faster at 32–128 (1.07–1.10×); at 1–4 users they are slower (0.56–0.82×).
+- **Our nodes vs AMD's published numbers, AMD's workload (ISL/OSL 128K/1K):** our runs already use the new AMD recipe 2026-10 itself (same image, server flags and client settings as the PDF); the published numbers are the PDF's results table. Result: our nodes are the same as AMD's at 8–16 users (1.01×) and faster at 32–128 (1.07–1.10×); at 1–4 users they are slower (0.56–0.82×).
 - **Results on our workload (1K/1K, node6101):** 54 tok/s at 1 user (TPOT 18.1 ms), 315 at 8, 1,228 at 64 and 1,735 at 128 (TPOT 71.8 ms), TTFT under 0.5 s up to 128 users. At 256 users throughput stays at 1,747 and TTFT jumps to 73 s, because `max-num-seqs 128` makes half the requests wait.
 - The comparison with the old recipes (vLLM recipe, ATOM) is in its own file: [ubuntu/kimi-recipe-old-vs-new.md](ubuntu/kimi-recipe-old-vs-new.md).

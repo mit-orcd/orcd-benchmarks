@@ -6,13 +6,14 @@ comes from root kernel threads, not jobs.)
 
 Runs
 ----
-1. Kimi-K3, AMD's recipe, input/output 128K/1K -- node6100, finished Oct 8 06:07 UTC
+1. Kimi-K3, new AMD recipe 2026-10, input/output 128K/1K -- node6100, finished Oct 8 06:07 UTC
    Done, all 8 concurrency levels (C=1-128) ran without errors.
-   Compared with AMD's recipe document: 0.56x at C=1 rising to 0.82x at C=4,
+   Our run uses the new AMD recipe 2026-10 itself. Compared with AMD's
+   published numbers (the PDF's table): 0.56x at C=1 rising to 0.82x at C=4,
    about the same at C=8-16, and 1.07-1.10x at C=32-128.
    Result: results/ubuntu/kimi-amd-recipe.md (section 1)
 
-2. Kimi-K3, AMD's recipe, input/output 1K/1K -- node6101, finished Oct 7 23:18 UTC
+2. Kimi-K3, new AMD recipe 2026-10, input/output 1K/1K -- node6101, finished Oct 7 23:18 UTC
    Done, all 9 levels (C=1-256) ran without errors.
    54 tok/s at 1 user up to 1,735 tok/s at 128 users (TPOT 18-72 ms).
    At C=256 throughput stays at 1,747 and TTFT jumps to 73 s: the recipe
@@ -42,15 +43,15 @@ Runs
 Summaries -- updated 2026-10-08
 -------------------------------
 - results/SUMMARY.md (source analysis/SUMMARY.md): fp4 recheck result, sendrecv
-  fix, new Kimi section 8(c) for AMD's recipe PDF.
+  fix, new Kimi section 8(c) for new AMD recipe 2026-10.
 - results/vs-amd-cloud/rvs.md, results/ubuntu/rocm.md: fp4 profile result.
 - results/ubuntu/rccl_2node.md, results/ubuntu/sendrecv-check.md: sendrecv
   cause and fix (NCCL_NCHANNELS_PER_NET_PEER=4).
-- results/ubuntu/kimi.md: AMD's recipe PDF results.
-- results/mi355x-vs-b200.md: new section 6.3 (AMD's recipe PDF vs B200),
+- results/ubuntu/kimi.md: new AMD recipe 2026-10 results.
+- results/mi355x-vs-b200.md: new section 6.3 (new AMD recipe 2026-10 vs B200),
   sendrecv fix (0.96x of B200), fp4 clocks/power and profile.
 - NEW results/kimi-summary.md: all Kimi-K3 runs on one page.
 - NEW results/ubuntu/kimi-recipe-old-vs-new.md: old Kimi recipes (vLLM recipe,
-  ATOM) vs the new one (AMD recipe PDF); other files give only new-recipe results.
+  ATOM) vs the new one (new AMD recipe 2026-10); other files give only new-recipe results.
 
 Nothing failed, so nothing needs rerunning.

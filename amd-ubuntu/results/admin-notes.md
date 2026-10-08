@@ -29,6 +29,6 @@ Written 2026-10-08 from all results in this directory. Details: [SUMMARY.md](SUM
 
 ## To raise with AMD (optional)
 
-- Kimi-K3 with AMD's recipe document, on AMD's own workload, is 0.56–0.82× AMD's published numbers at 1–4 users and the same or better from 8 users. Ask which host settings and warm-up were used.
+- Kimi-K3 with the new AMD recipe 2026-10 (our runs use that exact recipe), on AMD's own workload, is 0.56–0.82× AMD's published numbers at 1–4 users and the same or better from 8 users. Ask which host settings and warm-up were used.
 - Megatron-LM v26.1 image: fused RoPE crashes on gfx950. GPT-15.6B runs without it at ≈0.73× of a published MI355X result.
 - RVS fp4 on ROCm 7.14 with 8 GPUs in one process runs at 0.57× of 1 GPU. This is a host-side launch limit in the test, not in the GPUs.

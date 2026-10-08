@@ -1,8 +1,10 @@
-# amd-ubuntu — Kimi-K3 with AMD's recipe PDF (vLLM v0.29.0)
+# amd-ubuntu — Kimi-K3 with new AMD recipe 2026-10 (vLLM v0.29.0)
 
 Recipe: `amd-kimi-k3-recipe.pdf` — `vllm/vllm-openai-rocm:v0.29.0`, TP8, one server for the sweep, `max-num-seqs 128`, `max-num-batched-tokens 4096`, `gpu-memory-utilization 0.95`, cudagraph `FULL_DECODE_ONLY`, `+fused_rms_norm_gated`, AITER MXFP4 MoE (`VLLM_ROCM_USE_AITER_MOE_SITUV2_A8W4=1`), no speculative decoding. Scripts: `atom/run_kimi_amdrecipe.sh` (`isl128k` on node6100, `isl1k` on node6101), weights from `/scratch/Kimi-K3`, run under apptainer.
 
-## 1. AMD's workload (ISL/OSL 128K/1K): ours vs the PDF
+## 1. AMD's workload (ISL/OSL 128K/1K): our nodes vs AMD's published numbers
+
+Our runs already use this same recipe: the new AMD recipe 2026-10 from `amd-kimi-k3-recipe.pdf` (same image `vllm/vllm-openai-rocm:v0.29.0`, server flags and client settings). AMD's published numbers are the results table printed in that PDF.
 
 Total tok/s per GPU = total_token_throughput / 8 (the PDF's metric). Ours: node6100. Apple-to-apple: same image, server flags and client settings; different machine.
 

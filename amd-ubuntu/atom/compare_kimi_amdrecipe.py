@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Build two files:
-  results/ubuntu/kimi-amd-recipe.md       the new recipe (AMD's Kimi-K3 recipe PDF, vLLM v0.29.0):
+  results/ubuntu/kimi-amd-recipe.md       the new AMD recipe 2026-10 (`amd-kimi-k3-recipe.pdf`, vLLM v0.29.0):
                                           ours vs the PDF's own table (128K/1K) and its 1K/1K results
-  results/ubuntu/kimi-recipe-old-vs-new.md the new recipe vs the old recipes at 1K/1K (vLLM recipe from
+  results/ubuntu/kimi-recipe-old-vs-new.md the new AMD recipe 2026-10 vs the old recipes at 1K/1K (vLLM recipe from
                                           recipes.vllm.ai, atom/run_kimi_recipe.sh; ATOM base / max-num-seqs 256 / 512)
 
 Reads results/<node>/kimi-amd-recipe/{isl128k,isl1k}.csv from either node, so it can run after
@@ -20,17 +20,17 @@ PDF = {1: 874, 2: 1090, 4: 1235, 8: 1199, 16: 1179, 32: 1118, 64: 1096, 128: 111
 # hand-written reading of the old-vs-new table (2026-10-08 results)
 CMP_NOTES = [
     "## Reading", "",
-    "- **Old vLLM recipe vs new recipe: the old vLLM recipe is faster at every load where both ran** "
+    "- **Old vLLM recipe vs new AMD recipe 2026-10: the old vLLM recipe is faster at every load where both ran** "
     "(new / old 0.76x at 1 user, 0.86–0.93x at 4–128, 0.69x at 256); its speculative decoding gives the largest "
     "gain at low load.",
-    "- **ATOM vs new recipe: the new recipe is faster up to 32 users** (1.10–1.20x at 1–8 users, 1.03x at 16–32) "
+    "- **ATOM vs new AMD recipe 2026-10: the new AMD recipe 2026-10 is faster up to 32 users** (1.10–1.20x at 1–8 users, 1.03x at 16–32) "
     "and slightly slower at 64–128 (0.94–0.96x).",
-    "- **At 256 users the new recipe falls behind both (0.67–0.69x)**: its `max-num-seqs 128` makes half the "
+    "- **At 256 users the new AMD recipe 2026-10 falls behind both (0.67–0.69x)**: its `max-num-seqs 128` makes half the "
     "requests wait.",
-    "- **Fastest per load on our nodes:** old vLLM recipe at 1, 4, 8, 64 and 128 users; new recipe at 2, 16 and 32 "
+    "- **Fastest per load on our nodes:** old vLLM recipe at 1, 4, 8, 64 and 128 users; new AMD recipe 2026-10 at 2, 16 and 32 "
     "(the old vLLM recipe was not run there); ATOM (`max-num-seqs` 256–512) at 256 users and above.",
     "- **Suggested setup:** the old vLLM recipe for interactive use (1–128 users); ATOM with `max-num-seqs` 256–512 "
-    "for 256 users or more. The new recipe is a good single setting for 2–32 users without speculative decoding; "
+    "for 256 users or more. The new AMD recipe 2026-10 is a good single setting for 2–32 users without speculative decoding; "
     "raise its `max-num-seqs` above 128 for heavier load.",
 ]
 
@@ -69,7 +69,7 @@ def ratio(a, b, bold_lo=0.95, bold_hi=1.05):
 
 
 def main():
-    L = ["# amd-ubuntu — Kimi-K3 with AMD's recipe PDF (vLLM v0.29.0)", ""]
+    L = ["# amd-ubuntu — Kimi-K3 with new AMD recipe 2026-10 (vLLM v0.29.0)", ""]
     L += ["Recipe: `amd-kimi-k3-recipe.pdf` — `vllm/vllm-openai-rocm:v0.29.0`, TP8, one server for the sweep, "
           "`max-num-seqs 128`, `max-num-batched-tokens 4096`, `gpu-memory-utilization 0.95`, cudagraph "
           "`FULL_DECODE_ONLY`, `+fused_rms_norm_gated`, AITER MXFP4 MoE (`VLLM_ROCM_USE_AITER_MOE_SITUV2_A8W4=1`), "
@@ -78,7 +78,7 @@ def main():
 
     # ---- 1. reproduce the PDF -----------------------------------------------------------
     node, a = arm("isl128k")
-    L += ["## 1. AMD's workload (ISL/OSL 128K/1K): ours vs the PDF", ""]
+    L += ["## 1. AMD's workload (ISL/OSL 128K/1K): our nodes vs AMD's published numbers", "", "Our runs already use this same recipe: the new AMD recipe 2026-10 from `amd-kimi-k3-recipe.pdf` (same image `vllm/vllm-openai-rocm:v0.29.0`, server flags and client settings). AMD's published numbers are the results table printed in that PDF.", ""]
     if not a:
         L += ["*Pending: the `isl128k` arm has not produced results yet.*", ""]
     else:
@@ -121,17 +121,17 @@ def main():
         L += ["", "C = 256 is above the recipe's `max-num-seqs 128`, so half the requests queue (TTFT jumps).", ""]
 
     # ---- 2b. old vs new recipes (separate file) ----------------------------------------
-    C = ["# amd-ubuntu — Kimi-K3: old recipes vs the new recipe (AMD's recipe PDF)", "",
-         "**Compared: the new recipe (AMD's recipe PDF, vLLM v0.29.0, no speculative decoding) vs the two old recipes "
+    C = ["# amd-ubuntu — Kimi-K3: old recipes vs the new AMD recipe 2026-10", "",
+         "**Compared: the new AMD recipe 2026-10 (`amd-kimi-k3-recipe.pdf`, vLLM v0.29.0, no speculative decoding) vs the two old recipes "
          "(the vLLM recipe with speculative decoding, and ATOM), all on our nodes, ISL/OSL 1K/1K, 8 GPUs (TP8).** "
          "Recipe vs recipe, not hardware. New-recipe results alone: [kimi-amd-recipe.md](kimi-amd-recipe.md).", ""]
     if not b:
         C += ["*Pending: the `isl1k` arm has not produced results yet.*", ""]
     else:
-        C += [f"New recipe: {node}, range ratio 0.8 and 10 × C prompts like the earlier Kimi runs. "
+        C += [f"new AMD recipe 2026-10: {node}, range ratio 0.8 and 10 × C prompts like the earlier Kimi runs. "
               "Old vLLM recipe: `results/node6101/kimi-recipe/` (DSpark speculative decoding up to C=14, "
               "DCP 8 + CPU KV offload above, server re-tuned per C). ATOM: best of base / max-num-seqs 256 / 512 "
-              "(`results/node6100/kimi-cloud/`). Ratios are new recipe / old recipe: tok/s above 1 and TPOT below 1 favour the new recipe; "
+              "(`results/node6100/kimi-cloud/`). Ratios are new AMD recipe 2026-10 / old recipe: tok/s above 1 and TPOT below 1 favour the new AMD recipe 2026-10; "
               "bold = more than 5%.", "",
               "| C | new tok/s | old vLLM recipe tok/s | ATOM tok/s (config) | new / old vLLM recipe | new / ATOM | new TPOT ms | old vLLM recipe TPOT ms | ATOM TPOT ms | TPOT new / old vLLM recipe | TPOT new / ATOM | new TTFT ms |",
               "|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|"]
@@ -144,7 +144,7 @@ def main():
             C.append(f"| {c} | {f(xt)} | {f(yt)} | {f(zt)}{' (' + z['cfg'] + ')' if z else ''} | "
                      f"{ratio(xt, yt)} | {ratio(xt, zt)} | {f(xp,2)} | {f(yp,2)} | {f(zp,2)} | "
                      f"{ratio(xp, yp)} | {ratio(xp, zp)} | {f(num(x,'ttft'))} |")
-        C += ["", "C = 256 is above the PDF recipe's `max-num-seqs 128`, so half the requests queue; it is kept to line up with ATOM.", ""]
+        C += ["", "C = 256 is above the new AMD recipe 2026-10's `max-num-seqs 128`, so half the requests queue; it is kept to line up with ATOM.", ""]
 
     L += ["## Is this apple-to-apple?", "",
           "- **§1 (vs the PDF): nearly.** Same image, server flags and client settings on the same GPU type. Differences: "
@@ -157,7 +157,7 @@ def main():
     if b:
         C += ["## Is this apple-to-apple?", "",
               "**No, recipe vs recipe.** Same hardware, model, ISL/OSL, concurrency and prompt count, but each recipe has its "
-              "own vLLM/ATOM version and server settings (the old vLLM recipe uses speculative decoding, the new recipe does "
+              "own vLLM/ATOM version and server settings (the old vLLM recipe uses speculative decoding, the new AMD recipe 2026-10 does "
               "not; ATOM is a different engine).", ""]
         C += CMP_NOTES
         OUT_CMP.write_text("\n".join(C) + "\n")
