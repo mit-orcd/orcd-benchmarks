@@ -6,6 +6,7 @@ Written 2026-10-08, updated 2026-10-09, from all results in this directory. Deta
 
 - **GPUs:** on ROCm 7.14, the RVS (ROCm Validation Suite) GEMM, RCCL, Primus training and Kimi-K3 serving results are almost the same as amd-cloud's (within a few percent). Both nodes agree within 1–3%.
 - **Network:** all 16 Pollara rails reach 98% of line rate. GPUDirect RDMA is active on all 8 rails, and the ring collectives across the two nodes reach 91–93% of 400 GB/s, the same as B200's InfiniBand. No extra driver module (like `nv_peermem` on B200) or ACS change is needed.
+- **Nothing to copy from amd-cloud:** our nodes match amd-cloud (GEMM, RCCL, training) or are faster (ATOM serving, Kimi-K3 at 256+ users). The host already has AMD's recommended MI355X settings (performance governor, CPU sleep states off, IOMMU passthrough, NUMA balancing off). The only small gap, Llama-70B time to first token at 1–4 users (≈30 ms slower), does not point to a host setting.
 - **Apptainer** works since the AppArmor user-namespace change on 2026-10-01. Please keep that setting.
 
 ## Suggested changes for admins
