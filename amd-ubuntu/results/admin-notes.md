@@ -28,8 +28,7 @@ Written 2026-10-08, updated 2026-10-09, from all results in this directory. Deta
 | 2 | NUMA binding for the RDMA NICs | Without binding, 8 rails at once reach only 52% of line rate (98% with binding) | Bind each rank to its NIC's NUMA node: rails 0–3 → NUMA 0, rails 4–7 → NUMA 1 (admins could provide a small wrapper). | [net.md](ubuntu/net.md)<br>[ib_bw_nonuma.md](node6100/ib_bw_nonuma.md)<br>[ib_bw.md](node6100/ib_bw.md) |
 | 3 | GPUs per node | With 5–7 GPUs, RCCL busbw falls to ≈47 GB/s, because those GPU counts don't use the full set of direct GPU links; amd-cloud shows the same | Use 1, 2, 4 or 8 GPUs per node for collective-heavy work. | [rccl.md](ubuntu/rccl.md)<br>[vs-amd-cloud/rccl.md](vs-amd-cloud/rccl.md) |
 | 4 | One process per GPU | On ROCm 7.14, a single process driving 8 GPUs leaves the GPUs idle 37–70% of the time (RVS fp4 profile) | Run one process per GPU. | [rvs-fp4-recheck.md](vs-amd-cloud/rvs-fp4-recheck.md) |
-| 5 | `$HOME` | `$HOME` on these nodes is node-local and differs from the login nodes | Use `/orcd/data/...` paths. | [README.md](../README.md) |
-| 6 | Kimi-K3 serving recipe | On one node, vLLM recipe 1 is fastest up to 128 users with short prompts; ATOM is fastest for long prompts (from 2 users at 128K/1K) and for 256+ users | vLLM recipe 1 for interactive use with short prompts; ATOM for long prompts or heavy load. | [kimi-recipe-old-vs-new.md](ubuntu/kimi-recipe-old-vs-new.md)<br>[mi355x-vs-b200.md §6](mi355x-vs-b200.md#6-inference--kimi-k3) |
+| 5 | Kimi-K3 serving recipe | On one node, vLLM recipe 1 is fastest up to 128 users with short prompts; ATOM is fastest for long prompts (from 2 users at 128K/1K) and for 256+ users | vLLM recipe 1 for interactive use with short prompts; ATOM for long prompts or heavy load. | [kimi-recipe-old-vs-new.md](ubuntu/kimi-recipe-old-vs-new.md)<br>[mi355x-vs-b200.md §6](mi355x-vs-b200.md#6-inference--kimi-k3) |
 
 ## To raise with AMD (optional)
 
