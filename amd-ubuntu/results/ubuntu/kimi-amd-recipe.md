@@ -10,6 +10,8 @@ Total tok/s per GPU = total_token_throughput / 8 (the PDF's metric). Ours: node6
 
 TPOT = time per output token.
 
+TTFT = time to first token.
+
 | C | ours total tok/s/GPU | PDF total tok/s/GPU | ours / PDF | out tok/s | TTFT med ms | TPOT med ms |
 |---:|---:|---:|---:|---:|---:|---:|
 | 1 | 487 | 874 | **0.56x** | 34.4 | 9,522 | 19.26 |

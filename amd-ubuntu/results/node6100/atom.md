@@ -8,6 +8,8 @@ Unlike Parts A-C this measures **inference serving**, not raw FLOPS or fabric ba
 
 TPOT = time per output token.
 
+TTFT = time to first token.
+
 | Tier | Model | Params (total / active) | On disk | TP | Peak tok/s | @ conc | TTFT med @c=1 (ms) | TPOT med @c=1 (ms) | Knee |
 |---|---|---|---:|---:|---:|---:|---:|---:|---:|
 | tier 1 | `Qwen3-8B-FP8` | 8 B / 8 B | 8.9 GB | 1 | **14,966.6** | 256 | 25.0 | 5.52 | none in range |

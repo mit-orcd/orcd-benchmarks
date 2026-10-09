@@ -4,7 +4,7 @@ Generated 2026-10-09 06:00 by `report.py`.
 
 - **amd-cloud**: one 8 × MI355X node, ROCm 7.14, Ubuntu 22.04.5, docker ([results](../../../amd-benchmarks/amd-cloud/results/SUMMARY.md)).
 - **amd-ubuntu**: node6100 and node6101, 8 × MI355X each, same amdgpu driver and CPUs, host ROCm 7.2.4, Ubuntu 24.04.5, apptainer. Same scripts, analyzers and (for the containers) the same image digests.
-- ratio = amd-ubuntu / amd-cloud; **bold** = more than 5% off. For latency (TTFT, TPOT = time per output token) below 1 is better.
+- ratio = amd-ubuntu / amd-cloud; **bold** = more than 5% off. For latency (TTFT = time to first token, TPOT = time per output token) below 1 is better.
 
 
 ## Status

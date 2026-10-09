@@ -46,7 +46,7 @@ Our runs already use this same recipe: vLLM recipe 2 from `amd-kimi-k3-recipe.pd
 - **AMD's 874 tok/s/GPU means ≈17.5 s per request.** Our token generation alone (20.8 s) takes longer than that, so AMD's run must have had about half our time per output token (≈10 ms).
 - **The likely cause is a fixed overhead per generation step, not GPU speed.** Our time per output token barely depends on context length (18.1 ms at 1K, 19.3 ms at 128K), and with 8+ users, where GPU compute dominates, we match AMD (1.01–1.10×). The same overhead is why one B200 user streams faster.
 - **Ruled out:** recipe settings (same image, environment, server and client flags as the PDF), host CPU settings (performance governor, CPU sleep states off, IOMMU passthrough, NUMA balancing off) and ROCm version (the image brings its own ROCm 7.2.3).
-- **Not yet tested:** apptainer instead of docker, AMD's machine (driver, firmware, host CPU), and AMD's warm-up. Next steps: profile one generation step (rocprofv3) to see if the GPUs wait between steps, and ask AMD for their TTFT and TPOT at 1 user.
+- **Not yet tested:** apptainer instead of docker, AMD's machine (driver, firmware, host CPU), and AMD's warm-up. Next steps: profile one generation step (rocprofv3) to see if the GPUs wait between steps, and ask AMD for their TTFT (time to first token) and TPOT at 1 user.
 
 ## 3. vLLM recipe 2 on our workload (ISL/OSL 1K/1K)
 

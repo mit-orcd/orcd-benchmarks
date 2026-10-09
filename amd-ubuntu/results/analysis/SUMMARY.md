@@ -1,6 +1,6 @@
 # amd-ubuntu results — summary
 
-Hand-written (source `results/analysis/SUMMARY.md`, copied to `results/SUMMARY.md` by `report.py`); last edited 2026-10-08. Covers every benchmark on our two MI355X nodes. Each section starts with what is compared with what. Ratios: for latency (TPOT = time per output token, TTFT) below 1 is better.
+Hand-written (source `results/analysis/SUMMARY.md`, copied to `results/SUMMARY.md` by `report.py`); last edited 2026-10-08. Covers every benchmark on our two MI355X nodes. Each section starts with what is compared with what. Ratios: for latency (TPOT = time per output token, TTFT = time to first token) below 1 is better.
 
 Detail: [`ubuntu/`](ubuntu/README.md) (our nodes only), [`vs-amd-cloud/`](vs-amd-cloud/README.md) (vs amd-cloud), [`mi355x-vs-b200.md`](mi355x-vs-b200.md) (vs NVIDIA B200), [`kimi-summary.md`](kimi-summary.md) (all Kimi-K3 runs on one page).
 

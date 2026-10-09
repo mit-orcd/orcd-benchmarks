@@ -4,6 +4,8 @@ Sweeps: `kimi_recipe_20261008_220520`
 
 TPOT = time per output token.
 
+TTFT = time to first token.
+
 | C | out tok/s | total tok/s | total tok/s/GPU | TTFT med ms | TTFT p99 ms | TPOT med ms | TPOT p99 ms | completed |
 |---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | 1 | 40.5 | 4,584.7 | 573 | 7,323 | 9,483 | 17.99 | 20.05 | 10 |

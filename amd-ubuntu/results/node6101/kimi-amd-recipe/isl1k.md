@@ -4,6 +4,8 @@ Sweeps: `kimi_amdrecipe_isl1k_20261007_195356`, `kimi_amdrecipe_isl1k_20261007_2
 
 TPOT = time per output token.
 
+TTFT = time to first token.
+
 | C | out tok/s | total tok/s | total tok/s/GPU | TTFT med ms | TTFT p99 ms | TPOT med ms | TPOT p99 ms | completed |
 |---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | 1 | 53.9 | 86.0 | 11 | 186 | 2,210 | 18.15 | 18.36 | 10 |

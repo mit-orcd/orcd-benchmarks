@@ -10,6 +10,8 @@ Source: `logs/atom/kimi_repeats_20261002_112609/`
 
 TPOT = time per output token.
 
+TTFT = time to first token.
+
 | Config | Rep | tok/s | TTFT med (ms) | TPOT med (ms) | completed |
 |---|---:|---:|---:|---:|---:|
 | `A_original` | 1 | 1,387.0 | 228.7 | 44.83 | 640 |

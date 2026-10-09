@@ -4,6 +4,8 @@ Sweeps: `kimi_128k_atom_20261008_220525`
 
 TPOT = time per output token.
 
+TTFT = time to first token.
+
 | C | out tok/s | total tok/s | total tok/s/GPU | TTFT med ms | TTFT p99 ms | TPOT med ms | TPOT p99 ms | completed |
 |---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | 1 | 45.9 | 3,863.6 | 483 | 4,054 | 6,724 | 16.33 | 16.51 | 10 |

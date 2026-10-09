@@ -22,6 +22,8 @@ Both runs use the identical validated recipe flag set; the **only** difference i
 
 TPOT = time per output token.
 
+TTFT = time to first token.
+
 | Concurrency | tok/s TP-only | tok/s EP | EP/TP | TPOT TP-only (ms) | TPOT EP (ms) | TTFT TP-only (ms) | TTFT EP (ms) |
 |---:|---:|---:|---:|---:|---:|---:|---:|
 | 64 | 1,212.5 | 996.1 | **0.82x** | 51.74 | 56.19 | 261.4 | 271.1 |

@@ -1,38 +1,38 @@
 #!/usr/bin/env python3
-"""Spell out TPOT (time per output token) where it first appears in each results md file.
-Prose line: "TPOT" -> "TPOT (time per output token)". Table line: a line "TPOT = time per
-output token." is put just above the table. Files that already say "time per output token"
-before the first TPOT are left alone. Usage: expand_terms.py [files or dirs (md, depth<=4)]"""
+"""Spell out TPOT (time per output token) and TTFT (time to first token) where each first
+appears in each results md file. Prose line: "TPOT" -> "TPOT (time per output token)". Table
+line: a line "TPOT = time per output token." is put just above the table. Files that already
+spell the term out before its first use are left alone. Usage: expand_terms.py [files or dirs (md, depth<=4)]"""
 import re, sys
 from pathlib import Path
 
-FULL = "time per output token"
+TERMS = {"TPOT": "time per output token", "TTFT": "time to first token"}
 
-def fix(p):
+def fix(p, T, FULL):
     L = p.read_text().split("\n")
     for i, l in enumerate(L):
-        if re.search(r"\bTPOT\b", l):
+        if re.search(rf"\b{T}\b", l):
             break
     else:
         return False
     if FULL in "\n".join(L[: i + 1]).lower():
         return False
-    k0 = re.search(r"\bTPOT\b", l).start()
+    k0 = re.search(rf"\b{T}\b", l).start()
     if l.lstrip().startswith("|") or l[:k0].count("`") % 2:
         j = i
         while j > 0 and L[j - 1].lstrip().startswith("|"):
             j -= 1
-        L[j:j] = ["TPOT = time per output token.", ""]
+        L[j:j] = [f"{T} = {FULL}.", ""]
     else:
-        k = re.search(r"\bTPOT\b", l).start()
+        k = re.search(rf"\b{T}\b", l).start()
         inside = l[:k].count("(") > l[:k].count(")")
         if not inside:
-            rep = "TPOT (time per output token)"
-        elif re.match(r"\s*[\d(]", l[k + 4:]):
-            rep = "TPOT = time per output token:"
+            rep = f"{T} ({FULL})"
+        elif re.match(r"\s*[\d(]", l[k + len(T):]):
+            rep = f"{T} = {FULL}:"
         else:
-            rep = "TPOT = time per output token"
-        L[i] = l[:k] + rep + l[k + 4:]
+            rep = f"{T} = {FULL}"
+        L[i] = l[:k] + rep + l[k + len(T):]
     p.write_text("\n".join(L))
     return True
 
@@ -46,5 +46,5 @@ def files(args):
             yield a
 
 if __name__ == "__main__":
-    n = sum(fix(p) for p in files(sys.argv[1:] or ["/orcd/data/orcd/022/benchmarks/amd-ubuntu/results"]))
+    n = sum(fix(p, T, F) for p in files(sys.argv[1:] or ["/orcd/data/orcd/022/benchmarks/amd-ubuntu/results"]) for T, F in TERMS.items())
     print(f"expand_terms: {n} files updated")

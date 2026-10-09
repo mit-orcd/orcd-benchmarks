@@ -26,6 +26,8 @@ vLLM recipe 2: node6101, range ratio 0.8 and 10 × C prompts like the earlier Ki
 
 ### Latency (median, ms, lower is better)
 
+TTFT = time to first token.
+
 | Users (C) | TPOT (vLLM recipe 2) | TPOT (vLLM recipe 1) | TPOT (ATOM) | TPOT recipe 2 / recipe 1 | TPOT recipe 2 / ATOM | TTFT (vLLM recipe 2) |
 |---:|---:|---:|---:|---:|---:|---:|
 | 1 | 18.15 | 15.36 | 21.76 | **1.18x** | **0.83x** | 186 |

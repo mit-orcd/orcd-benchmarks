@@ -5,6 +5,8 @@ Raw logs: `kimi_recipe_20261008_220520`.
 
 TPOT = time per output token.
 
+TTFT = time to first token.
+
 | C | draft K | max-num-seqs | DCP | KV offload | out tok/s | tok/s per user | TTFT med (ms) | TPOT med (ms) | TPOT p99 (ms) | accept len | completed |
 |---:|---:|---:|---:|---|---:|---:|---:|---:|---:|---:|---:|
 | 1 | 7 | 2 | 1 | no | — | — | — | — | — | 1.13 | — |
