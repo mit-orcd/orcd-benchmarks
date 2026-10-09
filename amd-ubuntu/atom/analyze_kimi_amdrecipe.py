@@ -35,16 +35,17 @@ def main():
     ap.add_argument("arm")
     ap.add_argument("sweep", nargs="+")
     ap.add_argument("-o", "--out", required=True)
+    ap.add_argument("--title", default="AMD recipe PDF (vLLM v0.29.0)")
     a = ap.parse_args()
     out = Path(a.out); out.mkdir(parents=True, exist_ok=True)
     rows = {}
     for s in a.sweep:
-        for j in sorted(Path(s).glob("Kimi-K3-MXFP4_isl*_osl*_c*.json")):
+        for j in sorted(Path(s).rglob("Kimi-K3-MXFP4_isl*_osl*_c*.json")):
             r = load(j); rows[r["conc"]] = r
     rows = [rows[c] for c in sorted(rows)]
     with open(out / f"{a.arm}.csv", "w", newline="") as fh:
         w = csv.DictWriter(fh, COLS); w.writeheader(); w.writerows(rows)
-    md = [f"# Kimi-K3, AMD recipe PDF (vLLM v0.29.0), arm {a.arm}", "",
+    md = [f"# Kimi-K3, {a.title}, arm {a.arm}", "",
           "Sweeps: " + ", ".join(f"`{Path(s).name}`" for s in a.sweep), "",
           "| C | out tok/s | total tok/s | total tok/s/GPU | TTFT med ms | TTFT p99 ms | TPOT med ms | TPOT p99 ms | completed |",
           "|---:|---:|---:|---:|---:|---:|---:|---:|---:|"]

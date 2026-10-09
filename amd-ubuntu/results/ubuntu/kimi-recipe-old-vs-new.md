@@ -40,6 +40,21 @@ vLLM recipe 2: node6101, range ratio 0.8 and 10 × C prompts like the earlier Ki
 
 C = 256 is above vLLM recipe 2's `max-num-seqs 128`, so half the requests queue; it is kept to line up with ATOM.
 
+## AMD's workload (ISL/OSL 128K/1K): AMD's published numbers vs our three recipes
+
+**Compared: the same workload and metric for all columns** — AMD's 128K/1K workload from `amd-kimi-k3-recipe.pdf` (input 128,000 and output 1,000 tokens, range ratio 0.2, 10 × users prompts), metric = total tokens (input + output) per second per GPU, as in the PDF. AMD published only vLLM recipe 2. Our three recipes ran on one node of 8 × MI355X (vLLM recipe 2: node6100, 2026-10-07; vLLM recipe 1 and ATOM: 2026-10-08/09, `atom/run_kimi_128k.sh`). Ratios = ours / AMD's published number (above 1 = ours faster).
+
+| Users | AMD published (vLLM recipe 2) | ours (vLLM recipe 2) | ours (vLLM recipe 1) | ours (ATOM) | vLLM recipe 2 / AMD | vLLM recipe 1 / AMD | ATOM / AMD |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 874 | 487 | 573 | 483 | **0.56x** | **0.66x** | **0.55x** |
+| 2 | 1,090 | 791 | 840 | 1,123 | **0.73x** | **0.77x** | 1.03x |
+| 4 | 1,235 | 1,015 | 1,076 | 1,360 | **0.82x** | **0.87x** | **1.10x** |
+| 8 | 1,199 | 1,212 | 1,299 | 1,630 | 1.01x | **1.08x** | **1.36x** |
+| 16 | 1,179 | 1,189 | 1,619 | 1,775 | 1.01x | **1.37x** | **1.51x** |
+| 32 | 1,118 | 1,227 | 1,730 | 1,926 | **1.10x** | **1.55x** | **1.72x** |
+| 64 | 1,096 | 1,191 | 1,819 | 1,947 | **1.09x** | **1.66x** | **1.78x** |
+| 128 | 1,110 | 1,188 | 1,823 | 1,966 | **1.07x** | **1.64x** | **1.77x** |
+
 ## Is this apple-to-apple?
 
 **No, recipe vs recipe.** Same hardware, model, ISL/OSL, concurrency and prompt count, but each recipe has its own vLLM/ATOM version and server settings (vLLM recipe 1 uses speculative decoding, vLLM recipe 2 does not; ATOM is a different engine).

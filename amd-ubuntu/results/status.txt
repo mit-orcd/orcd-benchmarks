@@ -54,3 +54,16 @@ Summaries -- updated 2026-10-08
 - NEW results/ubuntu/kimi-recipe-old-vs-new.md: the three Kimi recipes (ATOM, vLLM recipe 1, vLLM recipe 2); other files give only vLLM recipe 2 results.
 
 Nothing failed, so nothing needs rerunning.
+
+Runs started 2026-10-08 22:03 UTC (Kimi-K3 on AMD's 128K/1K workload, to compare
+all three recipes with AMD's published numbers)
+------------------------------------------------------------------------------
+5. ATOM, 128K/1K, C=1-128 -- node6100, `atom/run_kimi_128k.sh atom`
+6. vLLM recipe 1, 128K/1K, C=1-128 -- node6101, `atom/run_kimi_128k.sh recipe1`
+   Both wait for other users and the node GPU lock, then run (~10 h each),
+   then write results/<node>/kimi-128k/<arm>.{csv,md} and fill the table
+   "AMD's workload (ISL/OSL 128K/1K)" in results/ubuntu/kimi-recipe-old-vs-new.md.
+   Progress: logs/<node>/kimi-128k/wrapper_<arm>_*.log
+   DONE 2026-10-09: ATOM finished 02:13 UTC, vLLM recipe 1 finished 06:00 UTC,
+   all 8 levels (C=1-128) ran without errors; table filled in
+   results/ubuntu/kimi-recipe-old-vs-new.md.

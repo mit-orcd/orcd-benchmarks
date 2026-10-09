@@ -63,7 +63,7 @@ Our runs already use this same recipe: vLLM recipe 2 from `amd-kimi-k3-recipe.pd
 
 ## 4. MI355X vs B200 (pointer)
 
-The full comparison is in [mi355x-vs-b200.md §6](mi355x-vs-b200.md#6-inference--kimi-k3). In short: the model fits in one MI355X node but needs two B200 nodes (16 GPUs). **With vLLM recipe 2, MI355X serves 1.21–1.45× more tokens per GPU than B200, and one user's answer streams 1.4–1.6× faster on B200** (TPOT).
+The full comparison is in [mi355x-vs-b200.md §6](mi355x-vs-b200.md#6-inference--kimi-k3). In short: the model fits in one MI355X node but needs two B200 nodes (16 GPUs). **Per GPU, MI355X serves 1.05–2.43× more tokens than B200 across the three recipes (best recipe: 1.21–1.63× up to 64 users, 2.03–2.43× from 128 users). Up to 64 users one user's answer streams 1.27–1.94× faster on B200 (TPOT; 1.37× vs vLLM recipe 1 at 1 user); from 128 users up MI355X is as fast or faster.**
 
 ## Open questions
 

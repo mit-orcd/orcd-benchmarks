@@ -1,0 +1,1 @@
+vllm/vllm-openai-rocm:nightly-rocm100 -> sha256:e76a953fa2c317e5e0913fab946887ae498629c8e57fb6b2dc633dadd4098b61

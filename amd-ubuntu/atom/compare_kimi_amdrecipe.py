@@ -163,6 +163,33 @@ def main():
                      f"{f(num(x,'ttft'))} |")
         C += ["", "C = 256 is above vLLM recipe 2's `max-num-seqs 128`, so half the requests queue; it is kept to line up with ATOM.", ""]
 
+    # ---- 2c. AMD's 128K/1K workload: AMD's published numbers vs our three recipes --------
+    _, r2 = arm("isl128k")
+    def k128(name):
+        for node in ("node6100", "node6101"):
+            d = rd(ROOT / node / "kimi-128k" / f"{name}.csv")
+            if d:
+                return d
+        return {}
+    r1, at = k128("recipe1"), k128("atom")
+    C += ["## AMD's workload (ISL/OSL 128K/1K): AMD's published numbers vs our three recipes", "",
+          "**Compared: the same workload and metric for all columns** — AMD's 128K/1K workload from `amd-kimi-k3-recipe.pdf` "
+          "(input 128,000 and output 1,000 tokens, range ratio 0.2, 10 × users prompts), metric = total tokens (input + output) "
+          "per second per GPU, as in the PDF. AMD published only vLLM recipe 2. Our three recipes ran on one node of 8 × MI355X "
+          "(vLLM recipe 2: node6100, 2026-10-07; vLLM recipe 1 and ATOM: 2026-10-08/09, `atom/run_kimi_128k.sh`). "
+          "Ratios = ours / AMD's published number (above 1 = ours faster).", "",
+          "| Users | AMD published (vLLM recipe 2) | ours (vLLM recipe 2) | ours (vLLM recipe 1) | ours (ATOM) | "
+          "vLLM recipe 2 / AMD | vLLM recipe 1 / AMD | ATOM / AMD |",
+          "|---:|---:|---:|---:|---:|---:|---:|---:|"]
+    pend = lambda d: "running" if not d else "—"
+    for c in sorted(PDF):
+        v2, v1, va = (num(d.get(c, {}), "ttps_gpu") if d else None for d in (r2, r1, at))
+        cell = lambda v, d: f(v) if v is not None else pend(d)
+        C.append(f"| {c} | {f(PDF[c])} | {cell(v2, r2)} | {cell(v1, r1)} | {cell(va, at)} | "
+                 f"{ratio(v2, PDF[c])} | {ratio(v1, PDF[c])} | {ratio(va, PDF[c])} |")
+    C += [""] + (["\"running\" = not finished yet; the table fills in automatically when each run ends.", ""]
+                 if not (r1 and at) else [])
+
     L += ["## Is this apple-to-apple?", "",
           "- **§1 (vs the PDF): nearly.** Same image, server flags and client settings on the same GPU type. Differences: "
           "this machine, apptainer instead of docker, weights from local disk, and one short warm-up before the sweep.",

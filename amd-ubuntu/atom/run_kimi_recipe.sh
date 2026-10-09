@@ -28,6 +28,10 @@ cd "$(dirname "$0")"
 
 CONC="${1:-${CONC:-1 4 8 10 12 14 44 48 70 64 128 256}}"
 ISL="${ISL:-1024}"; OSL="${OSL:-1024}"
+RR="${RR:-0.8}"                       # random range ratio (AMD's 128K/1K workload: 0.2)
+WARM_MAX="${WARM_MAX:-100000}"         # warm-up prompts = min(C, WARM_MAX)
+BENCH_TIMEOUT="${BENCH_TIMEOUT:-7200}"
+JSON_PREFIX="${JSON_PREFIX:-}"         # result file = ${JSON_PREFIX}c<C>.json
 IMG="${VLLM_IMG:-vllm/vllm-openai-rocm:nightly-rocm100}"
 MODEL="${MKIMI:-$KIMI_MODEL}"
 DRAFT="${DRAFT:-$DSPARK_MODEL}"
@@ -140,16 +144,16 @@ for C in $CONC; do
   # One untimed warm-up pass at the same concurrency compiles/fills caches before the measured run.
   timeout 3600 docker exec "$NAME" vllm bench serve --backend vllm --base-url "http://localhost:$PORT" \
       --model moonshotai/Kimi-K3 --tokenizer /model --trust-remote-code \
-      --dataset-name random --random-input-len "$ISL" --random-output-len "$OSL" --random-range-ratio 0.8 \
-      --ignore-eos --num-prompts "$C" --max-concurrency "$C" --request-rate inf >"$P/warmup.log" 2>&1
-  timeout 7200 docker exec "$NAME" vllm bench serve --backend vllm --base-url "http://localhost:$PORT" \
+      --dataset-name random --random-input-len "$ISL" --random-output-len "$OSL" --random-range-ratio "$RR" \
+      --ignore-eos --num-prompts "$(( C < WARM_MAX ? C : WARM_MAX ))" --max-concurrency "$C" --request-rate inf >"$P/warmup.log" 2>&1
+  timeout "$BENCH_TIMEOUT" docker exec "$NAME" vllm bench serve --backend vllm --base-url "http://localhost:$PORT" \
       --model moonshotai/Kimi-K3 --tokenizer /model --trust-remote-code \
-      --dataset-name random --random-input-len "$ISL" --random-output-len "$OSL" --random-range-ratio 0.8 \
+      --dataset-name random --random-input-len "$ISL" --random-output-len "$OSL" --random-range-ratio "$RR" \
       --ignore-eos --num-prompts $((C * 10)) --max-concurrency "$C" --request-rate inf \
-      --percentile-metrics ttft,tpot,itl,e2el --save-result --result-dir /out --result-filename "c$C.json" \
+      --percentile-metrics ttft,tpot,itl,e2el --save-result --result-dir /out --result-filename "${JSON_PREFIX}c$C.json" \
       >"$P/bench.log" 2>&1
   rc=$?
-  if [[ -s $P/c$C.json ]]; then ok=$((ok + 1)); say "C=$C: done rc=$rc"
+  if [[ -s $P/${JSON_PREFIX}c$C.json ]]; then ok=$((ok + 1)); say "C=$C: done rc=$rc"
   else say "C=$C: no result json rc=$rc: $(tail -3 "$P/bench.log")"; fi
   stop_server
 done
