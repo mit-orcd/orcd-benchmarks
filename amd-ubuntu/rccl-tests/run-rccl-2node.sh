@@ -9,7 +9,7 @@
 #
 # Knobs (env):
 #   HOSTS="node6100.inband node6101.inband"   PPN_LIST="8"  (e.g. "1 2 4 8" for per-node scaling)
-#   COLLECTIVES, MIN_BYTES, MAX_BYTES, ITERS, WARMUP, OUT_TAG
+#   COLLECTIVES, MIN_BYTES, MAX_BYTES, ITERS, WARMUP, CHECK, OUT_TAG
 #   NET_IF  bootstrap/OOB interface (frontend 10.1.0.0/16)      default eno17695np0
 #   IB_HCA  RCCL RDMA devices (the 8 GPU-rail NICs, not mlx5_0) default ionic_0..ionic_7
 #   GID     RoCEv2 IPv4-mapped GID index (gid_attrs: 0=link-local, 1=IPv4)  default 1
@@ -24,7 +24,7 @@ HOSTS=(${HOSTS:-node6100.inband node6101.inband})
 PPN_LIST="${PPN_LIST:-8}"
 COLLECTIVES="${COLLECTIVES:-all_reduce all_gather reduce_scatter alltoall broadcast sendrecv}"
 MIN_BYTES="${MIN_BYTES:-8}"; MAX_BYTES="${MAX_BYTES:-16G}"; STEP_FACTOR="${STEP_FACTOR:-2}"
-ITERS="${ITERS:-20}"; WARMUP="${WARMUP:-5}"
+ITERS="${ITERS:-20}"; WARMUP="${WARMUP:-5}"; CHECK="${CHECK:-1}"   # CHECK=0: skip data check (latency runs)
 NET_IF="${NET_IF:-eno17695np0}"
 IB_HCA="${IB_HCA:-ionic_0,ionic_1,ionic_2,ionic_3,ionic_4,ionic_5,ionic_6,ionic_7}"
 GID="${GID:-1}"
@@ -81,7 +81,7 @@ for PPN in $PPN_LIST; do
         --mca plm_rsh_args "-o BatchMode=yes" \
         --mca btl tcp,self --mca btl_tcp_if_include "$NET_IF" --mca oob_tcp_if_include "$NET_IF" \
         "${XARGS[@]}" "${dbg[@]}" \
-        "${LAUNCH[@]}" "$exe" -b "$MIN_BYTES" -e "$maxb" -f "$STEP_FACTOR" -g 1 -n "$ITERS" -w "$WARMUP" -c 1 \
+        "${LAUNCH[@]}" "$exe" -b "$MIN_BYTES" -e "$maxb" -f "$STEP_FACTOR" -g 1 -n "$ITERS" -w "$WARMUP" -c "$CHECK" \
         >"$log" 2>&1
     rc=$?
     # data rows: last row -> in-place busbw ($(NF-1)); first row -> in-place time (us, $(NF-3))

@@ -32,19 +32,23 @@ Differences from amd-cloud:
   **per node**: `logs/<node>/`, `results/<node>/`.
 - **2-node RCCL** is new, since amd-cloud had a single node.
 
+## Quick Start
+
+```bash
+cd /orcd/data/orcd/022/benchmarks/amd-ubuntu
+./launch.sh node6100 run_all_node.sh          # parts A -> B -> C -> M -> D, detached on node6100
+./launch.sh node6101 run_all_node.sh          # same on node6101, at the same time
+# when done (each part writes its analysis as it finishes):
+ls results/node6100/ results/node6101/        # rvs_tflops.md, rccl.md, PRIMUS_REPORT.md, atom.md, ...
+/orcd/data/orcd/022/benchmarks/amd-software/venv/bin/python report.py   # -> results/ubuntu/, results/vs-amd-cloud/ (needs pandas)
+```
+
 ## Installation
 
-Everything is installed by `../amd-software/setup/` (see [its README](../amd-software/README.md)):
-Open MPI, the rccl-tests builds, the venv, the models and the four SIFs. Nothing here needs
-building.
-
-**Blocking prerequisites, waiting on the admin:**
-
-1. `shaohao` must be added to the `render`/`video` groups on both nodes. Until then every GPU
-   test fails at the `assert_gpu_access` guard.
-2. ~~Apptainer~~: works since 2026-10-01 19:00 UTC.
-3. Kimi-K3 weights must be copied to node-local `/scratch/Kimi-K3` on each node (the user is doing
-   this). Scripts always use that path.
+See [install.md](install.md). All software (Open MPI, rccl-tests, optional
+ROCm 7.14 + RVS, venv, models, SIFs) is installed under `../amd-software`, not
+here. Kimi-K3 is copied to node-local `/scratch/Kimi-K3`, never downloaded. GPU
+access (`render`/`video`) and apptainer were sorted out on 2026-10-01.
 
 ## Usage
 
