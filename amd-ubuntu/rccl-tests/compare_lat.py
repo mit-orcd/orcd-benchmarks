@@ -179,6 +179,11 @@ def b200(bdir):
                 "MI355X (Pollara) is faster" if wins == {"MI355X"} else "Mixed")
         return f"> **{head}.** " + "; ".join(parts) + ".", head
 
+    def netpart(c, s):  # network part of a 2 x 8 GPU call = 2-node time - 1-node time (same size)
+        x2, x1 = best("2n_ppn8", c, s), best("1n_ppn8", c, s)
+        y2, y1 = g(n, "default", "2n_ppn8", c, s), g(n, "default", "1n_ppn8", c, s)
+        return (x2 - x1 if x2 and x1 else None), (y2 - y1 if y2 and y1 else None)
+
     def table(layout):
         rows = ["| collective | bytes | MI355X (Pollara) | B200 (InfiniBand) | MI355X / B200 speed |", "|---|---:|---:|---:|---:|"]
         for c in MAINC:
@@ -187,8 +192,36 @@ def b200(bdir):
                 rows.append(f"| {c} | {human(s)} | {f1(x)} | {f1(y)} | {rx(ratio(y, x))} |")
         return rows
 
+    def net_table():  # 2 x 8 GPUs: network part only (+ whole-call speed for reference)
+        rows = ["| collective | bytes | network part, Pollara | network part, InfiniBand | Pollara / InfiniBand speed | whole call, MI355X / B200 |",
+                "|---|---:|---:|---:|---:|---:|"]
+        for c in MAINC:
+            for s in SIZES:
+                nx, ny = netpart(c, s)
+                r = ratio(ny, nx) if nx and ny and nx > 0 and ny > 0 else None
+                rows.append(f"| {c} | {human(s)} | {f1(nx)} | {f1(ny)} | {rx(r)} | "
+                            f"{rx(ratio(g(n, 'default', '2n_ppn8', c, s), best('2n_ppn8', c, s)))} |")
+        return rows
+
+    def net_verdict():
+        rs = {(c, s): ratio(ny, nx) for c in MAINC for s in SIZES for nx, ny in [netpart(c, s)]
+              if nx and ny and nx > 0 and ny > 0}
+        if not rs:
+            return "> No data.", "No data"
+        ib = [r for r in rs.values() if r <= 0.97]
+        oth = {k: r for k, r in rs.items() if r > 0.97}
+        if not oth:
+            return (f"> **InfiniBand is faster.** In the network part, Pollara is {span(ib)} the speed of InfiniBand "
+                    "in every row.", "InfiniBand is faster")
+        if not ib:
+            return f"> **Pollara is faster or equal.** Pollara is {span(rs.values())} the speed of InfiniBand.", "Pollara is faster"
+        exc = ", ".join(f"{c} {unit(s)} ({r:.2f}x)" for (c, s), r in oth.items())
+        return (f"> **InfiniBand is faster** in {len(ib)} of {len(rs)} rows: Pollara is {span(ib)} the speed of InfiniBand "
+                f"in the network part. Exception: {exc}.", "InfiniBand is faster, mostly")
+
     v1, h1 = verdict("2n_ppn1")
     v8, h8 = verdict("2n_ppn8")
+    nv, hn = net_verdict()
     L = [BEGIN, "## 5. Latency across 2 nodes (small messages)", "",
          "MI355X ROCm 7.14 (RCCL, AMD Pollara RoCEv2) vs B200 (NCCL, NVIDIA InfiniBand). Time per call in µs, lower is better; "
          "speed = B200 time ÷ MI355X time (>1: MI355X faster). MI355X = the faster of RCCL's default and `NCCL_NET=IB` "
@@ -208,8 +241,9 @@ def b200(bdir):
               *rows, ""]
     L += ["### Main result: 2 nodes × 1 GPU and 2 nodes × 8 GPUs, same tests", "",
           "**2 nodes × 1 GPU** (one GPU per node, so only the network is between them):", "", v1, "", *table("2n_ppn1"), "",
-          "**2 nodes × 8 GPUs** (16 GPUs; each call also includes the step among the 8 GPUs inside each node):", "",
-          v8, "", *table("2n_ppn8"), ""]
+          "**2 nodes × 8 GPUs, network part only** (network part = 2-node time − 1-node time, same test and size; "
+          "this removes the step among the 8 GPUs inside each node):", "",
+          nv, "", *net_table(), ""]
     # Collectives run only with 8 GPUs per node: speed only, brief
     ext = [c for c in COLLS if c not in MAINC]
     rows = []
