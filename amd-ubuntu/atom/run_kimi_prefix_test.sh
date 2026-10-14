@@ -180,4 +180,5 @@ flock -u 9; exec 9>&-
 flock "$BENCH_ROOT/logs/auto/report.lock" $PY analyze_prefix_test.py "$OUT" >"$OUT/analyze.log" 2>&1
 say "analyze rc=$? -> results/ubuntu/kimi-prefix-cache-test.md"
 echo "STATUS=$( [[ -s $OUT/tests.txt ]] && echo ok || echo failed)" >> "$STATE"
+echo "$(date -Iseconds) prefix test (users: ${USERS:-1 2 4}) on $HOSTNAME_S: done, results/ubuntu/kimi-prefix-cache-test.md + mi355x-vs-b200.md table 7.3 updated ($OUT)" >> "$BENCH_ROOT/results/status.txt"
 say "PREFIX TEST DONE"

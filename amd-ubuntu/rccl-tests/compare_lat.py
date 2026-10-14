@@ -159,27 +159,49 @@ def b200(bdir):
                    f"{', '.join(slower) or 'none'} ({span(r8.values())}).") if r8 else "No data."
 
     L = [BEGIN, "## 5. Latency across 2 nodes (small messages)", "",
-         "**Compared:** MI355X ROCm 7.14 (RCCL) with B200 (NCCL), same tests on both: perftest RDMA latency on one rail, "
+         "**Compared:** MI355X ROCm 7.14 (RCCL, AMD Pollara network) with B200 (NCCL, NVIDIA InfiniBand), same tests on both: "
+         "perftest RDMA latency on one rail (network only: Pollara vs InfiniBand), "
          "then rccl-tests / nccl-tests from 8 B to 4 MB with 1000 iterations, one rank per GPU, NUMA-bound. "
          f"Time per call in µs, lower is better; ratio = B200 time ÷ MI355X time (>1: MI355X faster). **{verdict}**", "",
          "MI355X column = the faster of RCCL's default and `NCCL_NET=IB` (both are in `ubuntu/latency.md`).", ""]
+    def winner(rs, what, ref="InfiniBand"):  # highlighted one-line verdict above a table
+        rs = [r for r in rs if r]
+        if not rs:
+            return []
+        if max(rs) < 0.97:
+            w = f"**InfiniBand is better.** {what} is {span(rs)} the speed of {ref} (lower latency on InfiniBand in every row)."
+        elif min(rs) > 1.03:
+            w = f"**Pollara is better.** {what} is {span(rs)} the speed of {ref} (lower latency on Pollara in every row)."
+        else:
+            w = f"**Mixed.** {what} is {span(rs)} the speed of {ref}."
+        return [f"> {w}", ""]
+
     if la and lb:
-        L += ["**Raw network, no GPU** (perftest one-way latency, median of the 8 rails, µs):", "",
-              "| test | bytes | MI355X (RoCEv2) | B200 (InfiniBand) | MI355X / B200 speed |", "|---|---:|---:|---:|---:|"]
+        rows, rs = [], []
         for t in ("write", "send"):
             for s in (8, 4096, 65536):
                 x, y = rail_median(la, t, s), rail_median(lb, t, s)
-                L.append(f"| ib_{t}_lat | {human(s)} | {f2(x)} | {f2(y)} | {rx(ratio(y, x))} |")
-        L.append("")
-    L += ["**2 nodes × 1 GPU** (one GPU talking to one GPU over the network):", "",
-          "| collective | bytes | MI355X | B200 | MI355X / B200 speed |", "|---|---:|---:|---:|---:|"]
+                rs.append(ratio(y, x))
+                rows.append(f"| ib_{t}_lat | {human(s)} | {f2(x)} | {f2(y)} | {rx(ratio(y, x))} |")
+        L += ["### Raw network, no GPU: Pollara vs InfiniBand", "",
+              *winner(rs, "Pollara"),
+              "perftest one-way latency, median of the 8 rails, µs:", "",
+              "| test | bytes | AMD Pollara (RoCEv2) | NVIDIA InfiniBand (ConnectX-7) | Pollara / InfiniBand speed |", "|---|---:|---:|---:|---:|",
+              *rows, ""]
+    rows, rs = [], []
     for c in ("sendrecv", "all_reduce"):
         for s in SIZES:
             x, y = best("2n_ppn1", c, s), g(n, "default", "2n_ppn1", c, s)
-            L.append(f"| {c} | {human(s)} | {f1(x)} | {f1(y)} | {rx(ratio(y, x))} |")
-    L += ["", "**2 nodes × 8 GPUs** (16 ranks). \"Network adds\" = 2-node time − 1-node time at 8 bytes "
-          "(1 node = XGMI on MI355X, NVLink on B200):", "",
-          "| collective | MI355X 8 B | B200 8 B | MI355X / B200 speed | MI355X 1 MB | B200 1 MB | MI355X / B200 speed | network adds, MI355X | network adds, B200 |",
+            rs.append(ratio(y, x))
+            rows.append(f"| {c} | {human(s)} | {f1(x)} | {f1(y)} | {rx(ratio(y, x))} |")
+    L += ["### 2 nodes × 1 GPU: Pollara vs InfiniBand", "",
+          *winner(rs, "MI355X over Pollara", "B200 over InfiniBand"),
+          "One GPU talking to one GPU over the network, so the network sets the time:", "",
+          "| collective | bytes | MI355X (Pollara) | B200 (InfiniBand) | MI355X / B200 speed |", "|---|---:|---:|---:|---:|",
+          *rows]
+    L += ["", "### 2 nodes × 8 GPUs: MI355X vs B200", "", "16 ranks. \"Network adds\" = 2-node time − 1-node time at 8 bytes "
+          "(1 node = XGMI on MI355X, NVLink on B200; the added time crosses Pollara on MI355X, InfiniBand on B200):", "",
+          "| collective | MI355X 8 B | B200 8 B | MI355X / B200 speed | MI355X 1 MB | B200 1 MB | MI355X / B200 speed | network adds, Pollara | network adds, InfiniBand |",
           "|---|---:|---:|---:|---:|---:|---:|---:|---:|"]
     for c in COLLS:
         x8, y8 = best("2n_ppn8", c, 8), g(n, "default", "2n_ppn8", c, 8)
