@@ -69,3 +69,4 @@ all three recipes with AMD's published numbers)
    results/ubuntu/kimi-recipe-old-vs-new.md.
 2026-10-13T17:05:12-04:00 latency: DONE, results/ubuntu/latency.md + mi355x-vs-b200.md §4.2 updated (B200 job 25690497)
 2026-10-13T21:08:29+00:00 latency: DONE, results/ubuntu/latency.md + mi355x-vs-b200.md §4.2 updated (B200 job 25690497)
+2026-10-14T15:44:18-04:00 fp8 check: job 25320492 result put into mi355x-vs-b200.md + cuBLASLt/summary.md
