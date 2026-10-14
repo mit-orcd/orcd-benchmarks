@@ -146,79 +146,81 @@ def b200(bdir):
         v = [x for x in (g(m, "default", layout, c, s), g(m, "netib", layout, c, s)) if x]
         return min(v) if v else None
 
-    # headline: 8-byte speed ratios across 2 nodes x 8 GPUs
+    # Summary-table row: 8-byte speed ratios across 2 nodes x 8 GPUs
     r8 = {c: ratio(g(n, "default", "2n_ppn8", c, 8), best("2n_ppn8", c, 8)) for c in COLLS}
     r8 = {c: r for c, r in r8.items() if r}
-    faster = [c for c, r in r8.items() if r >= 1.03]
-    slower = [c for c, r in r8.items() if r <= 0.97]
-    if slower and not faster:
-        verdict = f"B200 has the lower latency for small messages (MI355X {span(r8.values())} the speed at 8 bytes)."
-    elif faster and not slower:
-        verdict = f"MI355X has the lower latency for small messages ({span(r8.values())} the speed of B200 at 8 bytes)."
-    else:
-        verdict = (f"Mixed: at 8 bytes MI355X is faster in {', '.join(faster) or 'none'} and slower in "
-                   f"{', '.join(slower) or 'none'} ({span(r8.values())}).") if r8 else "No data."
 
+    MAINC = ("sendrecv", "all_reduce")  # the tests run in both layouts
+    unit = lambda s: {8: "8 B", 1024: "1 KB", 65536: "64 KB", 1 << 20: "1 MB"}.get(s, f"{s} B")
+
+    def who(r):
+        return None if r is None else "MI355X" if r >= 1.03 else "B200" if r <= 0.97 else "equal"
+
+    def verdict(layout):  # one highlighted line: who is faster, per collective
+        parts, wins = [], set()
+        for c in MAINC:
+            rs = {s: ratio(g(n, "default", layout, c, s), best(layout, c, s)) for s in SIZES}
+            rs = {s: r for s, r in rs.items() if r}
+            if not rs:
+                continue
+            by = {}
+            for s, r in rs.items():
+                by.setdefault(who(r), []).append(s)
+            wins |= set(by)
+            if len(by) == 1:
+                w = next(iter(by))
+                parts.append(f"{c}: **{w} faster** at every size ({span(rs.values())})" if w != "equal"
+                             else f"{c}: equal ({span(rs.values())})")
+            else:
+                parts.append(f"{c}: " + ", ".join(
+                    f"**{w} faster** at {', '.join(unit(s) for s in ss)} ({span([rs[s] for s in ss])})" if w != "equal"
+                    else f"equal at {', '.join(unit(s) for s in ss)}" for w, ss in by.items()))
+        head = ("B200 (InfiniBand) is faster" if wins == {"B200"} else
+                "MI355X (Pollara) is faster" if wins == {"MI355X"} else "Mixed")
+        return f"> **{head}.** " + "; ".join(parts) + ".", head
+
+    def table(layout):
+        rows = ["| collective | bytes | MI355X (Pollara) | B200 (InfiniBand) | MI355X / B200 speed |", "|---|---:|---:|---:|---:|"]
+        for c in MAINC:
+            for s in SIZES:
+                x, y = best(layout, c, s), g(n, "default", layout, c, s)
+                rows.append(f"| {c} | {human(s)} | {f1(x)} | {f1(y)} | {rx(ratio(y, x))} |")
+        return rows
+
+    v1, h1 = verdict("2n_ppn1")
+    v8, h8 = verdict("2n_ppn8")
     L = [BEGIN, "## 5. Latency across 2 nodes (small messages)", "",
-         "**Compared:** MI355X ROCm 7.14 (RCCL, AMD Pollara network) with B200 (NCCL, NVIDIA InfiniBand), same tests on both: "
-         "perftest RDMA latency on one rail (network only: Pollara vs InfiniBand), "
-         "then rccl-tests / nccl-tests from 8 B to 4 MB with 1000 iterations, one rank per GPU, NUMA-bound. "
-         f"Time per call in µs, lower is better; ratio = B200 time ÷ MI355X time (>1: MI355X faster). **{verdict}**", "",
-         "MI355X column = the faster of RCCL's default and `NCCL_NET=IB` (both are in `ubuntu/latency.md`).", ""]
-    def winner(rs, what, ref="InfiniBand"):  # highlighted one-line verdict above a table
-        rs = [r for r in rs if r]
-        if not rs:
-            return []
-        if max(rs) < 0.97:
-            w = f"**InfiniBand is better.** {what} is {span(rs)} the speed of {ref} (lower latency on InfiniBand in every row)."
-        elif min(rs) > 1.03:
-            w = f"**Pollara is better.** {what} is {span(rs)} the speed of {ref} (lower latency on Pollara in every row)."
-        else:
-            w = f"**Mixed.** {what} is {span(rs)} the speed of {ref}."
-        return [f"> {w}", ""]
-
+         "MI355X ROCm 7.14 (RCCL, AMD Pollara RoCEv2) vs B200 (NCCL, NVIDIA InfiniBand). Time per call in µs, lower is better; "
+         "speed = B200 time ÷ MI355X time (>1: MI355X faster). MI355X = the faster of RCCL's default and `NCCL_NET=IB` "
+         "(both in `ubuntu/latency.md`).", ""]
     if la and lb:
         rows, rs = [], []
-        for t in ("write", "send"):
+        for tt in ("write", "send"):
             for s in (8, 4096, 65536):
-                x, y = rail_median(la, t, s), rail_median(lb, t, s)
+                x, y = rail_median(la, tt, s), rail_median(lb, tt, s)
                 rs.append(ratio(y, x))
-                rows.append(f"| ib_{t}_lat | {human(s)} | {f2(x)} | {f2(y)} | {rx(ratio(y, x))} |")
+                rows.append(f"| ib_{tt}_lat | {human(s)} | {f2(x)} | {f2(y)} | {rx(ratio(y, x))} |")
+        rs = [r for r in rs if r]
+        w = ("InfiniBand is faster" if rs and max(rs) < 0.97 else "Pollara is faster" if rs and min(rs) > 1.03 else "Mixed")
         L += ["### Raw network, no GPU: Pollara vs InfiniBand", "",
-              *winner(rs, "Pollara"),
-              "perftest one-way latency, median of the 8 rails, µs:", "",
+              f"> **{w}.** Pollara is {span(rs)} the speed of InfiniBand (perftest one-way latency, median of the 8 rails).", "",
               "| test | bytes | AMD Pollara (RoCEv2) | NVIDIA InfiniBand (ConnectX-7) | Pollara / InfiniBand speed |", "|---|---:|---:|---:|---:|",
               *rows, ""]
-    rows, rs = [], []
-    for c in ("sendrecv", "all_reduce"):
-        for s in SIZES:
-            x, y = best("2n_ppn1", c, s), g(n, "default", "2n_ppn1", c, s)
-            rs.append(ratio(y, x))
-            rows.append(f"| {c} | {human(s)} | {f1(x)} | {f1(y)} | {rx(ratio(y, x))} |")
-    L += ["### 2 nodes × 1 GPU: Pollara vs InfiniBand", "",
-          *winner(rs, "MI355X over Pollara", "B200 over InfiniBand"),
-          "One GPU talking to one GPU over the network, so the network sets the time:", "",
-          "| collective | bytes | MI355X (Pollara) | B200 (InfiniBand) | MI355X / B200 speed |", "|---|---:|---:|---:|---:|",
-          *rows]
-    L += ["", "### 2 nodes × 8 GPUs: MI355X vs B200", "", "16 ranks. \"Network adds\" = 2-node time − 1-node time at 8 bytes "
-          "(1 node = XGMI on MI355X, NVLink on B200; the added time crosses Pollara on MI355X, InfiniBand on B200):", "",
-          "| collective | " + " | ".join(f"MI355X {u} | B200 {u} | speed {u}" for u in ("8 B", "256 B", "64 KB", "1 MB"))
-          + " | network adds, Pollara | network adds, InfiniBand |",
-          "|---|" + "---:|" * (3 * len(SIZES8) + 2)]
-    for c in COLLS:
-        cells = []
-        for s in SIZES8:
-            x, y = best("2n_ppn8", c, s), g(n, "default", "2n_ppn8", c, s)
-            cells += [f1(x), f1(y), rx(ratio(y, x))]
-        x8, y8 = best("2n_ppn8", c, 8), g(n, "default", "2n_ppn8", c, 8)
-        x1, y1 = best("1n_ppn8", c, 8), g(n, "default", "1n_ppn8", c, 8)
-        ax = None if not (x8 and x1) else x8 - x1
-        ay = None if not (y8 and y1) else y8 - y1
-        L.append(f"| {c} | " + " | ".join(cells) + f" | {f1(ax)} | {f1(ay)} |")
-    L += ["", "speed = B200 time ÷ MI355X time (>1: MI355X faster). \"–\" at 8 B: with 16 ranks, all_gather, "
-          "reduce_scatter and alltoall split the buffer across ranks, so below 256 B no data moves and there is no real test."]
-    L += ["", f"Sources: `{d714[len(BENCH)+1:]}`, `{os.path.relpath(bdir, os.path.dirname(MAIN))}`. "
+    L += ["### Main result: 2 nodes × 1 GPU and 2 nodes × 8 GPUs, same tests", "",
+          "**2 nodes × 1 GPU** (one GPU per node, so only the network is between them):", "", v1, "", *table("2n_ppn1"), "",
+          "**2 nodes × 8 GPUs** (16 GPUs; each call also includes the step among the 8 GPUs inside each node):", "",
+          v8, "", *table("2n_ppn8"), ""]
+    # Collectives run only with 8 GPUs per node: speed only, brief
+    ext = [c for c in COLLS if c not in MAINC]
+    rows = []
+    for c in ext:
+        rows.append(f"| {c} | " + " | ".join(rx(ratio(g(n, "default", "2n_ppn8", c, s), best("2n_ppn8", c, s)))
+                                             for s in (256, 65536, 1 << 20)) + " |")
+    L += ["**Only in 2 nodes × 8 GPUs** (other collectives; speed only, >1: MI355X faster):", "",
+          "| collective | 256 B | 64 KB | 1 MB |", "|---|---:|---:|---:|", *rows, "",
+          f"Sources: `{d714[len(BENCH)+1:]}`, `{os.path.relpath(bdir, os.path.dirname(MAIN))}`. "
           f"Updated {datetime.date.today()}.", END, ""]
+    verdict_txt = f"2 nodes x 1 GPU: {h1}; 2 nodes x 8 GPUs: {h8}"
     sec = "\n".join(L)
 
     txt = open(MAIN).read()
@@ -228,15 +230,18 @@ def b200(bdir):
         i = txt.index("\n## 6. ")
         txt = txt[:i].rstrip("\n") + "\n\n" + sec + txt[i:]
     if r8:
-        row = (f"| Latency across 2 nodes, 8 bytes (§5) | {span(r8.values())} "
-               "(speed; MI355X ROCm 7.14) | ✅ same tests |")
+        def rng(layout):
+            v = [ratio(g(n, "default", layout, c, s), best(layout, c, s)) for c in MAINC for s in SIZES]
+            return span([r for r in v if r])
+        row = (f"| Latency across 2 nodes, sendrecv + all_reduce, 8 B–1 MB (§5) | 1 GPU/node: {h1} ({rng('2n_ppn1')}); "
+               f"8 GPUs/node: {h8} ({rng('2n_ppn8')}) (speed; MI355X ROCm 7.14) | ✅ same tests |")
         lines = txt.split("\n")
         lines = [l for l in lines if not l.startswith("| Latency across 2 nodes")]
         k = next(i for i, l in enumerate(lines) if l.startswith("| Collectives across 2 nodes"))
         lines.insert(k + 1, row)
         txt = "\n".join(lines)
     open(MAIN, "w").write(txt)
-    print("updated", MAIN, "|", verdict)
+    print("updated", MAIN, "|", verdict_txt)
 
 
 if __name__ == "__main__":
