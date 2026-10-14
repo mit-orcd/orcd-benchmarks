@@ -15,6 +15,7 @@ BENCH = "/orcd/data/orcd/022/benchmarks/amd-ubuntu"
 LOGS = f"{BENCH}/logs/node6100"
 COLLS = ["sendrecv", "all_reduce", "all_gather", "reduce_scatter", "broadcast", "alltoall"]
 SIZES = [8, 1024, 65536, 1048576]
+SIZES8 = [8, 256, 65536, 1048576]  # 2 nodes x 8 GPUs table; 256 B = smallest real size for all 6 at 16 ranks
 MAIN = f"{BENCH}/results/mi355x-vs-b200.md"
 BEGIN, END = "<!-- LATENCY-BEGIN (auto: rccl-tests/compare_lat.py) -->", "<!-- LATENCY-END -->"
 
@@ -201,15 +202,21 @@ def b200(bdir):
           *rows]
     L += ["", "### 2 nodes × 8 GPUs: MI355X vs B200", "", "16 ranks. \"Network adds\" = 2-node time − 1-node time at 8 bytes "
           "(1 node = XGMI on MI355X, NVLink on B200; the added time crosses Pollara on MI355X, InfiniBand on B200):", "",
-          "| collective | MI355X 8 B | B200 8 B | MI355X / B200 speed | MI355X 1 MB | B200 1 MB | MI355X / B200 speed | network adds, Pollara | network adds, InfiniBand |",
-          "|---|---:|---:|---:|---:|---:|---:|---:|---:|"]
+          "| collective | " + " | ".join(f"MI355X {u} | B200 {u} | speed {u}" for u in ("8 B", "256 B", "64 KB", "1 MB"))
+          + " | network adds, Pollara | network adds, InfiniBand |",
+          "|---|" + "---:|" * (3 * len(SIZES8) + 2)]
     for c in COLLS:
+        cells = []
+        for s in SIZES8:
+            x, y = best("2n_ppn8", c, s), g(n, "default", "2n_ppn8", c, s)
+            cells += [f1(x), f1(y), rx(ratio(y, x))]
         x8, y8 = best("2n_ppn8", c, 8), g(n, "default", "2n_ppn8", c, 8)
-        xm, ym = best("2n_ppn8", c, 1 << 20), g(n, "default", "2n_ppn8", c, 1 << 20)
         x1, y1 = best("1n_ppn8", c, 8), g(n, "default", "1n_ppn8", c, 8)
         ax = None if not (x8 and x1) else x8 - x1
         ay = None if not (y8 and y1) else y8 - y1
-        L.append(f"| {c} | {f1(x8)} | {f1(y8)} | {rx(ratio(y8, x8))} | {f1(xm)} | {f1(ym)} | {rx(ratio(ym, xm))} | {f1(ax)} | {f1(ay)} |")
+        L.append(f"| {c} | " + " | ".join(cells) + f" | {f1(ax)} | {f1(ay)} |")
+    L += ["", "speed = B200 time ÷ MI355X time (>1: MI355X faster). \"–\" at 8 B: with 16 ranks, all_gather, "
+          "reduce_scatter and alltoall split the buffer across ranks, so below 256 B no data moves and there is no real test."]
     L += ["", f"Sources: `{d714[len(BENCH)+1:]}`, `{os.path.relpath(bdir, os.path.dirname(MAIN))}`. "
           f"Updated {datetime.date.today()}.", END, ""]
     sec = "\n".join(L)
