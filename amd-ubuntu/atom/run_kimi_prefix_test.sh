@@ -12,19 +12,21 @@
 #   c1_seed1   C=1, 10 prompts, seed 1  -- new prompts (back to cold)
 #   c2_cold / c2_repeat   C=2, 20 prompts, seed 2
 #   c4_cold / c4_repeat   C=4, 40 prompts, seed 3 (4.9M tokens > KV cache: few hits expected)
+#   ./launch.sh <node> atom/run_kimi_prefix_test.sh 8 16 ...   -- instead: for each user count C,
+#   cC_cold / cC_repeat   C users, 10*C prompts, seed 100+C (used to fill 8-128 users)
 # Prefix-cache hit rate per test = delta of vllm:prefix_cache_hits / vllm:prefix_cache_queries
 # read from the server's /metrics before and after each test.
 #
 #   ./launch.sh node6100 atom/run_kimi_prefix_test.sh
 # Output: logs/<node>/kimi-amd-recipe/atom/kimi_prefix_test_<ts>/,
 #         results/ubuntu/kimi-prefix-cache-test.md (+ marker blocks in kimi-summary.md §2 and
-#         mi355x-vs-b200.md §6.3, by analyze_prefix_test.py)
+#         mi355x-vs-b200.md §7.3, by analyze_prefix_test.py, which merges all prefix-test runs)
 set -uo pipefail
 ARM=prefix
 export RESULTS_SUBDIR=kimi-amd-recipe
 source /orcd/data/orcd/022/benchmarks/amd-ubuntu/common/env.sh
 cd "$BENCH_ROOT/atom"
-ISL=128000; OSL=1000; RR=0.2; BT=3600
+ISL=128000; OSL=1000; RR=0.2; BT=36000   # timeout per test; 128 users take ~5 h
 IMG="${VLLM_IMG:-vllm/vllm-openai-rocm:v0.29.0}"
 MODEL="${MKIMI:-$KIMI_MODEL}"
 PORT="${PORT:-8030}"
@@ -35,7 +37,8 @@ TS=$(date +%Y%m%d_%H%M%S)
 OUT=$LOG_ROOT/atom/kimi_prefix_test_$TS; mkdir -p "$OUT" "$RESULTS"
 STATE=$OUT/STATE.txt
 say() { echo "[$(date -Iseconds)] $HOSTNAME_S $*" | tee -a "$STATE"; }
-say "prefix-cache test, vLLM recipe 2, ISL/OSL=$ISL/$OSL rr=$RR image=$IMG out=$OUT"
+USERS="$*"
+say "prefix-cache test (users: ${USERS:-1 2 4 default set}), vLLM recipe 2, ISL/OSL=$ISL/$OSL rr=$RR image=$IMG out=$OUT"
 
 # ---- 1. image (shared SIF dir; the first node builds it, the other waits on the lock) -------
 SIF=$SIF_DIR/vllm-openai-rocm-${IMG#vllm/vllm-openai-rocm:}.sif
@@ -155,13 +158,20 @@ test_run() {
 say "warm-up (4 prompts, ISL 1024, seed 99)"
 ISL0=$ISL; ISL=1024; bench 4 4 "" 1800 --seed 99 >"$OUT/warmup.log" 2>&1; ISL=$ISL0
 say "metrics: $(curl -sf http://localhost:${PORT}/metrics | grep -c '^vllm:prefix_cache') prefix-cache lines"
-test_run c1_cold   1 10 0
-test_run c1_repeat 1 10 0
-test_run c1_seed1  1 10 1
-test_run c2_cold   2 20 2
-test_run c2_repeat 2 20 2
-test_run c4_cold   4 40 3
-test_run c4_repeat 4 40 3
+if [[ -z $USERS ]]; then
+  test_run c1_cold   1 10 0
+  test_run c1_repeat 1 10 0
+  test_run c1_seed1  1 10 1
+  test_run c2_cold   2 20 2
+  test_run c2_repeat 2 20 2
+  test_run c4_cold   4 40 3
+  test_run c4_repeat 4 40 3
+else
+  for C in $USERS; do
+    test_run "c${C}_cold"   "$C" $((10 * C)) $((100 + C))
+    test_run "c${C}_repeat" "$C" $((10 * C)) $((100 + C))
+  done
+fi
 grep -i "prefix cache hit rate" "$OUT/server.log" | tail -3 >> "$STATE"
 stop_server
 flock -u 9; exec 9>&-

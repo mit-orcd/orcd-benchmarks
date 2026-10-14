@@ -2,7 +2,7 @@
 """Latency write-ups from run_rccl_lat_2node.sh (MI355X) and b200-nodes/job-nccl-lat-2node.sh.
 
   compare_lat.py ubuntu            -> results/ubuntu/latency.md (our nodes: ROCm 7.2.4 vs 7.14)
-  compare_lat.py b200 <b200 dir>   -> section 4.2 + one Summary row in results/mi355x-vs-b200.md
+  compare_lat.py b200 <b200 dir>   -> section 5 + one Summary row in results/mi355x-vs-b200.md
                                       (MI355X ROCm 7.14 vs B200; never 7.2.4 vs B200)
 Inputs are found by default as the newest finished run dirs under logs/node6100/.
 """
@@ -132,7 +132,7 @@ def ubuntu():
     print("wrote", out)
 
 
-# ---------------------------------------------------------------- vs-b200 section 4.2
+# ---------------------------------------------------------------- vs-b200 section 5
 def b200(bdir):
     d714 = newest_done(f"{LOGS}/rocm7.14/rccl/lat_2node_*")
     ibd = sorted(glob.glob(f"{LOGS}/net/ib_lat_*"))
@@ -158,7 +158,7 @@ def b200(bdir):
         verdict = (f"Mixed: at 8 bytes MI355X is faster in {', '.join(faster) or 'none'} and slower in "
                    f"{', '.join(slower) or 'none'} ({span(r8.values())}).") if r8 else "No data."
 
-    L = [BEGIN, "### 4.2 Latency across 2 nodes (small messages)", "",
+    L = [BEGIN, "## 5. Latency across 2 nodes (small messages)", "",
          "**Compared:** MI355X ROCm 7.14 (RCCL) with B200 (NCCL), same tests on both: perftest RDMA latency on one rail, "
          "then rccl-tests / nccl-tests from 8 B to 4 MB with 1000 iterations, one rank per GPU, NUMA-bound. "
          f"Time per call in µs, lower is better; ratio = B200 time ÷ MI355X time (>1: MI355X faster). **{verdict}**", "",
@@ -195,11 +195,11 @@ def b200(bdir):
     txt = open(MAIN).read()
     if BEGIN in txt:
         txt = re.sub(re.escape(BEGIN) + r".*?" + re.escape(END) + r"\n?", lambda _: sec, txt, flags=re.S)
-    else:  # put it at the end of section 4 (before "## 5.")
-        i = txt.index("\n## 5. ")
+    else:  # put it before "## 6." (section 5)
+        i = txt.index("\n## 6. ")
         txt = txt[:i].rstrip("\n") + "\n\n" + sec + txt[i:]
     if r8:
-        row = (f"| Latency across 2 nodes, 8 bytes (§4.2) | {span(r8.values())} "
+        row = (f"| Latency across 2 nodes, 8 bytes (§5) | {span(r8.values())} "
                "(speed; MI355X ROCm 7.14) | ✅ same tests |")
         lines = txt.split("\n")
         lines = [l for l in lines if not l.startswith("| Latency across 2 nodes")]

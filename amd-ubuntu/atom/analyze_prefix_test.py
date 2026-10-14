@@ -4,7 +4,7 @@
   python3 analyze_prefix_test.py <run dir>
 
 Writes results/ubuntu/kimi-prefix-cache-test.md and replaces the marker blocks in
-results/kimi-summary.md (before "## 3. ") and results/mi355x-vs-b200.md (before "### 6.4 ").
+results/kimi-summary.md (before "## 3. ") and results/mi355x-vs-b200.md (before "### 7.4 ").
 tests.txt lines: tag|concurrency|prompts|seed|prefix-cache queries|hits|result json.
 """
 import datetime, json, os, re, sys
@@ -189,7 +189,7 @@ def main():
     short = (f"**Prefix-cache test ({day}):** {head} Detail: "
              "[ubuntu/kimi-prefix-cache-test.md](ubuntu/kimi-prefix-cache-test.md).\n\n" + "\n".join(vlines))
     put_block(f"{RES}/kimi-summary.md", short, "## 3. vLLM recipe 2 on our workload")
-    put_block(f"{RES}/mi355x-vs-b200.md", short, "### 6.4 Apple-to-apple")
+    put_block(f"{RES}/mi355x-vs-b200.md", short, "### 7.4 Apple-to-apple")
 
 
 if __name__ == "__main__":
