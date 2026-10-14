@@ -26,14 +26,24 @@ Same as, or different from, the general benchmark dirs:
 The ~7B Megatron-LM model matches the AICR B200 reference, so results compare
 directly with it.
 
+## Quick Start
+
+```bash
+cd /orcd/data/orcd/022/benchmarks/b200-nodes
+./job-gpu-fryer.sh "node5500 node5502" 300        # per-GPU TFLOP/s, fp32/bf16/fp8
+./job-nccl-1node.sh "node5500 node5502"           # NVLink sendrecv busbw
+sbatch -w node5500,node5502 job-nccl-2node.sh     # inter-node busbw
+./job-megatron-1node.sh node5500 8                # Megatron-LM ~7B on 8 GPUs
+# when all jobs are done:
+./analyze-gpu-fryer.py; ./analyze-nccl-1node.py; ./analyze-nccl-2node.py; ./analyze-megatron.py
+cat out-gpu-fryer/summary.md out-nccl-1node/summary.md out-nccl-2node/summary.md output-megatron/summary.md
+```
+
 ## Installation
 
-Nothing to build. The scripts load their own modules and use prebuilt pieces
-from the other benchmark dirs:
-
-- NCCL: `../nccl-tests/build-nvhpc-26.1` (module `nvhpc/26.1`, CUDA 13, HPC-X OpenMPI)
-- gpu-fryer: `../gpu-fryer/gpu-fryer_1.1.0.sif` (module `apptainer/1.4.2`)
-- Megatron-LM: `../megatron-lm/Megatron-LM` and `../megatron-lm/imag/pytorch_26.02-py3.sif`
+See [install.md](install.md). Nothing is built here. It needs
+`../nccl-tests/build-nvhpc-26.1`, `../gpu-fryer/gpu-fryer_1.1.0.sif`, and
+`../megatron-lm/` (Megatron-LM tree + `pytorch_26.02-py3.sif`).
 
 ## Usage
 

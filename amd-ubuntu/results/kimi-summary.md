@@ -41,12 +41,21 @@ Our runs already use this same recipe: vLLM recipe 2 from `amd-kimi-k3-recipe.pd
 - **From 8 users up our nodes are the same as or faster than AMD's published result (1.01–1.10×).**
 - **At 1–4 users our nodes are slower (0.56–0.82×).**
 
-**Why slower at 1–4 users (not proven yet):**
+**Why slower at 1–4 users (partly tested, see the prefix-cache test below):**
 - **With 1 user, most of the time is spent generating the output one token at a time.** Per request (121K in, 1,082 out): 10.6 s to process the prompt + 20.8 s to generate (19.3 ms per token) = 31.4 s.
-- **AMD's 874 tok/s/GPU means ≈17.5 s per request.** Our token generation alone (20.8 s) takes longer than that, so AMD's run must have had about half our time per output token (≈10 ms).
-- **The likely cause is a fixed overhead per generation step, not GPU speed.** Our time per output token barely depends on context length (18.1 ms at 1K, 19.3 ms at 128K), and with 8+ users, where GPU compute dominates, we match AMD (1.01–1.10×). The same overhead is why one B200 user streams faster.
+- **AMD's 874 tok/s/GPU means ≈17.5 s per request.** Our token generation alone (20.8 s) takes longer than that. With new prompts AMD would need about half our time per output token (≈10 ms); if their prompts came from the prefix cache (prompt time ≈0.35 s, as in our repeated run), they would need ≈16 ms, still about 18% less than our 19.3 ms.
+- **Prompts reused from the prefix cache explain part of it.** The PDF's client sets no `--seed`, so every run sends the same prompts, and vLLM keeps them in the prefix cache. Sending the same prompts again on our nodes gives 1.47x at 1 user (0.82x AMD) and 1.92x at 2 users (1.38x AMD), so AMD's 1–2 user numbers fit partly cached runs. At 4 users the prompts do not fit in the cache and we stay at 0.82x.
+- **The rest (about 0.82x at 1 and 4 users) is likely a fixed overhead per generation step, not GPU speed.** Our time per output token barely depends on context length (18.1 ms at 1K, 19.3 ms at 128K), and with 8+ users, where GPU compute dominates, we match AMD (1.01–1.10×). The same overhead is why one B200 user streams faster.
 - **Ruled out:** recipe settings (same image, environment, server and client flags as the PDF), host CPU settings (performance governor, CPU sleep states off, IOMMU passthrough, NUMA balancing off) and ROCm version (the image brings its own ROCm 7.2.3).
 - **Not yet tested:** apptainer instead of docker, AMD's machine (driver, firmware, host CPU), and AMD's warm-up. Next steps: profile one generation step (rocprofv3) to see if the GPUs wait between steps, and ask AMD for their TTFT (time to first token) and TPOT at 1 user.
+
+<!-- PREFIX-TEST-BEGIN (auto: atom/analyze_prefix_test.py) -->
+**Prefix-cache test (2026-10-14):** **Partly confirmed: the prefix cache explains part of the low-user gap.** Repeated prompts give 719 tok/s/GPU at 1 user (0.82x AMD's 874), faster than with new prompts but still below AMD's number, and 1,500 at 2 users (1.38x AMD's 1,090). AMD's 1- and 2-user numbers lie between our first and repeated runs, which fits runs with partly cached prompts. At 4 users the 40 prompts do not fit in the KV cache, so nothing is reused (also not in AMD's runs), and we stay at 0.82x AMD's number. At 1 user the TPOT is 19.3 ms with or without the cache. So part of the gap has another cause (still to be profiled). Detail: [ubuntu/kimi-prefix-cache-test.md](ubuntu/kimi-prefix-cache-test.md).
+
+- **1 user:** repeated run 719 vs first run 489 tok/s/GPU (1.47x), 0.82x AMD's 874; prefix-cache hit rate 100%: the repeated run is faster, but still below AMD's number.
+- **2 users:** repeated run 1,500 vs first run 781 tok/s/GPU (1.92x), 1.38x AMD's 1,090; prefix-cache hit rate 100%: the repeated run is faster than AMD's number.
+- **4 users:** repeated run 1,019 vs first run 1,019 tok/s/GPU (1.00x), 0.82x AMD's 1,235; prefix-cache hit rate 0%: the repeated prompts were not found in the cache, so the cache cannot explain the gap here.
+<!-- PREFIX-TEST-END -->
 
 ## 3. vLLM recipe 2 on our workload (ISL/OSL 1K/1K)
 

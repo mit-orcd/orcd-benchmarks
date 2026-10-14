@@ -10,17 +10,20 @@ as a burn-in/health check and a rough throughput check. Runs are done in
 three modes: tensor-core FP (`-tc`), standard single precision, and
 doubles (`-d`).
 
-## Installation
-
-The source is in this repo (`gpu_burn-drv.cpp`, `compare.cu`, `Makefile`).
-Build with CUDA:
+## Quick Start
 
 ```bash
-module load cuda
-make                 # produces ./gpu_burn   (override arch: make COMPUTE=8.0)
+cd /orcd/data/orcd/022/benchmarks/gpu-burn-r8/run
+./run.sh "3100" mit_normal_gpu none unlimited 8 l40s 4     # 1 node: tc32, std32, d64, 300 s each
+# when done (~16 min):
+./get-results.sh mit_normal_gpu 1 l40s
+grep -A8 'Tested' ../mit_normal_gpu/output-l40s/*_node3100-<jobid>.out     # every GPU must say OK
 ```
 
-Upstream / Docker build instructions: <https://github.com/wilicc/gpu-burn>.
+## Installation
+
+See [install.md](install.md): `make` in this dir (with `CUDAPATH` overridden)
+produces `./gpu_burn`.
 
 ## Usage
 
@@ -55,12 +58,28 @@ srun -t 60 -n 8 --gres=gpu:4 -p mit_normal_gpu --mem=10GB --pty bash
 
 ## Analysis
 
-```bash
-cd run
-# get-results.sh <partition> <N> <gpu_type>
-./get-results.sh mit_normal_gpu 2 l40s
+Each output file is `<partition>/output-<gpu_type>/<mode>_<node>-<jobid>.out`,
+where `<mode>` is `tc32` (tensor cores), `std32` (FP32) or `d64` (FP64). Each
+progress line holds, per GPU, the iterations done, Gflop/s, error count and
+temperature:
+
+```
+100.0%  proc'd: 27768 (110036 Gflop/s) - 27924 (110572 Gflop/s) - ...   errors: 0 - 0 - ...   temps: 63 C - 62 C - ...
 ```
 
-Prints the per-GPU summary (`100.0%` proc'd line → Gflop/s and error
-count) from the most recent runs. A healthy GPU finishes with `OK` and
-zero errors; `FAULTY`/`Killing` indicates a failing GPU.
+```bash
+cd run
+./get-results.sh <partition> <N> <gpu_type>    # final (100.0%) line of the newest N runs x 3 modes
+```
+
+The file ends with a verdict for each GPU:
+
+```bash
+grep -A9 Tested ../<partition>/output-<gpu_type>/*.out | grep -E 'GPU [0-9]+:' | grep -v OK   # empty = all passed
+```
+
+A GPU passes when it is `OK` with `errors: 0`. `FAULTY` or a non-zero error count
+means the GPU is bad. The `Killing processes ...` lines are the normal shutdown
+at the end of every run. Gflop/s should agree
+within a few percent across the GPUs of one node and across nodes of the same
+type. A low outlier usually means throttling: check `temps`.

@@ -15,51 +15,69 @@ Layout:
 - `cuda-examples/`, `cuSolver/`, `gpu-harvard-workshop/`,
   `github-cuda-ex/` — additional example sets (some with their own README).
 
-## Installation
-
-Build the individual programs with `nvcc` (cuBLAS variants link
-`-lcublas`):
+## Quick Start
 
 ```bash
-module load cuda/12.4.0
-cd src
-nvcc -O3 -arch=sm_90 MatMult.cu        -o MatMult          # sm_90 = H100/H200; L40S = sm_89
-nvcc -O3 -arch=sm_90 matmul_cuBLAS.cu  -o matmul_cuBLAS -lcublas
+cd /orcd/data/orcd/022/benchmarks/cuda/src
+# build the binaries first (install.md); the old prebuilt ones are corrupt
+srun -t 30 -n 8 --gres=gpu:h100:1 -p mit_normal_gpu --mem=10GB \
+     bash -c 'module load cuda/12.9.1; ./MatMult_d_h100; ./matmul_cuBLAS_d_h100'
+# GPU time: "Cuda code took X seconds" (naive) / "cuBLAS took X milliseconds" (cuBLAS); lower is better
 ```
 
-Prebuilt per-GPU binaries already exist in `src/` (e.g. `MatMult_d_h100`,
-`MatMult_d_l40s`).
+## Installation
+
+See [install.md](install.md): build the `src/*.cu` programs with `nvcc`. The old
+prebuilt binaries in `src/` are corrupt (zero-filled), so rebuild before running.
 
 ## Usage
 
+| Program | What it does |
+|---|---|
+| `MatMult`, `MatMult_16x16`, `MatMult_16x32` | naive single-precision matmul, 10000², different thread-block shapes |
+| `MatMult_d_<gpu>[_16x16\|_16x32]` | the same in double precision |
+| `matmul_cuBLAS`, `matmul_cuBLAS_d_<gpu>` | the same product with cuBLAS `Sgemm` / `Dgemm` |
+| `SAXPY`, `dot`, `CalculatePi`, `HelloWorld` | small examples |
+
+Each program also runs the same computation serially on the CPU, so it reports
+both GPU and CPU times.
+
 ### Automated, many runs — `src/run_job.sh`
 
-Submits one Slurm job per node and runs a configured list of
-single-precision (`exe32p`) and double-precision (`exe64p`) executables.
-Edit `nodelist`, `partition`, and the executable lists at the top, then:
+`run_job.sh` submits one job per node in `nodelist` (all on one `partition`).
+Each job runs the single-precision list `exe32p`, then the double-precision list
+`exe64p`. Edit those four variables at the top, create the output dirs (see
+`install.md`), then:
 
 ```bash
 cd src
 ./run_job.sh
 ```
 
-Output is written per executable to `out_files/<precision>/<partition>/`.
+The output goes to `cuda/out_files/{single,double}_precision/<partition>/<exe>_<node>_.out`.
+`SLURM_JOB_ID` is expanded at submit time, when it is empty, so a rerun on the
+same node overwrites the file.
 
 ### Single run — `src/`
 
-Get an interactive GPU session and run a binary directly:
-
 ```bash
 srun -t 30 -n 8 --gres=gpu:1 -p mit_normal_gpu --mem=10GB --pty bash
-module load cuda/12.4.0
-cd src
-./MatMult            # or ./matmul_cuBLAS_d_h100, ./SAXPY, etc.
+cd /orcd/data/orcd/022/benchmarks/cuda/src
+./MatMult_d_h100        # or ./matmul_cuBLAS_d_h100, ./SAXPY, ...
 ```
 
 ## Analysis
 
-Each program prints its own timing/throughput (e.g. matmul GFLOP/s or
-elapsed kernel time) to stdout, captured in the `.out` files under
-`src/out_files/`. Compare the same executable across GPU types, and
-custom kernels vs. the cuBLAS variant, to gauge achieved vs. peak
-performance.
+The naive kernels print `Cuda code took <s> seconds`, the cuBLAS programs
+print `cuBLAS took <ms> milliseconds`, and both print the serial CPU time and
+`The calculation was correct`. To collect the GPU times:
+
+```bash
+cd /orcd/data/orcd/022/benchmarks/cuda/out_files
+grep -HE 'Cuda code took|cuBLAS took' */*/*.out | awk '{print $1, $(NF-1), $NF}' | column -t
+```
+
+For an N×N matmul, GFLOP/s = 2·N³ / time / 1e9 (N = 10000 → 2000 / time).
+Compare the same program across GPU types, and the naive kernels against
+cuBLAS, to see how close each gets to peak. Discard any run that prints
+`There was a calculation error`.

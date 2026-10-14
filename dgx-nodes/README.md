@@ -17,13 +17,22 @@ use a separate build (`nccl-tests/build-songhan-utuntu-nvhpc-26.1`: NVHPC 26.1,
 CUDA 12.9, NCCL 2.29.2, sm_90) instead of the Rocky 8 build that
 `nccl-tests/run/env.sh` selects.
 
+## Quick Start
+
+```bash
+cd /orcd/data/orcd/022/benchmarks/dgx-nodes
+sbatch -p mit_testing -w node1800 --gres=gpu:h100:8 -o out-1node/%x-%N-%J job-nccl-1node.sh 8 sendrecv
+sbatch -p mit_testing -w node1800,node1801 --gpus-per-node=h100:1 -o out-2node/%x-%N-%J job-nccl-2node.sh 1 sendrecv
+# when done:
+./get-results-nccl.sh 2          # sendrecv busbw at 4 GB
+./gen-summary.py                 # -> summary.md (peak busbw per collective, vs NVLink / IB ceilings)
+```
+
 ## Installation
 
-The nccl-tests build was made on node1800 under Ubuntu, into
-`/orcd/data/orcd/022/benchmarks/nccl-tests/build-songhan-utuntu-nvhpc-26.1`,
-against the NVHPC 26.1 SDK under `../nvhpc`. `env-ubuntu.sh` exports the same
-paths at run time and the MPI flags (MPI only exchanges the NCCL id at start-up;
-data goes over NVLink / InfiniBand). No `module load`.
+See [install.md](install.md): the NVHPC 26.1 SDK under `../nvhpc` (shared with
+`b200-ubuntu`) and `../nccl-tests/build-songhan-utuntu-nvhpc-26.1.sh`, built on an
+Ubuntu DGX node. `env-ubuntu.sh` sets the run-time paths.
 
 ## Usage
 

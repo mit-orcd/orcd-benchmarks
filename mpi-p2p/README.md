@@ -8,33 +8,21 @@ It runs `osu_bw` (bandwidth) and `osu_latency` between two nodes to
 measure the interconnect (InfiniBand) bandwidth in MB/s and latency in
 microseconds.
 
+## Quick Start
+
+```bash
+cd /orcd/data/orcd/022/benchmarks/mpi-p2p/run
+./run.sh "3506 3507" mit_normal_gpu none unlimited     # one 2-node job per node pair
+# when done:
+./get-results.sh mit_normal_gpu 1                      # bandwidth (MB/s) and latency (us) at 4 MiB
+./p2p-pair.sh node1363 node1364                        # or: one-shot pair health check, prints P2P_RESULT ...
+```
+
 ## Installation
 
-OSU micro-benchmarks must be compiled from source per MPI version.
-`src/build.sh` does this: it unpacks the OSU tarball, loads the requested
-module, then `configure`/`make`/`make install` into
-`install/<os>-<version>/` (or `install/<os>-intel-<version>/` for Intel).
-
-```bash
-# build.sh <os: c7|r8> <module: openmpi|intel-hpc> <version>
-cd src
-./build.sh r8 openmpi 4.1.4          # uses mpicc / mpicxx
-./build.sh r8 intel-hpc 2025.2.1.44  # uses mpiicx / mpiicpx
-```
-
-Submit it as a job with `src/job-build.sh` (a 1-task sbatch wrapper).
-Variant scripts (`build-nvhpc.sh`, `build-stage.sh`, …) build CUDA-aware
-or staged trees. Source archives come from
-<https://mvapich.cse.ohio-state.edu/benchmarks/>; for CUDA-aware builds
-see `notes` / `notes.claude` (UCX flags).
-
-At run time, `run/env.sh` loads the matching module stack and puts the
-installed OSU binaries on `PATH`:
-
-```bash
-# env.sh <os> <openmpi-version>, e.g.
-source run/env.sh r8 4.1.4
-```
+See [install.md](install.md): build the OSU Micro-Benchmarks for each MPI stack
+with `src/build.sh` (or `build-ompi-stack.sh` / `build-nvhpc.sh`) into
+`install/<os>-<version>/`. `run/env.sh <os> <version>` puts a build on `PATH`.
 
 ## Usage
 
@@ -49,7 +37,10 @@ cd run
 ./run.sh "3506 3507 3508" mit_normal_gpu none unlimited
 ```
 
-Output lands in `work/<partition>/output/`.
+Each job is exclusive and limited to `rocky8` nodes, with one rank per node. It
+runs `source env.sh r8 4.1.4` (the `install/r8-4.1.4` build; change the line in
+`run.sh` to test another stack), then `mpirun osu_bw` and `mpirun osu_latency`.
+The output goes to `work/<partition>/output/out.<node1>_<node2>-<jobid>`.
 
 ### Single run — `work/`
 

@@ -1,11 +1,19 @@
 # B200 vs B300 — single-node benchmark comparison
 
-- Generated: 2026-10-05 16:34:41
+- Generated: 2026-10-07 18:07:15
 - B300 node: node5900-c1 (mit_testing, 8 x B300); B200 data from `../b200-nodes/`
 - Ratios are B300 / B200; > 1.00x means B300 is faster.
 - Per-benchmark B300 summaries: `out-gpu-fryer/summary.md`, `out-nccl-1node/summary.md`, `output-megatron/summary.md`
 
-## 1. On paper — official NVIDIA specs, B300 vs B200
+## 1. Quick summary
+
+- **cuBLASLt GEMM:** B300 is 1.20x faster than B200 in FP4, but much slower in FP64 (0.03x) and INT8 (0.05x) (§4).
+- **FP4 is 1.20x, less than the 1.5x on paper, because of the power cap.** Both GPUs run FP4 at their power limit, and the B300 limit is 1,100 W, the maximum for this air-cooled (SXM6 AC) board, so B300 drops to a lower clock (§4, `admin-notes.md`). A liquid-cooled system with a higher power limit (~1,400 W per GPU, as in GB300-class systems) should get closer to 1.5x (not measured).
+- **All other precisions:** B300 is ≈6% or less faster than B200, both in cuBLASLt GEMM (FP8 1.00x, BF16 1.03x, FP16 1.01x, TF32 1.05x; §4) and in gpu-fryer GEMM (1.04–1.06x; §3).
+- **Megatron-LM training with BF16:** B300 is ≈12% or less faster than B200 (reference 7B: 1.03–1.06x, §7; tuned max: 1.12x, §8).
+- **Intra-node NCCL (NVLink):** almost the same, 0.94–1.11x depending on the collective (§5).
+
+## 2. On paper — official NVIDIA specs, B300 vs B200
 
 Sources: [NVIDIA HGX platform page](https://www.nvidia.com/en-us/data-center/hgx/) (HGX B300 vs HGX B200 table), [Inside NVIDIA Blackwell Ultra](https://developer.nvidia.com/blog/inside-nvidia-blackwell-ultra-the-chip-powering-the-ai-factory-era/) (NVIDIA technical blog), [DGX B300](https://www.nvidia.com/en-us/data-center/dgx-b300/) and [DGX B200](https://www.nvidia.com/en-us/data-center/dgx-b200/) product pages. Per-GPU values are the HGX 8-GPU numbers divided by 8; NVIDIA lists tensor-core numbers with 2:4 sparsity, and dense = 1/2 sparse except where NVIDIA gives a dense number (FP4).
 
@@ -43,7 +51,7 @@ B300 disadvantages on paper:
 
 What this predicts for the measurements below: gpu-fryer BF16/FP8 and NCCL NVLink close to 1.0x; ib_write_bw up to ~2x if the B300 links run at 800 Gb/s; Megatron reference config ~1.0x; tuned Megatron somewhat above B200 thanks to the larger memory.
 
-## 2. gpu-fryer — per-GPU matmul throughput (TFLOP/s)
+## 3. gpu-fryer — per-GPU matmul throughput (TFLOP/s)
 
 B200 = mean over 10 B200 node(s) of the per-node mean (newest run per node); B300 = node5900-c1 (B300 SXM6 AC). Converged value per GPU, 300 s per precision.
 
@@ -68,7 +76,7 @@ Throttling reported on B300: none
 | GPU6 | 794 | 1,507 | 4,226 |
 | GPU7 | 781 | 1,495 | 4,226 |
 
-## 3. cuBLASLt GEMM — per-GPU throughput incl. FP4 (TFLOP/s)
+## 4. cuBLASLt GEMM — per-GPU throughput incl. FP4 (TFLOP/s)
 
 From `../cuBLASLt/summary.md` (separate benchmark: `../cuBLASLt/job-lt-bench.sh`, 8 GPUs at once, tuned shape per GPU type; full method and per-shape results there).
 - Generated: 2026-10-01 18:45:10
@@ -140,7 +148,7 @@ The gap is mainly the power limit. Both GPUs hit their power cap during the FP4 
 5. **Other precisions.** FP4 is the only precision where B300 has more peak compute per clock. In BF16, FP8 and TF32 both GPUs have the same peak and run at similar clocks, so they measure about 1.0x.
 6. **What would change it.** A higher GPU power limit should narrow the gap; that is set by the node administrators, not by user jobs.
 
-## 4. NCCL 1-node — intra-node NVLink bus bandwidth (GB/s)
+## 5. NCCL 1-node — intra-node NVLink bus bandwidth (GB/s)
 
 Converged busbw = busbw at the largest message (16 GiB), best of out-of-place / in-place. B200 = mean over the B200 nodes that ran that collective (newest run per node); 8 GPUs, 1 MPI task.
 
@@ -171,7 +179,7 @@ Converged busbw = busbw at the largest message (16 GiB), best of out-of-place / 
 | 4 GiB | 822.5 | 904.4 | **1.10x** |
 | 16 GiB | 833.7 | 913.5 | **1.10x** |
 
-## 5. ib_write_bw — GPUDirect RDMA, two rails of one node (Gb/s)
+## 6. ib_write_bw — GPUDirect RDMA, two rails of one node (Gb/s)
 
 64 MiB RDMA write, 200 iterations. B200: `../b200-nodes/out-ibwrite/ibwrite-1node-20306762.out` (client mlx5_4, server mlx5_7). B300: `out-ibwrite/ibwrite-1node-24550230.out` (client mlx5_0, server mlx5_6).
 
@@ -199,7 +207,7 @@ Converged busbw = busbw at the largest message (16 GiB), best of out-of-place / 
 | 4 MiB | 394.84 | 403.84 | **1.02x** |
 | 8 MiB | 395.08 | 403.84 | **1.02x** |
 
-## 6. Megatron-LM 1-node — reference ~7B GPT (TFLOP/s/GPU)
+## 7. Megatron-LM 1-node — reference ~7B GPT (TFLOP/s/GPU)
 
 Same config on both: 36 layers, hidden 4096, FFN 14336, seq 2048, bf16, micro-batch 4, global batch = 128 x GPUs, 100 iters, no recompute, TP=PP=1. Metric = last-iteration throughput per GPU. B200 = mean over B200 nodes with that GPU count (newest run).
 
@@ -214,7 +222,7 @@ Same config on both: 36 layers, hidden 4096, FFN 14336, seq 2048, bf16, micro-ba
 | 7 | 896 | 968.6 | 1 | 1,018.3 | 7,128 | 11,615 | 11,047 | **1.05x** |
 | 8 | 1024 | 968.8 | 3 | 1,003.2 | 8,026 | 11,612 | 11,214 | **1.04x** |
 
-## 7. Megatron-LM 1-node — tuned max throughput, best per GPU type (TFLOP/s/GPU)
+## 8. Megatron-LM 1-node — tuned max throughput, best per GPU type (TFLOP/s/GPU)
 
 Each GPU type gets its own grid sweep (8 GPUs, seq 4096, distributed optimizer, overlapped grad-reduce/param-gather, TP=PP=1, grad-acc 4, 20 iters): 5B (24L, h4096) micro 4/8/16 x recompute none/selective/full, and 13B (40L, h5120) micro 2/4/8 x recompute none/full, each in bf16 and fp8. The configs are NOT forced to match: the best point per GPU type and precision is compared. TFLOP/s/GPU is Megatron's model-FLOP throughput (recompute work not counted). Peak memory = max allocated by PyTorch on rank 0.
 

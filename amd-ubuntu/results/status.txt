@@ -67,3 +67,5 @@ all three recipes with AMD's published numbers)
    DONE 2026-10-09: ATOM finished 02:13 UTC, vLLM recipe 1 finished 06:00 UTC,
    all 8 levels (C=1-128) ran without errors; table filled in
    results/ubuntu/kimi-recipe-old-vs-new.md.
+2026-10-13T17:05:12-04:00 latency: DONE, results/ubuntu/latency.md + mi355x-vs-b200.md §4.2 updated (B200 job 25690497)
+2026-10-13T21:08:29+00:00 latency: DONE, results/ubuntu/latency.md + mi355x-vs-b200.md §4.2 updated (B200 job 25690497)

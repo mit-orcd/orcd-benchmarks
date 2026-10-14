@@ -25,17 +25,21 @@ required for correct results, not tuning: `--gpu-memory-utilization 0.90`
 (0.95 runs out of memory in warm-up) and `--no-enable-prefix-caching` (the
 model's recurrent state cannot be rebuilt from the prefix cache).
 
+## Quick Start
+
+```bash
+cd /orcd/data/orcd/022/benchmarks/b200-kimi
+vi common/env.sh                  # set RESV, ACCT, nodes for the current reservation
+./chain.sh                        # gate -> 2-node verify -> 1-node attempt -> TP8xPP2 sweep -> summary
+# when the chain finishes:
+cat results/kimi-k3-base-b200.md results/RUN-SUMMARY.md
+```
+
 ## Installation
 
-- **Image:** `./pull-image.sh` pulls `vllm/vllm-openai:kimi-k3` into
-  `imag/vllm-openai_kimi-k3.sif` once (atomic, with a manifest; `--verify`,
-  `--force`). Every other script checks the image and fails rather than pulling.
-  It is a CUDA 13 build and needs driver r580+.
-- **Model:** already on the cluster, read in place and never downloaded:
-  `/orcd/compute/orcd/025/models/Kimi-K3` (another user's files, mounted read-only).
-- **Ray:** not in the image; installed in `pylibs/` with `--no-deps`.
-- **Config:** `common/env.sh` holds all paths, nodes, reservation and run
-  settings. Caches go to this dir, never `$HOME`.
+See [install.md](install.md): `./pull-image.sh` (vLLM `kimi-k3` image), Ray 2.57.0
+into `pylibs/` with `--no-deps`, and the staged Kimi-K3 weights (read in place).
+Edit `common/env.sh` for the current reservation.
 
 ## Usage
 

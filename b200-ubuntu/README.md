@@ -20,14 +20,22 @@ state.
 
 Megatron-LM was planned (`plan.md`) but not run here.
 
+## Quick Start
+
+```bash
+ssh node5700
+cd /orcd/data/orcd/022/benchmarks/b200-ubuntu
+./run-gpu-fryer.sh 300            # fp32 / bf16 / fp8, 300 s each
+./run-nccl-1node.sh               # sendrecv, all 8 GPUs
+./run-nccl-2node.sh               # sendrecv, node5700 <-> node5701, 1 GPU per node
+./analyze-gpu-fryer.py; ./analyze-nccl-1node.py; ./analyze-nccl-2node.py   # -> out-*/summary.md
+```
+
 ## Installation
 
-- gpu-fryer: `../gpu-fryer/gpu-fryer_1.1.0.sif`.
-- NCCL: NVHPC 26.1 SDK installed under `../nvhpc`, nccl-tests built with
-  `../nccl-tests/build-utuntu-nvhpc-26.1.sh`. The run scripts set `PATH` and
-  `LD_LIBRARY_PATH` to it; no `module load`.
-- 2-node NCCL needs passwordless ssh between the two nodes, both directions
-  (`ubuntu-nccl.md` lists what the admins must set up).
+See [install.md](install.md): the NVHPC 26.1 SDK from NVIDIA's tarball under
+`../nvhpc`, `../nccl-tests/build-utuntu-nvhpc-26.1.sh` (CUDA 12.9 flavour),
+the gpu-fryer image, and passwordless ssh between the two nodes.
 
 ## Usage
 

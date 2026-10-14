@@ -22,17 +22,21 @@ recompute none/selective/full, and 13B (40 layers, hidden 5120) Ã— micro 2/4/8 Ã
 recompute none/full, each in bf16 and fp8. Out-of-memory points at the top of
 the grid are expected.
 
+## Quick Start
+
+```bash
+cd /orcd/data/orcd/022/benchmarks/b300-nodes
+sbatch job-probe.sh                     # optional: check modules / apptainer on the node
+./submit-all.sh                         # all single-node B300 tests + analysis jobs, returns at once
+# when done (summaries also fill in as each group finishes):
+cat COMPARISON-b200-vs-b300.md
+```
+
 ## Installation
 
-Nothing to build. The scripts use prebuilt pieces from the other benchmark dirs:
-
-- NCCL: `../nccl-tests/build-nvhpc-26.1` (module `nvhpc/26.1`)
-- gpu-fryer: `../gpu-fryer/gpu-fryer_1.1.0.sif`
-- Megatron-LM: `../megatron-lm/Megatron-LM` and `../megatron-lm/imag/pytorch_26.02-py3.sif`
-
-Containers run with module `apptainer/1.4.2`, or the system apptainer /
-singularity if the module does not load on EL10. gpu-fryer falls back to
-`--unsquash` where FUSE is not allowed.
+See [install.md](install.md). Nothing is built here. It needs the same pieces as
+`b200-nodes`: `../nccl-tests/build-nvhpc-26.1`, `../gpu-fryer/gpu-fryer_1.1.0.sif`,
+and `../megatron-lm/` (Megatron-LM tree + `pytorch_26.02-py3.sif`).
 
 ## Usage
 

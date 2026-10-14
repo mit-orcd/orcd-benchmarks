@@ -96,7 +96,8 @@ def ubuntu():
          "`net/run_ib_lat.sh` (host RDMA, perftest), `rccl-tests/run_rccl_lat_2node.sh` (RCCL, rccl-tests 8 B–4 MB, "
          "1000 iterations + 100 warm-up, no data check, one rank per GPU, NUMA-bound).", "",
          "Compared: host ROCm 7.2.4 (RCCL 2.27.7) with ROCm 7.14 (RCCL 2.30.4, default IB-CAST transport and "
-         "`NCCL_NET=IB`). Time per call in µs, lower is better.", ""]
+         "`NCCL_NET=IB`). Time per call in µs, lower is better."
+         " **ROCm 7.14 is faster than 7.2.4 in almost every test (1.04–1.58x lower latency); the one exception is all_reduce at 1 MB on 16 ranks (0.89x). On 7.14 the default transport is faster than `NCCL_NET=IB` in most tests.**", ""]
     if lat:
         L += ["## 1. Raw network: RDMA latency, one rail at a time (no GPU, no RCCL)", "",
               f"perftest one-way latency (median, µs), host memory. Logs: `{ibd[-1][len(BENCH)+1:]}`.", "",

@@ -15,7 +15,7 @@ Benchmarks `run-all.sh` can run:
 | `mpi-calc-pi` | CPU / GPU node | MPI pi, rank-count sweep |
 | `mpi-p2p` | node pairs | OSU `osu_bw` + `osu_latency` |
 | `gpu-burn-r8` | GPU | gpu_burn TF32 / FP32 / FP64, 300 s each |
-| `nvidia-hpc-benchmarks` | GPU | HPL, HPL-MxP, HPCG, STREAM (NVIDIA container) |
+| `nvidia-hpc-benchmarks` | GPU | HPL on 1–8 GPUs (NVIDIA container; HPL-MxP, HPCG, STREAM available but off) |
 | `nccl-tests` | GPU, 1 node + pairs | NCCL `sendrecv_perf` bus bandwidth |
 | `megatron-lm` | L40S / H200, 1 node + pairs | Megatron-LM GPT pretrain TFLOP/s per GPU |
 | `b200-nodes` | B200, 1 node + pairs | gpu-fryer, NCCL 1-node/2-node, Megatron-LM 1-node/2-node |
@@ -39,11 +39,21 @@ general counterpart and are not run by `run-all.sh`.
 `b200-kimi` has no counterpart among the general dirs; it compares against the
 MI355X run in `amd-benchmarks/amd-cloud`.
 
+## Quick Start
+
+```bash
+module use /orcd/compute/orcd/011/team-software/modulefiles
+module load orcd-benchmark
+BENCH_NODES="3511 3512" BENCH_PARTITION=mit_normal_gpu BENCH_GPU_TYPE=l40s BENCH_GPUS=4 \
+    run-all.sh gpu-burn-r8 nccl-tests     # submits Slurm jobs, returns at once
+squeue --me                               # wait for the jobs to finish
+get-results-all.sh                        # set partition / all_bench at its top first
+```
+
 ## Installation
 
-Nothing to build here. Each target benchmark must already be built or pulled in
-its own directory (see its README). `run-all.sh` only needs the benchmark dirs
-under `/orcd/data/orcd/022/benchmarks`.
+See [install.md](install.md). Nothing is built here; each target benchmark must
+be installed in its own dir first.
 
 ## Usage
 

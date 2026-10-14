@@ -7,38 +7,58 @@ random `n × n` matrices, exercising the multithreaded BLAS backend
 (OpenBLAS/MKL) that NumPy links against. It is a quick check of
 multi-core dense linear-algebra throughput on a node.
 
-## Installation
-
-Only NumPy is required:
+## Quick Start
 
 ```bash
-module load miniforge/23.11.0-0
-pip install numpy      # once
+cd /orcd/data/orcd/022/benchmarks/numpy
+srun -p mit_normal -n 16 -t 15 --mem=20G bash -c \
+  'module load miniforge/23.11.0-0; for t in 1 16; do OMP_NUM_THREADS=$t python mat_mult.py; done'
+# prints "<s> seconds to matrix multiply"; GFLOP/s = 16000 / s for n = 20000
 ```
 
-The benchmark itself is `mat_mult.py` in this directory.
+## Installation
+
+See [install.md](install.md). The `miniforge/23.11.0-0` module already has
+NumPy + OpenBLAS. Fix `output_dir` in the `job_*_all_example.sh` scripts before
+the first run.
 
 ## Usage
 
 ### Automated, many runs — `job_*_all_example.sh`
 
-`job_full_all_example.sh` / `job_half_all_example.sh` submit one Slurm
-job per node over a list, sweeping the BLAS thread count. Edit the
-`nodes`, `partition`, `cpu_count`, and `output_dir` variables at the top,
-then run the script to submit.
+`job_full_all_example.sh` and `job_half_all_example.sh` submit one job per node
+in `nodes=(...)`. Each job runs `mat_mult.py` once per `OMP_NUM_THREADS` value:
+1, 2, 4, … then cores/2, cores, 1.5 × cores and 2 × cores. "full" uses all
+`cpu_count` cores and "half" uses half. Edit `nodes`, `partition`, `cpu_count`
+and `output_dir` at the top, then run from this dir (the job calls
+`python mat_mult.py` with a relative path):
+
+```bash
+cd /orcd/data/orcd/022/benchmarks/numpy
+./job_full_all_example.sh      # -> <output_dir>/out_full.<node>-<jobid>
+```
 
 ### Single run — root dir
 
 ```bash
 module load miniforge/23.11.0-0
-time python mat_mult.py        # set n inside the script; time = matmul wall clock
+OMP_NUM_THREADS=8 python mat_mult.py      # n = 20000 is set inside the script
 ```
 
-Set the BLAS thread count with e.g. `export OMP_NUM_THREADS=8` (or
-`OPENBLAS_NUM_THREADS` / `MKL_NUM_THREADS`) before running.
+The script times only the `np.matmul` call, not the creation of the random
+arrays. `OMP_NUM_THREADS` sets the OpenBLAS thread count.
 
 ## Analysis
 
-Each run prints `<seconds> seconds to matrix multiply`. Lower is better;
-compare across thread counts to see BLAS scaling. For an `n × n` matmul
-the work is ≈ `2·n³` FLOPs, so GFLOP/s ≈ `2·n³ / time / 1e9`.
+Each run prints `<seconds> seconds to matrix multiply`. In the sweep output,
+each result follows its `Ran with OMP_NUM_THREADS=<n>` line:
+
+```bash
+grep -E 'OMP_NUM_THREADS|seconds' <output_dir>/out_full.<node>-<jobid> | paste - -
+```
+
+The work is 2·n³ FLOPs, so for n = 20000, GFLOP/s = 16000 / seconds. Lower time
+is better. Time should fall roughly linearly up to the physical core count and
+flatten beyond it (hyper-threads add little for DGEMM). Compare nodes of the
+same CPU type at the same thread count. A node clearly slower than its peers
+points to clock, thermal or memory-config problems.

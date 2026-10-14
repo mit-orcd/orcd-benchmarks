@@ -75,7 +75,7 @@ def table(header, rows, align=None):
 
 # ---------------------------------------------------------------- gpu-fryer
 def section_fryer():
-    L = ["## 2. gpu-fryer — per-GPU matmul throughput (TFLOP/s)", ""]
+    L = ["## 3. gpu-fryer — per-GPU matmul throughput (TFLOP/s)", ""]
     b2 = newest_per_node(glob.glob(os.path.join(B200_DIR, "out-gpu-fryer", "*.out")),
                          fryer.parse_file)
     b3 = newest_per_node(glob.glob(os.path.join(DATA, "out-gpu-fryer", "*.out")),
@@ -126,9 +126,37 @@ def section_fryer():
 CUBLASLT_MD = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "cuBLASLt", "summary.md")
 
 
+def sustained_only(L):
+    """Reduce cuBLASLt's peak + sustained table to sustained only; peak is within ~0.5% of it."""
+    hdr = "| Precision | B200 peak | B200 sustained | B300 peak | B300 sustained | peak B300/B200 | sustained B300/B200 |"
+    if hdr not in L:
+        return L
+    out, i = [], 0
+    while i < len(L):
+        x = L[i]
+        if x == "### Peak and sustained throughput per GPU (TFLOP/s)":
+            out.append("### Sustained throughput per GPU (TFLOP/s)")
+        elif x.startswith("Peak = tuned shape, 3 s run after the warm-up. Sustained = "):
+            out.append("Sustained = " + x.split("Sustained = ", 1)[1])
+        elif x == hdr:
+            out += ["| Precision | B200 | B300 | B300 / B200 |", "|---|---:|---:|---:|"]
+            i += 2
+            while i < len(L) and L[i].startswith("|"):
+                c = [y.strip() for y in L[i].strip().strip("|").split("|")]
+                out.append("| {} | {} | {} | {} |".format(c[0], c[2], c[4], c[6]))
+                i += 1
+            out += ["", "Peak (tuned shape, 3 s run after the warm-up) is very close to sustained: "
+                        "within 0.5% for every precision on both GPUs."]
+            continue
+        else:
+            out.append(x)
+        i += 1
+    return out
+
+
 def section_cublaslt():
     """Pull sections 1, 3 and 4 of ../cuBLASLt/summary.md (its own analyzer, own jobs)."""
-    L = ["## 3. cuBLASLt GEMM — per-GPU throughput incl. FP4 (TFLOP/s)", ""]
+    L = ["## 4. cuBLASLt GEMM — per-GPU throughput incl. FP4 (TFLOP/s)", ""]
     if not os.path.exists(CUBLASLT_MD):
         return L + ["No results yet (`../cuBLASLt/summary.md` missing).", ""]
     lines = open(CUBLASLT_MD).read().splitlines()
@@ -147,6 +175,7 @@ def section_cublaslt():
         if x.startswith("# ") or cur not in keep:
             continue
         L.append(x)
+    L = sustained_only(L)
     if L[-1] != "":
         L.append("")
     L += ["### Why FP4 is 1.20x measured but 1.5x on paper", "",
@@ -184,7 +213,7 @@ def section_cublaslt():
 
 # ---------------------------------------------------------------- nccl
 def section_nccl():
-    L = ["## 4. NCCL 1-node — intra-node NVLink bus bandwidth (GB/s)", ""]
+    L = ["## 5. NCCL 1-node — intra-node NVLink bus bandwidth (GB/s)", ""]
     b2 = newest_per_node(glob.glob(os.path.join(B200_DIR, "out-nccl-1node", "*.out")),
                          nccl.parse_file)
     b3 = newest_per_node(glob.glob(os.path.join(DATA, "out-nccl-1node", "*.out")),
@@ -268,7 +297,7 @@ def newest(pattern):
 
 
 def section_ib():
-    L = ["## 5. ib_write_bw — GPUDirect RDMA, two rails of one node (Gb/s)", ""]
+    L = ["## 6. ib_write_bw — GPUDirect RDMA, two rails of one node (Gb/s)", ""]
     b2 = newest(os.path.join(B200_DIR, "out-ibwrite", "ibwrite-1node-*.out"))
     b3 = newest(os.path.join(DATA, "out-ibwrite", "ibwrite-1node-*.out"))
     if not b3:
@@ -309,7 +338,7 @@ def megatron_runs(d):
 
 
 def section_megatron():
-    L = ["## 6. Megatron-LM 1-node — reference ~7B GPT (TFLOP/s/GPU)", ""]
+    L = ["## 7. Megatron-LM 1-node — reference ~7B GPT (TFLOP/s/GPU)", ""]
     b2 = {k: v for k, v in megatron_runs(os.path.join(B200_DIR, "output-megatron")).items()
           if k[0] not in B300_NODES}
     b3 = {k: v for k, v in megatron_runs(os.path.join(DATA, "output-megatron")).items()
@@ -368,7 +397,7 @@ def parse_sweep(path):
 
 
 def section_megatron_max():
-    L = ["## 7. Megatron-LM 1-node — tuned max throughput, best per GPU type (TFLOP/s/GPU)", ""]
+    L = ["## 8. Megatron-LM 1-node — tuned max throughput, best per GPU type (TFLOP/s/GPU)", ""]
     runs = {}
     for p in sorted(glob.glob(os.path.join(DATA, "output-max-sweep", "max-*")), key=os.path.getmtime):
         r = parse_sweep(p)
@@ -429,9 +458,25 @@ def section_megatron_max():
 
 
 # ---------------------------------------------------------------- on paper
+def section_summary():
+    """Hand-written conclusions; update when the numbers in the sections below change."""
+    return ["## 1. Quick summary", "",
+            "- **cuBLASLt GEMM:** B300 is 1.20x faster than B200 in FP4, but much slower in FP64 (0.03x) "
+            "and INT8 (0.05x) (§4).",
+            "- **FP4 is 1.20x, less than the 1.5x on paper, because of the power cap.** Both GPUs run FP4 at "
+            "their power limit, and the B300 limit is 1,100 W, the maximum for this air-cooled (SXM6 AC) board, "
+            "so B300 drops to a lower clock (§4, `admin-notes.md`). A liquid-cooled system with a higher "
+            "power limit (~1,400 W per GPU, as in GB300-class systems) should get closer to 1.5x (not measured).",
+            "- **All other precisions:** B300 is ≈6% or less faster than B200, both in cuBLASLt GEMM "
+            "(FP8 1.00x, BF16 1.03x, FP16 1.01x, TF32 1.05x; §4) and in gpu-fryer GEMM (1.04–1.06x; §3).",
+            "- **Megatron-LM training with BF16:** B300 is ≈12% or less faster than B200 "
+            "(reference 7B: 1.03–1.06x, §7; tuned max: 1.12x, §8).",
+            "- **Intra-node NCCL (NVLink):** almost the same, 0.94–1.11x depending on the collective (§5).", ""]
+
+
 def section_paper():
     """Static: official NVIDIA specs (checked 2026-10-01), not measured here."""
-    L = ["## 1. On paper — official NVIDIA specs, B300 vs B200", "",
+    L = ["## 2. On paper — official NVIDIA specs, B300 vs B200", "",
          "Sources: [NVIDIA HGX platform page](https://www.nvidia.com/en-us/data-center/hgx/) "
          "(HGX B300 vs HGX B200 table), "
          "[Inside NVIDIA Blackwell Ultra](https://developer.nvidia.com/blog/inside-nvidia-blackwell-ultra-the-chip-powering-the-ai-factory-era/) "
@@ -494,7 +539,7 @@ def main():
          "- Ratios are B300 / B200; > 1.00x means B300 is faster.",
          "- Per-benchmark B300 summaries: `out-gpu-fryer/summary.md`, `out-nccl-1node/summary.md`, "
          "`output-megatron/summary.md`", ""]
-    for sec in (section_paper, section_fryer, section_cublaslt, section_nccl, section_ib, section_megatron, section_megatron_max):
+    for sec in (section_summary, section_paper, section_fryer, section_cublaslt, section_nccl, section_ib, section_megatron, section_megatron_max):
         try:
             L += sec()
         except Exception as e:

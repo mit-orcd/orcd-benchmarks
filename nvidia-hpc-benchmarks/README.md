@@ -3,55 +3,77 @@
 ## Introduction
 
 NVIDIA's [HPC-Benchmarks](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/hpc-benchmarks)
-container (HPL, HPL-MxP, HPCG, STREAM) run on GPUs. This setup focuses on
-**HPL** (dense LU / Linpack), reporting GFLOP/s for 1, 2, 4, and 8 GPUs
-so you can see GPU LU throughput and multi-GPU scaling on a node.
+container provides GPU builds of HPL, HPL-MxP, HPCG and STREAM. The scripts here
+run **HPL** (FP64 dense LU / Linpack) on 1, 2, 4 and 8 GPUs of one node. It
+reports GFLOP/s in total and per GPU, which shows FP64 throughput and
+multi-GPU scaling. The HPL-MxP, HPCG and STREAM commands are in
+`run/execute-all.sh` but commented out.
+
+## Quick Start
+
+```bash
+cd /orcd/data/orcd/022/benchmarks/nvidia-hpc-benchmarks/run
+./run.sh "3300" mit_normal_gpu none unlimited 16 h200 8      # HPL on 1, 2, 4, 8 GPUs of node3300
+# when done:
+./get-results.sh mit_normal_gpu 1 h200                       # total and per-GPU GFLOP/s for each GPU count
+```
 
 ## Installation
 
-Pull the container image from NGC into `run/` (the `.sif` is **not**
-committed — it is multi-GB):
-
-```bash
-module load apptainer/1.1.9
-singularity pull run/hpc-benchmarks_25.04.sif \
-    docker://nvcr.io/nvidia/hpc-benchmarks:25.04
-```
-
-HPL input decks (`HPL-*GPU*.dat`) ship inside the image under
-`/workspace/hpl-linux-x86_64/sample-dat/`.
+See [install.md](install.md): pull `hpc-benchmarks_25.04.sif` into `run/`.
 
 ## Usage
 
 ### Automated, many runs — `run/`
 
-`run.sh` submits one job per node; inside the container each job runs
-`execute-all.sh`, which sweeps 1→N GPUs.
+`run.sh` submits one exclusive job per node (`--mem=1000GB`; lower it for nodes
+with less memory). Each job runs `execute-all.sh <image> <gpu_count>`, which
+calls `/workspace/hpl.sh` with the in-image deck `HPL-<n>GPU(s).dat` for
+n = 1, 2, 4, 8, up to `gpu_count`. Run it from `run/`, because the job calls
+`./execute-all.sh`.
 
 ```bash
 cd run
-# args: "<nodes>" <partition> <reservation|none> <qos> <cpu_count> <gpu_type> <gpu_count>
+# run.sh "<nodes>" <partition> <reservation|none> <qos> <cpu_count> <gpu_type> <gpu_count>
 ./run.sh "3100 3101" mit_normal_gpu none unlimited 8 l40s 4
 ```
 
-`execute-h200.sh` / `execute-mig.sh` and `submit-h200.sh` /
-`submit-mig.sh` are hardware-specific variants. Output lands in
-`<partition>/output-<gpu_type>/`.
+The output goes to `<partition>/output-<gpu_type>/<node>-<jobid>.out`.
+`execute-h200.sh` (H200, larger N) and `execute-mig.sh` (MIG slices) are
+variants, submitted by `submit-h200.sh` and `submit-mig.sh`. To also run
+HPL-MxP, HPCG or STREAM, uncomment their lines in `execute-all.sh`.
 
-### Single run — `run/job.sh` (or root `run.sh` / `job.sh`)
+### Single run — `run/job.sh`
 
-`run/job.sh` is a self-contained sbatch script: edit the partition, GPU
-type/count, then `sbatch job.sh`. It runs HPL at 1/2/4/8 GPUs via
-`singularity exec --nv … /workspace/hpl.sh --dat <deck>`.
-
-## Analysis
+`run/job.sh` is a self-contained sbatch script that runs the same 1/2/4/8-GPU
+HPL sequence. Edit the partition and GPU type/count in its header, then:
 
 ```bash
 cd run
-# get-results.sh <partition> <N> <gpu_type>
-./get-results.sh mit_normal_gpu 2 l40s
+sbatch job.sh
 ```
 
-Prints HPL performance from the `WC0` summary lines (total and per-GPU
-GFLOP/s) and the `LU GFLOPS` line for the most recent N runs; higher is
-better.
+The root `run.sh`, `job.sh`, `run-2nodes.sh` and the scripts under
+`<partition>/` are older per-site versions (24.03 image).
+
+## Analysis
+
+HPL prints one result line per GPU count, then a residual check:
+
+```
+T/V                N    NB     P     Q         Time          Gflops (   per GPU)
+WC0           136192  1024     2     1        18.13       9.288e+04 ( 4.644e+04)
+||Ax-b||_oo/(...)=   0.000263094958 ...... PASSED
+```
+
+```bash
+cd run
+./get-results.sh <partition> <N> <gpu_type>     # total and per-GPU Gflops of the WC0 lines of the newest N runs
+grep -E '=+ [0-9]+ GPU|WC0|PASSED|FAILED' ../<partition>/output-<gpu_type>/<file>
+```
+
+A run counts only if the residual check says `PASSED`. Per-GPU Gflops should
+stay nearly flat from 1 to 8 GPUs (good scaling), and should be a large fraction
+of the GPU's FP64 tensor peak (H200 ≈ 47 TFLOP/s per GPU measured here). Consumer
+and inference GPUs (L40S, RTX) have little FP64, so their HPL numbers are low by
+design.
