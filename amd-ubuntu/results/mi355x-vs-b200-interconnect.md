@@ -2,8 +2,22 @@
 
 Every ratio is **MI355X / B200**: above 1 means MI355X is faster (higher bandwidth or lower latency). MI355X = RCCL on ROCm 7.14, node6100 + node6101; B200 = NCCL on the B200 nodes.
 
+- [Quick summary](#quick-summary)
 - [1. Intra-node (8 GPUs in one node)](#1-intra-node-8-gpus-in-one-node): 1.1 on paper, 1.2 measured bandwidth, 1.3 measured latency
 - [2. Inter-node (2 nodes, 16 GPUs)](#2-inter-node-2-nodes-16-gpus): 2.1 on paper, 2.2 measured bandwidth, 2.3 measured latency
+
+## Quick summary
+
+Which is faster and by how much. Here N× faster is the faster side's speed over the slower side's; the sections below give the same results as MI355X / B200 ratios.
+
+| | Faster | By how much |
+|---|---|---|
+| **Intra-node bandwidth** (8 GPUs, large messages), §1.2 | **B200** (NVLink 5 + NVSwitch) | • B200 1.7–2.1× faster on collectives<br>• B200 11× faster for one GPU pair (sendrecv) |
+| **Intra-node latency** (8 GPUs, 8 B–1 MB), §1.3 | **MI355X** (Infinity Fabric / XGMI) | • MI355X 1.1–5× faster in all_reduce, all_gather, reduce_scatter, alltoall<br>• B200 faster only in broadcast from 64 KB (1.3–3.4×) and sendrecv at 1 MB (1.1×) |
+| **Inter-node bandwidth** (2 nodes, large messages), §2.2 | **Equal** (Pollara vs InfiniBand) | • Within 3%<br>• sendrecv equal with `NCCL_NET=IB`<br>• MI355X 1.6× faster in all_reduce and 1.8× in alltoall, where NCCL is low |
+| **Inter-node latency** (2 nodes, small messages), §2.3 | **B200** (InfiniBand) | • Network alone: InfiniBand 1.8–5× faster<br>• 1 GPU per node: B200 1.2–1.5× faster<br>• 8 GPUs per node: MI355X 1.1–1.2× faster in all_reduce (B200 1.06× faster at 64 KB), thanks to its faster step inside the node<br>• B200 1.1–1.5× faster in sendrecv and 1.1–2.7× in all_gather, reduce_scatter, broadcast, alltoall up to 64 KB<br>• MI355X 1.2–1.7× faster in those at 1 MB, likely an NCCL tuning issue on B200 |
+
+On paper: links inside one node 537.6 vs 900 GB/s per GPU (0.60x, §1.1); network 400 vs 400 GB/s per node (1.00x, §2.1); neither vendor publishes latency figures.
 
 ## 1. Intra-node (8 GPUs in one node)
 
