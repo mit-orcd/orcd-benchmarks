@@ -130,11 +130,11 @@ Vendor specs ("on paper"), plus what is set on these clusters. Measured numbers 
 | NICs per node | 8, one per GPU (rails 0–3 on CPU socket 0, 4–7 on socket 1) | 8, one per GPU |
 | Per node | 3.2 Tb/s = 400 GB/s per direction | 3.2 Tb/s = 400 GB/s per direction |
 | Host link | PCIe Gen5 x16 | PCIe Gen5 x16 |
-| GPU-direct RDMA | yes | yes (GPUDirect RDMA) |
+| GPU-direct RDMA | yes | yes |
 | Loss handling | Ethernet, lossy by default; UEC-style multipath (packet spraying), selective retransmit and programmable congestion control (P4-programmable NIC) | lossless link layer (credit-based flow control); adaptive routing in the switch |
 | In-network reduction | none | SHARP v3 in the Quantum-2 switches (tested in `../b200-nodes/out-nccl-2node-sharp/`) |
 | Switch | Ethernet switch (model not recorded) | NVIDIA Quantum-2 NDR |
-| MTU | 4096 (RoCE) | 4096 (IB) |
+| MTU (maximum transmission unit: largest packet size on the link, bytes) | 4096 (RoCE) | 4096 (IB) |
 | Measured, one rail | `ib_write_bw` 392 Gb/s = 98% of line rate | nccl sendrecv 48.8 GB/s = 98% of one rail |
 | Latency on paper (NIC, switch) | not published by AMD | not published by NVIDIA ("ultra-low latency") |
 | Measured latency, one rail, no GPU (`ib_write_lat` 8 B, one way, §2.3) | 5.21 µs | 1.33 µs |
@@ -155,12 +155,15 @@ Vendor specs ("on paper"), plus what is set on these clusters. Measured numbers 
 | sendrecv³ ⁴ | 49.4 | **50**² | 99% | 48.8 | **50**² | 98% | 1.01x |
 
 Ceiling = what the network can carry for that pattern, per node and direction. **400 GB/s** for the ring/tree collectives: up to 8 rings, one per rail, together use the whole network of the node. sendrecv and alltoall use no ring, so their ceiling is what one GPU can send over its own rail:
-- ¹ **alltoall, 93.75 GB/s:** each GPU sends half of its data straight to the other node over its own rail (50 GB/s); in busbw units that is 50 × 2 × 15/16.
+- ¹ **alltoall, 93.75 GB/s:** each GPU sends half of its data straight to the other node over its own rail (50 GB/s), so the call runs at up to 100 GB/s; in busbw units that is 100 × 15/16. It is lower than the 400 GB/s of the ring collectives because a ring spreads each GPU's data over all 8 rails, while in alltoall each rail carries half of one GPU's data, about 4× more. It is an upper bound: protocol overhead makes the real ceiling about 5% lower.
 - ² **sendrecv, 50 GB/s:** each GPU pair that crosses the nodes uses one rail, and the slowest pair sets the busbw.
-- ³ MI355X sendrecv also with `NCCL_NCHANNELS_PER_NET_PEER=4` (4 channels per network peer).
+- ³ MI355X sendrecv result: `NCCL_NET=IB` plus `NCCL_NCHANNELS_PER_NET_PEER=4` (4 channels per network peer).
 - ⁴ **Fixed results:** ROCm 7.14 with `NCCL_NET=IB`. With RCCL 7.14's defaults these two are lower: alltoall 77.1 GB/s (82%, 1.58x of B200), sendrecv 32.2 GB/s (64%; 39.9 = 80% with 4 channels). The ring collectives above use the defaults (not rerun with `NCCL_NET=IB`).
 
-**How it is fixed:** ROCm 7.14's RCCL uses a new network transport (`IB-CAST`) by default, which slows point-to-point traffic between nodes. `NCCL_NET=IB` switches back to the standard transport; for sendrecv, `NCCL_NCHANNELS_PER_NET_PEER=4` also adds channels (set it per job: it lowers alltoall by ≈30%). Details below.
+**How it is fixed:** ROCm 7.14's RCCL uses a new network transport (`IB-CAST`) by default, which slows point-to-point traffic between nodes. `NCCL_NET=IB` switches back to the standard transport; for sendrecv, `NCCL_NCHANNELS_PER_NET_PEER=4` also adds channels (set it per job: it lowers alltoall by ≈30%). With the defaults MI355X sendrecv reaches only 64%; with both settings 99% (1.01x of B200). Found step by step (2026-10-08; `ubuntu/sendrecv-check.md`, logs in `logs/node6100/rocm7.14/rccl/`):
+  1. **System and network are fine:** GPUDirect RDMA is on for all 8 rails, the ring collectives use the same GPU-to-NIC path at 91–93%, and raw RDMA (`ib_write_bw`) reaches 98% of a rail.
+  2. **Too few channels per network peer:** 4 channels lift sendrecv from 64% to 80%.
+  3. **ROCm 7.14's new `IB-CAST` transport:** switching back with `NCCL_NET=IB` lifts it to 99%, the same as ROCm 7.2.4, so the gap is in RCCL 7.14, not the hardware or network.
 - Inside one node (§1.2) alltoall needs no special ceiling: each GPU has its own links to every other GPU (B200: NVSwitch).
 
 > [!NOTE]
@@ -171,11 +174,6 @@ Ceiling = what the network can carry for that pattern, per node and direction. *
 **Results far from paper** (also listed in the Quick summary of [`mi355x-vs-b200.md`](mi355x-vs-b200.md)):
 
 - **B200 all_reduce reaches only 58% (1.60x vs 1.00x on paper):** other NCCL collectives reach 90–96% on the same network, so **the likely cause is NCCL's all_reduce algorithm, not the network** (the algorithm NCCL picked was not logged). **SHARP should help:** the switches add the data up, so each GPU sends it once instead of twice (2.2x on a reference cluster). It could not be tested: the fabric has no SHARP Aggregation Manager (`sharp_am`) running, a switch-side setting admins can enable (`../b200-nodes/sharp.md`).
-- **MI355X sendrecv reaches only 64% with RCCL's defaults (fixed: 99%, 1.01x).** Found step by step (2026-10-08; `ubuntu/sendrecv-check.md`, logs in `logs/node6100/rocm7.14/rccl/`):
-  1. **System and network are fine.** GPUDirect RDMA is on for all 8 rails (RCCL log `via NET/IB/<n>/GDRDMA`; no extra module needed, unlike B200's `nv_peermem`); the ring collectives use the same GPU-to-NIC path at 91–93%, which rules out ACS; raw RDMA (`ib_write_bw`) reaches 98% of a rail with 2+ queue pairs.
-  2. **Too few channels by default.** RCCL uses too few channels per network peer for point-to-point traffic. `NCCL_NCHANNELS_PER_NET_PEER=4` (or 8) lifts sendrecv from 64% to 80% on ROCm 7.14 (57% to 94% on ROCm 7.2.4).
-  3. **The rest is ROCm 7.14's new network transport.** ROCm 7.2.4 ships RCCL 2.27.7, which uses the standard `IB` transport between nodes; ROCm 7.14 ships RCCL 2.30.4, which uses a new `IB-CAST` transport by default. Switching back with `NCCL_NET=IB` lifts sendrecv (with 4 channels) to 49.4 GB/s = 99% of one rail (1.01x of B200), and alltoall to 89.6 GB/s (96%), the same as ROCm 7.2.4. So the gap is in RCCL 7.14, not the hardware or network.
-  4. **Caveat:** 4 channels per peer lowers alltoall by about 30%, so set it per job for sendrecv-heavy work, not globally.
 - **B200 alltoall reaches only 52% (1.83x vs 1.00x on paper):** NCCL's alltoall is known to be slow here: like RCCL, it sends a separate piece directly to each of the 15 other GPUs, but reaches only half of the ceiling. **Likely the same cause as MI355X sendrecv: too few channels per network peer.** Not tested on B200; `NCCL_NCHANNELS_PER_NET_PEER=4` would be the first setting to try.
 
 **ROCm 7.14 vs 7.2.4 on our nodes** (same nodes and tests, only ROCm differs): the ring collectives are the same (1–2% lower on 7.14, within noise). Point-to-point is slower on 7.14 because of the new transport above: alltoall 0.86x (77.1 vs 89.6 GB/s), sendrecv with 4 channels 0.85x (39.9 vs 46.9). Only default sendrecv is faster on 7.14 (1.12x: 32.2 vs 28.6 GB/s).
