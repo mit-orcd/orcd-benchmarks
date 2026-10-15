@@ -188,7 +188,7 @@ Ceiling = what the network can carry for that pattern, per node and direction. *
 
 **Results far from paper** (also listed in the Quick summary of [`mi355x-vs-b200.md`](mi355x-vs-b200.md)):
 
-- **B200 all_reduce reaches only 58% (1.60x vs 1.00x on paper):** other NCCL collectives reach 90–96% on the same network, so **the likely cause is NCCL's all_reduce algorithm, not the network** (the algorithm NCCL picked was not logged). **SHARP should help:** the switches add the data up, so each GPU sends it once instead of twice (2.2x on a reference cluster). It could not be tested: the fabric has no SHARP Aggregation Manager (`sharp_am`) running, a switch-side setting admins can enable (`../b200-nodes/sharp.md`).
+- **B200 all_reduce reaches only 58% (1.60x vs 1.00x on paper):** other NCCL collectives reach 90–96% on the same network, so **the likely cause is NCCL's all_reduce algorithm, not the network** (the algorithm NCCL picked was not logged). **SHARP should help:** the switches add the data up, so each GPU sends it once instead of twice (2.2x on a reference cluster). It could not be tested: the fabric has no SHARP Aggregation Manager (`sharp_am`) running, a switch-side setting we can turn on with admin access (`../b200-nodes/sharp.md`).
 - **B200 alltoall reaches only 52% (1.83x vs 1.00x on paper):** NCCL's alltoall is known to be slow here: like RCCL, it sends a separate piece directly to each of the 15 other GPUs, but reaches only half of the ceiling. **Likely the same cause as MI355X sendrecv: too few channels per network peer.** Not tested on B200; `NCCL_NCHANNELS_PER_NET_PEER=4` would be the first setting to try.
 
 **ROCm 7.14 vs 7.2.4 on our nodes** (same nodes and tests, only ROCm differs): the ring collectives are the same (1–2% lower on 7.14, within noise). Point-to-point is slower on 7.14 because of the new transport above: alltoall 0.86x (77.1 vs 89.6 GB/s), sendrecv with 4 channels 0.85x (39.9 vs 46.9). Only default sendrecv is faster on 7.14 (1.12x: 32.2 vs 28.6 GB/s).
@@ -277,11 +277,11 @@ Sources: `logs/node6100/rocm7.14/rccl/lat_2node_20261013_014214`, `../../b200-no
 | Congestion control | DCQCN, needs ECN and PFC (lossless) tuned in the switches | new sender- and receiver-based schemes, works on a lossy network |
 | Security | none in the protocol | optional encryption built in |
 
-**What "UEC ready" means: Pollara 400 sits in between.** It speaks standard RoCEv2, so it works with other NICs and switches, and its P4-programmable packet pipeline adds some UET-style features in firmware (listed below). It does not run the full UET protocol; AMD's next NIC, Vulcano, is announced as UEC 1.0 compliant.
+**What "UEC ready" means: Pollara 400 sits in between.** It speaks standard RoCEv2, so it works with other NICs and switches, and its P4-programmable packet pipeline adds some UET-style features in firmware (listed below). It does not run the full UET protocol.
 
 **What runs on node6100/6101.** Standard RoCEv2. Checked on node6100: all 8 NICs (`ionic_0`–`ionic_7`, firmware 1.117.5-a-196) use RoCE v2 GIDs (`NCCL_IB_GID_INDEX=1`), and RCCL opens them through the normal verbs path (`NET/IB/<n>/GDRDMA`, or `NET/IB-CAST` with ROCm 7.14's default). Nothing in our runs turns on the UEC-style features, so every result in this file is plain RoCEv2.
 
-**Pollara features beyond plain RoCEv2, and how to turn them on.** The NIC hardware has these features, but they are off on our nodes (AMD's description, not tested here):
+**Pollara features beyond plain RoCEv2, and how to turn them on.** The NIC hardware has them (AMD's description, not tested here):
 
 | Feature | What it changes vs plain RoCEv2 |
 |---|---|
@@ -292,21 +292,21 @@ Sources: `logs/node6100/rocm7.14/rccl/lat_2node_20261013_014214`, `../../b200-no
 
 AMD's own figure: about 25% more all_reduce bandwidth than plain RoCEv2 (vendor test).
 
-Turning them on needs root and switch access, so it is done by the **admins, with software and settings from AMD**; users cannot do it (`nicctl` needs root):
+**Would they help on these two nodes? Probably only a little.** With 2 nodes, 8 rails and no other traffic there is little to spray around and almost no packet loss, and plain RoCEv2 already reaches 91–99% of the line rate (§2.2). The latency gap (5.2 vs 1.3 µs one way, §2.3) is not expected to change much either. The features mainly help large fabrics with several switch tiers, many jobs and congestion, so they matter more if more Pollara nodes are added.
+
+Turning them on needs root and switch access, so **we do it with our admin accounts, using software and settings from AMD** (`nicctl` needs root):
 
 | Needed | Who | Now on node6100/6101 |
 |---|---|---|
-| Firmware and driver with the features | AMD provides, admin installs | firmware 1.117.5-a-196, `ionic` driver 26.08.17.001 |
-| NIC settings (transport mode, congestion control) | admin, with `nicctl` | defaults |
-| Switch settings (ECN, QoS marking, per-packet load balancing) | admin / network team | not checked |
-| RCCL network plugin for Pensando NICs (AMD's ANP plugin) | AMD provides, admin installs | not installed; RCCL uses its built-in `NET/IB` |
+| Firmware and driver with the features | AMD provides, we install | firmware 1.117.5-a-196, `ionic` driver 26.08.17.001 |
+| NIC settings (transport mode, congestion control) | we, with `nicctl` (root) | defaults |
+| Switch settings (ECN, QoS marking, per-packet load balancing) | we, with the network team | not checked |
+| RCCL network plugin for Pensando NICs (AMD's ANP plugin) | AMD provides, we install | not installed; RCCL uses its built-in `NET/IB` |
 
-**Suggested steps for the admins:**
+**Our next steps:**
 1. Ask AMD which firmware, driver, `nicctl` and switch settings enable these features on Pollara 400, and whether the ANP RCCL plugin is needed (the plugin name and `nicctl` options above are from memory; AMD should confirm them).
 2. Install and configure them on node6100 and node6101 during a maintenance window.
-3. Tell us when it is done; we rerun §2.2 and §2.3 to measure the difference.
-
-**Why it did not matter here.** Two nodes, 8 rails, no other traffic: there is little to spray around and almost no loss, so RoCEv2 already reaches 91–99% of the line rate (§2.2). The features mainly help large fabrics with several switch tiers, many jobs and congestion. The RoCEv2 latency gap (5.2 vs 1.3 µs one way, §2.3) is not expected to change much with them.
+3. Rerun §2.2 and §2.3 to measure the difference.
 
 **Next step by AMD: Vulcano 800G AI NIC** (successor, PCIe Gen6, 800 Gb/s), announced for 2026 with the MI400 "Helios" rack. AMD says it is UEC 1.0 compliant (the full UEC transport, not only "ready") and will support AMD's Multipath Reliable Connection (MRC) transport. Shipping status not confirmed as of 2026-10.
 
