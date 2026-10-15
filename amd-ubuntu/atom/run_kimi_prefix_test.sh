@@ -25,6 +25,7 @@ set -uo pipefail
 ARM=prefix
 export RESULTS_SUBDIR=kimi-amd-recipe
 source /orcd/data/orcd/022/benchmarks/amd-ubuntu/common/env.sh
+export CTR_OVERLAY="vllm-v0.29.0-$(hostname -s)"   # persistent overlay: the AITER JIT build outgrows the tmpfs
 cd "$BENCH_ROOT/atom"
 ISL=128000; OSL=1000; RR=0.2; BT=36000   # timeout per test; 128 users take ~5 h
 IMG="${VLLM_IMG:-vllm/vllm-openai-rocm:v0.29.0}"
