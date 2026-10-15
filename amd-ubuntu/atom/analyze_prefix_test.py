@@ -69,6 +69,23 @@ def pct(x):
     return "–" if x is None else f"{100 * x:.0f}%"
 
 
+def one_line(t):
+    """1-2 sentences instead of one line per user count."""
+    def r(c):
+        rep, cold = t.get(f"c{c}_repeat"), t.get(f"c{c}_cold")
+        return (rep["tps"], rep["tps"] / cold["tps"], rep["tps"] / AMD[c], rep["hit"]) if rep and cold and rep["tps"] and cold["tps"] else None
+    a, b = r(1), r(2)
+    s = ""
+    if a and b:
+        s += (f"With 100% cache hits the repeated run is {a[1]:.2f}x (1 user) and {b[1]:.2f}x (2 users) faster than the first run, "
+              f"i.e. {a[2]:.2f}x and {b[2]:.2f}x AMD's numbers. ")
+    hi = [r(c) for c in (4, 8, 16, 32, 64, 128) if r(c)]
+    if hi:
+        s += (f"From 4 users up the prompts do not fit in the KV cache (0% hits), so the repeated run is the same as the first "
+              f"({min(x[1] for x in hi):.2f}–{max(x[1] for x in hi):.2f}x) and the cache does not help.")
+    return s
+
+
 def verdict(t):
     """One line per user count + overall verdict for 1 user."""
     lines, overall = [], "not tested"
@@ -140,20 +157,17 @@ def headline(overall, t):
                 "So AMD's 1-user number most likely includes cache hits, and our nodes are almost the same "
                 "as AMD's for vLLM recipe 2.")
     if overall == "partly confirmed":
-        s = ("**Partly confirmed: the prefix cache explains part of the low-user gap.** Repeated prompts "
-             f"give {f0(rep.get('tps'))} tok/s/GPU at 1 user ({rep['tps'] / AMD[1]:.2f}x AMD's 874), "
-             "faster than with new prompts but still below AMD's number")
-        r2, c4 = t.get("c2_repeat") or {}, t.get("c4_repeat") or {}
+        r2 = t.get("c2_repeat") or {}
+        s = ("**Partly confirmed: the prefix cache explains part of the low-user gap.** "
+             f"With cached prompts we get {f0(rep.get('tps'))} tok/s/GPU at 1 user ({rep['tps'] / AMD[1]:.2f}x AMD's 874)")
         if r2.get("tps"):
-            s += f", and {f0(r2['tps'])} at 2 users ({r2['tps'] / AMD[2]:.2f}x AMD's 1,090)"
-        s += ". AMD's 1- and 2-user numbers lie between our first and repeated runs, which fits runs with partly cached prompts."
-        if c4.get("tps") and (c4.get("hit") or 0) < 0.1:
-            s += (f" At 4 users the 40 prompts do not fit in the KV cache, so nothing is reused (also not in AMD's runs), "
-                  f"and we stay at {c4['tps'] / AMD[4]:.2f}x AMD's number.")
-        s += high_users(t)
-        if rep.get("tpot"):
-            s += f" At 1 user the TPOT is {f0(rep['tpot'], 1)} ms with or without the cache."
-        return s + " So part of the gap has another cause (still to be profiled)."
+            s += f" and {f0(r2['tps'])} at 2 users ({r2['tps'] / AMD[2]:.2f}x AMD's 1,090)"
+        s += ", but from 4 users up the prompts do not fit in the KV cache, so the cache does not help"
+        hi = [c for c in (4, 8, 16, 32, 64, 128) if t.get(f"c{c}_repeat") and t.get(f"c{c}_cold")]
+        if hi:
+            ra = [t[f"c{c}_repeat"]["tps"] / AMD[c] for c in hi]
+            s += f" (0% hits; {min(ra):.2f}–{max(ra):.2f}x AMD's numbers)"
+        return s + ". The remaining gap at 1 and 4 users has another cause (still to be profiled)."
     if overall == "not confirmed":
         return ("**Not confirmed: the prefix cache does not explain the 1-user gap.** Repeating the same "
                 "prompts on the same server does not bring our 1-user number close to AMD's 874 tok/s/GPU, "
@@ -276,7 +290,7 @@ def main():
     print("wrote", out)
 
     short = (f"**Prefix-cache test ({day}):** {head} Detail: "
-             "[ubuntu/kimi-prefix-cache-test.md](ubuntu/kimi-prefix-cache-test.md).\n\n" + "\n".join(vlines))
+             "[ubuntu/kimi-prefix-cache-test.md](ubuntu/kimi-prefix-cache-test.md).")
     put_block(f"{RES}/kimi-summary.md", short, "## 3. vLLM recipe 2 on our workload")
     put_block(f"{RES}/mi355x-vs-b200.md", short, "### 5.4 Apple-to-apple")
     fill_table_73(t, f"{RES}/mi355x-vs-b200.md")
