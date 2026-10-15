@@ -266,6 +266,21 @@ Sources: `logs/node6100/rocm7.14/rccl/lat_2node_20261013_014214`, `../../b200-no
 
 **What "UEC ready" means.** The Ultra Ethernet Consortium (UEC) published its 1.0 specification in June 2025: a new transport for AI and HPC over Ethernet, meant to replace RoCEv2. AMD sells the Pensando Pollara 400 as "UEC ready": its packet pipeline is P4-programmable, so the UEC-style features below run in NIC firmware, and it still speaks standard RoCEv2 so it works with other NICs and switches.
 
+**Yes, they are different protocols.** RoCEv2 is the InfiniBand transport carried in UDP/IP packets over Ethernet (an IBTA standard from 2014). Ultra Ethernet Transport (UET, UEC 1.0) is a new transport written from scratch for AI and HPC; it also runs over UDP/IP Ethernet, but it does not reuse the InfiniBand transport. A RoCEv2 NIC and a UET NIC cannot talk to each other with RDMA.
+
+| | RoCEv2 | Ultra Ethernet Transport (UEC 1.0) |
+|---|---|---|
+| Origin | InfiniBand transport over Ethernet (IBTA) | new design (Ultra Ethernet Consortium, 2025) |
+| Software interface | RDMA verbs (queue pairs) | libfabric |
+| Connections | one queue pair per peer, state kept for each | short-lived, set up on demand, so it scales to very many peers |
+| Packet order | must arrive in order | may arrive out of order (ordered delivery is optional) |
+| Paths | one path per connection | packets sprayed over many paths |
+| Loss recovery | go-back-N | selective retransmission |
+| Congestion control | DCQCN, needs ECN and PFC (lossless) tuned in the switches | new sender- and receiver-based schemes, works on a lossy network |
+| Security | none in the protocol | optional encryption built in |
+
+**Pollara 400 sits in between:** it speaks standard RoCEv2 and adds some UET-style features (the table below) through its programmable pipeline. It does not run the full UET protocol; AMD's next NIC, Vulcano, is announced as UEC 1.0 compliant.
+
 **What runs on node6100/6101.** Standard RoCEv2. Checked on node6100: all 8 NICs (`ionic_0`–`ionic_7`, firmware 1.117.5-a-196) use RoCE v2 GIDs (`NCCL_IB_GID_INDEX=1`), and RCCL opens them through the normal verbs path (`NET/IB/<n>/GDRDMA`, or `NET/IB-CAST` with ROCm 7.14's default). Nothing in our runs turns on the UEC-style features, so every result in this file is plain RoCEv2.
 
 **What Pollara can do beyond plain RoCEv2** (AMD product brief, vendor claims, not tested here):
@@ -284,5 +299,22 @@ AMD's own figure: about 25% higher all_reduce bandwidth with 4 queue pairs and "
 **Next steps by AMD.**
 - **Vulcano 800G AI NIC** (successor, PCIe Gen6, 800 Gb/s), announced for 2026 with the MI400 "Helios" rack: AMD says it is UEC 1.0 compliant (the full UEC transport, not only "ready") and will support AMD's Multipath Reliable Connection (MRC) transport. Shipping status not confirmed as of 2026-10.
 - On Pollara, UEC features come with firmware and RCCL/driver updates; a test on these nodes would need the matching firmware, a switch configuration that allows packet spray, and an RCCL build that uses it. Worth asking AMD which firmware and RCCL version enable it on Pollara 400, and repeating §2.2–2.3 with it.
+
+**Who can turn on the Pollara features: mostly the admins, with software and settings from AMD.** The NIC hardware already has them; what is missing is configuration that needs root and switch access, and an RCCL that uses them. Users cannot do it (`nicctl` needs root).
+
+| Step | Who | Now on node6100/6101 |
+|---|---|---|
+| Firmware and driver with the UEC-style features | AMD provides, admin installs | firmware 1.117.5-a-196, `ionic` driver 26.08.17.001 |
+| NIC settings (transport mode, congestion control) | admin, with `nicctl` (root) | `nicctl` installed, defaults in use |
+| Switch settings (ECN, QoS marking, per-packet load balancing) | admin / network team | not checked |
+| RCCL network plugin for Pensando NICs (AMD's ANP plugin) | AMD provides, admin installs | not installed; RCCL uses its built-in `NET/IB` over plain RoCE |
+| Full UET protocol | AMD only (Vulcano or a future firmware) | not available on Pollara 400 |
+
+**Suggested steps for the admins:**
+1. Ask AMD which firmware and driver versions enable packet spray and selective retransmission on Pollara 400, which `nicctl` settings to use, which switch settings are needed, and whether the ANP RCCL plugin is required.
+2. Install that firmware, driver and plugin on node6100 and node6101 (and configure the switches) during a maintenance window.
+3. Tell us when it is done; we rerun the §2.2 and §2.3 tests to measure the difference.
+
+The plugin name and the `nicctl` options are from memory, not from AMD's documentation; AMD should confirm them.
 
 Sources: [AMD Pollara 400 product brief](https://www.amd.com/content/dam/amd/en/documents/pensando-technical-docs/product-briefs/pensando-pollara-400-product-brief.pdf), [AMD blog: Transforming AI networks with Pollara 400](https://www.amd.com/en/blogs/2024/transforming-ai-networks-with-amd-pensando-pollar.html), [AMD blog: Vulcano 800 AI NIC](https://www.amd.com/en/blogs/2026/amd-pensando-vulcano-800-ai-nic-scale-out-and-across.html), [ServeTheHome: Vulcano 800G NIC and UEC plans](https://www.servethehome.com/amd-vulcano-800g-nic-coming-as-amd-outlines-its-ualink-and-uec-scale-plans/).
