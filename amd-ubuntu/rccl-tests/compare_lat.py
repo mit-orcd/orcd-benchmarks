@@ -2,7 +2,7 @@
 """Latency write-ups from run_rccl_lat_2node.sh (MI355X) and b200-nodes/job-nccl-lat-2node.sh.
 
   compare_lat.py ubuntu            -> results/ubuntu/latency.md (our nodes: ROCm 7.2.4 vs 7.14)
-  compare_lat.py b200 <b200 dir>   -> section 5 + one Summary row in results/mi355x-vs-b200.md
+  compare_lat.py b200 <b200 dir>   -> §2.3 of results/mi355x-vs-b200-interconnect.md + one Summary row in results/mi355x-vs-b200.md
                                       (MI355X ROCm 7.14 vs B200; never 7.2.4 vs B200)
 Inputs are found by default as the newest finished run dirs under logs/node6100/.
 """
@@ -16,7 +16,8 @@ LOGS = f"{BENCH}/logs/node6100"
 COLLS = ["sendrecv", "all_reduce", "all_gather", "reduce_scatter", "broadcast", "alltoall"]
 SIZES = [8, 1024, 65536, 1048576]
 SIZES8 = [8, 256, 65536, 1048576]  # 2 nodes x 8 GPUs table; 256 B = smallest real size for all 6 at 16 ranks
-MAIN = f"{BENCH}/results/mi355x-vs-b200.md"
+MAIN = f"{BENCH}/results/mi355x-vs-b200.md"               # Summary row
+IC = f"{BENCH}/results/mi355x-vs-b200-interconnect.md"    # §2.3 latency section
 BEGIN, END = "<!-- LATENCY-BEGIN (auto: rccl-tests/compare_lat.py) -->", "<!-- LATENCY-END -->"
 
 
@@ -133,7 +134,7 @@ def ubuntu():
     print("wrote", out)
 
 
-# ---------------------------------------------------------------- vs-b200 section 5
+# ---------------------------------------------------------------- vs-b200 §2.3 (interconnect file)
 def b200(bdir):
     d714 = newest_done(f"{LOGS}/rocm7.14/rccl/lat_2node_*")
     ibd = sorted(glob.glob(f"{LOGS}/net/ib_lat_*"))
@@ -222,7 +223,7 @@ def b200(bdir):
     v1, h1 = verdict("2n_ppn1")
     v8, h8 = verdict("2n_ppn8")
     nv, hn = net_verdict()
-    L = [BEGIN, "## 5. Latency across 2 nodes (small messages)", "",
+    L = [BEGIN, "### 2.3 Measured latency (small messages)", "",
          "MI355X ROCm 7.14 (RCCL, AMD Pollara RoCEv2) vs B200 (NCCL, NVIDIA InfiniBand). Time per call in µs, lower is better; "
          "speed = B200 time ÷ MI355X time (>1: MI355X faster). MI355X = the faster of RCCL's default and `NCCL_NET=IB` "
          "(both in `ubuntu/latency.md`).", ""]
@@ -235,11 +236,11 @@ def b200(bdir):
                 rows.append(f"| ib_{tt}_lat | {human(s)} | {f2(x)} | {f2(y)} | {rx(ratio(y, x))} |")
         rs = [r for r in rs if r]
         w = ("InfiniBand is faster" if rs and max(rs) < 0.97 else "Pollara is faster" if rs and min(rs) > 1.03 else "Mixed")
-        L += ["### Raw network, no GPU: Pollara vs InfiniBand", "",
+        L += ["#### Raw network, no GPU: Pollara vs InfiniBand", "",
               f"> **{w}.** Pollara is {span(rs)} the speed of InfiniBand (perftest one-way latency, median of the 8 rails).", "",
               "| test | bytes | AMD Pollara (RoCEv2) | NVIDIA InfiniBand (ConnectX-7) | Pollara / InfiniBand speed |", "|---|---:|---:|---:|---:|",
               *rows, ""]
-    L += ["### Main result: 2 nodes × 1 GPU and 2 nodes × 8 GPUs, same tests", "",
+    L += ["#### Main result: 2 nodes × 1 GPU and 2 nodes × 8 GPUs, same tests", "",
           "**2 nodes × 1 GPU** (one GPU per node, so only the network is between them):", "", v1, "", *table("2n_ppn1"), "",
           "**2 nodes × 8 GPUs, network part only** (network part = 2-node time − 1-node time, same test and size; "
           "this removes the step among the 8 GPUs inside each node):", "",
@@ -257,17 +258,18 @@ def b200(bdir):
     verdict_txt = f"2 nodes x 1 GPU: {h1}; 2 nodes x 8 GPUs: {h8}"
     sec = "\n".join(L)
 
+    ic = open(IC).read()
+    if BEGIN in ic:
+        ic = re.sub(re.escape(BEGIN) + r".*?" + re.escape(END) + r"\n?", lambda _: sec, ic, flags=re.S)
+    else:  # last section of the interconnect file
+        ic = ic.rstrip("\n") + "\n\n" + sec
+    open(IC, "w").write(ic)
     txt = open(MAIN).read()
-    if BEGIN in txt:
-        txt = re.sub(re.escape(BEGIN) + r".*?" + re.escape(END) + r"\n?", lambda _: sec, txt, flags=re.S)
-    else:  # put it before "## 6." (section 5)
-        i = txt.index("\n## 6. ")
-        txt = txt[:i].rstrip("\n") + "\n\n" + sec + txt[i:]
     if r8:
         def rng(layout):
             v = [ratio(g(n, "default", layout, c, s), best(layout, c, s)) for c in MAINC for s in SIZES]
             return span([r for r in v if r])
-        row = (f"| Latency across 2 nodes, sendrecv + all_reduce, 8 B–1 MB (§5) | 1 GPU/node: {h1} ({rng('2n_ppn1')}); "
+        row = (f"| Latency across 2 nodes, sendrecv + all_reduce, 8 B–1 MB (§3) | 1 GPU/node: {h1} ({rng('2n_ppn1')}); "
                f"8 GPUs/node: {h8} ({rng('2n_ppn8')}) (speed; MI355X ROCm 7.14) | ✅ same tests |")
         lines = txt.split("\n")
         lines = [l for l in lines if not l.startswith("| Latency across 2 nodes")]
@@ -275,7 +277,7 @@ def b200(bdir):
         lines.insert(k + 1, row)
         txt = "\n".join(lines)
     open(MAIN, "w").write(txt)
-    print("updated", MAIN, "|", verdict_txt)
+    print("updated", IC, "§2.3 and the Summary row of", MAIN, "|", verdict_txt)
 
 
 if __name__ == "__main__":

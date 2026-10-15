@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Intra-node latency, 1 node x 8 GPUs (XGMI only), RCCL small messages.
-# Checks the 1-node numbers behind section 5 of results/mi355x-vs-b200.md (e.g. all_reduce
+# Checks the 1-node numbers behind results/mi355x-vs-b200-interconnect.md §2.3 (e.g. all_reduce
 # 8 B slower than 1 KB; four of the five 2-node and 1-node logs warned "GPUs busy"): the default setting is run
 # three times, and RCCL is also run with a fixed protocol / algorithm, so NCCL's own choice
 # can be told apart from the hardware.
@@ -11,8 +11,8 @@
 # Waits for this node's GPU lock; each run starts only after rocm-smi shows every GPU at 0 %
 # (up to 2 min; the reading is logged either way).
 # Results: $OUT/STATE.txt, $OUT/rccl_runs.txt, results/<node>[/rocm7.14]/rccl_lat_1node.md,
-#          then compare_lat_1node.py refreshes results/ubuntu/latency-1node.md and §3.2 of
-#          results/mi355x-vs-b200.md.
+#          then compare_lat_1node.py refreshes results/latency-1node-mi355x-vs-b200.md and §1.3 of
+#          results/mi355x-vs-b200-interconnect.md (+ one Summary row in results/mi355x-vs-b200.md).
 set -uo pipefail
 source /orcd/data/orcd/022/benchmarks/amd-ubuntu/common/env.sh
 cd "$(dirname "$0")"

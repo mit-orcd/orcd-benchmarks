@@ -5,7 +5,7 @@
 
 Merges the tests.txt of every prefix-test run (logs/node*/kimi-amd-recipe/atom/kimi_prefix_test_*;
 a later run replaces an earlier one's test of the same tag), so the 1-4 user run and the 8-128
-user runs on the two nodes give one table. Also fills the prefix-cache column of table 7.3.
+user runs on the two nodes give one table. Also fills the prefix-cache column of table 5.3.
 
 Writes results/ubuntu/kimi-prefix-cache-test.md and replaces the marker blocks in
 results/kimi-summary.md (before "## 3. ") and results/mi355x-vs-b200.md (before "### 7.4 ").
@@ -176,12 +176,12 @@ def table(t):
 
 
 def fill_table_73(t, path):
-    """Prefix-cache column + ratio column of table 7.3 in mi355x-vs-b200.md (only users with a result)."""
+    """Prefix-cache column + ratio column of table 5.3 in mi355x-vs-b200.md (only users with a result)."""
     s = open(path).read()
-    a = s.find("### 7.3 ")
+    a = s.find("### 5.3 ")
     b = s.find(BEGIN, a) if a >= 0 else -1
     if a < 0 or b < 0:
-        print("WARN: table 7.3 not found; not filled"); return
+        print("WARN: table 5.3 not found; not filled"); return
     sec, out = s[a:b], []
     head = None
     for l in sec.split("\n"):
@@ -208,7 +208,7 @@ def fill_table_73(t, path):
     txt += "); 2026-10-13/14, see the test below."
     sec = re.sub(r"^- \*\*Prefix-cache test column:\*\*.*$", lambda _: txt, sec, flags=re.M)
     open(path, "w").write(s[:a] + sec + s[b:])
-    print("filled table 7.3 in", path)
+    print("filled table 5.3 in", path)
 
 
 def put_block(path, block, before):
@@ -278,7 +278,7 @@ def main():
     short = (f"**Prefix-cache test ({day}):** {head} Detail: "
              "[ubuntu/kimi-prefix-cache-test.md](ubuntu/kimi-prefix-cache-test.md).\n\n" + "\n".join(vlines))
     put_block(f"{RES}/kimi-summary.md", short, "## 3. vLLM recipe 2 on our workload")
-    put_block(f"{RES}/mi355x-vs-b200.md", short, "### 7.4 Apple-to-apple")
+    put_block(f"{RES}/mi355x-vs-b200.md", short, "### 5.4 Apple-to-apple")
     fill_table_73(t, f"{RES}/mi355x-vs-b200.md")
 
 

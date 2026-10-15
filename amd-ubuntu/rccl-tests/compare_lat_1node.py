@@ -6,7 +6,8 @@ Inputs (all finished runs found, so it can run after either side finishes):
   B200  : b200-nodes/out-nccl-lat-1node/<job>                     (b200-nodes/job-nccl-lat-1node.sh)
 Outputs:
   results/latency-1node-mi355x-vs-b200.md   every node, setting and collective
-  results/mi355x-vs-b200.md                 section 3.2 (between the INTRA-LAT markers)
+  results/mi355x-vs-b200-interconnect.md    §1.3 (between the INTRA-LAT markers)
+  results/mi355x-vs-b200.md                 one Summary row
 """
 import glob, os, re, statistics, datetime
 
@@ -14,7 +15,8 @@ from analyze_rccl_lat import parse, human
 
 BENCH = "/orcd/data/orcd/022/benchmarks"
 AMD = f"{BENCH}/amd-ubuntu"
-MAIN = f"{AMD}/results/mi355x-vs-b200.md"
+MAIN = f"{AMD}/results/mi355x-vs-b200.md"               # Summary row
+IC = f"{AMD}/results/mi355x-vs-b200-interconnect.md"    # §1.3
 DETAIL = f"{AMD}/results/latency-1node-mi355x-vs-b200.md"
 AMD_GLOB = f"{AMD}/logs/node610[01]/rocm7.14/rccl/lat_1node_*"
 B200_GLOB = f"{BENCH}/b200-nodes/out-nccl-lat-1node/[0-9]*"
@@ -86,8 +88,8 @@ def main():
     bnodes = sorted({n for n, _, _ in b}) or ["pending"]
     rel = lambda d: os.path.relpath(d, os.path.dirname(MAIN))
 
-    # ---- section 3.2 of the main file ---------------------------------------------------
-    L = [BEGIN, "### 3.2 Latency inside one node (8 GPUs, small messages)", "",
+    # ---- §1.3 of the interconnect file -----------------------------------------------------
+    L = [BEGIN, "### 1.3 Measured latency (8 GPUs, small messages)", "",
          "rccl-tests (MI355X, ROCm 7.14) / nccl-tests (B200), 8 B–4 MB, 1000 iterations + 100 warm-up, one rank per GPU, "
          "NUMA-bound, each run started only after all GPUs read 0 % use. Time per call in µs, lower is better; "
          "speed = B200 time ÷ MI355X time (>1: MI355X faster). Default = median of 3 default runs per node "
@@ -102,10 +104,11 @@ def main():
                 r = ratio(med(default_vals(b, c, s)), med(default_vals(m, c, s)))
                 if r:
                     wins.setdefault(c, []).append(r)
-        parts, who_all = [], set()
+        parts, who_all, wins_by = [], set(), {}
         for c, rs in wins.items():
             w = "MI355X" if min(rs) > 1.03 else "B200" if max(rs) < 0.97 else "mixed"
             who_all.add(w)
+            wins_by.setdefault(w, []).append(c)
             parts.append(f"{c}: **{w + ' faster' if w != 'mixed' else 'mixed'}** ({span(rs)})")
         head = ("MI355X (XGMI) is faster" if who_all == {"MI355X"} else
                 "B200 (NVLink) is faster" if who_all == {"B200"} else "Mixed")
@@ -138,15 +141,25 @@ def main():
     L += ["", "Sources: " + ", ".join(f"`{rel(d)}`" for d in mdirs + bdirs) + f". Updated {today}.", END, ""]
     sec = "\n".join(L)
 
-    txt = open(MAIN).read()
+    txt = open(IC).read()
     if BEGIN in txt:
         txt = re.sub(re.escape(BEGIN) + r".*?" + re.escape(END) + r"\n?", lambda _: sec, txt, flags=re.S)
     else:  # after 3.1, before "## 4."
-        i = txt.index("\n## 4. ")
+        i = txt.index("\n## 2. Inter-node")
         txt = txt[:i].rstrip("\n") + "\n\n" + sec + txt[i:]
-    tmp = MAIN + ".tmp-intra"
+    tmp = IC + ".tmp-intra"
     open(tmp, "w").write(txt)
-    os.replace(tmp, MAIN)
+    os.replace(tmp, IC)
+    if m and b:  # one Summary row in the main file, after the 1-node bandwidth row
+        desc = "; ".join(f"{'mixed' if w == 'mixed' else w + ' faster'} in {', '.join(cs)} "
+                         f"({span([r for c in cs for r in wins[c]])})" for w, cs in wins_by.items())
+        row = f"| Latency inside one node, 8 B–1 MB (§3) | {desc} (default settings, MI355X ROCm 7.14) | ✅ same tests |"
+        lines = [l for l in open(MAIN).read().split("\n") if not l.startswith("| Latency inside one node")]
+        k = next(i for i, l in enumerate(lines) if l.startswith("| Collectives inside one node"))
+        lines.insert(k + 1, row)
+        tmp = MAIN + ".tmp-intra"
+        open(tmp, "w").write("\n".join(lines))
+        os.replace(tmp, MAIN)
 
     # ---- detail file ---------------------------------------------------------------------
     D = ["# Latency inside one node: MI355X (RCCL) vs B200 (NCCL)", "",
@@ -165,7 +178,7 @@ def main():
     D += ["Settings: r1/r2/r3 = default; " + "; ".join(f"{k} = `{v}`" for k, v in FIXED.items()) + " (nvls0: B200 only).", "",
           "Sources: " + ", ".join(f"`{os.path.relpath(d, os.path.dirname(DETAIL))}`" for d in mdirs + bdirs) + "."]
     open(DETAIL, "w").write("\n".join(D) + "\n")
-    print(f"updated {MAIN} §3.2 and {DETAIL}: MI355X runs {len(mdirs)}, B200 runs {len(bdirs)}")
+    print(f"updated {IC} §1.3, {MAIN} Summary row and {DETAIL}: MI355X runs {len(mdirs)}, B200 runs {len(bdirs)}")
 
 
 if __name__ == "__main__":

@@ -20,7 +20,7 @@
 #   ./launch.sh node6100 atom/run_kimi_prefix_test.sh
 # Output: logs/<node>/kimi-amd-recipe/atom/kimi_prefix_test_<ts>/,
 #         results/ubuntu/kimi-prefix-cache-test.md (+ marker blocks in kimi-summary.md §2 and
-#         mi355x-vs-b200.md §7.3, by analyze_prefix_test.py, which merges all prefix-test runs)
+#         mi355x-vs-b200.md §5.3, by analyze_prefix_test.py, which merges all prefix-test runs)
 set -uo pipefail
 ARM=prefix
 export RESULTS_SUBDIR=kimi-amd-recipe
@@ -181,5 +181,5 @@ flock -u 9; exec 9>&-
 flock "$BENCH_ROOT/logs/auto/report.lock" $PY analyze_prefix_test.py "$OUT" >"$OUT/analyze.log" 2>&1
 say "analyze rc=$? -> results/ubuntu/kimi-prefix-cache-test.md"
 echo "STATUS=$( [[ -s $OUT/tests.txt ]] && echo ok || echo failed)" >> "$STATE"
-echo "$(date -Iseconds) prefix test (users: ${USERS:-1 2 4}) on $HOSTNAME_S: done, results/ubuntu/kimi-prefix-cache-test.md + mi355x-vs-b200.md table 7.3 updated ($OUT)" >> "$BENCH_ROOT/results/status.txt"
+echo "$(date -Iseconds) prefix test (users: ${USERS:-1 2 4}) on $HOSTNAME_S: done, results/ubuntu/kimi-prefix-cache-test.md + mi355x-vs-b200.md table 5.3 updated ($OUT)" >> "$BENCH_ROOT/results/status.txt"
 say "PREFIX TEST DONE"

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Background watcher for the latency runs: updates the md files as each part finishes.
 #   MI355X 7.2.4 or 7.14 run DONE -> results/ubuntu/latency.md        (compare_lat.py ubuntu)
-#   MI355X 7.14 DONE and B200 job done -> §4.2 of results/mi355x-vs-b200.md (compare_lat.py b200)
+#   MI355X 7.14 DONE and B200 job done -> §2.3 of results/mi355x-vs-b200-interconnect.md (compare_lat.py b200)
 # Run on the login node, detached:
 #   setsid nohup bash rccl-tests/watch_lat.sh <b200 jobid> > logs/launch/watch_lat_<ts>.log 2>&1 &
 # Gives up after MAX_H hours. Slurm controller outages are tolerated: the B200 job counts as
@@ -29,11 +29,11 @@ while (( $(date +%s) < end )); do
     st=$(b200_state)
     if [[ $st != done && $st == ended:* ]]; then
       ub=1; say "B200 job $JOB $st without finishing -- see $BOUT/nccl-lat-2node-$JOB.out"
-      echo "$(date -Iseconds) latency: B200 job $JOB $st, vs-b200 §4.2 not written" >> "$BENCH/results/status.txt"
+      echo "$(date -Iseconds) latency: B200 job $JOB $st, interconnect §2.3 not written" >> "$BENCH/results/status.txt"
     elif [[ $st == done ]] && (( u714 )); then
       ub=1; say "B200 job $JOB done"
       (cd "$BENCH/rccl-tests" && $PY compare_lat.py b200 "$BOUT/$JOB") && \
-        echo "$(date -Iseconds) latency: DONE, results/ubuntu/latency.md + mi355x-vs-b200.md §4.2 updated (B200 job $JOB)" >> "$BENCH/results/status.txt"
+        echo "$(date -Iseconds) latency: DONE, results/ubuntu/latency.md + mi355x-vs-b200-interconnect.md §2.3 updated (B200 job $JOB)" >> "$BENCH/results/status.txt"
     fi
   fi
   (( u724 && u714 && ub )) && { say "all done"; exit 0; }
