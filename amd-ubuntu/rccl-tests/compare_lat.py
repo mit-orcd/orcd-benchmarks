@@ -194,7 +194,7 @@ def b200(bdir):
         return rows
 
     def net_table():  # 2 x 8 GPUs: network part only (+ whole-call speed for reference)
-        rows = ["| collective | bytes | network part, Pollara | network part, InfiniBand | Pollara / InfiniBand speed | whole call, MI355X / B200 |",
+        rows = ["| collective | bytes | network part, Pollara | network part, InfiniBand | Pollara / InfiniBand speed | whole call, MI355X / B200 speed |",
                 "|---|---:|---:|---:|---:|---:|"]
         for c in MAINC:
             for s in SIZES:

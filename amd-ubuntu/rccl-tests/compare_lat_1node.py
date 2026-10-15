@@ -114,7 +114,7 @@ def main():
         head = ("MI355X (XGMI) is faster" if who_all == {"MI355X"} else
                 "B200 (NVLink) is faster" if who_all == {"B200"} else "Mixed")
         L += [f"> **{head}** with default settings, 8 B–1 MB. " + "; ".join(parts) + ".", "",
-              "| collective | bytes | MI355X (XGMI) | B200 (NVLink) | MI355X / B200 speed | best fixed setting¹, MI355X | best fixed setting¹, B200 |",
+              "| collective | bytes | MI355X (XGMI) | B200 (NVLink) | MI355X / B200 speed | best fixed setting¹, MI355X (µs) | best fixed setting¹, B200 (µs) |",
               "|---|---:|---:|---:|---:|---:|---:|"]
         for c in COLLS:
             for s in MAIN_SIZES:
@@ -125,7 +125,7 @@ def main():
                 fx = f"{bx[0]:.1f} <sup>{MARK[bx[1]]}</sup>" if bx else "–"
                 fy = f"{by[0]:.1f} <sup>{MARK[by[1]]}</sup>" if by else "–"
                 L.append(f"| {c} | {unit(s)} | {f1(x)} | {f1(y)} | {rx(ratio(y, x))} | {fx} | {fy} |")
-        L += ["", "¹ Fastest of the fixed settings, µs: " + ", ".join(
+        L += ["", "¹ Fastest of the fixed settings: " + ", ".join(
             f"<sup>{MARK[k]}</sup> `{FIXED[k]}`" for k in ("ringll", "treell", "ll", "nvls0")) + "."]
         # repeatability of the default runs, all_reduce + sendrecv
         L += ["", "**Run-to-run spread of the default runs** (min–max over all runs and nodes, µs):", "",

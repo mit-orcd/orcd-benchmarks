@@ -69,7 +69,7 @@ rccl-tests (MI355X, ROCm 7.14) / nccl-tests (B200), 8 B–4 MB, 1000 iterations 
 
 > **Mixed** with default settings, 8 B–1 MB. sendrecv: **mixed** (0.91–1.46x); all_reduce: **MI355X faster** (1.29–5.06x); all_gather: **MI355X faster** (1.56–2.05x); reduce_scatter: **MI355X faster** (2.07–2.62x); broadcast: **mixed** (0.30–1.28x); alltoall: **MI355X faster** (1.06–1.29x).
 
-| collective | bytes | MI355X (XGMI) | B200 (NVLink) | MI355X / B200 speed | best fixed setting¹, MI355X | best fixed setting¹, B200 |
+| collective | bytes | MI355X (XGMI) | B200 (NVLink) | MI355X / B200 speed | best fixed setting¹, MI355X (µs) | best fixed setting¹, B200 (µs) |
 |---|---:|---:|---:|---:|---:|---:|
 | sendrecv | 8 B | 6.2 | 9.0 | 1.46x | 6.2 <sup>b</sup> | 8.3 <sup>a</sup> |
 | sendrecv | 1 KB | 6.5 | 8.9 | 1.38x | 6.4 <sup>a</sup> | 8.4 <sup>a</sup> |
@@ -93,7 +93,7 @@ rccl-tests (MI355X, ROCm 7.14) / nccl-tests (B200), 8 B–4 MB, 1000 iterations 
 | alltoall | 64 KB | 10.4 | 11.1 | 1.06x | 10.2 <sup>a</sup> | 10.4 <sup>d</sup> |
 | alltoall | 1 MB | 14.0 | 17.7 | 1.26x | 13.5 <sup>c</sup> | 16.4 <sup>d</sup> |
 
-¹ Fastest of the fixed settings, µs: <sup>a</sup> `NCCL_ALGO=Ring NCCL_PROTO=LL`, <sup>b</sup> `NCCL_ALGO=Tree NCCL_PROTO=LL`, <sup>c</sup> `NCCL_PROTO=LL`, <sup>d</sup> `NCCL_NVLS_ENABLE=0`.
+¹ Fastest of the fixed settings: <sup>a</sup> `NCCL_ALGO=Ring NCCL_PROTO=LL`, <sup>b</sup> `NCCL_ALGO=Tree NCCL_PROTO=LL`, <sup>c</sup> `NCCL_PROTO=LL`, <sup>d</sup> `NCCL_NVLS_ENABLE=0`.
 
 **Run-to-run spread of the default runs** (min–max over all runs and nodes, µs):
 
@@ -217,7 +217,7 @@ MI355X ROCm 7.14 (RCCL, AMD Pollara RoCEv2) vs B200 (NCCL, NVIDIA InfiniBand). T
 
 > **InfiniBand is faster** in 7 of 8 rows: Pollara is 0.29–0.91x the speed of InfiniBand in the network part. Exception: all_reduce 1 MB (1.10x).
 
-| collective | bytes | network part, Pollara | network part, InfiniBand | Pollara / InfiniBand speed | whole call, MI355X / B200 |
+| collective | bytes | network part, Pollara | network part, InfiniBand | Pollara / InfiniBand speed | whole call, MI355X / B200 speed |
 |---|---:|---:|---:|---:|---:|
 | sendrecv | 8 | 14.5 | 6.6 | 0.45x | 0.75x |
 | sendrecv | 1K | 14.1 | 6.5 | 0.46x | 0.76x |
