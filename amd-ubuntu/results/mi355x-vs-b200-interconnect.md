@@ -16,7 +16,7 @@ Which is faster and by how much. Here N× faster is the faster side's speed over
 | **Intra-node bandwidth** (8 GPUs, large messages), §1.2 | **B200** (NVLink 5 + NVSwitch) | • B200 1.7–2.1× faster on collectives<br>• B200 11× faster for one GPU pair (sendrecv) |
 | **Intra-node latency** (8 GPUs, 8 B–1 MB), §1.3 | **MI355X** (Infinity Fabric / XGMI) | • MI355X 1.1–5× faster in all_reduce, all_gather, reduce_scatter, alltoall<br>• B200 faster only in broadcast from 64 KB (1.3–3.4×) and sendrecv at 1 MB (1.1×) |
 | **Inter-node bandwidth** (2 nodes, large messages), §2.2 | **Equal** (Pollara vs InfiniBand) | • Within 3%<br>• sendrecv equal with `NCCL_NET=IB`<br>• MI355X 1.6× faster in all_reduce and 1.8× in alltoall, where NCCL is low |
-| **Inter-node latency** (2 nodes, small messages), §2.3 | **B200** (InfiniBand) | • Network alone: InfiniBand 1.8–5× faster<br>• 1 GPU per node: B200 1.2–1.5× faster<br>• 8 GPUs per node:<br>&nbsp;&nbsp;◦ MI355X 1.1–1.2× faster in all_reduce (B200 1.06× faster at 64 KB), thanks to its faster step inside the node<br>&nbsp;&nbsp;◦ B200 1.1–1.5× faster in sendrecv and 1.1–2.7× in all_gather, reduce_scatter, broadcast, alltoall up to 64 KB<br>&nbsp;&nbsp;◦ MI355X 1.2–1.7× faster in those at 1 MB, likely an NCCL tuning issue on B200 |
+| **Inter-node latency** (2 nodes, small messages), §2.3 | **B200** (InfiniBand) | • Network alone: InfiniBand 1.8–5× faster<br>• 1 GPU per node: B200 1.2–1.5× faster<br>• 8 GPUs per node:<br>&nbsp;&nbsp;◦ MI355X 1.1–1.2× faster in all_reduce (B200 1.06× faster at 64 KB), thanks to its faster step inside the node<br>&nbsp;&nbsp;◦ B200 1.1–1.5× faster in sendrecv and 1.1–2.7× in all_gather, reduce_scatter, broadcast, alltoall up to 64 KB<br>&nbsp;&nbsp;◦ MI355X 0.9–1.3× faster in those at 1 MB, also with B200's best fixed NCCL setting (default: 1.2–1.7×) |
 
 On paper: links inside one node 537.6 vs 900 GB/s per GPU (0.60x, §1.1); network 400 vs 400 GB/s per node (1.00x, §2.1); neither vendor publishes latency figures.
 
@@ -259,7 +259,30 @@ Sources: `logs/node6100/rocm7.14/rccl/lat_2node_20261013_014214`, `../../b200-no
 - **2 nodes × 1 GPU:** only the network is between the GPUs, and Pollara has about 4× the latency of InfiniBand (5.2 vs 1.3 µs one way), so B200 is faster in every test. The gap (0.65–0.85x) looks smaller than in the raw network (0.20–0.56x) only because both systems add about 14–20 µs of GPU and library time; Pollara still costs 4–6 µs more per crossing.
 - **2 nodes × 8 GPUs:** each call also includes the step among the 8 GPUs inside each node (XGMI / NVLink). For all_reduce that step is faster on MI355X (8 B: 14.3 vs 18.4 µs), which outweighs the slower network, so MI355X is faster at most sizes. In sendrecv the slowest pair crosses the network, so B200 stays faster.
 <!-- B200-TUNE-BEGIN (auto: rccl-tests/b200_lat_tune.py) -->
-- **1 MB:** B200's NCCL looks badly tuned across nodes at this size (all_gather: 18 µs in one node, 83 µs across two, slower than at 4 MB), which gives MI355X its 1 MB wins. This is likely an NCCL setting, not the B200 hardware; a B200 rerun with `NCCL_ALGO` / `NCCL_PROTO` set would confirm it.
+- **1 MB, B200 rerun with fixed `NCCL_ALGO` / `NCCL_PROTO` (job 25990596):** **Partly confirmed.** A fixed setting makes B200 faster at 1 MB in 3 of 4 collectives, but MI355X stays faster in 3 of them (1.16–1.69x with NCCL's default, 0.88–1.33x with B200's best fixed setting). This job's default reproduces the earlier run within 1%.
+
+  | collective | bytes | B200 default, earlier run | B200 default, this job | B200 best fixed | best setting | MI355X | MI355X / B200 speed, default | MI355X / B200 speed, B200 best fixed |
+  |---|---:|---:|---:|---:|---|---:|---:|---:|
+  | all_gather | 64 KB | 34.0 | 36.7 | 36.7 | none faster than default | 38.2 | 0.96x | 0.96x |
+  | all_gather | 1 MB | 83.1 | 84.2 | 61.9 | NCCL_ALGO=Ring NCCL_PROTO=LL | 54.5 | 1.54x | 1.13x |
+  | all_gather | 4 MB | 81.5 | 83.2 | 83.1 | none faster than default | 73.0 | 1.14x | 1.14x |
+  | reduce_scatter | 64 KB | 33.6 | 35.7 | 35.5 | none faster than default | 43.3 | 0.82x | 0.82x |
+  | reduce_scatter | 1 MB | 93.9 | 93.2 | 61.2 | NCCL_PROTO=LL | 55.0 | 1.69x | 1.11x |
+  | reduce_scatter | 4 MB | 89.3 | 90.8 | 90.9 | none faster than default | 72.4 | 1.25x | 1.26x |
+  | broadcast | 64 KB | 16.9 | 19.8 | 19.7 | none faster than default | 45.5 | 0.44x | 0.43x |
+  | broadcast | 1 MB | 70.9 | 70.0 | 53.1 | NCCL_ALGO=Ring NCCL_PROTO=LL128 | 60.1 | 1.16x | 0.88x |
+  | broadcast | 4 MB | 78.7 | 80.7 | 80.0 | none faster than default | 78.5 | 1.03x | 1.02x |
+  | alltoall | 64 KB | 30.5 | 31.3 | 31.1 | none faster than default | 36.6 | 0.85x | 0.85x |
+  | alltoall | 1 MB | 62.3 | 63.1 | 62.1 | none faster than default | 46.6 | 1.35x | 1.33x |
+  | alltoall | 4 MB | 133.2 | 142.8 | 134.6 | NCCL_ALGO=Ring NCCL_PROTO=Simple | 103.2 | 1.38x | 1.30x |
+  | all_reduce | 64 KB | 39.4 | 40.9 | 48.9 | none faster than default | 41.9 | 0.98x | 1.17x |
+  | all_reduce | 1 MB | 82.3 | 84.6 | 78.8 | NCCL_ALGO=Tree NCCL_PROTO=LL | 66.5 | 1.27x | 1.18x |
+  | all_reduce | 4 MB | 98.9 | 100.2 | 96.0 | NCCL_PROTO=Simple | 91.0 | 1.10x | 1.05x |
+  | sendrecv | 64 KB | 20.4 | 21.2 | 20.2 | NCCL_ALGO=Tree NCCL_PROTO=LL | 23.2 | 0.91x | 0.87x |
+  | sendrecv | 1 MB | 32.7 | 35.9 | 34.4 | NCCL_ALGO=Tree | 49.1 | 0.73x | 0.70x |
+  | sendrecv | 4 MB | 100.1 | 99.3 | 95.7 | NCCL_ALGO=Tree | 118.5 | 0.84x | 0.81x |
+
+  Time per call, µs. All settings: `../../b200-nodes/out-nccl-lat-tune/25990596/summary.md`.
 <!-- B200-TUNE-END -->
 
 ## Appendix A. Pollara: RoCEv2 vs Ultra Ethernet
