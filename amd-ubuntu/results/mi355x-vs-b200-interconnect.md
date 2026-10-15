@@ -69,29 +69,31 @@ rccl-tests (MI355X, ROCm 7.14) / nccl-tests (B200), 8 B–4 MB, 1000 iterations 
 
 > **Mixed** with default settings, 8 B–1 MB. sendrecv: **mixed** (0.91–1.46x); all_reduce: **MI355X faster** (1.29–5.06x); all_gather: **MI355X faster** (1.56–2.05x); reduce_scatter: **MI355X faster** (2.07–2.62x); broadcast: **mixed** (0.30–1.28x); alltoall: **MI355X faster** (1.06–1.29x).
 
-| collective | bytes | MI355X (XGMI) | B200 (NVLink) | MI355X / B200 speed | best fixed setting, MI355X | best fixed setting, B200 |
+| collective | bytes | MI355X (XGMI) | B200 (NVLink) | MI355X / B200 speed | best fixed setting¹, MI355X | best fixed setting¹, B200 |
 |---|---:|---:|---:|---:|---:|---:|
-| sendrecv | 8 B | 6.2 | 9.0 | 1.46x | 6.2 (NCCL_ALGO=Tree NCCL_PROTO=LL) | 8.3 (NCCL_ALGO=Ring NCCL_PROTO=LL) |
-| sendrecv | 1 KB | 6.5 | 8.9 | 1.38x | 6.4 (NCCL_ALGO=Ring NCCL_PROTO=LL) | 8.4 (NCCL_ALGO=Ring NCCL_PROTO=LL) |
-| sendrecv | 64 KB | 13.4 | 15.3 | 1.14x | 13.3 (NCCL_ALGO=Ring NCCL_PROTO=LL) | 14.1 (NCCL_ALGO=Ring NCCL_PROTO=LL) |
-| sendrecv | 1 MB | 29.5 | 27.0 | 0.91x | 29.5 (NCCL_ALGO=Ring NCCL_PROTO=LL) | 25.1 (NCCL_ALGO=Ring NCCL_PROTO=LL) |
-| all_reduce | 8 B | 14.4 | 18.5 | 1.29x | 12.4 (NCCL_ALGO=Ring NCCL_PROTO=LL) | 17.0 (NCCL_NVLS_ENABLE=0) |
-| all_reduce | 1 KB | 5.0 | 25.2 | 5.06x | 4.9 (NCCL_ALGO=Tree NCCL_PROTO=LL) | 23.4 (NCCL_NVLS_ENABLE=0) |
-| all_reduce | 64 KB | 6.5 | 26.8 | 4.13x | 6.5 (NCCL_ALGO=Ring NCCL_PROTO=LL) | 25.2 (NCCL_NVLS_ENABLE=0) |
-| all_reduce | 1 MB | 17.4 | 28.1 | 1.62x | 17.4 (NCCL_PROTO=LL) | 26.1 (NCCL_NVLS_ENABLE=0) |
-| all_gather | 1 KB | 7.8 | 15.9 | 2.05x | 7.7 (NCCL_PROTO=LL) | 15.9 (NCCL_PROTO=LL) |
-| all_gather | 64 KB | 8.9 | 17.6 | 1.96x | 8.8 (NCCL_ALGO=Ring NCCL_PROTO=LL) | 17.5 (NCCL_PROTO=LL) |
-| all_gather | 1 MB | 11.7 | 18.3 | 1.56x | 11.7 (NCCL_ALGO=Tree NCCL_PROTO=LL) | 18.2 (NCCL_PROTO=LL) |
-| reduce_scatter | 1 KB | 6.1 | 15.9 | 2.62x | 5.9 (NCCL_PROTO=LL) | 15.6 (NCCL_PROTO=LL) |
-| reduce_scatter | 64 KB | 7.1 | 17.1 | 2.42x | 7.0 (NCCL_PROTO=LL) | 16.9 (NCCL_ALGO=Ring NCCL_PROTO=LL) |
-| reduce_scatter | 1 MB | 8.7 | 18.0 | 2.07x | 8.6 (NCCL_ALGO=Tree NCCL_PROTO=LL) | 17.8 (NCCL_PROTO=LL) |
-| broadcast | 8 B | 5.7 | 6.9 | 1.21x | 5.6 (NCCL_PROTO=LL) | 6.3 (NCCL_ALGO=Ring NCCL_PROTO=LL) |
-| broadcast | 1 KB | 5.8 | 7.4 | 1.28x | 5.7 (NCCL_ALGO=Ring NCCL_PROTO=LL) | 7.1 (NCCL_PROTO=LL) |
-| broadcast | 64 KB | 15.0 | 12.0 | 0.80x | 15.0 (NCCL_ALGO=Ring NCCL_PROTO=LL) | 11.4 (NCCL_PROTO=LL) |
-| broadcast | 1 MB | 41.7 | 12.3 | 0.30x | 19.6 (NCCL_PROTO=LL) | 11.8 (NCCL_PROTO=LL) |
-| alltoall | 1 KB | 7.6 | 9.8 | 1.29x | 7.5 (NCCL_ALGO=Tree NCCL_PROTO=LL) | 9.1 (NCCL_NVLS_ENABLE=0) |
-| alltoall | 64 KB | 10.4 | 11.1 | 1.06x | 10.2 (NCCL_ALGO=Ring NCCL_PROTO=LL) | 10.4 (NCCL_NVLS_ENABLE=0) |
-| alltoall | 1 MB | 14.0 | 17.7 | 1.26x | 13.5 (NCCL_PROTO=LL) | 16.4 (NCCL_NVLS_ENABLE=0) |
+| sendrecv | 8 B | 6.2 | 9.0 | 1.46x | 6.2 <sup>b</sup> | 8.3 <sup>a</sup> |
+| sendrecv | 1 KB | 6.5 | 8.9 | 1.38x | 6.4 <sup>a</sup> | 8.4 <sup>a</sup> |
+| sendrecv | 64 KB | 13.4 | 15.3 | 1.14x | 13.3 <sup>a</sup> | 14.1 <sup>a</sup> |
+| sendrecv | 1 MB | 29.5 | 27.0 | 0.91x | 29.5 <sup>a</sup> | 25.1 <sup>a</sup> |
+| all_reduce | 8 B | 14.4 | 18.5 | 1.29x | 12.4 <sup>a</sup> | 17.0 <sup>d</sup> |
+| all_reduce | 1 KB | 5.0 | 25.2 | 5.06x | 4.9 <sup>b</sup> | 23.4 <sup>d</sup> |
+| all_reduce | 64 KB | 6.5 | 26.8 | 4.13x | 6.5 <sup>a</sup> | 25.2 <sup>d</sup> |
+| all_reduce | 1 MB | 17.4 | 28.1 | 1.62x | 17.4 <sup>c</sup> | 26.1 <sup>d</sup> |
+| all_gather | 1 KB | 7.8 | 15.9 | 2.05x | 7.7 <sup>c</sup> | 15.9 <sup>c</sup> |
+| all_gather | 64 KB | 8.9 | 17.6 | 1.96x | 8.8 <sup>a</sup> | 17.5 <sup>c</sup> |
+| all_gather | 1 MB | 11.7 | 18.3 | 1.56x | 11.7 <sup>b</sup> | 18.2 <sup>c</sup> |
+| reduce_scatter | 1 KB | 6.1 | 15.9 | 2.62x | 5.9 <sup>c</sup> | 15.6 <sup>c</sup> |
+| reduce_scatter | 64 KB | 7.1 | 17.1 | 2.42x | 7.0 <sup>c</sup> | 16.9 <sup>a</sup> |
+| reduce_scatter | 1 MB | 8.7 | 18.0 | 2.07x | 8.6 <sup>b</sup> | 17.8 <sup>c</sup> |
+| broadcast | 8 B | 5.7 | 6.9 | 1.21x | 5.6 <sup>c</sup> | 6.3 <sup>a</sup> |
+| broadcast | 1 KB | 5.8 | 7.4 | 1.28x | 5.7 <sup>a</sup> | 7.1 <sup>c</sup> |
+| broadcast | 64 KB | 15.0 | 12.0 | 0.80x | 15.0 <sup>a</sup> | 11.4 <sup>c</sup> |
+| broadcast | 1 MB | 41.7 | 12.3 | 0.30x | 19.6 <sup>c</sup> | 11.8 <sup>c</sup> |
+| alltoall | 1 KB | 7.6 | 9.8 | 1.29x | 7.5 <sup>b</sup> | 9.1 <sup>d</sup> |
+| alltoall | 64 KB | 10.4 | 11.1 | 1.06x | 10.2 <sup>a</sup> | 10.4 <sup>d</sup> |
+| alltoall | 1 MB | 14.0 | 17.7 | 1.26x | 13.5 <sup>c</sup> | 16.4 <sup>d</sup> |
+
+¹ Fastest of the fixed settings, µs: <sup>a</sup> `NCCL_ALGO=Ring NCCL_PROTO=LL`, <sup>b</sup> `NCCL_ALGO=Tree NCCL_PROTO=LL`, <sup>c</sup> `NCCL_PROTO=LL`, <sup>d</sup> `NCCL_NVLS_ENABLE=0`.
 
 **Run-to-run spread of the default runs** (min–max over all runs and nodes, µs):
 
