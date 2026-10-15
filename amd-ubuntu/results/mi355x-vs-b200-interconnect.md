@@ -1,6 +1,6 @@
 # AMD MI355X vs NVIDIA B200: interconnect (RCCL vs NCCL)
 
-Written 2026-10-15 from sections 3–5 of [`mi355x-vs-b200.md`](mi355x-vs-b200.md) (summary there, §3). Every ratio is **MI355X / B200**: above 1 means MI355X is faster (higher bandwidth or lower latency). MI355X = RCCL on ROCm 7.14, node6100 + node6101; B200 = NCCL on the B200 nodes.
+Every ratio is **MI355X / B200**: above 1 means MI355X is faster (higher bandwidth or lower latency). MI355X = RCCL on ROCm 7.14, node6100 + node6101; B200 = NCCL on the B200 nodes.
 
 - [1. Intra-node (8 GPUs in one node)](#1-intra-node-8-gpus-in-one-node): 1.1 on paper, 1.2 measured bandwidth, 1.3 measured latency
 - [2. Inter-node (2 nodes, 16 GPUs)](#2-inter-node-2-nodes-16-gpus): 2.1 on paper, 2.2 measured bandwidth, 2.3 measured latency
