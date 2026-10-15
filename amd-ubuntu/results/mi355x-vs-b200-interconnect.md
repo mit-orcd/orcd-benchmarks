@@ -5,6 +5,7 @@ Every ratio is **MI355X / B200**: above 1 means MI355X is faster (higher bandwid
 - [Quick summary](#quick-summary)
 - [1. Intra-node (8 GPUs in one node)](#1-intra-node-8-gpus-in-one-node): 1.1 on paper, 1.2 measured bandwidth, 1.3 measured latency
 - [2. Inter-node (2 nodes, 16 GPUs)](#2-inter-node-2-nodes-16-gpus): 2.1 on paper, 2.2 measured bandwidth, 2.3 measured latency
+- [Appendix A. Pollara: RoCEv2 vs Ultra Ethernet](#appendix-a-pollara-rocev2-vs-ultra-ethernet)
 
 ## Quick summary
 
@@ -15,7 +16,7 @@ Which is faster and by how much. Here N× faster is the faster side's speed over
 | **Intra-node bandwidth** (8 GPUs, large messages), §1.2 | **B200** (NVLink 5 + NVSwitch) | • B200 1.7–2.1× faster on collectives<br>• B200 11× faster for one GPU pair (sendrecv) |
 | **Intra-node latency** (8 GPUs, 8 B–1 MB), §1.3 | **MI355X** (Infinity Fabric / XGMI) | • MI355X 1.1–5× faster in all_reduce, all_gather, reduce_scatter, alltoall<br>• B200 faster only in broadcast from 64 KB (1.3–3.4×) and sendrecv at 1 MB (1.1×) |
 | **Inter-node bandwidth** (2 nodes, large messages), §2.2 | **Equal** (Pollara vs InfiniBand) | • Within 3%<br>• sendrecv equal with `NCCL_NET=IB`<br>• MI355X 1.6× faster in all_reduce and 1.8× in alltoall, where NCCL is low |
-| **Inter-node latency** (2 nodes, small messages), §2.3 | **B200** (InfiniBand) | • Network alone: InfiniBand 1.8–5× faster<br>• 1 GPU per node: B200 1.2–1.5× faster<br>• 8 GPUs per node: MI355X 1.1–1.2× faster in all_reduce (B200 1.06× faster at 64 KB), thanks to its faster step inside the node<br>• B200 1.1–1.5× faster in sendrecv and 1.1–2.7× in all_gather, reduce_scatter, broadcast, alltoall up to 64 KB<br>• MI355X 1.2–1.7× faster in those at 1 MB, likely an NCCL tuning issue on B200 |
+| **Inter-node latency** (2 nodes, small messages), §2.3 | **B200** (InfiniBand) | • Network alone: InfiniBand 1.8–5× faster<br>• 1 GPU per node: B200 1.2–1.5× faster<br>• 8 GPUs per node:<br>&nbsp;&nbsp;◦ MI355X 1.1–1.2× faster in all_reduce (B200 1.06× faster at 64 KB), thanks to its faster step inside the node<br>&nbsp;&nbsp;◦ B200 1.1–1.5× faster in sendrecv and 1.1–2.7× in all_gather, reduce_scatter, broadcast, alltoall up to 64 KB<br>&nbsp;&nbsp;◦ MI355X 1.2–1.7× faster in those at 1 MB, likely an NCCL tuning issue on B200 |
 
 On paper: links inside one node 537.6 vs 900 GB/s per GPU (0.60x, §1.1); network 400 vs 400 GB/s per node (1.00x, §2.1); neither vendor publishes latency figures.
 
@@ -139,7 +140,7 @@ Vendor specs ("on paper"), plus what is set on these clusters. Measured numbers 
 | | MI355X nodes (node6100/6101) | B200 nodes |
 |---|---|---|
 | NIC | AMD Pensando **Pollara 400** AI NIC (`ionic` driver) | NVIDIA **ConnectX-7** (MT4129, `mlx5` driver) |
-| Network type | **Ethernet**. Pollara is sold as Ultra Ethernet (UEC 1.0) ready; **here it runs RoCEv2** (RDMA over Converged Ethernet), not the UEC transport | **InfiniBand NDR** |
+| Network type | **Ethernet**. Pollara is sold as Ultra Ethernet (UEC 1.0) ready; **here it runs RoCEv2** (RDMA over Converged Ethernet), not the UEC transport (see [Appendix A](#appendix-a-pollara-rocev2-vs-ultra-ethernet)) | **InfiniBand NDR** |
 | Speed per NIC | 400 Gb/s = 50 GB/s per direction | 400 Gb/s = 50 GB/s per direction |
 | NICs per node | 8, one per GPU (rails 0–3 on CPU socket 0, 4–7 on socket 1) | 8, one per GPU |
 | Per node | 3.2 Tb/s = 400 GB/s per direction | 3.2 Tb/s = 400 GB/s per direction |
@@ -257,4 +258,31 @@ Sources: `logs/node6100/rocm7.14/rccl/lat_2node_20261013_014214`, `../../b200-no
 **Why the two layouts differ.**
 - **2 nodes × 1 GPU:** only the network is between the GPUs, and Pollara has about 4× the latency of InfiniBand (5.2 vs 1.3 µs one way), so B200 is faster in every test. The gap (0.65–0.85x) looks smaller than in the raw network (0.20–0.56x) only because both systems add about 14–20 µs of GPU and library time; Pollara still costs 4–6 µs more per crossing.
 - **2 nodes × 8 GPUs:** each call also includes the step among the 8 GPUs inside each node (XGMI / NVLink). For all_reduce that step is faster on MI355X (8 B: 14.3 vs 18.4 µs), which outweighs the slower network, so MI355X is faster at most sizes. In sendrecv the slowest pair crosses the network, so B200 stays faster.
+<!-- B200-TUNE-BEGIN (auto: rccl-tests/b200_lat_tune.py) -->
 - **1 MB:** B200's NCCL looks badly tuned across nodes at this size (all_gather: 18 µs in one node, 83 µs across two, slower than at 4 MB), which gives MI355X its 1 MB wins. This is likely an NCCL setting, not the B200 hardware; a B200 rerun with `NCCL_ALGO` / `NCCL_PROTO` set would confirm it.
+<!-- B200-TUNE-END -->
+
+## Appendix A. Pollara: RoCEv2 vs Ultra Ethernet
+
+**What "UEC ready" means.** The Ultra Ethernet Consortium (UEC) published its 1.0 specification in June 2025: a new transport for AI and HPC over Ethernet, meant to replace RoCEv2. AMD sells the Pensando Pollara 400 as "UEC ready": its packet pipeline is P4-programmable, so the UEC-style features below run in NIC firmware, and it still speaks standard RoCEv2 so it works with other NICs and switches.
+
+**What runs on node6100/6101.** Standard RoCEv2. Checked on node6100: all 8 NICs (`ionic_0`–`ionic_7`, firmware 1.117.5-a-196) use RoCE v2 GIDs (`NCCL_IB_GID_INDEX=1`), and RCCL opens them through the normal verbs path (`NET/IB/<n>/GDRDMA`, or `NET/IB-CAST` with ROCm 7.14's default). Nothing in our runs turns on the UEC-style features, so every result in this file is plain RoCEv2.
+
+**What Pollara can do beyond plain RoCEv2** (AMD product brief, vendor claims, not tested here):
+
+| Feature | Plain RoCEv2 | Pollara "UEC ready" mode |
+|---|---|---|
+| Multipath | one path per connection (hash on the 5-tuple); one hot link slows the flow | **intelligent packet spray** over many paths |
+| Out-of-order packets | treated as loss, because only the first packet carries the memory address (RETH header) | every packet carries a full RETH, so it can be written to GPU memory in any order (**in-order delivery to the GPU** is kept per message) |
+| Loss recovery | go-back-N: resend everything after the lost packet | **selective retransmission** (SACK): resend only the lost packets |
+| Congestion | DCQCN, needs ECN/PFC tuned in the switches | **path-aware congestion avoidance** (steers traffic away from busy paths) |
+
+AMD's own figure: about 25% higher all_reduce bandwidth with 4 queue pairs and "UEC ready RDMA" vs RoCEv2 (vendor test, not on Pollara 400 specifically).
+
+**Why it did not matter here.** Two nodes, 8 rails, no other traffic: there is little to spray around and almost no loss, so RoCEv2 already reaches 91–99% of the line rate (§2.2). The features above mainly help large fabrics with several switch tiers, many jobs and congestion. The RoCEv2 latency gap (5.2 vs 1.3 µs one way, §2.3) is not expected to change much with them.
+
+**Next steps by AMD.**
+- **Vulcano 800G AI NIC** (successor, PCIe Gen6, 800 Gb/s), announced for 2026 with the MI400 "Helios" rack: AMD says it is UEC 1.0 compliant (the full UEC transport, not only "ready") and will support AMD's Multipath Reliable Connection (MRC) transport. Shipping status not confirmed as of 2026-10.
+- On Pollara, UEC features come with firmware and RCCL/driver updates; a test on these nodes would need the matching firmware, a switch configuration that allows packet spray, and an RCCL build that uses it. Worth asking AMD which firmware and RCCL version enable it on Pollara 400, and repeating §2.2–2.3 with it.
+
+Sources: [AMD Pollara 400 product brief](https://www.amd.com/content/dam/amd/en/documents/pensando-technical-docs/product-briefs/pensando-pollara-400-product-brief.pdf), [AMD blog: Transforming AI networks with Pollara 400](https://www.amd.com/en/blogs/2024/transforming-ai-networks-with-amd-pensando-pollar.html), [AMD blog: Vulcano 800 AI NIC](https://www.amd.com/en/blogs/2026/amd-pensando-vulcano-800-ai-nic-scale-out-and-across.html), [ServeTheHome: Vulcano 800G NIC and UEC plans](https://www.servethehome.com/amd-vulcano-800g-nic-coming-as-amd-outlines-its-ualink-and-uec-scale-plans/).
