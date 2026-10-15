@@ -277,9 +277,7 @@ Sources: `logs/node6100/rocm7.14/rccl/lat_2node_20261013_014214`, `../../b200-no
 | Congestion control | DCQCN, needs ECN and PFC (lossless) tuned in the switches | new sender- and receiver-based schemes, works on a lossy network |
 | Security | none in the protocol | optional encryption built in |
 
-**Pollara 400 sits in between:** it speaks standard RoCEv2 and adds some UET-style features (the table below) through its programmable pipeline. It does not run the full UET protocol; AMD's next NIC, Vulcano, is announced as UEC 1.0 compliant.
-
-**What "UEC ready" means.** The Ultra Ethernet Consortium (UEC) published its 1.0 specification in June 2025: a new transport for AI and HPC over Ethernet, meant to replace RoCEv2. AMD sells the Pensando Pollara 400 as "UEC ready": its packet pipeline is P4-programmable, so the UEC-style features below run in NIC firmware, and it still speaks standard RoCEv2 so it works with other NICs and switches.
+**What "UEC ready" means: Pollara 400 sits in between.** It speaks standard RoCEv2, so it works with other NICs and switches, and its P4-programmable packet pipeline adds some UET-style features in firmware (listed below). It does not run the full UET protocol; AMD's next NIC, Vulcano, is announced as UEC 1.0 compliant.
 
 **What runs on node6100/6101.** Standard RoCEv2. Checked on node6100: all 8 NICs (`ionic_0`–`ionic_7`, firmware 1.117.5-a-196) use RoCE v2 GIDs (`NCCL_IB_GID_INDEX=1`), and RCCL opens them through the normal verbs path (`NET/IB/<n>/GDRDMA`, or `NET/IB-CAST` with ROCm 7.14's default). Nothing in our runs turns on the UEC-style features, so every result in this file is plain RoCEv2.
 
