@@ -205,7 +205,7 @@ Spec decoding does *not* require single-node TP. The upstream vLLM recipe gates 
 
 | Step | MI355X (our vLLM recipe 1) | MI355X (InferenceX) | B200 (InferenceX) |
 |---|---|---|---|
-| 1. Speculator | DSpark draft model, mounted as `/draft` | `Inferact/Kimi-K3-DSpark` | `Inferact/Kimi-K3-DSpark` |
+| 1. Speculator | `Inferact/Kimi-K3-DSpark`, mounted as `/draft` | `Inferact/Kimi-K3-DSpark` | `Inferact/Kimi-K3-DSpark` |
 | 2. `pard_token` shim | not needed | not needed | **required** |
 | 3. Extra server flags | none up to 14 users | none | 3 flags, below |
 | 4. Attention backend in the config | `ROCM_AITER_MLA` | `TRITON_MLA` | `TOKENSPEED_MLA` |
