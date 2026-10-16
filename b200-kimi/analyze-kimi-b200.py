@@ -1376,26 +1376,24 @@ def build_report(b, a, arch, args):
     W("### 7.5 One agent turn, end to end")
     W("")
     W("A user waits for a whole turn, not for a token. Modelled here as one realistic "
-      "agent request — **plan (200 tok) → fan out 8 parallel tool calls (500 tok each, "
-      "hidden) → stream the answer (800 tok, shown)** — priced with each system's own "
+      "agent request — **plan (200 tok) → act: launch 8 independent tool calls (500 tok "
+      "each, hidden) → stream the answer (800 tok, shown)** — priced with each system's own "
       "measured TTFT and per-user rate. **English runs ~1.3 tokens per word** (≈0.75 words "
       "per token), so an 800-token answer is ~600 words and the print rates below are "
       "`tok/s × 0.75`.")
     W("")
     W("The three steps play different roles: the model *thinks* (plan), then *acts* "
-      "(tool calls), then *writes* (answer). Only the middle step is fan-out — it is the "
-      "only one where the work naturally splits into independent pieces that can run "
-      "concurrently; you cannot parallelise \"write one coherent plan\" or \"write one "
-      "coherent answer\" the same way.")
+      "(tool calls), then *writes* (answer). Only *act* runs in parallel — it is the "
+      "only step where the work naturally splits into independent pieces; you cannot "
+      "parallelise \"write one coherent plan\" or \"write one coherent answer\" the "
+      "same way.")
     W("")
-    W("**Fan-out** = the agent issuing several requests *at the same time* instead of one "
-      "after another — searching several files at once, spawning multiple subagents, "
-      "calling several independent tools. A fan-out of 8 is concurrency 8 from that "
-      "single agent, "
-      "which is why the concurrency axis in §7.3 and §7.4 maps onto agent behaviour at "
-      "all. It only works when the calls do not depend on each other's results. Real "
-      "fan-out runs ~2–8; **8 is used here because it is a measured point on every sweep "
-      "in §7.3 and §7.4**.")
+    W("**Act** = the agent **launches 8 independent tasks at once** — searches, file "
+      "reads, subagents, tool calls — instead of running them one after another. To the "
+      "server that is 8 concurrent requests from a single agent, which is why the "
+      "concurrency axis in §7.3 and §7.4 maps onto agent behaviour at all. It only works "
+      "when no task needs another's result. Real agents launch ~2–8 at a time; **8 is "
+      "used here because it is a measured point on every sweep in §7.3 and §7.4**.")
     W("")
 
     def _pu_at(src):
@@ -1431,7 +1429,7 @@ def build_report(b, a, arch, args):
       "§7.4, c=1 row |")
     W("")
     W("Each step costs `TTFT + (tokens per stream − 1) ÷ per-user tok/s`. Only the "
-      "**per-user** rate enters the arithmetic — the fan-out is already accounted for by "
+      "**per-user** rate enters the arithmetic — the parallel act step is already accounted for by "
       "the fact that eight streams run concurrently, so §7.3's aggregate is the same "
       "information viewed from the server side, not a second speedup to multiply in. "
       "(*Close to §7.3's aggregate, not exactly equal*: `8 × per-user` is a steady-state "
@@ -1440,7 +1438,7 @@ def build_report(b, a, arch, args):
     W("")
 
     def _phase(t1, r1, t8, r8, n_plan=200, n_tool=500, n_ans=800):
-        """Whole-turn timing from (TTFT, per-user tok/s) at c=1 and at the c=8 fan-out."""
+        """Whole-turn timing from (TTFT, per-user tok/s) at c=1 and at c=8 (the act step)."""
         plan = t1 + (n_plan - 1) / r1
         tools = t8 + (n_tool - 1) / r8
         ans = t1 + (n_ans - 1) / r1
@@ -1458,8 +1456,8 @@ def build_report(b, a, arch, args):
                      m[8]["median_ttft_ms"] / 1000.0,
                      1000.0 / m[8]["median_tpot_ms"]))
     # Theirs: median_ttft and median_intvty from the API dump in ../semianalysis-ref/.
-    sysd += [("**Theirs** B200 +MTP", 1.15, 221.7, 0.86, 154.1),
-             ("**Theirs** B200 (no spec)", 4.52, 81.9, 6.70, 21.1),
+    sysd += [("**Theirs** B200 (no spec)", 4.52, 81.9, 6.70, 21.1),
+             ("**Theirs** B200 +MTP", 1.15, 221.7, 0.86, 154.1),
              ("**Theirs** MI355X ATOM +MTP", 0.80, 127.2, 0.80, 64.7),
              ("**Theirs** MI355X vLLM +MTP", 1.41, 84.0, 1.63, 41.4)]
     order = [d[0] for d in sysd]
@@ -1504,8 +1502,8 @@ def build_report(b, a, arch, args):
         W("")
     W("**Do not read the total column across the ours/theirs boundary.** Their TTFT is "
       "measured on 100k+ token agentic prompts with prefix caching on; ours on a 1024-token "
-      "prompt with it off (§7.2). Compare ours-to-ours and theirs-to-theirs. The fan-out "
-      "phase also assumes the 8 calls are independent — if each needs the previous one's "
+      "prompt with it off (§7.2). Compare ours-to-ours and theirs-to-theirs. The act "
+      "step also assumes the 8 calls are independent — if each needs the previous one's "
       "result they run serially and that phase takes ~8× longer.")
     W("")
     W("#### A short task")

@@ -4,10 +4,6 @@ Serving `moonshotai/Kimi-K3` (2.78 T params, 1.56 TB MXFP4 checkpoint) on **2 no
 
 > **Why two nodes.** The checkpoint is **1561 GB (1.42 TiB)**. One 8 × B200 node holds **1538 GB (1.40 TiB)** of HBM (8 × 192 GB) — **23 GB short of the weights alone**, before a single byte of KV cache, activation workspace, NCCL buffers or CUDA-graph pool, which together take another ~15–20 GB per GPU. There is no single-node B200 configuration for this model. TP8 shards within each node and PP2 splits the 93 layers across the pair. The MI355X baseline runs the same model on **one** node, because 8 × 288 GB = 2304 GB does fit with room to spare. Every throughput figure below is therefore also reported per GPU and per node.
 
-![Two server computers drawn as rack boxes. Each box holds two GPUs, each GPU with its own memory, joined inside the box by a direct link. A network cable runs between the two boxes.](kimi-k3-two-nodes-plain.svg)
-
-*The same idea without the jargon, for readers new to HPC: each box is one computer (a node), the cards inside it are GPUs, each GPU has its own memory, and a network cable joins the two boxes so they can work on one model together. Simplified — the real job uses eight GPUs per node, not the two drawn here.*
-
 **Run configuration** (from the server log, not assumed):
 
 | Setting | Value |
@@ -28,10 +24,6 @@ Serving `moonshotai/Kimi-K3` (2.78 T params, 1.56 TB MXFP4 checkpoint) on **2 no
 The parse is **exactly validated**: routed-expert parameters computed from the config (`92 MoE layers × 896 experts × 3 × 3584 × 3072`) come to **2,722,740,830,208**, which is the checkpoint's own MXFP4 (U8) parameter count to the last digit. Total computed ≈ **2.777 T** against the advertised 2.78 T.
 
 > The routed experts live in a **latent space of 3584**, not on the 7168-wide residual stream. That is the difference between 2.72 T and the ~6.4 T a naive `3 × hidden × expert_width` count would predict, and it is why the exact match above is worth stating.
-
-![Kimi-K3 decode step across two B200 nodes: the checkpoint exceeds one node's HBM, forcing 16 GPUs in two pipeline stages; NVLink and InfiniBand run under 1% utilized while each GPU's HBM moves 67 GB per step at 23% of peak, the binding constraint.](kimi-k3-decode-path.svg)
-
-*One decode step at three scales — the 1,561 GB checkpoint against one node's 1,538 GB of HBM (top), the 16-GPU / 2-node topology with NVLink and InfiniBand traffic (middle), and the 67 GB/step HBM path inside a single GPU that is the actual bottleneck (bottom, §3).*
 
 ---
 
@@ -213,10 +205,6 @@ TTFT moves 226 → 278 ms (1.2×) across a 64× concurrency increase, because pr
 ## 4. Data communication analysis
 
 Three paths carry traffic here, where the single-node MI355X run had one.
-
-![Sixteen GPUs across two nodes. Inside each GPU, arrows run between compute and HBM. Within each node, every GPU connects to an NVLink spine joining all eight. Between the nodes, dashed InfiniBand links join each GPU to its counterpart in the other node.](kimi-k3-gpu-topology.svg)
-
-*The three paths, structurally: HBM ⇄ compute inside every GPU (§4.3), NVLink among the eight GPUs of a node (§4.1), and InfiniBand rank-to-rank across the pipeline stage boundary (§4.2). Volumes and utilizations follow below.*
 
 ### 4.1 Intra-node GPU↔GPU (NVLink) — activations only
 
@@ -540,11 +528,11 @@ Units: output tokens/s delivered to a single request. Theirs are `median_intvty`
 
 ### 7.5 One agent turn, end to end
 
-A user waits for a whole turn, not for a token. Modelled here as one realistic agent request — **plan (200 tok) → fan out 8 parallel tool calls (500 tok each, hidden) → stream the answer (800 tok, shown)** — priced with each system's own measured TTFT and per-user rate. **English runs ~1.3 tokens per word** (≈0.75 words per token), so an 800-token answer is ~600 words and the print rates below are `tok/s × 0.75`.
+A user waits for a whole turn, not for a token. Modelled here as one realistic agent request — **plan (200 tok) → act: launch 8 independent tool calls (500 tok each, hidden) → stream the answer (800 tok, shown)** — priced with each system's own measured TTFT and per-user rate. **English runs ~1.3 tokens per word** (≈0.75 words per token), so an 800-token answer is ~600 words and the print rates below are `tok/s × 0.75`.
 
-The three steps play different roles: the model *thinks* (plan), then *acts* (tool calls), then *writes* (answer). Only the middle step is fan-out — it is the only one where the work naturally splits into independent pieces that can run concurrently; you cannot parallelise "write one coherent plan" or "write one coherent answer" the same way.
+The three steps play different roles: the model *thinks* (plan), then *acts* (tool calls), then *writes* (answer). Only *act* runs in parallel — it is the only step where the work naturally splits into independent pieces; you cannot parallelise "write one coherent plan" or "write one coherent answer" the same way.
 
-**Fan-out** = the agent issuing several requests *at the same time* instead of one after another — searching several files at once, spawning multiple subagents, calling several independent tools. A fan-out of 8 is concurrency 8 from that single agent, which is why the concurrency axis in §7.3 and §7.4 maps onto agent behaviour at all. It only works when the calls do not depend on each other's results. Real fan-out runs ~2–8; **8 is used here because it is a measured point on every sweep in §7.3 and §7.4**.
+**Act** = the agent **launches 8 independent tasks at once** — searches, file reads, subagents, tool calls — instead of running them one after another. To the server that is 8 concurrent requests from a single agent, which is why the concurrency axis in §7.3 and §7.4 maps onto agent behaviour at all. It only works when no task needs another's result. Real agents launch ~2–8 at a time; **8 is used here because it is a measured point on every sweep in §7.3 and §7.4**.
 
 **Which number governs each step:**
 
@@ -554,14 +542,14 @@ The three steps play different roles: the model *thinks* (plan), then *acts* (to
 | 2. Eight parallel tool calls — *act* | **8** | per-user tok/s at c=8 — eight streams run at once, so the *session* rate is 8× that | 64.9 each → **519.3 tok/s** session | 37.0 each → **296.1 tok/s** session | §7.4, c=8 row; the session rate is §7.3's aggregate column |
 | 3. Stream the answer — *write* | **1** | per-user tok/s | 89.0 tok/s | 46.6 tok/s | §7.4, c=1 row |
 
-Each step costs `TTFT + (tokens per stream − 1) ÷ per-user tok/s`. Only the **per-user** rate enters the arithmetic — the fan-out is already accounted for by the fact that eight streams run concurrently, so §7.3's aggregate is the same information viewed from the server side, not a second speedup to multiply in. (*Close to §7.3's aggregate, not exactly equal*: `8 × per-user` is a steady-state rate, while the aggregate column is measured tokens ÷ wall clock, so it carries the prefill time too.)
+Each step costs `TTFT + (tokens per stream − 1) ÷ per-user tok/s`. Only the **per-user** rate enters the arithmetic — the parallel act step is already accounted for by the fact that eight streams run concurrently, so §7.3's aggregate is the same information viewed from the server side, not a second speedup to multiply in. (*Close to §7.3's aggregate, not exactly equal*: `8 × per-user` is a steady-state rate, while the aggregate column is measured tokens ÷ wall clock, so it carries the prefill time too.)
 
 | System | Plan | 8 tool calls | Answer | **Whole turn** | First word at | Print rate |
 |---|---:|---:|---:|---:|---:|---:|
 | **Ours** B200 (no spec) | 2.5 s | 7.9 s | 9.2 s | **19.6 s** | 10.6 s | 67 words/s |
 | **Ours** MI355X ATOM (no spec) | 4.5 s | 13.7 s | 17.4 s | **35.6 s** | 18.5 s | 35 words/s |
-| **Theirs** B200 +MTP | 2.0 s | 4.1 s | 4.8 s | **10.9 s** | 7.3 s | 166 words/s |
 | **Theirs** B200 (no spec) | 6.9 s | 30.3 s | 14.3 s | **51.6 s** | 41.8 s | 61 words/s |
+| **Theirs** B200 +MTP | 2.0 s | 4.1 s | 4.8 s | **10.9 s** | 7.3 s | 166 words/s |
 | **Theirs** MI355X ATOM +MTP | 2.4 s | 8.5 s | 7.1 s | **18.0 s** | 11.7 s | 95 words/s |
 | **Theirs** MI355X vLLM +MTP | 3.8 s | 13.7 s | 10.9 s | **28.4 s** | 18.9 s | 63 words/s |
 
@@ -571,7 +559,7 @@ Each step costs `TTFT + (tokens per stream − 1) ÷ per-user tok/s`. Only the *
 
 **MTP is worth 4.7× on the whole turn** in their B200 data (51.6 s → 10.9 s) — larger than any hardware gap in this table, and it shortens the hidden phases as well as the visible one (§7.6).
 
-**Do not read the total column across the ours/theirs boundary.** Their TTFT is measured on 100k+ token agentic prompts with prefix caching on; ours on a 1024-token prompt with it off (§7.2). Compare ours-to-ours and theirs-to-theirs. The fan-out phase also assumes the 8 calls are independent — if each needs the previous one's result they run serially and that phase takes ~8× longer.
+**Do not read the total column across the ours/theirs boundary.** Their TTFT is measured on 100k+ token agentic prompts with prefix caching on; ours on a 1024-token prompt with it off (§7.2). Compare ours-to-ours and theirs-to-theirs. The act step also assumes the 8 calls are independent — if each needs the previous one's result they run serially and that phase takes ~8× longer.
 
 #### A short task
 
@@ -581,8 +569,8 @@ The turn above is a heavy one. Most agent traffic is lighter — a brief plan, s
 |---|---:|---:|---:|---:|---:|---:|
 | **Ours** B200 (no spec) | 0.6 s | 1.3 s | 1.3 s | **3.2 s** | 2.1 s | 67 words/s |
 | **Ours** MI355X ATOM (no spec) | 0.8 s | 2.1 s | 2.4 s | **5.3 s** | 3.2 s | 35 words/s |
-| **Theirs** B200 +MTP | 1.3 s | 1.3 s | 1.6 s | **4.2 s** | 3.7 s | 166 words/s |
 | **Theirs** B200 (no spec) | 4.9 s | 10.0 s | 5.7 s | **20.6 s** | 19.4 s | 61 words/s |
+| **Theirs** B200 +MTP | 1.3 s | 1.3 s | 1.6 s | **4.2 s** | 3.7 s | 166 words/s |
 | **Theirs** MI355X ATOM +MTP | 1.0 s | 1.9 s | 1.6 s | **4.5 s** | 3.7 s | 95 words/s |
 | **Theirs** MI355X vLLM +MTP | 1.8 s | 3.3 s | 2.6 s | **7.6 s** | 6.5 s | 63 words/s |
 
