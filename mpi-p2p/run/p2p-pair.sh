@@ -6,6 +6,7 @@
 # p2p-pair.sh <nodeA> <nodeB> [partition] [build]
 #   partition: default ou_orcd_everything (sched_system_all never hands out
 #              allocations right now, even for idle nodes)
+#   RESERVATION (env, optional): submit with --reservation=$RESERVATION
 #   build:     OSU install tree under ../install (default r8-4.1.4, linked
 #              against the openmpi/4.1.4 module -- NOT r8-5.0.8, which is linked
 #              against nvhpc's openmpi-3.1.5)
@@ -46,7 +47,8 @@ OSU=${INSTALL_ROOT}/${build}/libexec/osu-micro-benchmarks/mpi/pt2pt/osu_latency
 # busy-but-healthy nodes can still be tested. --immediate=120: give up instead of
 # queueing forever; jobs here start on the backfill pass (bf_interval=30),
 # which took ~50s even for idle nodes, so 30s was too short.
-out=$(srun -p "$partition" -w "${nodeA},${nodeB}" -N 2 --ntasks-per-node=1 \
+out=$(srun -p "$partition" ${RESERVATION:+--reservation="$RESERVATION"} \
+        -w "${nodeA},${nodeB}" -N 2 --ntasks-per-node=1 \
         --mem=2G -t 00:03:00 --immediate=120 -J mpi-p2p-check --mpi=pmi2 \
         bash -c 's=$(date +%s%N); "$0" -m 1:4194304 -i 200 -x 20; rc=$?;
                  echo "P2P_EXEC_NS=$(( $(date +%s%N) - s ))"; exit $rc' "$OSU" 2>&1)

@@ -1,0 +1,19 @@
+[2026-10-17T05:46:21-04:00] MTP run: job 26092372 on node5601-c1 node5602-c1, draft /orcd/data/orcd/022/benchmarks/b200-kimi/models/Kimi-K3-DSpark-pard
+[2026-10-17T05:46:21-04:00]   ISL/OSL=1024/1024 conc='1 2 4 8 16 32 64' max_num_seqs=64 max_model_len=16384
+  driver, HBM: 590.48.01, 183359 MiB
+[2026-10-17T05:46:23-04:00] ARM mtp7: draft length 7, attention_backend TOKENSPEED_MLA
+[2026-10-17T05:59:50-04:00] ARM mtp7: server did not start (rc=1). Last lines:
+    (APIServer pid=3219376)     raise NotImplementedError(
+    (APIServer pid=3219376) NotImplementedError: Pipeline parallelism is not supported for this model. Supported models implement the `SupportsPP` interface.
+    (APIServer pid=3219376)     raise NotImplementedError(
+    (APIServer pid=3219376) NotImplementedError: Pipeline parallelism is not supported for this model. Supported models implement the `SupportsPP` interface.
+    srun: error: node5601-c1: task 0: Exited with exit code 1
+[2026-10-17T06:00:00-04:00] ARM mtp7d: draft length 7, attention_backend default
+[2026-10-17T06:01:00-04:00] ARM mtp7d: server did not start (rc=1). Last lines:
+    (APIServer pid=3248389)     raise NotImplementedError(
+    (APIServer pid=3248389) NotImplementedError: Pipeline parallelism is not supported for this model. Supported models implement the `SupportsPP` interface.
+    (APIServer pid=3248389)     raise NotImplementedError(
+    (APIServer pid=3248389) NotImplementedError: Pipeline parallelism is not supported for this model. Supported models implement the `SupportsPP` interface.
+    srun: error: node5601-c1: task 0: Exited with exit code 1
+[2026-10-17T06:01:09-04:00] no MTP server started; stopping
+[2026-10-17T06:01:09-04:00] MTP run DONE (failed)

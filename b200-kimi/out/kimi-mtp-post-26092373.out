@@ -1,0 +1,3 @@
+B200 Kimi-K3 MTP (job 26092372): no MTP server started; see /orcd/data/orcd/022/benchmarks/b200-kimi/results/kimi-k3-mtp-b200.md
+==> fetching and fast-forwarding /orcd/data/orcd/022/shaohao/orcd-benchmarks to origin/main
+ERROR: destination has uncommitted changes; resolve them first: /orcd/data/orcd/022/shaohao/orcd-benchmarks

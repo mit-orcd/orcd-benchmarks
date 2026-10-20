@@ -243,7 +243,7 @@ Spec decoding does *not* require single-node TP. The upstream vLLM recipe gates 
  "draft_sample_method": "probabilistic", "rejection_sample_method": "block"}
 ```
 
-**On MI355X it is on in our vLLM recipe 1** (up to 14 users) and in our ATOM + MTP run (draft length 6 at 1 user, 2 above). **On B200 it was not attempted** — the speculator is not downloaded there (`HF_HUB_OFFLINE=1`). Given the ~2.7× per-user gain at c=1 measured above, this is the single highest-value follow-up available on B200.
+**On MI355X it is on in our vLLM recipe 1** (up to 14 users) and in our ATOM + MTP run (draft length 6 at 1 user, 2 above). **On B200 it was tried (job 26092372, TP8 × PP2, DCP 1) but the server did not start:** `(APIServer pid=3219376) NotImplementedError: Pipeline parallelism is not supported for this model. Supported models implement the `SupportsPP` interface.`. Given the ~2.7× per-user gain at c=1 measured above, this is the single highest-value follow-up available on B200.
 
 ## Source data
 

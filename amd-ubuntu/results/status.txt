@@ -77,3 +77,7 @@ all three recipes with AMD's published numbers)
 2026-10-16T14:52:57-04:00 MI355X ATOM + MTP: launched on node6100 (atom/run_kimi_atom_mtp.sh), md + push automatic at the end
 2026-10-16T15:48:33-04:00 MI355X ATOM + MTP: first run stopped (baseline image crashes with the DSpark draft: window_size); relaunched on nightly_202610011450 with a no-MTP arm
 MI355X ATOM + MTP: 9 points; c=1 per-user 256.8 tok/s (4.0x no MTP); /orcd/data/orcd/022/benchmarks/amd-ubuntu/results/mi355x-vs-b200-kimi-k3.md updated
+B200 Kimi-K3 MTP (job 26092372): no MTP server started; see /orcd/data/orcd/022/benchmarks/b200-kimi/results/kimi-k3-mtp-b200.md
+[2026-10-20T16:16:35-04:00] rocHPL: build (../rochpl/setup/build-rochpl.sh) + driver rochpl/run_rochpl_all.sh launched on node6100 (1-8 GPUs, then 16 GPUs 2 nodes; auto analysis -> results/rochpl-vs-rvs.md + push)
+[2026-10-20T16:26:26-04:00] rocHPL: rebuilt with ROCm 7.14 (amd-software/rocm-7.14.0) + driver relaunched on node6100; compares with RVS rocm7.14
+[2026-10-20T16:43:56-04:00] rocHPL: UCX fix (no UD; 1 node sm+rocm, 2 nodes +rc_verbs+tcp) tested 2/8/16 GPUs; full sweep relaunched
