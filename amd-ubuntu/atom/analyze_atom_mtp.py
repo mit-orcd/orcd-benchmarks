@@ -65,7 +65,7 @@ def turn(p1, p8, p, a, w):
 
 def main():
     run = sys.argv[1].rstrip("/")
-    pts, kof, acc, err = {}, {}, {}, ""
+    pts, kof, acc, err, k0 = {}, {}, {}, "", {}
     for d in sorted(glob.glob(f"{run}/k*")):
         k = int(os.path.basename(d)[1:])
         log = f"{d}/atom_server.log"
@@ -79,20 +79,26 @@ def main():
         for j in glob.glob(f"{d}/c*.json"):
             r = json.load(open(j))
             c = int(re.search(r"c(\d+)\.json$", j).group(1))
-            if r.get("completed", 0) > 0 and r.get("median_tpot_ms"):
+            if r.get("completed", 0) > 0 and r.get("median_tpot_ms") and k == 0:
+                k0[c] = (r["output_throughput"], 1000 / r["median_tpot_ms"])
+            elif r.get("completed", 0) > 0 and r.get("median_tpot_ms"):
                 pts[c] = dict(tps=r["output_throughput"], pu=1000 / r["median_tpot_ms"], tpot=r["median_tpot_ms"],
                               ttft=r["median_ttft_ms"])
                 kof[c] = k
-    ns = nospec()
+    # no-MTP reference: the K=0 arm of this run (same image) where it ran, else our ATOM baseline
+    ns = k0 or nospec()
+    nsref = "the no-MTP arm of this run (same image)" if k0 else "our ATOM baseline (`node6100/kimi-cloud/atom.csv`)"
+    imgf = f"{run}/images.txt"
+    img = open(imgf).read().split(" ->")[0].strip() if os.path.exists(imgf) else "rocm/atom-dev"
     s = open(MD).read()
     klab = " at 1 user, ".join(f"{k}" for k in sorted(set(kof.values()), reverse=True)) + (" above" if len(set(kof.values())) > 1 else "")
 
     # summary file
     D = ["# Kimi-K3 on 8 × MI355X: ATOM + DSpark MTP", "",
-         f"Run: `{run}`. Image `rocm/atom-dev:nightly_202608111555` (same as our ATOM baseline), TP8, max-num-seqs 64, "
-         "no prefix caching, ISL/OSL 1024/1024, `--ignore-eos`, 10 × users prompts; `--method dspark --draft-model "
+         f"Run: `{run}`. Image `{img}`, our ATOM baseline flags (TP8, max-num-seqs 64, "
+         "no prefix caching), ISL/OSL 1024/1024, `--ignore-eos`, 10 × users prompts; `--method dspark --draft-model "
          "Inferact/Kimi-K3-DSpark`, real acceptance (no forced acceptance length). TPOT = time per output token, "
-         "TTFT = time to first token. No MTP = our ATOM baseline (`node6100/kimi-cloud/atom.csv`).", ""]
+         f"TTFT = time to first token. No MTP = {nsref}.", ""]
     if acc:
         D += ["Acceptance length (median of the server's log lines): " + "; ".join(f"{v:.2f} at draft length {k}" for k, v in acc.items()) + ".", ""]
     D += ["| Users | draft length | out tok/s | per-user tok/s | TPOT med (ms) | TTFT med (ms) | per-user, no MTP | MTP / no MTP |",
@@ -122,8 +128,8 @@ def main():
 
     s = rep(s, next((l for l in s.split("\n") if l.startswith("- **8 × MI355X, vLLM recipe 1**")), "@@"),
             next((l for l in s.split("\n") if l.startswith("- **8 × MI355X, vLLM recipe 1**")), "")
-            + f"\n- **8 × MI355X, ATOM + MTP** (one node, TP8): our ATOM setup (`rocm/atom-dev:nightly_202608111555`, max-num-seqs 64) "
-              f"plus DSpark MTP (`--method dspark`, `Inferact/Kimi-K3-DSpark`), draft length {klab}, as in the InferenceX ATOM recipe. "
+            + f"\n- **8 × MI355X, ATOM + MTP** (one node, TP8): our ATOM flags (max-num-seqs 64), image `{img}` "
+              f"plus DSpark MTP (`--method dspark`, `Inferact/Kimi-K3-DSpark`), draft length {klab}, as in the InferenceX ATOM recipe (our ATOM baseline image, `nightly_202608111555`, crashes with this draft). "
               "Detail: `ubuntu/kimi-atom-mtp.md`.", "intro")
     if anchor:
         s = rep(s, anchor, anchor + "\n" + forced.format(ours="real (measured draft/target agreement)"), "§2 forced")
@@ -140,7 +146,7 @@ def main():
     # next numbered point in §4
     lines = s.split("\n")
     h = next((i for i, l in enumerate(lines) if l.startswith("**What the table shows, in ")), None)
-    if h is not None and 1 in pts:
+    if h is not None and 1 in pts and 1 in ns:
         j = h + 1
         while j < len(lines) and not re.match(r"\d+\. ", lines[j]):
             j += 1
@@ -196,7 +202,7 @@ def main():
             f"**On MI355X it is on in our vLLM recipe 1** (up to 14 users) and in our ATOM + MTP run (draft length {klab}).", "§6 on")
     open(MD, "w").write(s)
     line = (f"MI355X ATOM + MTP: {len(pts)} points; c=1 per-user {f1(pts[1]['pu'])} tok/s ({pts[1]['pu'] / ns[1][1]:.1f}x no MTP)"
-            if 1 in pts else f"MI355X ATOM + MTP: {len(pts)} points") + f"; {MD} updated"
+            if 1 in pts and 1 in ns else f"MI355X ATOM + MTP: {len(pts)} points") + f"; {MD} updated"
     open(STATUS, "a").write(line + "\n"); print(line)
 
 

@@ -1,12 +1,16 @@
 #!/usr/bin/env bash
 # Kimi-K3 on 8 x MI355X with ATOM + DSpark speculative decoding (MTP).
-# Same server and workload as our ATOM baseline (run_part_d.sh tier3: image
-# rocm/atom-dev:nightly_202608111555, TP8, max-num-seqs 64, gpu-mem-util 0.93,
+# Same server flags and workload as our ATOM baseline (run_part_d.sh tier3: TP8,
+# max-num-seqs 64, gpu-mem-util 0.93,
 # max-model-len 16384, batched 16384, block 128, no prefix caching, PTPC-FP8 quant;
 # ISL/OSL 1024/1024, --ignore-eos, range ratio 0.8, 10 x C prompts) plus
 #   --method dspark --draft-model Inferact/Kimi-K3-DSpark --num-speculative-tokens K
 # K as in the SemiAnalysis InferenceX ATOM recipe: 6 at 1 user, 2 above (one server each).
 # Real acceptance: no --spec-decode-acceptance-length.
+# Image: the newest ATOM (nightly_202610011450). The baseline image nightly_202608111555 crashes
+# on the first request with the K3 DSpark draft ("'KimiK3DSpark' object has no attribute
+# 'window_size'", dspark_proposer.py precompute_context_kv; run kimi_atom_mtp_20261016_185231),
+# so arm K=0 (no MTP) runs in the same image for a like-for-like MTP gain.
 #
 #   ./launch.sh node6100 atom/run_kimi_atom_mtp.sh
 # Knobs: ARMS ("K:conc list;K:conc list"), ATOM_IMG, DRAFT, PORT.
@@ -17,11 +21,11 @@ export RESULTS_SUBDIR=${RESULTS_SUBDIR:-kimi-atom-mtp}
 source /orcd/data/orcd/022/benchmarks/amd-ubuntu/common/env.sh
 cd "$(dirname "$0")"
 
-IMG="${ATOM_IMG:-${ATOM_IMG_CLOUD:-rocm/atom-dev:nightly_202608111555}}"
+IMG="${ATOM_IMG:-${ATOM_IMG_NEW:-rocm/atom-dev:nightly_202610011450}}"
 MODEL="${MKIMI:-$KIMI_MODEL}"
 DRAFT="${DRAFT:-$DSPARK_MODEL}"
 PORT="${PORT:-8031}"
-ARMS="${ARMS:-6:1;2:2 4 8 10 16 32 48 64}"
+ARMS="${ARMS:-0:1 8 32;6:1;2:2 4 8 10 16 32 48 64}"
 ISL=1024; OSL=1024; MAXSEQS=64
 NAME="atom-kimi-mtp"
 
@@ -57,7 +61,7 @@ run_arm() {   # $1 = K, $2 = conc list
     echo '  --gpu-memory-utilization 0.93 --trust-remote-code \'
     echo '  --max-model-len 16384 --max-num-batched-tokens 16384 --block-size 128 \'
     echo '  --no-enable_prefix_caching \'
-    echo "  --method dspark --draft-model /draft --num-speculative-tokens $K \\"
+    (( K > 0 )) && echo "  --method dspark --draft-model /draft --num-speculative-tokens $K \\"
     printf "  --online_quant_config '%s' 2>&1 | tee /out/atom_server.log\n" "$KIMI_QUANT"
   } >"$D/server_cmd.sh"
   chmod +x "$D/server_cmd.sh"
@@ -85,8 +89,18 @@ run_arm() {   # $1 = K, $2 = conc list
         --percentile-metrics ttft,tpot,itl,e2el --dataset-name random --ignore-eos \
         --request-rate inf --random-range-ratio 0.8 --trust-remote-code --max-concurrency "$C" \
         --num-prompts "$n" --random-input-len "$ISL" --random-output-len "$OSL" --save-result \
-        --result-dir /out --result-filename "c${C}.json" >"$D/c${C}.log" 2>&1
-    rc=$?
+        --result-dir /out --result-filename "c${C}.json" >"$D/c${C}.log" 2>&1 &
+    bp=$!
+    # a dead model runner leaves the client waiting for the full timeout: stop at once
+    while kill -0 $bp 2>/dev/null; do
+      if grep -q 'proc died unexpectedly' "$D/atom_server.log" 2>/dev/null; then
+        say "k=$K c=$C: server worker died: $(grep -m1 -E '^[A-Za-z]*Error' "$D/atom_server.log" | cut -c1-200)"
+        kill $bp 2>/dev/null; echo died >"$D/FAILED"; break
+      fi
+      sleep 20
+    done
+    wait $bp; rc=$?
+    [[ -f $D/FAILED ]] && break
     say "k=$K c=$C rc=$rc $($PY -c "import json,sys;d=json.load(open('$D/c$C.json'));print('tok/s %.1f TPOT %.2f ms TTFT %.0f ms done %d'%(d['output_throughput'],d['median_tpot_ms'],d['median_ttft_ms'],d['completed']))" 2>/dev/null || echo 'no json')"
   done
   docker stop -t 30 "$NAME" >/dev/null 2>&1; docker rm "$NAME" >/dev/null 2>&1

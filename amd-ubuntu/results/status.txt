@@ -75,3 +75,5 @@ all three recipes with AMD's published numbers)
 2026-10-15T18:20:36-04:00 B200 NCCL 1 MB tuning: job 25990596 result put into mi355x-vs-b200-interconnect.md + mi355x-vs-b200.md
 2026-10-16T14:37:29-04:00 B200 Kimi-K3 MTP: submitted job 26092372 (post 26092373), top priority among own B200 jobs
 2026-10-16T14:52:57-04:00 MI355X ATOM + MTP: launched on node6100 (atom/run_kimi_atom_mtp.sh), md + push automatic at the end
+2026-10-16T15:48:33-04:00 MI355X ATOM + MTP: first run stopped (baseline image crashes with the DSpark draft: window_size); relaunched on nightly_202610011450 with a no-MTP arm
+MI355X ATOM + MTP: 9 points; c=1 per-user 256.8 tok/s (4.0x no MTP); /orcd/data/orcd/022/benchmarks/amd-ubuntu/results/mi355x-vs-b200-kimi-k3.md updated
