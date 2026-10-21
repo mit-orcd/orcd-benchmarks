@@ -18,6 +18,7 @@ SUMMD = os.environ.get("MTP_SUM", f"{R}/ubuntu/kimi-atom-mtp.md")
 # our ATOM baseline without MTP (results/node6100/kimi-cloud/atom.csv, sweep_20261002_025708)
 NOSPEC_CSV = f"{R}/node6100/kimi-cloud/atom.csv"
 COL = "**Ours** MI355X ATOM +MTP"
+NSCOL = "**Ours** MI355X ATOM (no MTP)"   # K=0 arm, same image; goes right before COL
 f1 = lambda x: f"{x:,.1f}"
 
 
@@ -141,6 +142,9 @@ def main():
         s = rep(s, anchor, anchor + "\n" + forced.format(ours="real (measured draft/target agreement)"), "§2 forced")
 
     head = "| Conc | **Ours** B200 TP8×PP2 (no spec) |"
+    if k0:
+        s = add_col(s, head, 0, NSCOL, {c: f1(v[0]) for c, v in k0.items()}, before_last=True)
+        s = add_col(s, head, 1, NSCOL, {c: f1(v[1]) for c, v in k0.items()}, before_last=True)
     s = add_col(s, head, 0, COL, {c: f1(p["tps"]) for c, p in pts.items()}, before_last=True)
     s = add_col(s, head, 1, COL, {c: f1(p["pu"]) for c, p in pts.items()}, before_last=True)
     if 64 in pts:

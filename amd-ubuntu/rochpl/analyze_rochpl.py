@@ -142,6 +142,22 @@ larger share of its time in the GEMM.
   is less efficient.
 - A larger N (more of the 288 GB HBM) gives a larger GEMM share and a higher result.
 
+## What each test measures, and which real work it is close to
+
+| | RVS `gst` | rocHPL |
+|---|---|---|
+| Main thing measured | Peak fp64 speed of the matrix units, one GEMM per GPU | Sustained fp64 speed of a full dense solver on many GPUs |
+| What limits it | Compute only | Compute, plus panel factorization, data movement (XGMI, RoCE) and memory |
+| GPUs work together | No | Yes |
+| Question it answers | Is each GPU healthy and at spec? | How fast does the whole system solve a large dense problem? |
+| Real work it is close to | The inner GEMM loop of any fp64 code — a ceiling, not an app | Dense linear algebra: direct (LU) solvers, boundary element methods (electromagnetics, acoustics), dense electronic-structure and quantum-chemistry solves |
+| Real work it is NOT like | Anything with communication or memory traffic | Sparse and memory-bound codes (most CFD, climate, graph work: closer to HPCG or STREAM); AI training and inference (bf16, fp8, fp4: closer to RVS at those precisions, RCCL, and real model runs) |
+
+**rocHPL is closer to real-world computation**: it runs a full solver with real communication across
+GPUs and nodes, and is the Top500 metric. But it is still a best case: a dense, compute-bound fp64
+problem. Most real science codes are sparse or memory-bound and reach a much smaller share of peak.
+RVS is a hardware ceiling and health check, not a model of any application.
+
 ## Setup
 
 - rocHPL: built from github.com/ROCm/rocHPL for gfx950 with ROCm 7.14 hipcc and rocBLAS

@@ -54,23 +54,36 @@ Two independent teams, different clusters, same conclusions — including the ex
 
 **Precision is the same, despite the labels.** InferenceX's config says `precision: "fp4"` and ours says MXFP4 — the same thing. Both serve the native `moonshotai/Kimi-K3` MXFP4 checkpoint (`mxfp4-pack-quantized`, 4-bit routed experts with e8m0 scales); neither re-quantises. "FP4" on the InferenceX dashboard is the checkpoint's own format, not a separate NVFP4 conversion.
 
+**Why ours looks much better than InferenceX — the workload, not the hardware.** Same model, same B200 image and layout, but a different job:
+
+- **Ours:** random prompts, 1024 tokens in, 1024 out — short and the same every time.
+- **InferenceX:** real agent traces — long, growing context (up to 1M tokens), mostly input, short outputs. Each output token reads far more KV cache, and prefill from other users takes GPU time from decode.
+- **At 1 user the two agree:** B200 89.0 (ours) vs 81.9 (InferenceX) tok/s per user. This is the fair check, and it shows our setup is sound.
+- **With more users the gap grows:** 53.6 vs 8.6 at 16 users, 39.6 vs 3.8 at 32. Long contexts crowd out decode; our short requests never hit this.
+- **Aggregate throughput counts output tokens only**, so InferenceX's input-heavy requests look slow even when the GPUs are busy.
+- **InferenceX's B200 columns mix two runs:** from 48 users the no-spec rows use a newer nightly image (`nightly-dev-x86_64-cu13.0.1-728d3ad`), hence the jump from 60 tok/s at 32 users to 838 at 48.
+
+So "ours is faster" at high load is not a valid conclusion — ours is an easier workload. A like-for-like comparison would need the InferenceX agent traces replayed on our nodes.
+
 ## 3. Aggregate throughput — InferenceX vs ours
 
 The InferenceX API carries aggregate output throughput (`output_tput_tps`) at every concurrency point — the same quantity as our "Throughput (tok/s)" column ([mi355x-vs-b200.md](mi355x-vs-b200.md) §5.1). InferenceX's **B200 arms are 16 GPUs, TP8 × PP2 across 2 nodes — the same layout as ours**; its MI355X arms are 8 GPUs on one node, as is ours.
 
-| Conc | **Ours** B200 TP8×PP2 (no spec) | **InferenceX** B200 TP8×PP2 (no spec) | **InferenceX** B200 +MTP | **Ours** MI355X vLLM recipe 1 (+MTP up to 14 users) | **InferenceX** MI355X vLLM +MTP | **Ours** MI355X ATOM +MTP | **InferenceX** MI355X ATOM +MTP |
-|---:|---:|---:|---:|---:|---:|---:|---:|
-| 1 | 86.7 | 59.9 | 118.1 | 70.7 | 67.4 | 197.4 | 91.0 |
-| 2 | 165.2 | 72.1 | 144.5 | — | — | 280.7 | — |
-| 4 | 280.8 | 76.0 | 190.3 | 212.5 | 115.7 | 464.1 | 137.1 |
-| 8 | 475.3 | 99.7 | 338.3 | 353.0 | 169.5 | 811.5 | 233.0 |
-| 10 | — | — | — | 418.6 | 235.0 | 695.5 | 293.1 |
-| 16 | 801.8 | 92.4 | 518.0 | — | — | 1,117.0 | — |
-| 32 | 1,209.3 | 60.2 | 768.0 | — | — | 1,810.2 | — |
-| 48 | — | 838.2 | — | 1,157.9 (no spec) | — | 2,149.0 | — |
-| 64 | 1,696.4 | — | — | 1,344.2 (no spec) | — | 2,463.1 | — |
-| 72 | — | 1,021.6 | — | — | — | — | — |
-| 96 | — | 1,159.4 | — | — | — | — | — |
+| Conc | **Ours** B200 TP8×PP2 (no spec) | **InferenceX** B200 TP8×PP2 (no spec) | **InferenceX** B200 +MTP | **Ours** MI355X vLLM recipe 1 (+MTP up to 14 users) | **InferenceX** MI355X vLLM +MTP | **Ours** MI355X ATOM (no MTP) | **Ours** MI355X ATOM +MTP | **InferenceX** MI355X ATOM +MTP |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 86.7 | 59.9 | 118.1 | 70.7 | 67.4 | 63.1 | 197.4 | 91.0 |
+| 2 | 165.2 | 72.1 | 144.5 | — | — | — | 280.7 | — |
+| 4 | 280.8 | 76.0 | 190.3 | 212.5 | 115.7 | — | 464.1 | 137.1 |
+| 8 | 475.3 | 99.7 | 338.3 | 353.0 | 169.5 | 430.8 | 811.5 | 233.0 |
+| 10 | — | — | — | 418.6 | 235.0 | — | 695.5 | 293.1 |
+| 16 | 801.8 | 92.4 | 518.0 | — | — | — | 1,117.0 | — |
+| 32 | 1,209.3 | 60.2 | 768.0 | — | — | 1,084.7 | 1,810.2 | — |
+| 48 | — | 838.2 | — | 1,157.9 (no spec) | — | — | 2,149.0 | — |
+| 64 | 1,696.4 | — | — | 1,344.2 (no spec) | — | — | 2,463.1 | — |
+| 72 | — | 1,021.6 | — | — | — | — | — | — |
+| 96 | — | 1,159.4 | — | — | — | — | — | — |
+
+*Ours MI355X ATOM (no MTP) = the no-MTP arm of the same ATOM + MTP run (same image, `nightly_202610011450`), measured at 1, 8 and 32 users only.*
 
 ### Why ours leads here but trails on per-user tok/s (§4)
 
@@ -101,16 +114,18 @@ InferenceX traces average **~138k input tokens** per request against a handful o
 
 Retrieved from the InferenceX public API (`/api/v1/benchmarks?model=Kimi-K3`); an extracted CSV is in `../../b200-kimi/semianalysis-ref/`. The InferenceX **"Interactivity"** metric is exactly our per-user tok/s — verified against its own fields: `mean_tpot` 0.00454 s → 1/0.00454 = 220.3 = `mean_intvty`. Same definition, `1 / TPOT`.
 
-| Conc | **Ours** B200 TP8×PP2 (no spec) | **InferenceX** B200 TP8×PP2 (no spec) | **InferenceX** B200 +MTP | **Ours** MI355X vLLM recipe 1 (+MTP up to 14 users) | **InferenceX** MI355X vLLM +MTP | **Ours** MI355X ATOM +MTP | **InferenceX** MI355X ATOM +MTP |
-|---:|---:|---:|---:|---:|---:|---:|---:|
-| 1 | **89.0** | 81.9 | **221.7** | 65.1 | 84.0 | 256.8 | 127.2 |
-| 2 | 84.4 | 74.8 | 219.3 | — | — | 161.5 | — |
-| 4 | 73.4 | 54.1 | 203.3 | 53.2 | 62.5 | 138.5 | 88.7 |
-| 8 | 64.9 | 21.1 | 154.1 | 45.5 | 41.4 | 112.2 | 64.7 |
-| 10 | — | — | — | 43.0 | 35.7 | 78.4 | 62.7 |
-| 16 | 53.6 | 8.6 | 77.7 | — | — | 78.2 | — |
-| 32 | 39.6 | 3.8 | 46.5 | — | — | 61.7 | — |
-| 64 | 27.9 | — | — | 21.9 (no spec) | — | 41.7 | — |
+| Conc | **Ours** B200 TP8×PP2 (no spec) | **InferenceX** B200 TP8×PP2 (no spec) | **InferenceX** B200 +MTP | **Ours** MI355X vLLM recipe 1 (+MTP up to 14 users) | **InferenceX** MI355X vLLM +MTP | **Ours** MI355X ATOM (no MTP) | **Ours** MI355X ATOM +MTP | **InferenceX** MI355X ATOM +MTP |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | **89.0** | 81.9 | **221.7** | 65.1 | 84.0 | 64.0 | 256.8 | 127.2 |
+| 2 | 84.4 | 74.8 | 219.3 | — | — | — | 161.5 | — |
+| 4 | 73.4 | 54.1 | 203.3 | 53.2 | 62.5 | — | 138.5 | 88.7 |
+| 8 | 64.9 | 21.1 | 154.1 | 45.5 | 41.4 | 56.4 | 112.2 | 64.7 |
+| 10 | — | — | — | 43.0 | 35.7 | — | 78.4 | 62.7 |
+| 16 | 53.6 | 8.6 | 77.7 | — | — | — | 78.2 | — |
+| 32 | 39.6 | 3.8 | 46.5 | — | — | 35.3 | 61.7 | — |
+| 64 | 27.9 | — | — | 21.9 (no spec) | — | — | 41.7 | — |
+
+*Ours MI355X ATOM (no MTP) = the no-MTP arm of the same ATOM + MTP run (same image, `nightly_202610011450`), measured at 1, 8 and 32 users only.*
 
 **"no spec" = plain decoding, one token per forward pass. "+MTP" = speculative decoding on: a draft model proposes several tokens and the big model verifies them in one pass.**
 
