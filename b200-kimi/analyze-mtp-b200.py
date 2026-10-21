@@ -176,10 +176,10 @@ def main():
 
     if 1 in best and 8 in best:
         rows = []
-        for (p, a, w), anchor in (((200, 500, 800), "| **Ours** MI355X vLLM recipe 1 (+MTP) | 3.3 s |"),
-                                  ((30, 70, 100), "| **Ours** MI355X vLLM recipe 1 (+MTP) | 0.6 s |")):
+        for (p, a, w), anchor in (((200, 500, 800), "| **Ours** 8× MI355X vLLM recipe 1 (+MTP) | 3.3 s |"),
+                                  ((30, 70, 100), "| **Ours** 8× MI355X vLLM recipe 1 (+MTP) | 0.6 s |")):
             P, A, W, T, F, R = turn(best[1][1], best[8][1], p, a, w)
-            s = rep(s, anchor, f"| **Ours** B200 +MTP | {P:.1f} s | {A:.1f} s | {W:.1f} s | **{T:.1f} s** | {F:.1f} s | {R:.0f} words/s |\n" + anchor, f"turn {p}")
+            s = rep(s, anchor, f"| **Ours** 16× B200 +MTP | {P:.1f} s | {A:.1f} s | {W:.1f} s | **{T:.1f} s** | {F:.1f} s | {R:.0f} words/s |\n" + anchor, f"turn {p}")
             rows.append(R)
         m = re.search(r"Every row prints at (\d+)–(\d+) words/s", s)
         if m:

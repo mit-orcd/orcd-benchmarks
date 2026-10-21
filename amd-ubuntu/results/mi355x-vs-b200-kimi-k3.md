@@ -160,14 +160,14 @@ Each step costs `TTFT + (tokens per stream − 1) ÷ per-user tok/s`. Only the *
 
 | System | Plan | 8 tool calls | Answer | **Whole turn** | First word at | Print rate |
 |---|---:|---:|---:|---:|---:|---:|
-| **Ours** B200 (no MTP) | 2.5 s | 7.9 s | 9.2 s | **19.6 s** | 10.6 s | 67 words/s |
-| **Ours** MI355X vLLM recipe 1 (+MTP) | 3.3 s | 11.3 s | 12.5 s | **27.0 s** | 14.7 s | 49 words/s |
-| **Ours** MI355X ATOM (no MTP) | 3.3 s | 9.0 s | 12.7 s | **25.0 s** | 12.5 s | 48 words/s |
-| **Ours** MI355X ATOM +MTP | 0.9 s | 4.6 s | 3.3 s | **8.9 s** | 5.8 s | 193 words/s |
-| **InferenceX** B200 (no MTP) | 6.9 s | 30.3 s | 14.3 s | **51.6 s** | 41.8 s | 61 words/s |
-| **InferenceX** B200 +MTP | 2.0 s | 4.1 s | 4.8 s | **10.9 s** | 7.3 s | 166 words/s |
-| **InferenceX** MI355X ATOM +MTP | 2.4 s | 8.5 s | 7.1 s | **18.0 s** | 11.7 s | 95 words/s |
-| **InferenceX** MI355X vLLM +MTP | 3.8 s | 13.7 s | 10.9 s | **28.4 s** | 18.9 s | 63 words/s |
+| **Ours** 16× B200 (no MTP) | 2.5 s | 7.9 s | 9.2 s | **19.6 s** | 10.6 s | 67 words/s |
+| **Ours** 8× MI355X vLLM recipe 1 (+MTP) | 3.3 s | 11.3 s | 12.5 s | **27.0 s** | 14.7 s | 49 words/s |
+| **Ours** 8× MI355X ATOM (no MTP) | 3.3 s | 9.0 s | 12.7 s | **25.0 s** | 12.5 s | 48 words/s |
+| **Ours** 8× MI355X ATOM +MTP | 0.9 s | 4.6 s | 3.3 s | **8.9 s** | 5.8 s | 193 words/s |
+| **InferenceX** 16× B200 (no MTP) | 6.9 s | 30.3 s | 14.3 s | **51.6 s** | 41.8 s | 61 words/s |
+| **InferenceX** 16× B200 +MTP | 2.0 s | 4.1 s | 4.8 s | **10.9 s** | 7.3 s | 166 words/s |
+| **InferenceX** 8× MI355X ATOM +MTP | 2.4 s | 8.5 s | 7.1 s | **18.0 s** | 11.7 s | 95 words/s |
+| **InferenceX** 8× MI355X vLLM +MTP | 3.8 s | 13.7 s | 10.9 s | **28.4 s** | 18.9 s | 63 words/s |
 
 *Worked example, the first row.* §4 gives 89.0 tok/s at c=1 and 64.9 at c=8. Step 1 = 0.23 + 199/89.0 = 2.5 s. Step 2 = 0.23 + 499/64.9 = 7.9 s for all eight calls together — a session rate of 504.9 tok/s (the steady-state 519.3, diluted by the 0.23 s prefill), which is §3's aggregate column. Step 3 = 0.23 + 799/89.0 = 9.2 s. (MI355X row: TTFT 0.20 s at c=1 and 0.28 s at c=8; Step 1 = 0.20 + 199/65.1 = 3.3 s, Step 2 = 0.28 + 499/45.5 = 11.3 s, Step 3 = 0.20 + 799/65.1 = 12.5 s.)
 
@@ -183,14 +183,14 @@ The turn above is a heavy one. Most agent traffic is lighter — a brief plan, s
 
 | System | Plan (30 tok) | 8 tool calls (70 tok ea) | Answer (100 tok) | **Whole turn** | First word at | Print rate |
 |---|---:|---:|---:|---:|---:|---:|
-| **Ours** B200 (no MTP) | 0.6 s | 1.3 s | 1.3 s | **3.2 s** | 2.1 s | 67 words/s |
-| **Ours** MI355X vLLM recipe 1 (+MTP) | 0.6 s | 1.8 s | 1.7 s | **4.2 s** | 2.6 s | 49 words/s |
-| **Ours** MI355X ATOM (no MTP) | 0.6 s | 1.4 s | 1.7 s | **3.7 s** | 2.2 s | 48 words/s |
-| **Ours** MI355X ATOM +MTP | 0.3 s | 0.8 s | 0.6 s | **1.7 s** | 1.3 s | 193 words/s |
-| **InferenceX** B200 (no MTP) | 4.9 s | 10.0 s | 5.7 s | **20.6 s** | 19.4 s | 61 words/s |
-| **InferenceX** B200 +MTP | 1.3 s | 1.3 s | 1.6 s | **4.2 s** | 3.7 s | 166 words/s |
-| **InferenceX** MI355X ATOM +MTP | 1.0 s | 1.9 s | 1.6 s | **4.5 s** | 3.7 s | 95 words/s |
-| **InferenceX** MI355X vLLM +MTP | 1.8 s | 3.3 s | 2.6 s | **7.6 s** | 6.5 s | 63 words/s |
+| **Ours** 16× B200 (no MTP) | 0.6 s | 1.3 s | 1.3 s | **3.2 s** | 2.1 s | 67 words/s |
+| **Ours** 8× MI355X vLLM recipe 1 (+MTP) | 0.6 s | 1.8 s | 1.7 s | **4.2 s** | 2.6 s | 49 words/s |
+| **Ours** 8× MI355X ATOM (no MTP) | 0.6 s | 1.4 s | 1.7 s | **3.7 s** | 2.2 s | 48 words/s |
+| **Ours** 8× MI355X ATOM +MTP | 0.3 s | 0.8 s | 0.6 s | **1.7 s** | 1.3 s | 193 words/s |
+| **InferenceX** 16× B200 (no MTP) | 4.9 s | 10.0 s | 5.7 s | **20.6 s** | 19.4 s | 61 words/s |
+| **InferenceX** 16× B200 +MTP | 1.3 s | 1.3 s | 1.6 s | **4.2 s** | 3.7 s | 166 words/s |
+| **InferenceX** 8× MI355X ATOM +MTP | 1.0 s | 1.9 s | 1.6 s | **4.5 s** | 3.7 s | 95 words/s |
+| **InferenceX** 8× MI355X vLLM +MTP | 1.8 s | 3.3 s | 2.6 s | **7.6 s** | 6.5 s | 63 words/s |
 
 **Prefill stops being negligible.** The B200 turn drops from 19.6 s to **3.2 s**, and the three prefills (0.69 s of TTFT) go from 4% of the heavy turn to **22%** of this one. Generation still dominates at this size, but the margin narrows — and on realistic agent prompts of 100k+ tokens, where TTFT is seconds rather than 0.23 s (§2), it would invert entirely.
 
