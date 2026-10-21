@@ -141,7 +141,7 @@ def main():
     if anchor:
         s = rep(s, anchor, anchor + "\n" + forced.format(ours="real (measured draft/target agreement)"), "§2 forced")
 
-    head = "| Conc | **Ours** B200 TP8×PP2 (no spec) |"
+    head = "| Conc | **Ours** B200 TP8×PP2 (no MTP) |"
     if k0:
         s = add_col(s, head, 0, NSCOL, {c: f1(v[0]) for c, v in k0.items()}, before_last=True)
         s = add_col(s, head, 1, NSCOL, {c: f1(v[1]) for c, v in k0.items()}, before_last=True)
@@ -188,7 +188,7 @@ def main():
     if g:
         tab = ["", "Measured gain in our MI355X ATOM data (MTP vs no MTP, same hardware, 1024/1024, real acceptance):", "",
                "| | " + " | ".join(f"c={c}" for c, _, _ in g) + " |", "|---|" + "---:|" * len(g),
-               "| MI355X ATOM per-user tok/s, **no spec** | " + " | ".join(f1(n) for _, _, n in g) + " |",
+               "| MI355X ATOM per-user tok/s, **no MTP** | " + " | ".join(f1(n) for _, _, n in g) + " |",
                "| MI355X ATOM per-user tok/s, **MTP** | " + " | ".join(f1(m) for _, m, _ in g) + " |",
                "| ratio | " + " | ".join(f"**{m / n:.1f}×**" for _, m, n in g) + " |", ""]
         s = rep(s, "\nCeiling is draft length × acceptance rate", "\n".join(tab) + "\nCeiling is draft length × acceptance rate", "§6 gain")

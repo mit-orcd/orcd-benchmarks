@@ -45,7 +45,7 @@ Two independent teams, different clusters, same conclusions — including the ex
 | `max-model-len` | **B200** | 16384 | native **1M** (unset) | InferenceX pays a far larger KV footprint per sequence |
 | `max-num-seqs` | **B200** | **64** (fixed) | let vLLM choose | ours deliberately caps the batch; `../../b200-kimi/results/kimi-k3-base-b200.md` §3.2 shows that cap is what binds our throughput |
 | Benchmark client | **both** | `vllm bench serve` | `aiperf` + trace replay | different measurement harness |
-| **Spec decoding (MTP)** | **B200** | **off** | both: no spec and **DSpark MTP on** | InferenceX's B200 +MTP arm gets a lever ours does not use — see §6 |
+| **Spec decoding (MTP)** | **B200** | **off** | both: no MTP and **DSpark MTP on** | InferenceX's B200 +MTP arm gets a lever ours does not use — see §6 |
 | **Spec decoding (MTP)** | **MI355X** | **DSpark MTP on up to 14 users** (draft length 7, 5, 4, 3 as load rises), off from 44 users | **DSpark MTP on** (`SPEC_NUM_TOKENS 2`) | both MI355X arms use MTP at low load; ours uses a longer draft |
 | `max-num-seqs` | **MI355X** | 2 × users (2–512, recipe setting) | 128 | ours re-tunes the batch for each load |
 | `gpu-memory-utilization` | **MI355X** | 0.90 | 0.95 | small KV-cache difference |
@@ -61,7 +61,7 @@ Two independent teams, different clusters, same conclusions — including the ex
 - **At 1 user the two agree:** B200 89.0 (ours) vs 81.9 (InferenceX) tok/s per user. This is the fair check, and it shows our setup is sound.
 - **With more users the gap grows:** 53.6 vs 8.6 at 16 users, 39.6 vs 3.8 at 32. Long contexts crowd out decode; our short requests never hit this.
 - **Aggregate throughput counts output tokens only**, so InferenceX's input-heavy requests look slow even when the GPUs are busy.
-- **InferenceX's B200 columns mix two runs:** from 48 users the no-spec rows use a newer nightly image (`nightly-dev-x86_64-cu13.0.1-728d3ad`), hence the jump from 60 tok/s at 32 users to 838 at 48.
+- **InferenceX's B200 columns mix two runs:** from 48 users the no-MTP rows use a newer nightly image (`nightly-dev-x86_64-cu13.0.1-728d3ad`), hence the jump from 60 tok/s at 32 users to 838 at 48.
 
 So "ours is faster" at high load is not a valid conclusion — ours is an easier workload. A like-for-like comparison would need the InferenceX agent traces replayed on our nodes.
 
@@ -69,7 +69,7 @@ So "ours is faster" at high load is not a valid conclusion — ours is an easier
 
 The InferenceX API carries aggregate output throughput (`output_tput_tps`) at every concurrency point — the same quantity as our "Throughput (tok/s)" column ([mi355x-vs-b200.md](mi355x-vs-b200.md) §5.1). InferenceX's **B200 arms are 16 GPUs, TP8 × PP2 across 2 nodes — the same layout as ours**; its MI355X arms are 8 GPUs on one node, as is ours.
 
-| Conc | **Ours** B200 TP8×PP2 (no spec) | **InferenceX** B200 TP8×PP2 (no spec) | **InferenceX** B200 +MTP | **Ours** MI355X vLLM recipe 1 (+MTP up to 14 users) | **InferenceX** MI355X vLLM +MTP | **Ours** MI355X ATOM (no MTP) | **Ours** MI355X ATOM +MTP | **InferenceX** MI355X ATOM +MTP |
+| Conc | **Ours** B200 TP8×PP2 (no MTP) | **InferenceX** B200 TP8×PP2 (no MTP) | **InferenceX** B200 +MTP | **Ours** MI355X vLLM recipe 1 (+MTP up to 14 users) | **InferenceX** MI355X vLLM +MTP | **Ours** MI355X ATOM (no MTP) | **Ours** MI355X ATOM +MTP | **InferenceX** MI355X ATOM +MTP |
 |---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | 1 | 86.7 | 59.9 | 118.1 | 70.7 | 67.4 | 63.1 | 197.4 | 91.0 |
 | 2 | 165.2 | 72.1 | 144.5 | — | — | — | 280.7 | — |
@@ -78,8 +78,8 @@ The InferenceX API carries aggregate output throughput (`output_tput_tps`) at ev
 | 10 | — | — | — | 418.6 | 235.0 | — | 695.5 | 293.1 |
 | 16 | 801.8 | 92.4 | 518.0 | — | — | — | 1,117.0 | — |
 | 32 | 1,209.3 | 60.2 | 768.0 | — | — | 1,084.7 | 1,810.2 | — |
-| 48 | — | 838.2 | — | 1,157.9 (no spec) | — | — | 2,149.0 | — |
-| 64 | 1,696.4 | — | — | 1,344.2 (no spec) | — | — | 2,463.1 | — |
+| 48 | — | 838.2 | — | 1,157.9 (no MTP) | — | — | 2,149.0 | — |
+| 64 | 1,696.4 | — | — | 1,344.2 (no MTP) | — | — | 2,463.1 | — |
 | 72 | — | 1,021.6 | — | — | — | — | — | — |
 | 96 | — | 1,159.4 | — | — | — | — | — | — |
 
@@ -108,13 +108,13 @@ InferenceX traces average **~138k input tokens** per request against a handful o
 
 **Which view is "real world" depends on the workload, not the user count.** One interactive chat issues one request at a time and feels per-user tok/s; a batch job or an agentic app fanning out parallel calls fills the server itself and gets the aggregate rate. The InferenceX data makes the same point from the other side: its aggregate column is a *capacity* number measured under agentic load, which is why it is dominated by prefill and says almost nothing about how fast a single agent turn streams. For that, read §4.
 
-**The InferenceX B200 no-spec column is not one curve.** It falls to 60.2 at c=32 and then jumps to 838.2 at c=48 because the c=1–32 and c=48–96 points come from different recipe families (the low-concurrency records carry no `recipe_fingerprint`; the high-concurrency ones do). Do not read a scaling trend down that column.
+**The InferenceX B200 no-MTP column is not one curve.** It falls to 60.2 at c=32 and then jumps to 838.2 at c=48 because the c=1–32 and c=48–96 points come from different recipe families (the low-concurrency records carry no `recipe_fingerprint`; the high-concurrency ones do). Do not read a scaling trend down that column.
 
 ## 4. Per-user tok/s — InferenceX vs ours
 
 Retrieved from the InferenceX public API (`/api/v1/benchmarks?model=Kimi-K3`); an extracted CSV is in `../../b200-kimi/semianalysis-ref/`. The InferenceX **"Interactivity"** metric is exactly our per-user tok/s — verified against its own fields: `mean_tpot` 0.00454 s → 1/0.00454 = 220.3 = `mean_intvty`. Same definition, `1 / TPOT`.
 
-| Conc | **Ours** B200 TP8×PP2 (no spec) | **InferenceX** B200 TP8×PP2 (no spec) | **InferenceX** B200 +MTP | **Ours** MI355X vLLM recipe 1 (+MTP up to 14 users) | **InferenceX** MI355X vLLM +MTP | **Ours** MI355X ATOM (no MTP) | **Ours** MI355X ATOM +MTP | **InferenceX** MI355X ATOM +MTP |
+| Conc | **Ours** B200 TP8×PP2 (no MTP) | **InferenceX** B200 TP8×PP2 (no MTP) | **InferenceX** B200 +MTP | **Ours** MI355X vLLM recipe 1 (+MTP up to 14 users) | **InferenceX** MI355X vLLM +MTP | **Ours** MI355X ATOM (no MTP) | **Ours** MI355X ATOM +MTP | **InferenceX** MI355X ATOM +MTP |
 |---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | 1 | **89.0** | 81.9 | **221.7** | 65.1 | 84.0 | 64.0 | 256.8 | 127.2 |
 | 2 | 84.4 | 74.8 | 219.3 | — | — | — | 161.5 | — |
@@ -123,19 +123,19 @@ Retrieved from the InferenceX public API (`/api/v1/benchmarks?model=Kimi-K3`); a
 | 10 | — | — | — | 43.0 | 35.7 | — | 78.4 | 62.7 |
 | 16 | 53.6 | 8.6 | 77.7 | — | — | — | 78.2 | — |
 | 32 | 39.6 | 3.8 | 46.5 | — | — | 35.3 | 61.7 | — |
-| 64 | 27.9 | — | — | 21.9 (no spec) | — | — | 41.7 | — |
+| 64 | 27.9 | — | — | 21.9 (no MTP) | — | — | 41.7 | — |
 
 *Ours MI355X ATOM (no MTP) = the no-MTP arm of the same ATOM + MTP run (same image, `nightly_202610011450`), measured at 1, 8 and 32 users only.*
 
-**"no spec" = plain decoding, one token per forward pass. "+MTP" = speculative decoding on: a draft model proposes several tokens and the big model verifies them in one pass.**
+**"no MTP" = plain decoding, one token per forward pass. "+MTP" = speculative decoding on: a draft model proposes several tokens and the big model verifies them in one pass.**
 
-> ⚠️ **Every one of the InferenceX MI355X runs uses MTP — InferenceX publishes no MI355X result without it — so the InferenceX MI355X columns can never be compared against the B200 no-spec columns on equal footing.** (Verified in the InferenceX API data: all 8 MI355X records are `spec_method: mtp`; B200 has both, 9 `none` and 6 `mtp`.) The same holds for our MI355X column up to 14 users.
+> ⚠️ **Every one of the InferenceX MI355X runs uses MTP — InferenceX publishes no MI355X result without it — so the InferenceX MI355X columns can never be compared against the B200 no-MTP columns on equal footing.** (Verified in the InferenceX API data: all 8 MI355X records are `spec_method: mtp`; B200 has both, 9 `none` and 6 `mtp`.) The same holds for our MI355X column up to 14 users.
 
 Units: output tokens/s delivered to a single request. InferenceX's are `median_intvty`; ours are `1000 / median TPOT` (with speculative decoding, TPOT counts accepted tokens, so it already includes the draft's benefit). **Read across rows with care — see §2.** The columns differ in workload (agentic traces vs fixed 1024/1024), prefix caching and context (1M vs 16K on B200), so this is not a like-for-like ranking.
 
 **What the table shows, in four points:**
 
-1. **Our B200 no-spec number matches InferenceX's at c=1** (89.0 vs 81.9) — an independent check that our TP8×PP2 setup is performing normally, not misconfigured.
+1. **Our B200 no-MTP number matches InferenceX's at c=1** (89.0 vs 81.9) — an independent check that our TP8×PP2 setup is performing normally, not misconfigured.
 2. **MTP is worth ~2.7× at c=1 on B200**, in the InferenceX data, same hardware — the single largest lever in this table. §6 shows how to get it.
 3. **Our MI355X vLLM recipe 1 (+MTP) lands close to InferenceX's MI355X vLLM +MTP**: 0.77× at c=1 (65.1 vs 84.0), 0.85× at c=4, and faster at c=8–10 (1.10–1.20×). With MTP on MI355X and off on B200, our B200 still streams 1.37× faster at c=1 (89.0 vs 65.1). The biggest differentiator in the whole table is MTP — a **software** feature both platforms can run, not a silicon difference.
 4. **MTP is worth 4.0× at c=1 on our MI355X ATOM** (256.8 vs 64.0 without MTP, real acceptance). InferenceX's MI355X ATOM +MTP gets 127.2 at c=1, but with a forced acceptance length (§2).
@@ -160,10 +160,10 @@ Each step costs `TTFT + (tokens per stream − 1) ÷ per-user tok/s`. Only the *
 
 | System | Plan | 8 tool calls | Answer | **Whole turn** | First word at | Print rate |
 |---|---:|---:|---:|---:|---:|---:|
-| **Ours** B200 (no spec) | 2.5 s | 7.9 s | 9.2 s | **19.6 s** | 10.6 s | 67 words/s |
+| **Ours** B200 (no MTP) | 2.5 s | 7.9 s | 9.2 s | **19.6 s** | 10.6 s | 67 words/s |
 | **Ours** MI355X vLLM recipe 1 (+MTP) | 3.3 s | 11.3 s | 12.5 s | **27.0 s** | 14.7 s | 49 words/s |
 | **Ours** MI355X ATOM +MTP | 0.9 s | 4.6 s | 3.3 s | **8.9 s** | 5.8 s | 193 words/s |
-| **InferenceX** B200 (no spec) | 6.9 s | 30.3 s | 14.3 s | **51.6 s** | 41.8 s | 61 words/s |
+| **InferenceX** B200 (no MTP) | 6.9 s | 30.3 s | 14.3 s | **51.6 s** | 41.8 s | 61 words/s |
 | **InferenceX** B200 +MTP | 2.0 s | 4.1 s | 4.8 s | **10.9 s** | 7.3 s | 166 words/s |
 | **InferenceX** MI355X ATOM +MTP | 2.4 s | 8.5 s | 7.1 s | **18.0 s** | 11.7 s | 95 words/s |
 | **InferenceX** MI355X vLLM +MTP | 3.8 s | 13.7 s | 10.9 s | **28.4 s** | 18.9 s | 63 words/s |
@@ -182,10 +182,10 @@ The turn above is a heavy one. Most agent traffic is lighter — a brief plan, s
 
 | System | Plan (30 tok) | 8 tool calls (70 tok ea) | Answer (100 tok) | **Whole turn** | First word at | Print rate |
 |---|---:|---:|---:|---:|---:|---:|
-| **Ours** B200 (no spec) | 0.6 s | 1.3 s | 1.3 s | **3.2 s** | 2.1 s | 67 words/s |
+| **Ours** B200 (no MTP) | 0.6 s | 1.3 s | 1.3 s | **3.2 s** | 2.1 s | 67 words/s |
 | **Ours** MI355X vLLM recipe 1 (+MTP) | 0.6 s | 1.8 s | 1.7 s | **4.2 s** | 2.6 s | 49 words/s |
 | **Ours** MI355X ATOM +MTP | 0.3 s | 0.8 s | 0.6 s | **1.7 s** | 1.3 s | 193 words/s |
-| **InferenceX** B200 (no spec) | 4.9 s | 10.0 s | 5.7 s | **20.6 s** | 19.4 s | 61 words/s |
+| **InferenceX** B200 (no MTP) | 4.9 s | 10.0 s | 5.7 s | **20.6 s** | 19.4 s | 61 words/s |
 | **InferenceX** B200 +MTP | 1.3 s | 1.3 s | 1.6 s | **4.2 s** | 3.7 s | 166 words/s |
 | **InferenceX** MI355X ATOM +MTP | 1.0 s | 1.9 s | 1.6 s | **4.5 s** | 3.7 s | 95 words/s |
 | **InferenceX** MI355X vLLM +MTP | 1.8 s | 3.3 s | 2.6 s | **7.6 s** | 6.5 s | 63 words/s |
@@ -206,21 +206,21 @@ The turn above is a heavy one. Most agent traffic is lighter — a brief plan, s
 
 **Why it helps so much here:** decode is *latency-bound, not bandwidth-bound* (`../../b200-kimi/results/kimi-k3-base-b200.md` §3). Verifying N tokens at once makes each expert GEMM **N wide instead of 1** — the same widening `max-num-seqs` buys, but **without needing other users**. That is why it is the only lever that helps a single user.
 
-Measured gain in the InferenceX B200 data (MTP vs no-spec, same hardware):
+Measured gain in the InferenceX B200 data (MTP vs no-MTP, same hardware):
 
 | | c=1 | c=8 | c=32 |
 |---|---:|---:|---:|
-| B200 per-user tok/s, **no spec** | 81.9 | 21.1 | 3.8 |
+| B200 per-user tok/s, **no MTP** | 81.9 | 21.1 | 3.8 |
 | B200 per-user tok/s, **MTP** | 221.7 | 154.1 | 46.5 |
 | ratio | **2.7×** | **7.3×** | **12.2×** |
 
-> **Note the trend is the opposite of what simple theory predicts.** Speculative decoding should matter *most* at low concurrency and fade as batching widens the GEMMs on its own — yet here the ratio grows from 2.7× to 12.2×. The likely cause is that the ratio is not a clean MTP-only A/B: the no-spec column collapses steeply (81.9 → 3.8) under long-context agentic traces, and the InferenceX MTP rows come from a different recipe family than the `agg-b200-tp8pp2-agentic.yaml` config cross-checked in §1. Treat the **c=1 figure (2.7×) as the trustworthy one** and the high-concurrency ratios as confounded.
+> **Note the trend is the opposite of what simple theory predicts.** Speculative decoding should matter *most* at low concurrency and fade as batching widens the GEMMs on its own — yet here the ratio grows from 2.7× to 12.2×. The likely cause is that the ratio is not a clean MTP-only A/B: the no-MTP column collapses steeply (81.9 → 3.8) under long-context agentic traces, and the InferenceX MTP rows come from a different recipe family than the `agg-b200-tp8pp2-agentic.yaml` config cross-checked in §1. Treat the **c=1 figure (2.7×) as the trustworthy one** and the high-concurrency ratios as confounded.
 
 Measured gain in our MI355X ATOM data (MTP vs no MTP, same hardware, 1024/1024, real acceptance):
 
 | | c=1 | c=8 | c=32 |
 |---|---:|---:|---:|
-| MI355X ATOM per-user tok/s, **no spec** | 64.0 | 56.4 | 35.3 |
+| MI355X ATOM per-user tok/s, **no MTP** | 64.0 | 56.4 | 35.3 |
 | MI355X ATOM per-user tok/s, **MTP** | 256.8 | 112.2 | 61.7 |
 | ratio | **4.0×** | **2.0×** | **1.7×** |
 

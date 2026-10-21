@@ -6,7 +6,7 @@
 Writes
   results/kimi-k3-mtp-b200.md                              all arms, all points
   ../amd-ubuntu/results/mi355x-vs-b200-kimi-k3.md          adds the "Ours B200 +MTP" results
-                                                           (the B200 no-spec results stay)
+                                                           (the B200 no-MTP results stay)
   ../amd-ubuntu/results/status.txt                         one line
 Env MTP_MD overrides the comparison md path (tests).
 """
@@ -17,7 +17,7 @@ RES = f"{BENCH}/b200-kimi/results"
 MD = os.environ.get("MTP_MD", f"{BENCH}/amd-ubuntu/results/mi355x-vs-b200-kimi-k3.md")
 STATUS = os.environ.get("MTP_STATUS", f"{BENCH}/amd-ubuntu/results/status.txt")
 ARMS = [("mtp7", 7, "TOKENSPEED_MLA"), ("mtp7d", 7, "default"), ("mtp3", 3, None)]
-# our B200 no-spec run (job 20916742), as in mi355x-vs-b200.md §5: conc -> (tok/s, per-user, TTFT s)
+# our B200 no-MTP run (job 20916742), as in mi355x-vs-b200.md §5: conc -> (tok/s, per-user, TTFT s)
 NOSPEC = {1: (86.7, 89.0, 0.23), 2: (165.2, 84.4, 0.218), 4: (280.8, 73.4, 0.233), 8: (475.3, 64.9, 0.23),
           16: (801.8, 53.6, 0.235), 32: (1209.3, 39.6, 0.264), 64: (1696.4, 27.9, 0.278)}
 MI_C1 = 65.1                      # our MI355X vLLM recipe 1 per-user tok/s at c=1
@@ -94,7 +94,7 @@ def main():
     D = [f"# Kimi-K3 on 2 × 8 B200 with DSpark MTP (job {job})", "",
          "TP8 × PP2, `vllm/vllm-openai:kimi-k3`, draft `Inferact/Kimi-K3-DSpark` (with the `pard_token` shim), DCP 1, "
          "ISL/OSL 1024/1024, `--ignore-eos`, max-num-seqs 64, 10 × conc prompts. TPOT = time per output token, TTFT = time to first token. "
-         "Per-user tok/s = 1000 / median TPOT. No-spec = job 20916742.", ""]
+         "Per-user tok/s = 1000 / median TPOT. No-MTP = job 20916742.", ""]
     for t, k, ab in ARMS:
         a = arms[t]
         if a is None:
@@ -104,7 +104,7 @@ def main():
             D += ["", f"Server did not start: `{a['err']}`", ""]
             continue
         D += ["", f"Mean acceptance length (median of the server's log lines): {a['acc'] or '–'}; GPU KV cache: {a['kv'] or '–'} tokens.", "",
-              "| Conc | out tok/s | per-user tok/s | TPOT med (ms) | TTFT med (ms) | no-spec per-user tok/s | MTP / no spec |",
+              "| Conc | out tok/s | per-user tok/s | TPOT med (ms) | TTFT med (ms) | no-MTP per-user tok/s | MTP / no MTP |",
               "|---:|---:|---:|---:|---:|---:|---:|"]
         for c in sorted(a["pts"]):
             p = a["pts"][c]
@@ -137,19 +137,19 @@ def main():
     g1 = b1["pu"] / NOSPEC[1][1] if b1 else None
 
     s = rep(s, "- **16 × B200** (two nodes, TP8 × PP2), vLLM `vllm/vllm-openai:kimi-k3`, no speculative decoding.",
-            f"- **16 × B200** (two nodes, TP8 × PP2), vLLM `vllm/vllm-openai:kimi-k3`: no speculative decoding (no spec), "
+            f"- **16 × B200** (two nodes, TP8 × PP2), vLLM `vllm/vllm-openai:kimi-k3`: no speculative decoding (no MTP), "
             f"and a second run with DSpark MTP (+MTP; `Inferact/Kimi-K3-DSpark`, draft length {klab}, job {job}).", "intro")
-    s = rep(s, "| **Spec decoding (MTP)** | **B200** | **off** | both: no spec and **DSpark MTP on** | InferenceX's B200 +MTP arm gets a lever ours does not use — see §6 |",
-            f"| **Spec decoding (MTP)** | **B200** | both: no spec and **DSpark MTP on** (draft length {klab}, DCP 1) | both: no spec and **DSpark MTP on** (draft length 7, DCP 8) | "
+    s = rep(s, "| **Spec decoding (MTP)** | **B200** | **off** | both: no MTP and **DSpark MTP on** | InferenceX's B200 +MTP arm gets a lever ours does not use — see §6 |",
+            f"| **Spec decoding (MTP)** | **B200** | both: no MTP and **DSpark MTP on** (draft length {klab}, DCP 1) | both: no MTP and **DSpark MTP on** (draft length 7, DCP 8) | "
             f"same lever on both; our image does not allow DCP with the K3 DSpark draft — see §6 |", "§2 row")
 
-    head = "| Conc | **Ours** B200 TP8×PP2 (no spec) |"
+    head = "| Conc | **Ours** B200 TP8×PP2 (no MTP) |"
     s = add_col(s, head, 0, "**Ours** B200 TP8×PP2 +MTP", {c: f1(p["tps"]) + mark(c) for c, (t, p) in best.items()}, pos=4)  # right before InferenceX B200 +MTP
     s = add_col(s, head, 1, "**Ours** B200 TP8×PP2 +MTP", {c: f1(p["pu"]) + mark(c) for c, (t, p) in best.items()}, pos=4)  # right before InferenceX B200 +MTP
     note = (" (k3) = draft length 3; other +MTP points of ours on B200 use draft length 7." if 3 in ks and 7 in ks else "")
-    s = rep(s, "**The InferenceX B200 no-spec column is not one curve.**",
+    s = rep(s, "**The InferenceX B200 no-MTP column is not one curve.**",
             (f"Our B200 +MTP column: the faster of draft length {klab} at each point.{note}\n\n" if len(ks) > 1 else "")
-            + "**The InferenceX B200 no-spec column is not one curve.**", "§3 note")
+            + "**The InferenceX B200 no-MTP column is not one curve.**", "§3 note")
 
     if 64 in best:
         p = best[64][1]
@@ -188,9 +188,9 @@ def main():
 
     g = [(c, best[c][1]["pu"], NOSPEC[c][1]) for c in (1, 8, 32) if c in best]
     if g:
-        tab = ["", f"Measured gain in our B200 data (MTP vs no-spec, same hardware, 1024/1024, job {job}):", "",
+        tab = ["", f"Measured gain in our B200 data (MTP vs no-MTP, same hardware, 1024/1024, job {job}):", "",
                "| | " + " | ".join(f"c={c}" for c, _, _ in g) + " |", "|---|" + "---:|" * len(g),
-               "| B200 per-user tok/s, **no spec** | " + " | ".join(f1(n) for _, _, n in g) + " |",
+               "| B200 per-user tok/s, **no MTP** | " + " | ".join(f1(n) for _, _, n in g) + " |",
                "| B200 per-user tok/s, **MTP** | " + " | ".join(f1(m) for _, m, _ in g) + " |",
                "| ratio | " + " | ".join(f"**{m / n:.1f}×**" for _, m, n in g) + " |", ""]
         s = rep(s, "\nCeiling is draft length × acceptance rate", "\n".join(tab) + "\nCeiling is draft length × acceptance rate", "§6 gain table")
@@ -217,7 +217,7 @@ def main():
             f"DCP with the K3 DSpark draft (*\"MLA DSpark does not currently support decode context parallelism\"*), so the three "
             f"extra flags above are not used. " + (f"It gives {g1:.1f}× per-user tok/s at c=1 (§4)." if g1 else ""), "§6 B200")
     open(MD, "w").write(s)
-    line = (f"B200 Kimi-K3 MTP (job {job}): arms {', '.join(ok)}; c=1 per-user {f1(b1['pu'])} tok/s ({g1:.1f}x no spec)"
+    line = (f"B200 Kimi-K3 MTP (job {job}): arms {', '.join(ok)}; c=1 per-user {f1(b1['pu'])} tok/s ({g1:.1f}x no MTP)"
             if b1 else f"B200 Kimi-K3 MTP (job {job}): arms {', '.join(ok)}") + f"; {MD} updated"
     open(STATUS, "a").write(line + "\n"); print(line)
 
