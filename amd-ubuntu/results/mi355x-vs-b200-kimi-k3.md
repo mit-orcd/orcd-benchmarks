@@ -162,6 +162,7 @@ Each step costs `TTFT + (tokens per stream − 1) ÷ per-user tok/s`. Only the *
 |---|---:|---:|---:|---:|---:|---:|
 | **Ours** B200 (no MTP) | 2.5 s | 7.9 s | 9.2 s | **19.6 s** | 10.6 s | 67 words/s |
 | **Ours** MI355X vLLM recipe 1 (+MTP) | 3.3 s | 11.3 s | 12.5 s | **27.0 s** | 14.7 s | 49 words/s |
+| **Ours** MI355X ATOM (no MTP) | 3.3 s | 9.0 s | 12.7 s | **25.0 s** | 12.5 s | 48 words/s |
 | **Ours** MI355X ATOM +MTP | 0.9 s | 4.6 s | 3.3 s | **8.9 s** | 5.8 s | 193 words/s |
 | **InferenceX** B200 (no MTP) | 6.9 s | 30.3 s | 14.3 s | **51.6 s** | 41.8 s | 61 words/s |
 | **InferenceX** B200 +MTP | 2.0 s | 4.1 s | 4.8 s | **10.9 s** | 7.3 s | 166 words/s |
@@ -170,9 +171,9 @@ Each step costs `TTFT + (tokens per stream − 1) ÷ per-user tok/s`. Only the *
 
 *Worked example, the first row.* §4 gives 89.0 tok/s at c=1 and 64.9 at c=8. Step 1 = 0.23 + 199/89.0 = 2.5 s. Step 2 = 0.23 + 499/64.9 = 7.9 s for all eight calls together — a session rate of 504.9 tok/s (the steady-state 519.3, diluted by the 0.23 s prefill), which is §3's aggregate column. Step 3 = 0.23 + 799/89.0 = 9.2 s. (MI355X row: TTFT 0.20 s at c=1 and 0.28 s at c=8; Step 1 = 0.20 + 199/65.1 = 3.3 s, Step 2 = 0.28 + 499/45.5 = 11.3 s, Step 3 = 0.20 + 799/65.1 = 12.5 s.)
 
-**Printing is never the constraint.** Every row prints at 49–193 words/s against a human reading speed of ~4–5. Past ~10 words/s more per-user tok/s is imperceptible — it only shortens the tail before the reader can start scrolling. **What the user feels is the wait before the first word**, which is hidden token generation plus prefill.
+**Printing is never the constraint.** Every row prints at 48–193 words/s against a human reading speed of ~4–5. Past ~10 words/s more per-user tok/s is imperceptible — it only shortens the tail before the reader can start scrolling. **What the user feels is the wait before the first word**, which is hidden token generation plus prefill.
 
-**MTP is worth 4.7× on the whole turn** in the InferenceX B200 data (51.6 s → 10.9 s) — larger than any hardware gap in this table, and it shortens the hidden phases as well as the visible one (§6).
+**MTP is worth 4.7× on the whole turn** in the InferenceX B200 data (51.6 s → 10.9 s) — larger than any hardware gap in this table, and it shortens the hidden phases as well as the visible one (§6). On our MI355X ATOM, with real acceptance, it is worth **2.8×** (25.0 s → 8.9 s), and 2.2× on the short task (3.7 s → 1.7 s).
 
 **Do not read the total column across the ours/InferenceX boundary.** InferenceX's TTFT is measured on 100k+ token agentic prompts with prefix caching on; ours on a 1024-token random prompt (§2). Compare ours-to-ours and InferenceX-to-InferenceX. The act step also assumes the 8 calls are independent — if each needs the previous one's result they run serially and that phase takes ~8× longer.
 
@@ -184,6 +185,7 @@ The turn above is a heavy one. Most agent traffic is lighter — a brief plan, s
 |---|---:|---:|---:|---:|---:|---:|
 | **Ours** B200 (no MTP) | 0.6 s | 1.3 s | 1.3 s | **3.2 s** | 2.1 s | 67 words/s |
 | **Ours** MI355X vLLM recipe 1 (+MTP) | 0.6 s | 1.8 s | 1.7 s | **4.2 s** | 2.6 s | 49 words/s |
+| **Ours** MI355X ATOM (no MTP) | 0.6 s | 1.4 s | 1.7 s | **3.7 s** | 2.2 s | 48 words/s |
 | **Ours** MI355X ATOM +MTP | 0.3 s | 0.8 s | 0.6 s | **1.7 s** | 1.3 s | 193 words/s |
 | **InferenceX** B200 (no MTP) | 4.9 s | 10.0 s | 5.7 s | **20.6 s** | 19.4 s | 61 words/s |
 | **InferenceX** B200 +MTP | 1.3 s | 1.3 s | 1.6 s | **4.2 s** | 3.7 s | 166 words/s |

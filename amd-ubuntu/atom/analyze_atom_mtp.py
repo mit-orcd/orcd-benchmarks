@@ -87,7 +87,7 @@ def main():
             r = json.load(open(j))
             c = int(re.search(r"c(\d+)\.json$", j).group(1))
             if r.get("completed", 0) > 0 and r.get("median_tpot_ms") and k == 0:
-                k0[c] = (r["output_throughput"], 1000 / r["median_tpot_ms"])
+                k0[c] = (r["output_throughput"], 1000 / r["median_tpot_ms"], r["median_ttft_ms"])
             elif r.get("completed", 0) > 0 and r.get("median_tpot_ms"):
                 pts[c] = dict(tps=r["output_throughput"], pu=1000 / r["median_tpot_ms"], tpot=r["median_tpot_ms"],
                               ttft=r["median_ttft_ms"])
@@ -176,6 +176,12 @@ def main():
         for idx, (p, a, w) in zip(reversed(anchors), ((30, 70, 100), (200, 500, 800))):
             P, A, W, T, F, Rr = turn(pts[1], pts[8], p, a, w)
             L = s.split("\n")
+            if 1 in k0 and 8 in k0:   # the no-MTP arm, same image, right before the +MTP row
+                q = lambda v: dict(ttft=v[2], pu=v[1])
+                nP, nA, nW, nT, nF, nR = turn(q(k0[1]), q(k0[8]), p, a, w)
+                L.insert(idx + 1, f"| **Ours** MI355X ATOM (no MTP) | {nP:.1f} s | {nA:.1f} s | {nW:.1f} s | **{nT:.1f} s** | {nF:.1f} s | {nR:.0f} words/s |")
+                idx += 1
+                rows.append(nR)
             L.insert(idx + 1, f"| **Ours** MI355X ATOM +MTP | {P:.1f} s | {A:.1f} s | {W:.1f} s | **{T:.1f} s** | {F:.1f} s | {Rr:.0f} words/s |")
             s = "\n".join(L)
             rows.append(Rr)
