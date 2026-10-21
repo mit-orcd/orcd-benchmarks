@@ -54,7 +54,7 @@ def rep(s, old, new, what):
 
 
 def add_col(s, header_start, nth, new_head, vals, pos=3):
-    """insert a column at cell position pos (3 = after the 2nd cell, -1 = last) of the nth table
+    """insert a column at cell position pos (4 = after the 3rd cell, -1 = last) of the nth table
     whose header starts with header_start"""
     lines = s.split("\n")
     idx = [i for i, l in enumerate(lines) if l.startswith(header_start)]
@@ -144,8 +144,8 @@ def main():
             f"same lever on both; our image does not allow DCP with the K3 DSpark draft — see §6 |", "§2 row")
 
     head = "| Conc | **Ours** B200 TP8×PP2 (no spec) |"
-    s = add_col(s, head, 0, "**Ours** B200 TP8×PP2 +MTP", {c: f1(p["tps"]) + mark(c) for c, (t, p) in best.items()})
-    s = add_col(s, head, 1, "**Ours** B200 TP8×PP2 +MTP", {c: f1(p["pu"]) + mark(c) for c, (t, p) in best.items()})
+    s = add_col(s, head, 0, "**Ours** B200 TP8×PP2 +MTP", {c: f1(p["tps"]) + mark(c) for c, (t, p) in best.items()}, pos=4)  # right before InferenceX B200 +MTP
+    s = add_col(s, head, 1, "**Ours** B200 TP8×PP2 +MTP", {c: f1(p["pu"]) + mark(c) for c, (t, p) in best.items()}, pos=4)  # right before InferenceX B200 +MTP
     note = (" (k3) = draft length 3; other +MTP points of ours on B200 use draft length 7." if 3 in ks and 7 in ks else "")
     s = rep(s, "**The InferenceX B200 no-spec column is not one curve.**",
             (f"Our B200 +MTP column: the faster of draft length {klab} at each point.{note}\n\n" if len(ks) > 1 else "")

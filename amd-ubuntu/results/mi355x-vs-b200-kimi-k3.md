@@ -58,17 +58,17 @@ Two independent teams, different clusters, same conclusions — including the ex
 
 The InferenceX API carries aggregate output throughput (`output_tput_tps`) at every concurrency point — the same quantity as our "Throughput (tok/s)" column ([mi355x-vs-b200.md](mi355x-vs-b200.md) §5.1). InferenceX's **B200 arms are 16 GPUs, TP8 × PP2 across 2 nodes — the same layout as ours**; its MI355X arms are 8 GPUs on one node, as is ours.
 
-| Conc | **Ours** B200 TP8×PP2 (no spec) | **InferenceX** B200 TP8×PP2 (no spec) | **InferenceX** B200 +MTP | **InferenceX** MI355X vLLM +MTP | **InferenceX** MI355X ATOM +MTP | **Ours** MI355X vLLM recipe 1 (+MTP up to 14 users) | **Ours** MI355X ATOM +MTP |
-|---:|---:|---:|---:|---:|---:|---:| ---: |
-| 1 | 86.7 | 59.9 | 118.1 | 67.4 | 91.0 | 70.7 | 197.4 |
-| 2 | 165.2 | 72.1 | 144.5 | — | — | — | 280.7 |
-| 4 | 280.8 | 76.0 | 190.3 | 115.7 | 137.1 | 212.5 | 464.1 |
-| 8 | 475.3 | 99.7 | 338.3 | 169.5 | 233.0 | 353.0 | 811.5 |
-| 10 | — | — | — | 235.0 | 293.1 | 418.6 | 695.5 |
-| 16 | 801.8 | 92.4 | 518.0 | — | — | — | 1,117.0 |
-| 32 | 1,209.3 | 60.2 | 768.0 | — | — | — | 1,810.2 |
-| 48 | — | 838.2 | — | — | — | 1,157.9 (no spec) | 2,149.0 |
-| 64 | 1,696.4 | — | — | — | — | 1,344.2 (no spec) | 2,463.1 |
+| Conc | **Ours** B200 TP8×PP2 (no spec) | **InferenceX** B200 TP8×PP2 (no spec) | **InferenceX** B200 +MTP | **Ours** MI355X vLLM recipe 1 (+MTP up to 14 users) | **InferenceX** MI355X vLLM +MTP | **Ours** MI355X ATOM +MTP | **InferenceX** MI355X ATOM +MTP |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 86.7 | 59.9 | 118.1 | 70.7 | 67.4 | 197.4 | 91.0 |
+| 2 | 165.2 | 72.1 | 144.5 | — | — | 280.7 | — |
+| 4 | 280.8 | 76.0 | 190.3 | 212.5 | 115.7 | 464.1 | 137.1 |
+| 8 | 475.3 | 99.7 | 338.3 | 353.0 | 169.5 | 811.5 | 233.0 |
+| 10 | — | — | — | 418.6 | 235.0 | 695.5 | 293.1 |
+| 16 | 801.8 | 92.4 | 518.0 | — | — | 1,117.0 | — |
+| 32 | 1,209.3 | 60.2 | 768.0 | — | — | 1,810.2 | — |
+| 48 | — | 838.2 | — | 1,157.9 (no spec) | — | 2,149.0 | — |
+| 64 | 1,696.4 | — | — | 1,344.2 (no spec) | — | 2,463.1 | — |
 | 72 | — | 1,021.6 | — | — | — | — | — |
 | 96 | — | 1,159.4 | — | — | — | — | — |
 
@@ -101,16 +101,16 @@ InferenceX traces average **~138k input tokens** per request against a handful o
 
 Retrieved from the InferenceX public API (`/api/v1/benchmarks?model=Kimi-K3`); an extracted CSV is in `../../b200-kimi/semianalysis-ref/`. The InferenceX **"Interactivity"** metric is exactly our per-user tok/s — verified against its own fields: `mean_tpot` 0.00454 s → 1/0.00454 = 220.3 = `mean_intvty`. Same definition, `1 / TPOT`.
 
-| Conc | **Ours** B200 TP8×PP2 (no spec) | **InferenceX** B200 TP8×PP2 (no spec) | **InferenceX** B200 +MTP | **InferenceX** MI355X vLLM +MTP | **InferenceX** MI355X ATOM +MTP | **Ours** MI355X vLLM recipe 1 (+MTP up to 14 users) | **Ours** MI355X ATOM +MTP |
-|---:|---:|---:|---:|---:|---:|---:| ---: |
-| 1 | **89.0** | 81.9 | **221.7** | 84.0 | 127.2 | 65.1 | 256.8 |
-| 2 | 84.4 | 74.8 | 219.3 | — | — | — | 161.5 |
-| 4 | 73.4 | 54.1 | 203.3 | 62.5 | 88.7 | 53.2 | 138.5 |
-| 8 | 64.9 | 21.1 | 154.1 | 41.4 | 64.7 | 45.5 | 112.2 |
-| 10 | — | — | — | 35.7 | 62.7 | 43.0 | 78.4 |
-| 16 | 53.6 | 8.6 | 77.7 | — | — | — | 78.2 |
-| 32 | 39.6 | 3.8 | 46.5 | — | — | — | 61.7 |
-| 64 | 27.9 | — | — | — | — | 21.9 (no spec) | 41.7 |
+| Conc | **Ours** B200 TP8×PP2 (no spec) | **InferenceX** B200 TP8×PP2 (no spec) | **InferenceX** B200 +MTP | **Ours** MI355X vLLM recipe 1 (+MTP up to 14 users) | **InferenceX** MI355X vLLM +MTP | **Ours** MI355X ATOM +MTP | **InferenceX** MI355X ATOM +MTP |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | **89.0** | 81.9 | **221.7** | 65.1 | 84.0 | 256.8 | 127.2 |
+| 2 | 84.4 | 74.8 | 219.3 | — | — | 161.5 | — |
+| 4 | 73.4 | 54.1 | 203.3 | 53.2 | 62.5 | 138.5 | 88.7 |
+| 8 | 64.9 | 21.1 | 154.1 | 45.5 | 41.4 | 112.2 | 64.7 |
+| 10 | — | — | — | 43.0 | 35.7 | 78.4 | 62.7 |
+| 16 | 53.6 | 8.6 | 77.7 | — | — | 78.2 | — |
+| 32 | 39.6 | 3.8 | 46.5 | — | — | 61.7 | — |
+| 64 | 27.9 | — | — | 21.9 (no spec) | — | 41.7 | — |
 
 **"no spec" = plain decoding, one token per forward pass. "+MTP" = speculative decoding on: a draft model proposes several tokens and the big model verifies them in one pass.**
 

@@ -37,15 +37,21 @@ def rep(s, old, new, what):
     return s.replace(old, new, 1)
 
 
-def add_col(s, header_start, nth, new_head, vals, sep="---:"):
-    """append a column to the nth table whose header starts with header_start"""
+def add_col(s, header_start, nth, new_head, vals, sep="---:", before_last=False):
+    """append a column to the nth table whose header starts with header_start
+    (before_last: insert it before the last column instead, i.e. right before its InferenceX twin)"""
     lines = s.split("\n")
     idx = [i for i, l in enumerate(lines) if l.startswith(header_start)]
     if len(idx) <= nth:
         print("WARN: table not found:", header_start, nth)
         return s
     i = idx[nth]
-    app = lambda line, cell: line.rstrip().rstrip("|") + f"| {cell} |"
+    def app(line, cell):
+        if before_last:
+            p = line.rstrip().split("|")   # ['', c1, ..., cN, '']
+            p.insert(len(p) - 2, f" {cell} ")
+            return "|".join(p)
+        return line.rstrip().rstrip("|") + f"| {cell} |"
     lines[i] = app(lines[i], new_head)
     lines[i + 1] = app(lines[i + 1], sep)
     k = i + 2
@@ -135,8 +141,8 @@ def main():
         s = rep(s, anchor, anchor + "\n" + forced.format(ours="real (measured draft/target agreement)"), "§2 forced")
 
     head = "| Conc | **Ours** B200 TP8×PP2 (no spec) |"
-    s = add_col(s, head, 0, COL, {c: f1(p["tps"]) for c, p in pts.items()})
-    s = add_col(s, head, 1, COL, {c: f1(p["pu"]) for c, p in pts.items()})
+    s = add_col(s, head, 0, COL, {c: f1(p["tps"]) for c, p in pts.items()}, before_last=True)
+    s = add_col(s, head, 1, COL, {c: f1(p["pu"]) for c, p in pts.items()}, before_last=True)
     if 64 in pts:
         p = pts[64]
         s = rep(s, "| **InferenceX** B200 +MTP, agentic | 32 |",
