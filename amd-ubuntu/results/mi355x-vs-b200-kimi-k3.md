@@ -2,7 +2,7 @@
 
 SemiAnalysis publish continuous Kimi-K3 benchmarks at <https://inferencex.semianalysis.com> (InferenceX), and open-source the harness (Apache-2.0, `github.com/SemiAnalysisAI/InferenceX`). The InferenceX configs are in `../../b200-kimi/semianalysis-ref/`. InferenceX's **B200 recipe uses TP8 × PP2 on 2 nodes — the same layout as our B200 run**, which makes the methodology directly checkable.
 
-**Ours** = the Kimi-K3 results in [mi355x-vs-b200.md](mi355x-vs-b200.md) §5:
+**Ours** = the Kimi-K3 results in [mi355x-vs-b200.md](mi355x-vs-b200.md) §6:
 - **16 × B200** (two nodes, TP8 × PP2), vLLM `vllm/vllm-openai:kimi-k3`, no speculative decoding.
 - **8 × MI355X, vLLM recipe 1** (one node, TP8): AMD's vLLM (ROCm) recipe from [recipes.vllm.ai/moonshotai/Kimi-K3?hardware=mi355x](https://recipes.vllm.ai/moonshotai/Kimi-K3?hardware=mi355x) (2026-09-25), `vllm/vllm-openai-rocm:nightly-rocm100`. DSpark speculative decoding (MTP, §6) up to 14 users, DCP 8 + CPU KV-cache offload above, server re-tuned for each load. Detail: `node6101/kimi-recipe/kimi-k3-recipe.md`.
 - **8 × MI355X, ATOM + MTP** (one node, TP8): our ATOM flags (max-num-seqs 64), image `rocm/atom-dev:nightly_202610011450` plus DSpark MTP (`--method dspark`, `Inferact/Kimi-K3-DSpark`), draft length 6 at 1 user, 2 above, as in the InferenceX ATOM recipe (our ATOM baseline image, `nightly_202608111555`, crashes with this draft). Detail: `ubuntu/kimi-atom-mtp.md`.
@@ -67,7 +67,7 @@ So "ours is faster" at high load is not a valid conclusion — ours is an easier
 
 ## 3. Aggregate throughput — InferenceX vs ours
 
-The InferenceX API carries aggregate output throughput (`output_tput_tps`) at every concurrency point — the same quantity as our "Throughput (tok/s)" column ([mi355x-vs-b200.md](mi355x-vs-b200.md) §5.1). InferenceX's **B200 arms are 16 GPUs, TP8 × PP2 across 2 nodes — the same layout as ours**; its MI355X arms are 8 GPUs on one node, as is ours.
+The InferenceX API carries aggregate output throughput (`output_tput_tps`) at every concurrency point — the same quantity as our "Throughput (tok/s)" column ([mi355x-vs-b200.md](mi355x-vs-b200.md) §6.1). InferenceX's **B200 arms are 16 GPUs, TP8 × PP2 across 2 nodes — the same layout as ours**; its MI355X arms are 8 GPUs on one node, as is ours.
 
 | Conc | **Ours** B200 TP8×PP2 (no MTP) | **InferenceX** B200 TP8×PP2 (no MTP) | **InferenceX** B200 +MTP | **Ours** MI355X vLLM recipe 1 (+MTP up to 14 users) | **InferenceX** MI355X vLLM +MTP | **Ours** MI355X ATOM (no MTP) | **Ours** MI355X ATOM +MTP | **InferenceX** MI355X ATOM +MTP |
 |---:|---:|---:|---:|---:|---:|---:|---:|---:|
@@ -264,5 +264,5 @@ Spec decoding does *not* require single-node TP. The upstream vLLM recipe gates 
 
 ## Source data
 
-- Ours: [mi355x-vs-b200.md](mi355x-vs-b200.md) §5; B200 `../../b200-kimi/results/kimi-k3-base-b200.md`; MI355X `node6101/kimi-recipe/kimi-k3-recipe.{md,csv}` (script `../atom/run_kimi_recipe.sh`).
+- Ours: [mi355x-vs-b200.md](mi355x-vs-b200.md) §6; B200 `../../b200-kimi/results/kimi-k3-base-b200.md`; MI355X `node6101/kimi-recipe/kimi-k3-recipe.{md,csv}` (script `../atom/run_kimi_recipe.sh`).
 - InferenceX: `../../b200-kimi/semianalysis-ref/` (`SOURCE.md`, `inferencex-b200-mi355x.csv`, `agg-b200-tp8pp2-agentic.yaml`, `kimik3_fp4_mi355x_mtp.sh`, `kimik3_fp4_mi355x_atom_mtp.sh`).

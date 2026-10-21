@@ -2,7 +2,7 @@
 
 Hand-written, 2026-10-08. One page for every Kimi-K3 serving run on node6100 / node6101 (8 × MI355X each, one node per run, TP8, weights from `/scratch/Kimi-K3`). Throughput = output tokens per second for the whole node; TPOT = median time per output token (lower is better). Ratios below 1 mean the first-named system or recipe is slower in throughput; for TPOT a ratio below 1 means it is faster.
 
-Detail: [ubuntu/kimi.md](ubuntu/kimi.md) (ATOM and vLLM recipe 1), [ubuntu/kimi-amd-recipe.md](ubuntu/kimi-amd-recipe.md) (vLLM recipe 2), [ubuntu/kimi-recipe-old-vs-new.md](ubuntu/kimi-recipe-old-vs-new.md) (old recipes vs the new one), [vs-amd-cloud/kimi.md](vs-amd-cloud/kimi.md) (vs amd-cloud), [mi355x-vs-b200.md §5](mi355x-vs-b200.md#5-inference--kimi-k3) (vs B200). All results: [SUMMARY.md](SUMMARY.md).
+Detail: [ubuntu/kimi.md](ubuntu/kimi.md) (ATOM and vLLM recipe 1), [ubuntu/kimi-amd-recipe.md](ubuntu/kimi-amd-recipe.md) (vLLM recipe 2), [ubuntu/kimi-recipe-old-vs-new.md](ubuntu/kimi-recipe-old-vs-new.md) (old recipes vs the new one), [vs-amd-cloud/kimi.md](vs-amd-cloud/kimi.md) (vs amd-cloud), [mi355x-vs-b200.md §6](mi355x-vs-b200.md#5-inference--kimi-k3) (vs B200). All results: [SUMMARY.md](SUMMARY.md).
 
 ## The three recipes
 
@@ -68,7 +68,7 @@ Our runs already use this same recipe: vLLM recipe 2 from `amd-kimi-k3-recipe.pd
 
 ## 4. MI355X vs B200 (pointer)
 
-The full comparison is in [mi355x-vs-b200.md §5](mi355x-vs-b200.md#5-inference--kimi-k3). In short: the model fits in one MI355X node but needs two B200 nodes (16 GPUs). **Per GPU, MI355X serves 1.05–2.43× more tokens than B200 across the three recipes (best recipe: 1.21–1.63× up to 64 users, 2.03–2.43× from 128 users). Up to 64 users one user's answer streams 1.27–1.94× faster on B200 (TPOT; 1.37× vs vLLM recipe 1 at 1 user); from 128 users up MI355X is as fast or faster.**
+The full comparison is in [mi355x-vs-b200.md §6](mi355x-vs-b200.md#5-inference--kimi-k3). In short: the model fits in one MI355X node but needs two B200 nodes (16 GPUs). **Per GPU, MI355X serves 1.05–2.43× more tokens than B200 across the three recipes (best recipe: 1.21–1.63× up to 64 users, 2.03–2.43× from 128 users). Up to 64 users one user's answer streams 1.27–1.94× faster on B200 (TPOT; 1.37× vs vLLM recipe 1 at 1 user); from 128 users up MI355X is as fast or faster.**
 
 ## Open questions
 

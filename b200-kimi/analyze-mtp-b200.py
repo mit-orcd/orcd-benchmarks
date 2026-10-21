@@ -17,7 +17,7 @@ RES = f"{BENCH}/b200-kimi/results"
 MD = os.environ.get("MTP_MD", f"{BENCH}/amd-ubuntu/results/mi355x-vs-b200-kimi-k3.md")
 STATUS = os.environ.get("MTP_STATUS", f"{BENCH}/amd-ubuntu/results/status.txt")
 ARMS = [("mtp7", 7, "TOKENSPEED_MLA"), ("mtp7d", 7, "default"), ("mtp3", 3, None)]
-# our B200 no-MTP run (job 20916742), as in mi355x-vs-b200.md §5: conc -> (tok/s, per-user, TTFT s)
+# our B200 no-MTP run (job 20916742), as in mi355x-vs-b200.md §6: conc -> (tok/s, per-user, TTFT s)
 NOSPEC = {1: (86.7, 89.0, 0.23), 2: (165.2, 84.4, 0.218), 4: (280.8, 73.4, 0.233), 8: (475.3, 64.9, 0.23),
           16: (801.8, 53.6, 0.235), 32: (1209.3, 39.6, 0.264), 64: (1696.4, 27.9, 0.278)}
 MI_C1 = 65.1                      # our MI355X vLLM recipe 1 per-user tok/s at c=1

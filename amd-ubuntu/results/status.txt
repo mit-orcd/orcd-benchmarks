@@ -81,3 +81,4 @@ B200 Kimi-K3 MTP (job 26092372): no MTP server started; see /orcd/data/orcd/022/
 [2026-10-20T16:16:35-04:00] rocHPL: build (../rochpl/setup/build-rochpl.sh) + driver rochpl/run_rochpl_all.sh launched on node6100 (1-8 GPUs, then 16 GPUs 2 nodes; auto analysis -> results/rochpl-vs-rvs.md + push)
 [2026-10-20T16:26:26-04:00] rocHPL: rebuilt with ROCm 7.14 (amd-software/rocm-7.14.0) + driver relaunched on node6100; compares with RVS rocm7.14
 [2026-10-20T16:43:56-04:00] rocHPL: UCX fix (no UD; 1 node sm+rocm, 2 nodes +rc_verbs+tcp) tested 2/8/16 GPUs; full sweep relaunched
+[2026-10-21T16:31:54-04:00] B200 HPL submitted: smoke 26533172, sweep 26533173 26533175 26533176 26533178 26533179 26533180 26533181 26533182 26533183, post 26533191; run /orcd/data/orcd/022/benchmarks/b200-nodes/hpl/out-hpl/run_20261021_163151
