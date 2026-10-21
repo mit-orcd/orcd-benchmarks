@@ -56,8 +56,14 @@ rocHPL reaches **79–84%** of the RVS fp64 rate.
 | What limits it | Compute only | Compute, plus panel factorization, data movement (XGMI, RoCE) and memory |
 | GPUs work together | No | Yes |
 | Question it answers | Is each GPU healthy and at spec? | How fast does the whole system solve a large dense problem? |
-| Real work it is close to | The inner GEMM loop of any fp64 code — a ceiling, not an app | Dense linear algebra: direct (LU) solvers, boundary element methods (electromagnetics, acoustics), dense electronic-structure and quantum-chemistry solves |
-| Real work it is NOT like | Anything with communication or memory traffic | Sparse and memory-bound codes (most CFD, climate, graph work: closer to HPCG or STREAM); AI training and inference (bf16, fp8, fp4: closer to RVS at those precisions, RCCL, and real model runs) |
+| Real work it is close to | Only the inner GEMM loop of fp64 codes — a ceiling, not an app | Dense linear algebra: direct (LU) solvers, boundary element methods (electromagnetics, acoustics), dense electronic-structure and quantum-chemistry solves |
+
+**Neither test (at fp64) is close to:**
+
+| Real work | Why not | Closer test |
+|---|---|---|
+| Sparse and memory-bound codes (most CFD, climate, graph work) | Limited by memory bandwidth, not the matrix units | STREAM, HPCG |
+| AI training and inference | Runs at bf16, fp8, fp4, not fp64; also needs fast collectives | RVS `gst` at those precisions (`rvs_tflops.md`), RCCL tests, real model runs |
 
 **rocHPL is closer to real-world computation**: it runs a full solver with real communication across
 GPUs and nodes, and is the Top500 metric. But it is still a best case: a dense, compute-bound fp64
