@@ -1,0 +1,353 @@
+# AMD MI355X vs NVIDIA B200
+
+Written 2026-10-27. Every ratio is **MI355X / B200**: above 1 means MI355X is higher. For latency (TPOT, time per output token) a ratio above 1 means MI355X is **slower**.
+
+$\color{red}{\textsf{Red}}$ = a result far from what the specs on paper predict; each is explained in the **Quick summary** at the end of the file. (Red text renders on GitHub; other viewers show the `$\color{red}...$` code.)
+
+| | MI355X (this directory) | B200 |
+|---|---|---|
+| Nodes | node6100, node6101: 8 × MI355X (288 GB) each | node5500–5502, node5600–5802: 8 × B200 (192 GB) each |
+| Network | 8 × 400G AMD Pollara RoCEv2 per node (400 GB/s) | 8 × 400G NDR InfiniBand per node (400 GB/s) |
+| Software | ROCm 10.1 (user-space install; hipBLASLt 1.4.1, RCCL 2.30.7, rocBLAS 5.7.0) for RVS (ROCm Validation Suite), rocHPL and RCCL; apptainer containers (Primus, ATOM, vLLM) | CUDA 13.x, NGC containers, vLLM |
+| Sources | `results/node6100/rocm10.1/` and `results/node6101/rocm10.1/` (RVS, RCCL, rocHPL); `logs/node6100/rocm10.1/rvs/fp4_multiproc_*`; `results/ubuntu/{primus,kimi-recipe-old-vs-new}.md` | `../b200-nodes/out-gpu-fryer/`, `../cuBLASLt/summary.md`, `../b200-nodes/out-nccl-{1node,2node}/`, `../b200-nodes/output-megatron/`, `../b200-kimi/results/kimi-k3-{base,improve}-b200.md` |
+
+## Summary
+
+| Area | MI355X / B200 | Apple-to-apple? |
+|---|---|---|
+| BF16 GEMM | 1.15–1.19x | ❌ |
+| FP8 GEMM | 0.93x (vs gpu-fryer) or 1.48x (vs cuBLASLt) | ❌ |
+| FP4 GEMM | 0.71x (1 GPU), 0.72x (8 GPUs, one process per GPU) | ❌ |
+| FP64 GEMM | 2.14x | ❌ |
+| FP64 HPL (Linpack) (§2) | pending | ✅ same benchmark, each vendor's own build |
+| Collectives inside one node, bandwidth (§4) | 0.47–0.59x (sendrecv 0.09x) | ⚠️ close |
+| Latency inside one node, 8 B–1 MB (§4) | mixed in sendrecv, broadcast (0.29–1.28x); MI355X faster in all_reduce, all_gather, reduce_scatter, alltoall (1.18–5.00x) (default settings, MI355X ROCm 10.1) | ✅ same tests |
+| Collectives across 2 nodes, bandwidth (§4) | pending | ✅ nearly |
+| Latency across 2 nodes, sendrecv + all_reduce, 8 B–1 MB (§4) | pending | ✅ same tests |
+| Training, 7B, 1–8 GPUs | 1.12–1.19x | ❌ different model/settings |
+| Kimi-K3 (ATOM, vLLM recipe 1, vLLM recipe 2), per GPU | 1.05–2.43x (best recipe: 1.21–1.63x up to 64 users, 2.03–2.43x from 128) | ⚠️ 8 vs 16 GPUs |
+| Kimi-K3, one user's streaming speed (TPOT) | B200 1.27–1.94x faster up to 64 users (1.37x vs the best recipe at 1 user); same or slower from 128 users | ⚠️ 8 vs 16 GPUs |
+
+---
+
+## 1. RVS vs gpu-fryer (BF16, FP8, FP32/TF32 GEMM stress test, all 8 GPUs at once)
+
+TFLOP/s per GPU. MI355X = RVS `gst` on ROCm 10.1, N = 8, mean of node6100 and node6101 (aggregate / 8). B200 = gpu-fryer mean of node5500–5502 (the 7 newer nodes are within 1%).
+
+| Precision | MI355X (RVS) | MI355X on paper | MI355X % of paper | B200 (gpu-fryer) | B200 on paper | B200 % of paper | MI355X / B200, measured | MI355X / B200, on paper |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| BF16 | 1,667 | 2,516 | 66% | 1,450 | 2,250 | 64% | **1.15x** | 1.12x |
+| FP8 | 3,724 | 5,033 | 74% | 4,018 | 4,500 | 89% | **0.93x** | 1.12x |
+| FP32 (MI355X) / TF32 (B200) | 154 | 157.3 | 98% | 751 | 1,100 | 68% | 0.20x *(not comparable: B200 uses TF32 tensor cores, MI355X runs true FP32)* | — |
+
+On paper = vendor datasheet peak per GPU, dense (no sparsity), TFLOP/s.
+
+**Apple-to-apple: no.**
+- Different tools: RVS `gst` (hipBLASLt) vs gpu-fryer (cuBLASLt).
+- RVS runs 30 s and reports the **peak** per-GPU sample. gpu-fryer runs 300 s and reports the **converged mean**. This favours RVS by a few percent.
+- Matrix shapes are not the same: RVS uses 8192×8192×16384, gpu-fryer uses its own fixed shape.
+- "FP32" means a different operation on each GPU (see the table). MI355X has no TF32.
+
+### 1.1 MI355X vs B300 (RVS vs gpu-fryer)
+
+**Compared:** the MI355X numbers above with B300 (node5900-c1, gpu-fryer, same method as B200; `../b300-nodes/COMPARISON-b200-vs-b300.md` §3). **MI355X is faster in BF16, B300 is faster in FP8.**
+
+| Precision | MI355X (RVS) | MI355X on paper | MI355X % of paper | B300 (gpu-fryer) | B300 on paper | B300 % of paper | MI355X / B300, measured | MI355X / B300, on paper |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| BF16 | 1,667 | 2,516 | 66% | 1,521 | 2,250 | 68% | **1.10x** | 1.12x |
+| FP8 | 3,724 | 5,033 | 74% | 4,228 | 4,500 | 94% | **0.88x** | 1.12x |
+| FP32 (MI355X) / TF32 (B300) | 154 | 157.3 | 98% | 797 | 1,100 | 72% | 0.19x *(not comparable)* | — |
+
+- B300 is only 4–6% faster than B200 here, so the ratios are close to those against B200. The apple-to-apple notes above apply.
+
+## 2. rocHPL vs NVIDIA HPL (FP64 Linpack, 1–8 GPUs and 2 nodes)
+
+<!-- HPL-B200-START -->
+B200 HPL runs are pending; this section is filled in automatically when they finish.
+<!-- HPL-B200-END -->
+
+---
+
+## 3. RVS vs cuBLASLt (FP4, FP6, FP8, BF16, FP16, FP32/TF32, FP64 GEMM throughput, all 8 GPUs at once)
+
+TFLOP/s per GPU. MI355X = RVS `gst` N = 8 as above. B200 = `../cuBLASLt` **sustained** (60 s at the tuned shape), node5802-c1.
+
+| Precision | MI355X (RVS) | MI355X on paper | MI355X % of paper | B200 (cuBLASLt) | B200 on paper | B200 % of paper | MI355X / B200, measured | MI355X / B200, on paper |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| FP4, 1 GPU | 4,026 | 10,066 | $\color{red}{\textsf{40\\%}}$ | 5,708¹ | 9,000 | 63% | $\color{red}{\textbf{0.71x}}$ | 1.12x |
+| FP4, 8 GPUs, one RVS process for all 8 (standard run) | 2,558 | 10,066 | $\color{red}{\textsf{25\\%}}$ | 5,708 | 9,000 | 63% | $\color{red}{\textbf{0.45x}}$ | 1.12x |
+| FP4, 8 GPUs, one RVS process per GPU | ≈4,102 | 10,066 | $\color{red}{\textsf{41\\%}}$ | 5,708 | 9,000 | 63% | $\color{red}{\textbf{0.72x}}$ | 1.12x |
+| FP8 | 3,724 | 5,033 | 74% | 2,524 | 4,500 | $\color{red}{\textsf{56\\%}}$ | $\color{red}{\textbf{1.48x}}$ | 1.12x |
+| BF16 | 1,667 | 2,516 | 66% | 1,396 | 2,250 | 62% | **1.19x** | 1.12x |
+| FP16 | 1,569 | 2,516 | 62% | 1,322 | 2,250 | 59% | **1.19x** | 1.12x |
+| FP64 | 77 | 78.6 | 98% | 36 | 37 | 97% | **2.14x** | 2.12x |
+| FP32 (MI355X) / TF32 (B200) | 154 | 157.3 | 98% | 720 | 1,100 | 65% | 0.21x *(not comparable)* | — |
+| FP6 | 1,233 | 10,066 | $\color{red}{\textsf{12\\%}}$ | — | — | — | — *(not run on B200)* | — |
+
+On paper = vendor datasheet peak per GPU, dense (no sparsity), TFLOP/s. MI355X FP6 runs at the FP4 rate on paper.
+
+FP4 rows: MI355X 1 GPU = RVS N = 1, mean of node6100 (4,080) and node6101 (3,972); 8 GPUs = per GPU. **FP4 needs one process per GPU:** with one RVS process for all 8 GPUs (the standard RVS run) the rate falls to ≈2,558 per GPU; the FP4 kernel runs at full speed, but the GPUs sit idle much of the time because one process cannot launch work fast enough (profile: `vs-amd-cloud/rvs-fp4-recheck.md`). With 8 separate one-GPU processes at once, each GPU gives 4,034–4,161 (32,818 total), the same as 1 GPU. Real workloads run one process per GPU, so the last FP4 row is the one to use.
+
+¹ B200 FP4 was measured only with all 8 GPUs at once (one process per GPU; 5,647–5,824 per GPU), so the 1-GPU row uses the same B200 value.
+
+**Apple-to-apple: no.**
+- cuBLASLt is **tuned**: it tries 28 shapes and up to 8 algorithms per shape and keeps the fastest. RVS runs one fixed shape with the library's default choice. This favours B200.
+- The two B200 tools disagree on FP8: gpu-fryer gives 4,018 and cuBLASLt 2,524 (56% of datasheet). The FP8 ratio therefore depends on which B200 number is used (0.93x vs 1.48x).
+- FP4 formats differ: MI355X uses MXFP4 (32-element blocks), B200 uses NVFP4 (16-element blocks). The format does not change the FP4 work done, so the expected speed ratio between the two is about 1.0x for compute-bound GEMMs; NVFP4 only stores about 6% more bytes per element.
+
+**Results far from paper** (in the order of the table at the end of the file):
+
+- **Why MI355X FP4 is far below paper (0.72x measured with one process per GPU and 0.71x on 1 GPU, vs 1.12x on paper):** MI355X reaches only 40–41% of its FP4 peak (B200: 63%). Its FP8 reaches 74% and BF16 66% in the same test. **The likely cause is the ROCm software: the FP4 GEMM kernels in ROCm's hipBLASLt library are less mature than its FP8/BF16 kernels, not the hardware.** **It is not power or clocks:** in the fp4 recheck the GPUs ran at 1.6–2.1 GHz and 260–800 W during FP4, well below MI355X's 1,400 W limit (`vs-amd-cloud/rvs-fp4-recheck.md`).
+  - The test favours B200: cuBLASLt picks the best of many shapes and algorithms; RVS runs one fixed shape.
+- **Why MI355X FP6 is only 12% of paper:** on paper FP6 runs at the FP4 rate, but RVS measures it at 30% of FP4 (1,233 vs ≈4,102). **The likely cause is the same as for FP4, the ROCm software: hipBLASLt's FP6 GEMM kernels are even less mature than its FP4 ones, not the hardware.** Evidence: fp6 and bf6 give the same number (not profiled).
+- **Why B200 FP8 is only 56% of paper with cuBLASLt: the power limit, not the kernel.** All precisions run at the ≈1,000 W limit, and FP8 uses the most power per clock, so it gets the lowest clock (1,131 MHz, 58% of the maximum; `../cuBLASLt/summary.md` §3). Per clock the kernel reaches ≈97% of paper. gpu-fryer gets 89% because its FP8 matrices are constant (every value is clamped to 448): constant data uses less power, so the GPU clocks higher. **So gpu-fryer's FP8 number shows the clock with constant data, not what a real workload gets.** cuBLASLt uses random data, the most power-hungry case, so 56% is the lower bound and 89% the upper bound; real data lies in between. <!-- FP8-CHECK-BEGIN -->1-GPU check (job 25320492, node5501-c1): cuBLASLt with random data 2,559 TFLOP/s at 1,120 MHz, all zeros 4,358 TFLOP/s at 1,965 MHz, all 448 4,207 TFLOP/s at 1,901 MHz; at gpu-fryer's shape 8192³ random 2,444 TFLOP/s at 1,057 MHz, all 448 3,886 TFLOP/s at 1,817 MHz; gpu-fryer 4,023 TFLOP/s at 1,943 MHz. **Confirmed:** with gpu-fryer's constant data cuBLASLt reaches gpu-fryer's number, so the gap is the data.<!-- FP8-CHECK-END -->
+
+> [!NOTE]
+> In my test, MI355X FP4 GEMM is only 0.72x of B200, against 1.12x on paper. The likely reason is that ROCm's FP4 GEMM kernels are not fully optimized yet. In the other precisions MI355X is faster than B200, as expected; FP64 is 2.14x faster.
+
+### 3.1 MI355X vs B300 (RVS vs cuBLASLt)
+
+**Compared:** the MI355X numbers of the table above with B300 (Blackwell Ultra, SXM6 AC, air-cooled, 1,100 W limit), `../cuBLASLt` **sustained**, node5900-c1, same cuBLASLt method as for B200 (`../cuBLASLt/summary.md`, `../b300-nodes/COMPARISON-b200-vs-b300.md` §4). **MI355X is faster in FP8, BF16, FP16 and FP64; B300 is faster in FP4.**
+
+| Precision | MI355X (RVS) | MI355X on paper | MI355X % of paper | B300 (cuBLASLt) | B300 on paper | B300 % of paper | MI355X / B300, measured | MI355X / B300, on paper |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| FP4, 1 GPU | 4,026 | 10,066 | $\color{red}{\textsf{40\\%}}$ | 6,877² | 13,500 | $\color{red}{\textsf{51\\%}}$ | $\color{red}{\textbf{0.59x}}$ | 0.75x |
+| FP4, 8 GPUs, one RVS process for all 8 (standard run) | 2,558 | 10,066 | $\color{red}{\textsf{25\\%}}$ | 6,877 | 13,500 | $\color{red}{\textsf{51\\%}}$ | $\color{red}{\textbf{0.37x}}$ | 0.75x |
+| FP4, 8 GPUs, one RVS process per GPU | ≈4,102 | 10,066 | $\color{red}{\textsf{41\\%}}$ | 6,877 | 13,500 | $\color{red}{\textsf{51\\%}}$ | $\color{red}{\textbf{0.60x}}$ | 0.75x |
+| FP8 | 3,724 | 5,033 | 74% | 2,524 | 4,500 | $\color{red}{\textsf{56\\%}}$ | $\color{red}{\textbf{1.48x}}$ | 1.12x |
+| BF16 | 1,667 | 2,516 | 66% | 1,437 | 2,250 | 64% | **1.16x** | 1.12x |
+| FP16 | 1,569 | 2,516 | 62% | 1,333 | 2,250 | 59% | **1.18x** | 1.12x |
+| FP64 | 77 | 78.6 | 98% | 1.10 | 1.25 | 88% | **70x** | 63x |
+| FP32 (MI355X) / TF32 (B300) | 154 | 157.3 | 98% | 756 | 1,100 | 69% | 0.20x *(not comparable)* | — |
+| FP6 | 1,233 | 10,066 | $\color{red}{\textsf{12\\%}}$ | — | — | — | — *(not run on B300)* | — |
+
+² As for B200, B300 FP4 was measured only with all 8 GPUs at once (one process per GPU), so the 1-GPU row uses the same value.
+
+- **The MI355X/B300 FP4 ratio is closer to paper than the MI355X/B200 one** (0.60x vs 0.75x on paper; B200: 0.72x vs 1.12x), because both sides are below paper: MI355X for the ROCm FP4 kernels (see above), and **B300 because of its power limit:** at 1,100 W it runs FP4 at 1,099 MHz, 54% of its full clock, and reaches 51% of paper (`../b300-nodes/COMPARISON-b200-vs-b300.md`, "Why FP4 is 1.20x measured but 1.5x on paper").
+- **B300 FP8 is 56% of paper,** the same as B200 and for the same reason (power limit, lowest clock of all precisions: 1,114 MHz). B300 FP8 equals B200 FP8 (2,524), so the FP8, BF16 and FP16 ratios are about the same as against B200.
+- **FP64:** B300 has almost no FP64 hardware (1.25 TFLOP/s on paper, 0.03x of B200), so MI355X is 70x faster.
+- The apple-to-apple notes above apply here too (tuned cuBLASLt vs fixed-shape RVS; NVFP4 vs MXFP4).
+
+## 4. Interconnect — RCCL vs NCCL, one node and two nodes
+
+| | Faster | By how much |
+|---|---|---|
+| **Intra-node bandwidth** (8 GPUs, large messages) | **B200** (NVLink 5 + NVSwitch) | • B200 1.7–2.1× faster on collectives<br>• B200 11× faster for one GPU pair (sendrecv) |
+| **Intra-node latency** (8 GPUs, 8 B–1 MB) | **MI355X** (Infinity Fabric) | • MI355X 1.2–5.0× faster in all_reduce, all_gather, reduce_scatter, alltoall<br>• B200 faster only in sendrecv at 1 MB (1.1×); broadcast at 1 KB, 64 KB, 1 MB (1.1–3.4×) |
+| **Inter-node bandwidth** (2 nodes, large messages) | pending | pending |
+| **Inter-node latency** (2 nodes, small messages) | pending | pending |
+
+On paper: links inside one node 537.6 vs 900 GB/s per GPU (0.60x); network 400 vs 400 GB/s per node (1.00x); neither vendor publishes latency figures.
+
+**Details:** [`mi355x-rocm10.1-vs-b200-interconnect.md`](mi355x-rocm10.1-vs-b200-interconnect.md) — 1. intra-node, 2. inter-node; each with on paper, measured bandwidth, measured latency.
+
+## 5. Training — Primus / Megatron-LM vs Megatron-LM
+
+**Single node, 1–8 GPUs, BF16, TFLOP/s per GPU.**
+
+MI355X = Primus v26.5 Megatron llama2-7B, mean of node6100 and node6101. B200 = Megatron-LM GPT-7B, node5500.
+
+**Yes, the Primus runs use Megatron-LM:** Primus is AMD's launcher, and these runs train with its Megatron-LM backend (the copy bundled in the image at `third_party/Megatron-LM`, with AMD's patches and fused kernels).
+
+| GPUs | MI355X (Primus llama2-7B) | MI355X % of BF16 paper (2,516) | B200 (Megatron GPT-7B) | B200 % of BF16 paper (2,250) | MI355X / B200 |
+|---:|---:|---:|---:|---:|---:|
+| 1 | 1,166 | 46% | 989 | 44% | **1.18x** |
+| 2 | 1,131 | 45% | 983 | 44% | **1.15x** |
+| 3 | 1,135 | 45% | 970 | 43% | **1.17x** |
+| 4 | 1,148 | 46% | 967 | 43% | **1.19x** |
+| 5 | 1,095 | 44% | 967 | 43% | **1.13x** |
+| 6 | 1,091 | 43% | 969 | 43% | **1.13x** |
+| 7 | 1,087 | 43% | 969 | 43% | **1.12x** |
+| 8 | 1,153 | 46% | 967 | 43% | **1.19x** |
+
+**% of BF16 paper is measured against the dense BF16 datasheet peak** (no sparsity: MI355X 2,516, B200 2,250 TFLOP/s; the same "on paper" values as in §3), **not against the measured GEMM**. It is the model FLOPs utilisation (MFU): Megatron's TFLOP/s/GPU divided by that peak. Against the measured BF16 GEMM in §3 (MI355X RVS 1,667, B200 cuBLASLt 1,396), training at 1 GPU reaches ≈70% and ≈71% (1,166 / 1,667 and 989 / 1,396).
+
+B200 at 8 GPUs on the other nodes: node5501 964, node5502 975. B200 across 2 nodes (16 GPUs): 958–967; not run on MI355X.
+
+**Apple-to-apple: no.** Both are 7B dense models in BF16, data-parallel (TP = PP = 1), no recompute, and both report Megatron's own TFLOP/s/GPU, but:
+
+| | MI355X | B200 |
+|---|---|---|
+| Model | llama2-7B: 32 layers, hidden 4096, FFN 11008 | GPT-7B: 36 layers, hidden 4096, FFN 14336 |
+| Sequence length | 4096 | 2048 |
+| Micro / global batch | 4 / 32 × N (8 steps of accumulation) | 4 / 128 × N (32 steps) |
+| Software | Primus v26.5 (AMD-tuned Megatron with fused kernels), distributed optimizer | NGC Megatron-LM |
+| Iterations | 50 | 100 |
+
+The longer sequence on MI355X gives more work per step, which tends to raise TFLOP/s. So the 1.12–1.19x is a mix of hardware and software tuning.
+
+> [!NOTE]
+> **Megatron-LM training (BF16): MI355X is about 1.2x faster than B200 (1.12–1.19x, mean 1.16x), consistent with the BF16 GEMM (1.15x vs gpu-fryer, 1.19x vs cuBLASLt, §1 and §3) and with the 1.12x on paper.** The training runs are BF16, not FP16 (FP16 GEMM gives 1.19x, §3). The two models have the same number of parameters but are not the same model, so this is not an exact apples-to-apples comparison.
+
+## 6. Inference — Kimi-K3
+
+**Compared: one MI355X node (8 × MI355X) running each of our three Kimi-K3 recipes vs two B200 nodes (16 × B200) running vLLM, with the same model, ISL/OSL 1K/1K and number of users.** MI355X serves more tokens per GPU than B200 with every recipe at every load. B200 streams one user's answer faster up to 64 users (lower TPOT). From 128 users up, MI355X has the same or lower TPOT.
+
+**Memory: why 8 MI355X vs 16 B200.** Kimi-K3 (2.78 trillion parameters) needs **1,561 GB for the weights alone** (MXFP4 checkpoint), plus memory for the KV cache.
+- **One MI355X node fits it:** 8 × 288 GB = 2,304 GB, i.e. ≈195 GB of weights per GPU and ≈90 GB per GPU left for the KV cache.
+- **One B200 node does not:** 8 × 192 GB ≈ 1,538 GB, 23 GB short of the weights alone. B200 therefore needs two nodes (16 GPUs, TP8 × PP2: 97 GiB of weights + 59 GiB of KV cache per GPU; `../b200-kimi/results/kimi-k3-base-b200.md`).
+
+**The setups:**
+- **8 × MI355X (one node, TP8), three recipes:**
+  - **ATOM:** AMD's ATOM engine ([github.com/ROCm/ATOM](https://github.com/ROCm/ATOM), not vLLM), same images as amd-cloud: [`rocm/atom-dev:nightly_202608111555`](https://hub.docker.com/r/rocm/atom-dev/tags) (`node6100/kimi-cloud/images.txt` lists the image digests); recipe: [ROCm/MAD Kimi-K3 benchmark](https://github.com/ROCm/MAD/blob/develop/benchmark/kimi_k3/README.md). `max-num-seqs` 64 up to 64 users, 256 at 128–256 users, 512 at 512 users. No speculative decoding.
+  - **vLLM recipe 1:** AMD's earlier vLLM (ROCm) recipe ([recipes.vllm.ai/moonshotai/Kimi-K3?hardware=mi355x](https://recipes.vllm.ai/moonshotai/Kimi-K3?hardware=mi355x), 2026-09-25). DSpark speculative decoding up to 14 users, DCP 8 + CPU KV-cache offload above, server re-tuned for each load.
+  - **vLLM recipe 2:** AMD's newer recipe (`amd-kimi-k3-recipe.pdf`, 2026-10): stock `vllm/vllm-openai-rocm:v0.29.0`, one server for the sweep, `max-num-seqs` 128, no speculative decoding.
+  - Detail: `ubuntu/kimi-recipe-old-vs-new.md`.
+- **16 × B200 (two nodes, TP8 × PP2):** vLLM, image [`vllm/vllm-openai:kimi-k3`](https://hub.docker.com/r/vllm/vllm-openai/tags); recipe: the vLLM Kimi-K3 recipe's `multi_node_tp_pp` strategy ([recipes.vllm.ai/moonshotai/Kimi-K3?hardware=b200](https://recipes.vllm.ai/moonshotai/Kimi-K3?hardware=b200); launch flags taken from it are listed in `../b200-kimi/plan.md` §4). `max-num-seqs` 64 up to 64 users, 256 at 128–256 users, 512 at 512 users (`../b200-kimi/results/kimi-k3-{base,improve}-b200.md`). No speculative decoding: DSpark does not work with pipeline parallelism, which B200 needs.
+- **Both:** Kimi-K3 MXFP4, ISL/OSL 1K/1K, fp8 KV cache, prefix caching off, no expert parallelism, 10 × users prompts.
+
+### 6.1 Throughput (output tokens per second, higher is better)
+
+Per-GPU ratio = (MI355X tok/s / 8) / (B200 tok/s / 16): above 1 = MI355X serves more per GPU. "—" = not run.
+
+| Users | 16 × B200 | 8 × MI355X (ATOM) | 8 × MI355X (vLLM recipe 1) | 8 × MI355X (vLLM recipe 2) | per GPU (ATOM / B200) | per GPU (vLLM recipe 1 / B200) | per GPU (vLLM recipe 2 / B200) |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 87 | 45 | 71 | 54 | 1.05x | **1.63x** | 1.24x |
+| 2 | 165 | 87 | — | 100 | 1.05x | — | **1.21x** |
+| 4 | 281 | 153 | 212 | 183 | 1.09x | **1.51x** | 1.30x |
+| 8 | 475 | 285 | 353 | 315 | 1.20x | **1.49x** | 1.32x |
+| 16 | 802 | 506 | — | 523 | 1.26x | — | **1.31x** |
+| 32 | 1,209 | 831 | — | 852 | 1.37x | — | **1.41x** |
+| 64 | 1,696 | 1,282 | 1,344 | 1,228 | 1.51x | **1.58x** | 1.45x |
+| 128 | 1,837 | 1,845 | 1,865 | 1,735 | 2.01x | **2.03x** | 1.89x |
+| 256 | 2,308 | 2,602 | 2,522 | 1,747¹ | **2.25x** | 2.18x | 1.51x¹ |
+| 512 | 2,929 | 3,562 | — | — | **2.43x** | — | — |
+
+Bold = the best MI355X recipe at that load. ¹ Above vLLM recipe 2's `max-num-seqs` 128, so half the requests wait.
+
+- **Per GPU, MI355X serves more than B200 with every recipe at every load:** 1.05–2.43x. With the best recipe for each load it is **1.21–1.63x up to 64 users and 2.03–2.43x from 128 users up.**
+- **Whole node:** one MI355X node gives 0.61–0.82x of two B200 nodes up to 64 users, and **matches or beats them from 128 users up** (1.01x at 128, 1.13x at 256, 1.22x at 512, best recipe).
+- **Best MI355X recipe:** vLLM recipe 1 at 1–128 users (its speculative decoding helps most at low load); ATOM at 256–512 users.
+
+### 6.2 Latency (median, ms, lower is better)
+
+TPOT (time per output token) = how fast one user's answer streams. TTFT (time to first token) = how long until the answer starts. TPOT ratio = MI355X / B200: above 1 = MI355X is **slower**.
+
+| Users | TPOT (16 × B200) | TPOT (ATOM) | TPOT (vLLM recipe 1) | TPOT (vLLM recipe 2) | TPOT ratio (ATOM / B200) | TPOT ratio (vLLM recipe 1 / B200) | TPOT ratio (vLLM recipe 2 / B200) |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 11.2 | 21.8 | 15.4 | 18.1 | $\color{red}{\textsf{1.94x}}$ | $\color{red}{\textsf{1.37x}}$ | $\color{red}{\textsf{1.61x}}$ |
+| 2 | 11.8 | 22.8 | — | 19.0 | $\color{red}{\textsf{1.92x}}$ | — | $\color{red}{\textsf{1.61x}}$ |
+| 4 | 13.6 | 25.2 | 18.8 | 20.7 | $\color{red}{\textsf{1.85x}}$ | $\color{red}{\textsf{1.38x}}$ | $\color{red}{\textsf{1.52x}}$ |
+| 8 | 15.4 | 27.3 | 22.0 | 23.8 | $\color{red}{\textsf{1.77x}}$ | $\color{red}{\textsf{1.43x}}$ | $\color{red}{\textsf{1.55x}}$ |
+| 16 | 18.6 | 30.8 | — | 28.5 | $\color{red}{\textsf{1.65x}}$ | — | $\color{red}{\textsf{1.53x}}$ |
+| 32 | 25.3 | 37.5 | — | 35.2 | $\color{red}{\textsf{1.48x}}$ | — | $\color{red}{\textsf{1.39x}}$ |
+| 64 | 35.9 | 49.1 | 45.6 | 49.7 | $\color{red}{\textsf{1.37x}}$ | 1.27x | $\color{red}{\textsf{1.38x}}$ |
+| 128 | 68.9 | 68.9 | 66.9 | 71.7 | 1.00x | 0.97x | 1.04x |
+| 256 | 110.2 | 98.5 | 100.4 | 71.7¹ | 0.89x | 0.91x | 0.65x¹ |
+| 512 | 167.0 | 143.5 | — | — | 0.86x | — | — |
+
+| Users | 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| TTFT, 16 × B200 | 226 | 218 | 233 | 234 | 235 | 264 | 278 | 462 | 485 | 554 |
+| TTFT, ATOM | 225 | 250 | 254 | 256 | 252 | 261 | 274 | 290 | 434 | 522 |
+| TTFT, vLLM recipe 1 | 199 | — | 275 | 283 | — | — | 289 | 314 | 480 | — |
+| TTFT, vLLM recipe 2 | 186 | 403 | 405 | 408 | 410 | 412 | 425 | 450 | 73,180¹ | — |
+
+¹ vLLM recipe 2 at 256 users: half the requests wait for a free slot (`max-num-seqs` 128), so TTFT jumps to 73 s and TPOT only covers the requests already running.
+
+- **Up to 64 users, one user's answer streams faster on B200:** 1.27–1.43x faster than vLLM recipe 1 (the fastest MI355X recipe here), 1.4–1.6x faster than vLLM recipe 2 and 1.4–1.9x faster than ATOM.
+- **From 128 users up, MI355X streams as fast or faster** (TPOT ratio 0.86–1.04x): at high load each step is mostly GPU work, so the fixed per-step overhead explained below matters less.
+- **Time to first token is about the same (0.2–0.3 s) up to 64 users**; from 128 users up it is lower on MI355X with ATOM and vLLM recipe 1 (0.29–0.52 s vs 0.46–0.55 s on B200).
+
+**Results far from paper** (in the order of the table at the end of the file):
+
+- **Why one user's answer streams faster on B200 up to 64 users (TPOT ratio 1.27–1.94x, vs 1.00x memory bandwidth on paper):** **not measured; the most likely cause is software: a fixed overhead per generation step (kernel and launch overhead) in the ROCm inference stacks, since both GPUs have the same 8 TB/s memory bandwidth on paper.** Three observations support this: the gap shrinks as users increase and disappears at 128 users; it is smallest with vLLM recipe 1, whose speculative decoding makes several tokens per step; and B200 is faster per user even though it adds a network hop per token (pipeline parallelism over 2 nodes).
+
+### 6.2.1 Latency at the same users per GPU
+
+**Compared: MI355X at N users vs B200 at 2N users, so both carry the same number of users per GPU** (8 MI355X vs 16 B200). This gives a chip-vs-chip view of latency; §6.2 compares the same total users (one MI355X node vs two B200 nodes). TPOT ratio = MI355X / B200: above 1 = MI355X is **slower**.
+
+| Users per GPU | Users, 8 × MI355X | Users, 16 × B200 | TPOT (B200) | TPOT (ATOM) | TPOT (vLLM recipe 1) | TPOT (vLLM recipe 2) | TPOT ratio (ATOM / B200) | TPOT ratio (vLLM recipe 1 / B200) | TPOT ratio (vLLM recipe 2 / B200) | TTFT (B200) | TTFT (ATOM) | TTFT (vLLM recipe 1) | TTFT (vLLM recipe 2) |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 0.125 | 1 | 2 | 11.8 | 21.8 | 15.4 | 18.1 | 1.84x | 1.30x | 1.53x | 218 | 225 | 199 | 186 |
+| 0.25 | 2 | 4 | 13.6 | 22.8 | — | 19.0 | 1.67x | — | 1.40x | 233 | 250 | — | 403 |
+| 0.5 | 4 | 8 | 15.4 | 25.2 | 18.8 | 20.7 | 1.64x | 1.22x | 1.35x | 234 | 254 | 275 | 405 |
+| 1 | 8 | 16 | 18.6 | 27.3 | 22.0 | 23.8 | 1.46x | 1.18x | 1.28x | 235 | 256 | 283 | 408 |
+| 2 | 16 | 32 | 25.3 | 30.8 | — | 28.5 | 1.22x | — | 1.13x | 264 | 252 | — | 410 |
+| 4 | 32 | 64 | 35.9 | 37.5 | — | 35.2 | 1.04x | — | **0.98x** | 278 | 261 | — | 412 |
+| 8 | 64 | 128 | 68.9 | 49.1 | 45.6 | 49.7 | **0.71x** | **0.66x** | **0.72x** | 462 | 274 | 289 | 425 |
+| 16 | 128 | 256 | 110.2 | 68.9 | 66.9 | 71.7 | **0.62x** | **0.61x** | **0.65x** | 485 | 290 | 314 | 450 |
+| 32 | 256 | 512 | 167.0 | 98.5 | 100.4 | 71.7¹ | **0.59x** | **0.60x** | **0.43x¹** | 554 | 434 | 480 | 73,180¹ |
+
+Latency in ms (median). **Bold** TPOT ratio = MI355X faster than B200 (below 1). ¹ vLLM recipe 2 at 256 users: half the requests wait (`max-num-seqs` 128), see §6.2.
+
+- **Up to 1 user per GPU, B200 still streams faster** (1.18–1.30x vs vLLM recipe 1, 1.28–1.84x vs the other recipes), but the gap is smaller than in §6.2.
+- **At 2–4 users per GPU they are about even** (0.98–1.22x).
+- **From 8 users per GPU up, MI355X streams 1.4–1.7x faster** (TPOT ratio 0.59–0.72x), and its TTFT is lower too (0.27–0.48 s vs 0.46–0.55 s).
+- So, chip for chip, B200 is ahead only at very light load per GPU; under load MI355X has the lower latency.
+
+### 6.3 Long context (ISL/OSL 128K/1K): AMD's tested numbers vs our three recipes (MI355X only)
+
+**Compared: AMD's tested numbers for vLLM recipe 2 vs our three recipes on one node of 8 × MI355X, same workload and metric.** B200 was not run on this workload (its run uses `max_model_len` 16,384). Workload: AMD's 128K/1K (input 128,000 and output 1,000 tokens, range ratio 0.2, 10 × users prompts). Metric: total tokens (input + output) per second per GPU. AMD's numbers are the "Benchmark Results" table on page 6 of `amd-kimi-k3-recipe.pdf` (AMD tested only this metric, and only for vLLM recipe 2). Ratio = ours / AMD's tested number: above 1 = ours faster. Detail: `ubuntu/kimi-recipe-old-vs-new.md`.
+
+Total tokens/s per GPU (input + output):
+
+| Users | AMD tested (vLLM recipe 2) | ours (vLLM recipe 2) | ours (vLLM recipe 2, prefix-cache test, same prompts repeated) | ours (vLLM recipe 1) | ours (ATOM) | (vLLM recipe 2) / (AMD tested) | (prefix-cache test) / (AMD tested) | (vLLM recipe 1) / (AMD tested) | (ATOM) / (AMD tested) |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 874 | 487 | 719 | 573 | 483 | 0.56x | 0.82x | 0.66x | 0.55x |
+| 2 | 1,090 | 791 | 1,500 | 840 | 1,123 | 0.73x | 1.38x | 0.77x | 1.03x |
+| 4 | 1,235 | 1,015 | 1,019 | 1,076 | 1,360 | 0.82x | 0.82x | 0.87x | 1.10x |
+| 8 | 1,199 | 1,212 | 1,210 | 1,299 | 1,630 | 1.01x | 1.01x | 1.08x | 1.36x |
+| 16 | 1,179 | 1,189 | 1,211 | 1,619 | 1,775 | 1.01x | 1.03x | 1.37x | 1.51x |
+| 32 | 1,118 | 1,227 | 1,187 | 1,730 | 1,926 | 1.10x | 1.06x | 1.55x | 1.72x |
+| 64 | 1,096 | 1,191 | 1,202 | 1,819 | 1,947 | 1.09x | 1.10x | 1.66x | 1.78x |
+| 128 | 1,110 | 1,188 | 1,192 | 1,823 | 1,966 | 1.07x | 1.07x | 1.64x | 1.77x |
+
+- **Prefix-cache test column:** vLLM recipe 2 run a second time with the same prompts on the same server (prefix-cache hit rate about 100% at 1 and 2 users, 0% at 4, 8, 16, 32, 64 and 128 users, where the prompts do not fit in the KV cache); 2026-10-13/14, see the test below.
+- **Same recipe as AMD (vLLM recipe 2):** our nodes match or beat AMD's tested numbers from 8 users up (1.01–1.10x) and are slower at 1–4 users (0.56–0.82x). Part of this comes from prompts reused from the prefix cache in AMD's runs (test below); the rest, about 0.82x at 1 and 4 users, is likely a fixed per-step overhead (see `kimi-summary.md`).
+- **ATOM is the fastest of our three recipes from 2 users up** (1.36–1.78x AMD's tested vLLM recipe 2 numbers at 8–128 users); vLLM recipe 1 is second.
+- **At 1 user all three recipes are at 0.55–0.66x of AMD's tested number**, which points to our setup rather than one recipe.
+
+<!-- PREFIX-TEST-BEGIN (auto: atom/analyze_prefix_test.py) -->
+**Prefix-cache test (2026-10-15):** **Partly confirmed: the prefix cache explains part of the low-user gap.** With cached prompts we get 719 tok/s/GPU at 1 user (0.82x AMD's 874) and 1,500 at 2 users (1.38x AMD's 1,090), but from 4 users up the prompts do not fit in the KV cache, so the cache does not help (0% hits; 0.82–1.10x AMD's numbers). The remaining gap at 1 and 4 users has another cause (still to be profiled). Detail: [ubuntu/kimi-prefix-cache-test.md](ubuntu/kimi-prefix-cache-test.md).
+<!-- PREFIX-TEST-END -->
+
+### 6.4 Apple-to-apple: partly
+
+- **Same:** model and weights, ISL/OSL, users, KV-cache type, prefix caching off, no expert parallelism, median TPOT and TTFT.
+- **Different and unavoidable:** **8 GPUs vs 16 GPUs.** B200 needs two nodes and pipeline parallelism, which adds a network hop per token and rules out speculative decoding.
+- **Different by choice:** engine and version (ATOM or AMD's vLLM recipes vs B200's vLLM build), and `max-num-seqs` at some loads (vLLM recipe 2 uses 128 everywhere; vLLM recipe 1 is re-tuned per load).
+- **Cross-check against SemiAnalysis InferenceX** (B200 and vLLM recipe 1): [mi355x-vs-b200-kimi-k3.md](mi355x-vs-b200-kimi-k3.md).
+
+---
+
+---
+
+## Quick summary: results far from what the specs on paper predict
+
+On paper, MI355X / B200 is 1.12x for FP4/FP8/BF16 compute, 2.12x for FP64, 0.60x for GPU-to-GPU links in one node (537.6 vs 900 GB/s), 1.00x for the network between nodes and 1.00x for memory bandwidth.
+
+**Results as expected from the specs on paper**, one per section (measured MI355X / B200 vs on paper; % of each GPU's own peak):
+
+- **1. RVS vs gpu-fryer:** BF16 1.15x vs 1.12x on paper; both GPUs ≈65% of peak.
+- **2. RVS vs cuBLASLt:** BF16 1.19x and FP16 1.19x vs 1.12x; FP64 2.14x vs 2.12x (both ≈97–98% of peak).
+- **3. Interconnect, one node (bandwidth):** Most collectives 0.53–0.59x vs 0.60x link bandwidth on paper; both GPUs 61–93% of their link peak. all_reduce 0.47x and reduce 0.48x are also expected: B200 is helped by NVLink SHARP (in-switch reduction).
+- **3. Interconnect, two nodes (bandwidth):** pending.
+- **3. Interconnect, latency:** no latency on the spec sheets. Inside one node MI355X is faster for small messages (1.18–5.00x in all_reduce, all_gather, reduce_scatter, alltoall). Across 2 nodes: pending.
+- **4. Training:** 7B models 1.12–1.19x vs 1.12x BF16; both use 43–46% of BF16 peak.
+- **5. Kimi-K3:** Model fits in one MI355X node but needs two B200 nodes, as 288 vs 192 GB per GPU predicts; per-GPU throughput 1.05–2.43x across the three MI355X recipes.
+
+**Results far from the specs on paper:**
+
+| Result | Which GPU is off | Measured | On paper | Likely reason (one sentence) |
+|---|---|---|---|---|
+| **FP4 GEMM** (§3) | MI355X (low) | MI355X 40–41% of its peak (1 GPU and 8 GPUs), B200 63%; ratio **0.71–0.72x** | 1.12x | ROCm software: the FP4 kernels in ROCm's hipBLASLt are less mature than its FP8/BF16 kernels (74%/66% of peak), and cuBLASLt was tuned while RVS was not. |
+| **FP6 GEMM** (§3) | MI355X (low) | MI355X 12% of its peak | — (not on B200) | Same ROCm software cause as FP4: the FP6 kernels are even less developed. |
+| **FP8 GEMM on B200 with cuBLASLt** (§3) | B200 (low) | B200 56% of peak (gpu-fryer: 89%); ratio **1.48x** | 1.12x | Power limit: all precisions run at the ≈1,000 W cap, and FP8 uses the most power per cycle, so it gets the lowest clock (1,131 MHz); the kernel itself is ≈97% efficient per clock. gpu-fryer's 89% is inflated by its constant test data (every FP8 value clamped to 448), as the 1-GPU check in §3 confirms. |
+| **all_reduce across 2 nodes** (§4) | pending | pending | 1.00x | pending |
+| **alltoall across 2 nodes** (§4) | pending | pending | 1.00x | pending |
+| **Kimi-K3 single-user speed** (§6) | MI355X (slow) | B200 1.27–1.94x faster per user (TPOT) up to 64 users, depending on the MI355X recipe; same or slower from 128 users | 1.00x (same 8 TB/s memory bandwidth) | Not measured; most likely software (per-step kernel and launch overhead in vLLM on ROCm), since memory bandwidth on paper is the same. |
+
+## Apple-to-apple?
+
+**Short answer.** No table here is an exact apple-to-apple comparison. Each one runs the same kind of test, but the tools, matrix sizes, models or GPU counts differ. The closest matches are 2-node RCCL vs NCCL (same 400 GB/s network, same message sizes) and Kimi-K3 (same model and workload, but B200 needs 16 GPUs where MI355X needs 8).
+
+| Comparison | Apple-to-apple? | Main differences |
+|---|---|---|
+| 1. RVS vs gpu-fryer | ❌ No | different tools; RVS reports the peak sample of a 30 s run, gpu-fryer the converged mean of a 300 s run; B200 "FP32" runs on tensor cores (TF32), MI355X FP32 is true FP32 |
+| 2. RVS vs cuBLASLt | ❌ No | RVS uses one fixed shape (8192×8192×16384); cuBLASLt picks the fastest of 28 shapes and up to 8 algorithms per shape (tuned in B200's favour); B200 TF32 vs MI355X FP32 |
+| 3. Interconnect: bandwidth, 1 node | ⚠️ Close | same test (rccl-tests / nccl-tests, 8 GPUs, 20 iterations, busbw at the largest size); max size 8 GB vs 16 GiB; different link design (XGMI mesh vs NVSwitch) |
+| 3. Interconnect: bandwidth, 2 nodes | ✅ Nearly | same test, 16 ranks, max 16 GiB, same 8 × 400G network; only the NIC type (RoCE vs IB) and library differ |
+| 3. Interconnect: latency, 1 and 2 nodes | ✅ Yes | same tests (perftest, rccl-tests / nccl-tests, 8 B–4 MB, 1000 iterations, one rank per GPU); only the links (XGMI vs NVLink, RoCE vs IB) and library differ |
+| 4. Primus vs Megatron (training) | ❌ No | different model (llama2-7B, seq 4096 vs GPT-7B, seq 2048), batch size and framework build |
+| 5. Kimi-K3 inference | ⚠️ Partly | same model, ISL/OSL 1K/1K, fp8 KV cache, users 1–512; but 8 GPUs (TP8) vs 16 GPUs (TP8 × PP2, no speculative decoding possible), engine and version (ATOM / AMD vLLM recipes vs B200 vLLM), `max-num-seqs` at some loads |

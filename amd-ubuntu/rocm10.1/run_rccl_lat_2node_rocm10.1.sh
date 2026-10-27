@@ -46,6 +46,8 @@ TWO="node6100.inband node6101.inband"; ONE="node6100.inband"
 COLLS="sendrecv all_reduce all_gather reduce_scatter broadcast alltoall"
 SETTINGS=("default|")
 SETTINGS+=("netib|NCCL_NET=IB")   # as the ROCm 7.14 run
+# extra "tag|ENV" setting, e.g. the all_reduce fix chosen by pick_fix_rocm10.1.py
+[[ -n ${LAT_EXTRA_SETTINGS:-} ]] && SETTINGS+=("$LAT_EXTRA_SETTINGS")
 for s in "${SETTINGS[@]}"; do
   tag=${s%%|*}; env=${s#*|}
   say "B. RCCL latency, setting $tag"

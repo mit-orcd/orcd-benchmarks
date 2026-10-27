@@ -4,7 +4,8 @@
   analyze-hpl-b200.py <run dir with summary.txt>
 
 Writes ../results/hpl-b200.md (B200 only) and fills section 2 (between the HPL-B200-START/END
-markers) plus the "FP64 HPL" summary row of ../../amd-ubuntu/results/mi355x-vs-b200.md.
+markers) plus the "FP64 HPL" summary row of ../../amd-ubuntu/results/mi355x-vs-b200.md, and the same in
+../../amd-ubuntu/results/mi355x-rocm10.1-vs-b200.md with the ROCm 10.1 rocHPL results.
 MI355X: ../../amd-ubuntu/results/node6100/rocm7.14/rochpl.csv (rocHPL, ROCm 7.14).
 FP64 GEMM per GPU (section 3 of mi355x-vs-b200.md): MI355X RVS 77, B200 cuBLASLt 36.
 """
@@ -16,7 +17,9 @@ import sys
 B = "/orcd/data/orcd/022/benchmarks"
 OUT_MD = os.environ.get("HPL_MD", f"{B}/b200-nodes/results/hpl-b200.md")
 CMP_MD = os.environ.get("CMP_MD", f"{B}/amd-ubuntu/results/mi355x-vs-b200.md")
-ROC = f"{B}/amd-ubuntu/results/node6100/rocm7.14/rochpl.csv"
+ROC = os.environ.get("ROC_CSV", f"{B}/amd-ubuntu/results/node6100/rocm7.14/rochpl.csv")
+LABEL = os.environ.get("ROC_LABEL", "ROCm 7.14")
+SRC = os.environ.get("ROC_SRC", "[rochpl-vs-rvs.md](rochpl-vs-rvs.md)")
 PEAK = {"mi": 78.6, "b2": 37.0}   # FP64 TFLOPS per GPU, datasheet, dense
 GEMM = {"mi": 77.0, "b2": 36.0}   # measured FP64 GEMM per GPU (RVS, cuBLASLt), section 3
 
@@ -93,8 +96,8 @@ FP64 GEMM = 36 TFLOPS per GPU measured with cuBLASLt; peak = 37 TFLOPS per GPU (
         t.append(f"| {g}{' (2 nodes)' if g > 8 else ''} | {ms[0]} | {ms[1]} | {bs[0]} | {bs[1]} | {rt} | {ms[2]} | {bs[2]} |")
     rr = f"{min(ratios):.2f}–{max(ratios):.2f}x" if ratios else "pending"
     rng = lambda v: f"{min(v):.0f}–{max(v):.0f}%" if v else "-"
-    sec = f"""TFLOP/s, FP64. MI355X = rocHPL on ROCm 7.14, node6100 (16 GPUs: node6100 + node6101), from
-[rochpl-vs-rvs.md](rochpl-vs-rvs.md). B200 = NVIDIA HPL (NGC HPC-Benchmarks 25.04), from
+    sec = f"""TFLOP/s, FP64. MI355X = rocHPL on {LABEL}, node6100 (16 GPUs: node6100 + node6101), from
+{SRC}. B200 = NVIDIA HPL (NGC HPC-Benchmarks 25.04), from
 `../../b200-nodes/results/hpl-b200.md`. Both: N ≈ 75% of HBM per GPU, best of 2 runs, residual check passed.
 
 {chr(10).join(t)}
@@ -125,3 +128,10 @@ GEMM and 2.12x on paper.
 
 if __name__ == "__main__":
     main()
+    # also section 2 of the ROCm 10.1 file (same B200 data, MI355X rocHPL on ROCm 10.1)
+    ALT = f"{B}/amd-ubuntu/results/mi355x-rocm10.1-vs-b200.md"
+    if "CMP_MD" not in os.environ and os.path.exists(ALT):
+        CMP_MD, LABEL = ALT, "ROCm 10.1"
+        ROC = f"{B}/amd-ubuntu/results/node6100/rocm10.1/rochpl.csv"
+        SRC = "`node6100/rocm10.1/rochpl.csv`"
+        main()

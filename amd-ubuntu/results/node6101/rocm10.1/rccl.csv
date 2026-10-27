@@ -1,0 +1,11 @@
+run,collective,config,gpus,max_size_bytes,busbw_at_max_GBps,peak_busbw_GBps,n_sizes
+rccl_all_20261027_213232,all_gather,default,8,8589934592,388.04,388.04,10
+rccl_all_20261027_213232,all_reduce,default,8,8589934592,395.97,396.56,10
+rccl_all_20261027_213232,alltoall,default,8,4294967296,347.2,347.2,9
+rccl_all_20261027_213232,alltoallv,default,8,4294967296,219.75,219.75,9
+rccl_all_20261027_213232,broadcast,default,8,8589934592,388.66,388.66,10
+rccl_all_20261027_213232,gather,default,8,8589934592,422.1,448.98,10
+rccl_all_20261027_213232,reduce,default,8,8589934592,333.9,349.64,10
+rccl_all_20261027_213232,reduce_scatter,default,8,8589934592,385.54,404.56,10
+rccl_all_20261027_213232,scatter,default,8,8589934592,396.75,433.07,10
+rccl_all_20261027_213232,sendrecv,default,8,8589934592,60.13,60.65,10
