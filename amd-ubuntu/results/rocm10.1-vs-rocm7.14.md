@@ -1,0 +1,198 @@
+# ROCm 10.1 vs ROCm 7.14 on MI355X
+
+ROCm 10.1.0 (released 2026-10-05) against the current ROCm 7.14 results, on the same node (node6100, 8× MI355X; node6101 joins for the 2-node tests). Same scripts and settings; only the ROCm user-space stack differs. Higher is better unless the table says otherwise. Change = (10.1 − 7.14) / 7.14; within ±3% counts as about the same.
+
+Plan: [`../plan-new-version.txt`](../plan-new-version.txt). Scripts: [`../rocm10.1/`](../rocm10.1/).
+
+## Summary
+
+- **hipBLASLt MX GEMM:** median +0.4% over 7 points; 1 faster, 0 slower, 6 about the same. Largest gain: MXBF8 (E5M2) (+3.6%).
+- **RVS GEMM:** median -0.0% over 9 points; 1 faster, 0 slower, 8 about the same. Largest gain: fp4 8 GPUs (+11.1%).
+- **rocHPL:** median +0.0% over 9 points; 0 faster, 0 slower, 9 about the same.
+- **RCCL bandwidth, 1 node:** median -0.0% over 10 points; 0 faster, 0 slower, 10 about the same.
+- **RCCL bandwidth, 2 nodes:** median -0.6% over 6 points; 0 faster, 0 slower, 6 about the same.
+- **RCCL latency, 1 node:** median -1.1% over 21 points; 7 faster, 5 slower, 9 about the same. Largest gain: alltoall 1K (+36.8%). Largest loss: broadcast 1K (-34.5%).
+- **RCCL latency, 2 nodes:** median +0.6% over 21 points; 5 faster, 3 slower, 13 about the same. Largest gain: all_reduce 1M (+14.1%). Largest loss: all_reduce 1K (-5384.6%).
+- **RCCL latency, 2 nodes, 1 GPU/node:** median -1.5% over 8 points; 0 faster, 2 slower, 6 about the same. Largest loss: all_reduce 8 (-5.4%).
+- **MX correctness:** every MX case passed on both versions.
+- **Not affected, not rerun:** network-only tests, Primus training and Kimi-K3 inference.
+
+## Versions
+
+| | Current | New |
+|---|---|---|
+| ROCm | 7.14.0 | 10.1.0 |
+| HIP | 7.14.60850-0000000 | 7.16.26385-0000000 |
+| hipBLASLt | 1.4.1 | 1.4.1 (same version) |
+| RCCL | 2.30.4 | 2.30.7 |
+| rocBLAS | 5.5.0 | 5.7.0 |
+| AMD clang | 23.0.0git | 24.0.0git |
+| amdgpu driver (host, not changed) | 6.19.14.31400100 | 6.19.14.31400100 |
+| RVS | 1.7.8, commit c82e4aeb | same commit, built against 10.1 |
+| rocHPL / Open MPI / UCX | rocHPL d76d0c3, Open MPI 5.0.8, UCX 1.18.0 | same versions, rebuilt against 10.1 |
+
+hipBLASLt reports the same version (1.4.1) in both stacks: ROCm 7.14 already shipped hipBLASLt 1.4.1. Its kernels and the rest of the stack (HIP, compiler, rocBLAS) still changed, so the GEMM results can still differ.
+
+## What the update affects
+
+| Result | Uses | Affected? | Rerun here |
+|---|---|---|---|
+| RVS GEMM, all precisions (§1, §3 of `mi355x-vs-b200.md`) | RVS `gst` → hipBLASLt | Yes | Yes |
+| hipBLASLt MX GEMM correctness (MXFP8, MXFP4) | hipBLASLt | Yes | Yes (both stacks) |
+| rocHPL FP64 (§2, `rochpl-vs-rvs.md`) | rocBLAS + HIP + Open MPI/UCX | Yes | Yes |
+| RCCL bandwidth and latency, 1 and 2 nodes (§4, interconnect and latency files) | RCCL | Yes | Yes |
+| Network alone (`ib_write_bw`, `ib_lat`) | perftest, host memory, no ROCm | No | No |
+| Training, Primus / Megatron-LM (§5) | container with its own ROCm | No | No |
+| Inference, Kimi-K3 (§6, Kimi files) | containers with their own ROCm | No | No |
+
+## 1. hipBLASLt MX GEMM correctness (MXFP8, MXFP6, MXFP4)
+
+`hipblaslt-bench -v` (result checked against a CPU reference), AMD's own bench from each release's gfx950 test tarball, 1 GPU. Scale mode 3 = MX block scaling (one E8M0 scale per 32 elements). Check at 2048×2048×2048 (PASS = error within the bench's own tolerance); speed at 8192×8192×8192.
+
+The MX fixes in the 10.1 release notes are in Composable Kernel: most name gfx1250, and one fixes MX GEMMs where B is packed more densely than A (such as FP8 × FP4). The FP8 × FP4 and FP4 × FP8 rows test that case on gfx950.
+
+| Case | A × B | 7.14 check (error ≤ limit) | 7.14 TFLOPS | 10.1 check | 10.1 TFLOPS | Change |
+|---|---|---|---:|---|---:|---:|
+| MXFP8 (E4M3) | f8_r × f8_r | PASS (0.0036 ≤ 0.1) | 2,040.0 | PASS (0.0036 ≤ 0.1) | 2,083.6 | +2.1% |
+| MXBF8 (E5M2) | bf8_r × bf8_r | PASS (0.0037 ≤ 0.01) | 2,039.8 | PASS (0.0037 ≤ 0.01) | 2,113.7 | +3.6% |
+| MXFP6 (E2M3) | f6_r × f6_r | PASS (0.0035 ≤ 0.01) | 1,250.8 | PASS (0.0035 ≤ 0.01) | 1,250.9 | 0.0% |
+| MXBF6 (E3M2) | bf6_r × bf6_r | PASS (0.0037 ≤ 0.01) | 1,250.6 | PASS (0.0037 ≤ 0.01) | 1,255.2 | +0.4% |
+| MXFP4 (E2M1) | f4_r × f4_r | PASS (0.004 ≤ 0.01) | 3,364.9 | PASS (0.004 ≤ 0.01) | 3,376.5 | +0.3% |
+| FP8 x FP4 | f8_r × f4_r | PASS (0.0038 ≤ 0.01) | 2,241.2 | PASS (0.0038 ≤ 0.01) | 2,209.6 | -1.4% |
+| FP4 x FP8 | f4_r × f8_r | PASS (0.0038 ≤ 0.01) | 2,285.0 | PASS (0.0038 ≤ 0.01) | 2,298.9 | +0.6% |
+
+## 2. RVS GEMM (hipBLASLt), TFLOPS
+
+Same RVS `gst` settings as §1/§3 of `mi355x-vs-b200.md` (level-5 matrix sizes, 30 s per test, peak of the 3 s samples). FP4, FP6 and FP8 are the MX formats.
+
+| Precision | 8 GPUs, 7.14 | 8 GPUs, 10.1 | Change | 1 GPU, 7.14 | 1 GPU, 10.1 | Change |
+|---|---:|---:|---:|---:|---:|---:|
+| FP4 | 17,027.5 | 18,913.5 | +11.1% | 4,079.3 | 4,079.9 | 0.0% |
+| FP6 | 9,925.1 | 9,930.5 | +0.1% | 1,240.5 | 1,238.0 | -0.2% |
+| BF6 | 9,914.4 | 9,925.1 | +0.1% | 1,240.9 | 1,240.4 | 0.0% |
+| FP8 | 30,278.5 | 30,170.3 | -0.4% | 3,752.6 | 3,628.8 | -3.3% |
+| BF8 | 27,282.0 | 27,065.9 | -0.8% | 3,377.9 | 3,388.3 | +0.3% |
+| FP16 | 12,764.0 | 12,716.6 | -0.4% | 1,570.5 | 1,582.0 | +0.7% |
+| BF16 | 13,558.4 | 13,549.2 | -0.1% | 1,670.7 | 1,668.6 | -0.1% |
+| FP32 | 1,230.9 | 1,230.7 | 0.0% | 152.6 | 152.5 | -0.1% |
+| FP64 | 616.1 | 616.2 | 0.0% | 76.5 | 76.5 | 0.0% |
+
+All 72 points (1–8 GPUs × precisions): median change +0.0%, range -7.0% to +23.9%.
+
+## 3. rocHPL FP64 Linpack, TFLOPS
+
+Same rocHPL commit, N, NB (512) and process grids as the ROCm 7.14 run (`rochpl_20261020_204342`, reported in `rochpl-vs-rvs.md`). Each run must pass HPL's residual check.
+
+| GPUs | P×Q | N (7.14 / 10.1) | 7.14 | 10.1 | Change | Passed (7.14 / 10.1) |
+|---:|---|---|---:|---:|---:|---|
+| 1 | 1×1 | 163840 / 163840 | 60.1 | 60.1 | 0.0% | yes / yes |
+| 2 | 1×2 | 231424 / 231424 | 124.1 | 124.4 | +0.2% | yes / yes |
+| 3 | 1×3 | 284160 / 284160 | 188.6 | 188.6 | 0.0% | yes / yes |
+| 4 | 2×2 | 327680 / 327680 | 251.2 | 251.7 | +0.2% | yes / yes |
+| 5 | 1×5 | 366080 / 366080 | 318.6 | 318.6 | 0.0% | yes / yes |
+| 6 | 2×3 | 402432 / 402432 | 383.9 | 384.2 | +0.1% | yes / yes |
+| 7 | 1×7 | 433664 / 433664 | 448.1 | 448.3 | 0.0% | yes / yes |
+| 8 | 2×4 | 462848 / 462848 | 515.4 | 515.6 | 0.0% | yes / yes |
+| 16 | 4×4 | 655360 / 655360 | 976.7 | 975.4 | -0.1% | yes / yes |
+
+## 4. RCCL bandwidth (bus bandwidth, GB/s)
+
+### 4.1 One node, 8 GPUs
+
+rccl-tests, default RCCL settings, peak bus bandwidth over message sizes up to 8 GB.
+
+| Collective | 7.14 | 10.1 | Change |
+|---|---:|---:|---:|
+| all_gather | 388.6 | 389.5 | +0.2% |
+| all_reduce | 396.1 | 396.1 | 0.0% |
+| alltoall | 347.6 | 347.2 | -0.1% |
+| alltoallv | 218.1 | 217.8 | -0.2% |
+| broadcast | 389.1 | 388.3 | -0.2% |
+| gather | 448.6 | 448.2 | -0.1% |
+| reduce | 349.6 | 351.9 | +0.6% |
+| reduce_scatter | 409.4 | 406.8 | -0.6% |
+| scatter | 432.8 | 436.9 | +0.9% |
+| sendrecv | 60.7 | 60.8 | +0.1% |
+
+### 4.2 Two nodes, 16 GPUs
+
+rccl-tests over the 8 RoCE rails (RCCL NET/IB), 8 GPUs per node, peak bus bandwidth and bus bandwidth at 1 GB.
+
+| Collective | Peak, 7.14 | Peak, 10.1 | Change | 1 GB, 7.14 | 1 GB, 10.1 | Change |
+|---|---:|---:|---:|---:|---:|---:|
+| all_gather | 380.0 | 376.8 | -0.8% | 380.0 | 375.5 | -1.2% |
+| all_reduce | 384.6 | 382.6 | -0.5% | 384.6 | 381.0 | -0.9% |
+| alltoall | 77.8 | 77.2 | -0.7% | 77.4 | 76.7 | -0.9% |
+| broadcast | 364.6 | 360.0 | -1.3% | 331.6 | 326.1 | -1.6% |
+| reduce_scatter | 372.2 | 372.4 | 0.0% | 372.2 | 371.5 | -0.2% |
+| sendrecv | 32.1 | 32.4 | +1.0% | 32.0 | 32.2 | +0.6% |
+
+## 5. RCCL latency (time per call, µs, lower is better)
+
+rccl-tests, 1000 iterations + 100 warm-up, no data check. In the Change column a positive number means 10.1 is faster.
+
+### 5.1 One node, 8 GPUs (median of the three default runs)
+
+| Collective | Size | 7.14 (µs) | 10.1 (µs) | Change (lower time = positive) |
+|---|---:|---:|---:|---:|
+| sendrecv | 8 | 6.1 | 7.0 | -14.8% |
+| sendrecv | 1K | 6.5 | 8.4 | -29.2% |
+| sendrecv | 64K | 13.4 | 13.9 | -3.7% |
+| sendrecv | 1M | 29.6 | 30.0 | -1.4% |
+| all_reduce | 8 | 13.9 | 15.9 | -14.4% |
+| all_reduce | 1K | 5.0 | 5.1 | -2.0% |
+| all_reduce | 64K | 6.5 | 6.4 | +1.5% |
+| all_reduce | 1M | 17.4 | 13.8 | +20.7% |
+| all_gather | 1K | 7.8 | 5.1 | +34.6% |
+| all_gather | 64K | 8.8 | 6.4 | +27.3% |
+| all_gather | 1M | 11.7 | 7.8 | +33.3% |
+| reduce_scatter | 1K | 6.1 | 6.2 | -1.6% |
+| reduce_scatter | 64K | 7.1 | 7.0 | +1.4% |
+| reduce_scatter | 1M | 8.7 | 8.8 | -1.1% |
+| broadcast | 8 | 6.1 | 6.1 | 0.0% |
+| broadcast | 1K | 5.8 | 7.8 | -34.5% |
+| broadcast | 64K | 15.2 | 15.6 | -2.6% |
+| broadcast | 1M | 41.7 | 42.6 | -2.2% |
+| alltoall | 1K | 7.6 | 4.8 | +36.8% |
+| alltoall | 64K | 10.4 | 7.6 | +26.9% |
+| alltoall | 1M | 14.0 | 9.2 | +34.3% |
+
+### 5.2 Two nodes, 8 GPUs per node (default setting)
+
+| Collective | Size | 7.14 (µs) | 10.1 (µs) | Change (lower time = positive) |
+|---|---:|---:|---:|---:|
+| sendrecv | 8 | 20.7 | 18.6 | +10.1% |
+| sendrecv | 1K | 20.4 | 18.9 | +7.4% |
+| sendrecv | 64K | 23.2 | 21.9 | +5.6% |
+| sendrecv | 1M | 49.1 | 48.5 | +1.2% |
+| all_reduce | 8 | 27.9 | 1,418.9 | -4985.7% |
+| all_reduce | 1K | 30.6 | 1,678.3 | -5384.6% |
+| all_reduce | 64K | 41.9 | 2,171.8 | -5083.3% |
+| all_reduce | 1M | 66.5 | 57.1 | +14.1% |
+| all_gather | 1K | 36.1 | 36.7 | -1.7% |
+| all_gather | 64K | 38.2 | 38.5 | -0.8% |
+| all_gather | 1M | 54.5 | 54.9 | -0.7% |
+| reduce_scatter | 1K | 35.6 | 35.4 | +0.6% |
+| reduce_scatter | 64K | 43.3 | 43.3 | 0.0% |
+| reduce_scatter | 1M | 55.0 | 55.0 | 0.0% |
+| broadcast | 8 | 15.9 | 15.5 | +2.5% |
+| broadcast | 1K | 10.1 | 10.1 | 0.0% |
+| broadcast | 64K | 45.5 | 45.1 | +0.9% |
+| broadcast | 1M | 60.1 | 61.7 | -2.7% |
+| alltoall | 1K | 36.9 | 35.2 | +4.6% |
+| alltoall | 64K | 36.6 | 36.2 | +1.1% |
+| alltoall | 1M | 46.6 | 45.3 | +2.8% |
+
+### 5.3 Two nodes, 1 GPU per node (default setting)
+
+| Collective | Size | 7.14 (µs) | 10.1 (µs) | Change (lower time = positive) |
+|---|---:|---:|---:|---:|
+| sendrecv | 8 | 27.4 | 27.0 | +1.5% |
+| sendrecv | 1K | 27.8 | 28.5 | -2.5% |
+| sendrecv | 64K | 37.0 | 37.7 | -1.9% |
+| sendrecv | 1M | 63.1 | 62.9 | +0.3% |
+| all_reduce | 8 | 20.4 | 21.5 | -5.4% |
+| all_reduce | 1K | 21.0 | 21.1 | -0.5% |
+| all_reduce | 64K | 36.9 | 38.2 | -3.5% |
+| all_reduce | 1M | 67.7 | 68.4 | -1.0% |
+

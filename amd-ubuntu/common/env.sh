@@ -21,6 +21,7 @@ export HOSTNAME_S=$(hostname -s)
 # RESULTS_SUBDIR separates runs of the same part with different images (atom/run_kimi_all.sh)
 # or a different ROCm stack (ROCM_STACK=7.14 -> results/<node>/rocm7.14/).
 [[ $ROCM_STACK == 7.14 && -z ${RESULTS_SUBDIR:-} ]] && export RESULTS_SUBDIR=rocm7.14
+[[ $ROCM_STACK == 10.1 && -z ${RESULTS_SUBDIR:-} ]] && export RESULTS_SUBDIR=rocm10.1
 export LOG_ROOT=$BENCH_ROOT/logs/$HOSTNAME_S${RESULTS_SUBDIR:+/$RESULTS_SUBDIR}
 export RESULTS=$BENCH_ROOT/results/$HOSTNAME_S${RESULTS_SUBDIR:+/$RESULTS_SUBDIR}
 export RCCL_TESTS_DIR=$RCCL_TESTS/$RCCL_TESTS_BUILD          # MPI=0 binaries (single node)

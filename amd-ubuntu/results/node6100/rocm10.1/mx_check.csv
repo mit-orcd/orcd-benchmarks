@@ -1,0 +1,15 @@
+version,case,a_type,b_type,m,n,k,status,gflops,error,rtol,log
+7.14,MXFP8 (E4M3),f8_r,f8_r,2048/8192,2048/8192,2048/8192,PASS,2.03999e+06,0.00359226,0.1,/orcd/data/orcd/022/benchmarks/amd-ubuntu/logs/node6100/rocm10.1/mx/mx_20261027_150934/7.14_MXFP8_E4M3__verify.log
+7.14,MXBF8 (E5M2),bf8_r,bf8_r,2048/8192,2048/8192,2048/8192,PASS,2.03983e+06,0.00372901,0.01,/orcd/data/orcd/022/benchmarks/amd-ubuntu/logs/node6100/rocm10.1/mx/mx_20261027_150934/7.14_MXBF8_E5M2__verify.log
+7.14,MXFP6 (E2M3),f6_r,f6_r,2048/8192,2048/8192,2048/8192,PASS,1.25075e+06,0.00354729,0.01,/orcd/data/orcd/022/benchmarks/amd-ubuntu/logs/node6100/rocm10.1/mx/mx_20261027_150934/7.14_MXFP6_E2M3__verify.log
+7.14,MXBF6 (E3M2),bf6_r,bf6_r,2048/8192,2048/8192,2048/8192,PASS,1.25058e+06,0.00372501,0.01,/orcd/data/orcd/022/benchmarks/amd-ubuntu/logs/node6100/rocm10.1/mx/mx_20261027_150934/7.14_MXBF6_E3M2__verify.log
+7.14,MXFP4 (E2M1),f4_r,f4_r,2048/8192,2048/8192,2048/8192,PASS,3.36489e+06,0.00401659,0.01,/orcd/data/orcd/022/benchmarks/amd-ubuntu/logs/node6100/rocm10.1/mx/mx_20261027_150934/7.14_MXFP4_E2M1__verify.log
+7.14,FP8 x FP4,f8_r,f4_r,2048/8192,2048/8192,2048/8192,PASS,2.24125e+06,0.00383805,0.01,/orcd/data/orcd/022/benchmarks/amd-ubuntu/logs/node6100/rocm10.1/mx/mx_20261027_150934/7.14_FP8_x_FP4__verify.log
+7.14,FP4 x FP8,f4_r,f8_r,2048/8192,2048/8192,2048/8192,PASS,2.28503e+06,0.00383805,0.01,/orcd/data/orcd/022/benchmarks/amd-ubuntu/logs/node6100/rocm10.1/mx/mx_20261027_150934/7.14_FP4_x_FP8__verify.log
+10.1,MXFP8 (E4M3),f8_r,f8_r,2048/8192,2048/8192,2048/8192,PASS,2.08359e+06,0.00359226,0.1,/orcd/data/orcd/022/benchmarks/amd-ubuntu/logs/node6100/rocm10.1/mx/mx_20261027_150934/10.1_MXFP8_E4M3__verify.log
+10.1,MXBF8 (E5M2),bf8_r,bf8_r,2048/8192,2048/8192,2048/8192,PASS,2.11371e+06,0.00372901,0.01,/orcd/data/orcd/022/benchmarks/amd-ubuntu/logs/node6100/rocm10.1/mx/mx_20261027_150934/10.1_MXBF8_E5M2__verify.log
+10.1,MXFP6 (E2M3),f6_r,f6_r,2048/8192,2048/8192,2048/8192,PASS,1.25089e+06,0.00354729,0.01,/orcd/data/orcd/022/benchmarks/amd-ubuntu/logs/node6100/rocm10.1/mx/mx_20261027_150934/10.1_MXFP6_E2M3__verify.log
+10.1,MXBF6 (E3M2),bf6_r,bf6_r,2048/8192,2048/8192,2048/8192,PASS,1.25515e+06,0.00372501,0.01,/orcd/data/orcd/022/benchmarks/amd-ubuntu/logs/node6100/rocm10.1/mx/mx_20261027_150934/10.1_MXBF6_E3M2__verify.log
+10.1,MXFP4 (E2M1),f4_r,f4_r,2048/8192,2048/8192,2048/8192,PASS,3.37646e+06,0.00401659,0.01,/orcd/data/orcd/022/benchmarks/amd-ubuntu/logs/node6100/rocm10.1/mx/mx_20261027_150934/10.1_MXFP4_E2M1__verify.log
+10.1,FP8 x FP4,f8_r,f4_r,2048/8192,2048/8192,2048/8192,PASS,2.20963e+06,0.00383805,0.01,/orcd/data/orcd/022/benchmarks/amd-ubuntu/logs/node6100/rocm10.1/mx/mx_20261027_150934/10.1_FP8_x_FP4__verify.log
+10.1,FP4 x FP8,f4_r,f8_r,2048/8192,2048/8192,2048/8192,PASS,2.29889e+06,0.00383805,0.01,/orcd/data/orcd/022/benchmarks/amd-ubuntu/logs/node6100/rocm10.1/mx/mx_20261027_150934/10.1_FP4_x_FP8__verify.log
