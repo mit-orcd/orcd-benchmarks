@@ -288,8 +288,8 @@ def parse_lat(p):
 SIZES = ["8", "1K", "64K", "1M"]
 
 
-def lat_table(old, new, pick, title, test):
-    """pick(columns) -> list of columns to take the median of"""
+def lat_table(old, new, pick, title, test, pick_new=None):
+    """pick(columns) -> list of columns to take the median of; pick_new(collective, columns) for 10.1"""
     w(title)
     w("")
     if not new:
@@ -300,7 +300,7 @@ def lat_table(old, new, pick, title, test):
     for c in old:
         if c not in new:
             continue
-        co_, cn_ = pick(old[c]), pick(new[c])
+        co_ = pick(old[c]); cn_ = pick_new(c, new[c]) if pick_new else pick(new[c])
         for s in SIZES:
             a = [old[c][k].get(s) for k in co_ if old[c][k].get(s) is not None]
             b = [new[c][k].get(s) for k in cn_ if new[c][k].get(s) is not None]
@@ -321,8 +321,20 @@ lo, ln = parse_lat(OLD / "rccl_lat_1node.md"), parse_lat(NEW / "rccl_lat_1node.m
 lat_table(lo, ln, lambda cols: [k for k in cols if "default" in k],
           "### 5.1 One node, 8 GPUs (median of the three default runs)", "RCCL latency, 1 node")
 lo2, ln2 = parse_lat(OLD / "rccl_lat.md"), parse_lat(NEW / "rccl_lat.md")
+FIXC = "2 nodes, 8 GPU/node, NCCL_PROTO=LL128"
+fixed = any(FIXC in ln2.get(c, {}) for c in ln2)
+if fixed:
+    w("On ROCm 10.1, RCCL 2.30.7's default all_reduce across 2 nodes x 8 GPUs gives wrong results "
+      "(rccl-tests data check) and takes 1.4-2.2 ms per call from 8 B to 256 KB. `NCCL_PROTO=LL128` gives "
+      "correct results at every size, so the 10.1 all_reduce rows in 5.2 use it; the other 10.1 rows "
+      "and all 7.14 rows use RCCL's default (all settings: `node6100/rocm10.1/fix_check.md`, "
+      "`node6100/rocm10.1/rccl_lat.md`).")
+    w("")
 lat_table(lo2, ln2, lambda cols: [k for k in cols if k == "2 nodes, 8 GPU/node"],
-          "### 5.2 Two nodes, 8 GPUs per node (default setting)", "RCCL latency, 2 nodes")
+          "### 5.2 Two nodes, 8 GPUs per node (default setting; 10.1 all_reduce with `NCCL_PROTO=LL128`)"
+          if fixed else "### 5.2 Two nodes, 8 GPUs per node (default setting)", "RCCL latency, 2 nodes",
+          pick_new=(lambda c, cols: [FIXC] if c == "all_reduce" and FIXC in cols
+                    else [k for k in cols if k == "2 nodes, 8 GPU/node"]) if fixed else None)
 lat_table(lo2, ln2, lambda cols: [k for k in cols if k == "2 nodes, 1 GPU/node"],
           "### 5.3 Two nodes, 1 GPU per node (default setting)", "RCCL latency, 2 nodes, 1 GPU/node")
 
@@ -334,7 +346,7 @@ for test, items in changes.items():
         continue
     up = sum(p > SAME for p in ps); dn = sum(p < -SAME for p in ps)
     best = max(items, key=lambda x: x[1]); worst = min(items, key=lambda x: x[1])
-    s = f"- **{test}:** median {statistics.median(ps):+.1f}% over {len(ps)} points; {up} faster, {dn} slower, {len(ps) - up - dn} about the same"
+    s = f"- **{test}:** median {fpct(statistics.median(ps))} over {len(ps)} points; {up} faster, {dn} slower, {len(ps) - up - dn} about the same"
     if best[1] > SAME:
         s += f". Largest gain: {best[0]} ({best[1]:+.1f}%)"
     if worst[1] < -SAME:

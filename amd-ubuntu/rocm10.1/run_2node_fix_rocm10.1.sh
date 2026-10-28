@@ -72,6 +72,6 @@ exec 9>&-
 say "tests done, locks released"
 
 # ---- E. md files ----------------------------------------------------------------------------------
+date -Iseconds > "$DRV/DONE2"   # before the md step: make_rocm10.1_vs_b200.py fills the 2-node items only when DONE2 exists
 $PY "$HERE/make_rocm10.1_vs_b200.py" >> "$STATE" 2>&1; say "E. md rc=$?"
-date -Iseconds > "$DRV/DONE2"
 say "2-node follow-up DONE"

@@ -22,8 +22,8 @@ $\color{red}{\textsf{Red}}$ = a result far from what the specs on paper predict;
 | FP64 HPL (Linpack) (§2) | pending | ✅ same benchmark, each vendor's own build |
 | Collectives inside one node, bandwidth (§4) | 0.47–0.59x (sendrecv 0.09x) | ⚠️ close |
 | Latency inside one node, 8 B–1 MB (§4) | mixed in sendrecv, broadcast (0.29–1.28x); MI355X faster in all_reduce, all_gather, reduce_scatter, alltoall (1.18–5.00x) (default settings, MI355X ROCm 10.1) | ✅ same tests |
-| Collectives across 2 nodes, bandwidth (§4) | pending | ✅ nearly |
-| Latency across 2 nodes, sendrecv + all_reduce, 8 B–1 MB (§4) | pending | ✅ same tests |
+| Collectives across 2 nodes, bandwidth (§4) | 0.95–1.00x; all_reduce 1.57x; alltoall 1.82x; sendrecv 1.01x (MI355X alltoall with `NCCL_NET=IB`; sendrecv with `NCCL_NET=IB` + `NCCL_NCHANNELS_PER_NET_PEER=4`) | ✅ nearly |
+| Latency across 2 nodes, sendrecv + all_reduce, 8 B–1 MB (§4) | 1 GPU/node: Mixed (0.55–1.05x); 8 GPUs/node: Mixed (0.68–1.43x) (speed; MI355X ROCm 10.1) | ✅ same tests |
 | Training, 7B, 1–8 GPUs | 1.12–1.19x | ❌ different model/settings |
 | Kimi-K3 (ATOM, vLLM recipe 1, vLLM recipe 2), per GPU | 1.05–2.43x (best recipe: 1.21–1.63x up to 64 users, 2.03–2.43x from 128) | ⚠️ 8 vs 16 GPUs |
 | Kimi-K3, one user's streaming speed (TPOT) | B200 1.27–1.94x faster up to 64 users (1.37x vs the best recipe at 1 user); same or slower from 128 users | ⚠️ 8 vs 16 GPUs |
@@ -134,8 +134,8 @@ FP4 rows: MI355X 1 GPU = RVS N = 1, mean of node6100 (4,080) and node6101 (3,972
 |---|---|---|
 | **Intra-node bandwidth** (8 GPUs, large messages) | **B200** (NVLink 5 + NVSwitch) | • B200 1.7–2.1× faster on collectives<br>• B200 11× faster for one GPU pair (sendrecv) |
 | **Intra-node latency** (8 GPUs, 8 B–1 MB) | **MI355X** (Infinity Fabric) | • MI355X 1.2–5.0× faster in all_reduce, all_gather, reduce_scatter, alltoall<br>• B200 faster only in sendrecv at 1 MB (1.1×); broadcast at 1 KB, 64 KB, 1 MB (1.1–3.4×) |
-| **Inter-node bandwidth** (2 nodes, large messages) | pending | pending |
-| **Inter-node latency** (2 nodes, small messages) | pending | pending |
+| **Inter-node bandwidth** (2 nodes, large messages) | **Equal** (Pollara vs InfiniBand) | • Within 5%<br>• sendrecv 1.01x with `NCCL_NET=IB` + `NCCL_NCHANNELS_PER_NET_PEER=4`<br>• MI355X 1.6× faster in all_reduce and 1.8× in alltoall, where NCCL is low |
+| **Inter-node latency** (2 nodes, small messages) | **B200** (InfiniBand) | • Network alone: InfiniBand 1.8–5× faster<br>• 1 GPU per node: MI355X / B200 0.55–1.05x<br>• 8 GPUs per node: all_reduce MI355X / B200 0.79–1.43x; sendrecv MI355X / B200 0.68–0.93x |
 
 On paper: links inside one node 537.6 vs 900 GB/s per GPU (0.60x); network 400 vs 400 GB/s per node (1.00x); neither vendor publishes latency figures.
 
@@ -322,8 +322,8 @@ On paper, MI355X / B200 is 1.12x for FP4/FP8/BF16 compute, 2.12x for FP64, 0.60x
 - **1. RVS vs gpu-fryer:** BF16 1.15x vs 1.12x on paper; both GPUs ≈65% of peak.
 - **2. RVS vs cuBLASLt:** BF16 1.19x and FP16 1.19x vs 1.12x; FP64 2.14x vs 2.12x (both ≈97–98% of peak).
 - **3. Interconnect, one node (bandwidth):** Most collectives 0.53–0.59x vs 0.60x link bandwidth on paper; both GPUs 61–93% of their link peak. all_reduce 0.47x and reduce 0.48x are also expected: B200 is helped by NVLink SHARP (in-switch reduction).
-- **3. Interconnect, two nodes (bandwidth):** pending.
-- **3. Interconnect, latency:** no latency on the spec sheets. Inside one node MI355X is faster for small messages (1.18–5.00x in all_reduce, all_gather, reduce_scatter, alltoall). Across 2 nodes: pending.
+- **3. Interconnect, two nodes (bandwidth):** all_gather, reduce_scatter, broadcast 0.95–1.00x vs 1.00x network; sendrecv 1.01x with `NCCL_NET=IB` + `NCCL_NCHANNELS_PER_NET_PEER=4` on MI355X.
+- **3. Interconnect, latency:** no latency on the spec sheets. Inside one node MI355X is faster for small messages (1.18–5.00x in all_reduce, all_gather, reduce_scatter, alltoall). Across 2 nodes point-to-point (sendrecv) is slower on MI355X (0.68–0.93x; RoCE latency 5.2 vs 1.3 µs on InfiniBand).
 - **4. Training:** 7B models 1.12–1.19x vs 1.12x BF16; both use 43–46% of BF16 peak.
 - **5. Kimi-K3:** Model fits in one MI355X node but needs two B200 nodes, as 288 vs 192 GB per GPU predicts; per-GPU throughput 1.05–2.43x across the three MI355X recipes.
 
@@ -334,8 +334,9 @@ On paper, MI355X / B200 is 1.12x for FP4/FP8/BF16 compute, 2.12x for FP64, 0.60x
 | **FP4 GEMM** (§3) | MI355X (low) | MI355X 40–41% of its peak (1 GPU and 8 GPUs), B200 63%; ratio **0.71–0.72x** | 1.12x | ROCm software: the FP4 kernels in ROCm's hipBLASLt are less mature than its FP8/BF16 kernels (74%/66% of peak), and cuBLASLt was tuned while RVS was not. |
 | **FP6 GEMM** (§3) | MI355X (low) | MI355X 12% of its peak | — (not on B200) | Same ROCm software cause as FP4: the FP6 kernels are even less developed. |
 | **FP8 GEMM on B200 with cuBLASLt** (§3) | B200 (low) | B200 56% of peak (gpu-fryer: 89%); ratio **1.48x** | 1.12x | Power limit: all precisions run at the ≈1,000 W cap, and FP8 uses the most power per cycle, so it gets the lowest clock (1,131 MHz); the kernel itself is ≈97% efficient per clock. gpu-fryer's 89% is inflated by its constant test data (every FP8 value clamped to 448), as the 1-GPU check in §3 confirms. |
-| **all_reduce across 2 nodes** (§4) | pending | pending | 1.00x | pending |
-| **alltoall across 2 nodes** (§4) | pending | pending | 1.00x | pending |
+| **all_reduce across 2 nodes** (§4) | B200 (low) | MI355X 92%, B200 58% of 400 GB/s; ratio **1.57x** | 1.00x | Likely NCCL's all_reduce algorithm, not the network (other NCCL collectives reach 90–96%). SHARP should help but is not enabled on the fabric (no `sharp_am`). |
+| **alltoall across 2 nodes** (§4) | B200 (low) | MI355X 95% (with `NCCL_NET=IB`; default 82%), B200 52% of the 93.75 GB/s alltoall ceiling; ratio **1.82x** | 1.00x | NCCL's alltoall (many point-to-point transfers, no ring) is known to be slow; likely too few channels per network peer (not tested on B200). |
+| **all_reduce across 2 nodes, 8 B–256 KB** (§4) | MI355X (wrong and slow) | RCCL 2.30.7's default: wrong results at 256 KB, 1.4–2.2 ms per call up to 256 KB (normal: about 30–50 µs) | correct, tens of µs | RCCL software: its default path for this case is broken; `NCCL_PROTO=LL128` gives correct results and normal times. |
 | **Kimi-K3 single-user speed** (§6) | MI355X (slow) | B200 1.27–1.94x faster per user (TPOT) up to 64 users, depending on the MI355X recipe; same or slower from 128 users | 1.00x (same 8 TB/s memory bandwidth) | Not measured; most likely software (per-step kernel and launch overhead in vLLM on ROCm), since memory bandwidth on paper is the same. |
 
 ## Apple-to-apple?

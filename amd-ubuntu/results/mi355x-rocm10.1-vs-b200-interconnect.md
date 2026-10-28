@@ -15,8 +15,8 @@ Which is faster and by how much. Here N× faster is the faster side's speed over
 |---|---|---|
 | **Intra-node bandwidth** (8 GPUs, large messages), §1.2 | **B200** (NVLink 5 + NVSwitch) | • B200 1.7–2.1× faster on collectives<br>• B200 11× faster for one GPU pair (sendrecv) |
 | **Intra-node latency** (8 GPUs, 8 B–1 MB), §1.3 | **MI355X** (Infinity Fabric) | • MI355X 1.2–5.0× faster in all_reduce, all_gather, reduce_scatter, alltoall<br>• B200 faster only in sendrecv at 1 MB (1.1×); broadcast at 1 KB, 64 KB, 1 MB (1.1–3.4×) |
-| **Inter-node bandwidth** (2 nodes, large messages), §2.2 | pending | pending |
-| **Inter-node latency** (2 nodes, small messages), §2.3 | pending | pending |
+| **Inter-node bandwidth** (2 nodes, large messages), §2.2 | **Equal** (Pollara vs InfiniBand) | • Within 5%<br>• sendrecv 1.01x with `NCCL_NET=IB` + `NCCL_NCHANNELS_PER_NET_PEER=4`<br>• MI355X 1.6× faster in all_reduce and 1.8× in alltoall, where NCCL is low |
+| **Inter-node latency** (2 nodes, small messages), §2.3 | **B200** (InfiniBand) | • Network alone: InfiniBand 1.8–5× faster<br>• 1 GPU per node: MI355X / B200 0.55–1.05x<br>• 8 GPUs per node: all_reduce MI355X / B200 0.79–1.43x; sendrecv MI355X / B200 0.68–0.93x |
 
 On paper: links inside one node 537.6 vs 900 GB/s per GPU (0.60x, §1.1); network 400 vs 400 GB/s per node (1.00x, §2.1); neither vendor publishes latency figures.
 
@@ -120,7 +120,7 @@ rccl-tests (MI355X, ROCm 10.1) / nccl-tests (B200), 8 B–4 MB, 1000 iterations 
 
 All nodes, settings and sizes: [`latency-1node-mi355x-rocm10.1-vs-b200.md`](latency-1node-mi355x-rocm10.1-vs-b200.md).
 
-Sources: `../logs/node6100/rocm10.1/rccl/lat_1node_20261027_171559`, `../logs/node6101/rocm10.1/rccl/lat_1node_20261027_213705`, `../../b200-nodes/out-nccl-lat-1node/25863885`, `../../b200-nodes/out-nccl-lat-1node/25863886`. Updated 2026-10-27.
+Sources: `../logs/node6100/rocm10.1/rccl/lat_1node_20261027_171559`, `../logs/node6101/rocm10.1/rccl/lat_1node_20261027_213705`, `../../b200-nodes/out-nccl-lat-1node/25863885`, `../../b200-nodes/out-nccl-lat-1node/25863886`. Updated 2026-10-28.
 <!-- INTRA-LAT-END -->
 
 ## 2. Inter-node (2 nodes, 16 GPUs)
@@ -150,12 +150,107 @@ Vendor specs ("on paper"), plus what is set on these clusters. Measured numbers 
 
 ### 2.2 Measured bandwidth (large messages)
 
-_Pending: the 2-node runs on ROCm 10.1 (bandwidth with all settings, all_reduce data check) are running._
+**Compared: MI355X (RCCL 2.30.7, ROCm 10.1, node6100 + node6101) vs B200 (NCCL, mean of the 4 healthy node pairs), 2 nodes × 8 GPUs, one rank per GPU.** busbw (GB/s) at the largest message size (16 GiB; MI355X alltoall 4 GB). Both have 8 × 400G rails per node = 400 GB/s (§2.1). RCCL is AMD's version of NCCL and reads the same `NCCL_*` setting names, so the `NCCL_*` variables below are RCCL settings on MI355X. MI355X rows use RCCL's defaults unless a setting is named; the named setting is the fastest one tested for that collective.
+
+| Collective | MI355X (RCCL) | MI355X ceiling | MI355X % of ceiling | B200 (NCCL) | B200 ceiling | B200 % of ceiling | MI355X / B200 |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| all_reduce | 366.4 | 400 | 92% | $\color{red}{\textsf{233.1}}$ | 400 | $\color{red}{\textsf{58\\%}}$ | $\color{red}{\textbf{1.57x}}$ |
+| all_gather | 366.0 | 400 | 92% | 375.4 | 400 | 94% | 0.97x |
+| reduce_scatter | 365.1 | 400 | 91% | 382.4 | 400 | 96% | 0.95x |
+| broadcast | 360.0 | 400 | 90% | 359.1 | 400 | 90% | 1.00x |
+| alltoall (`NCCL_NET=IB`) | 89.2 | 93.75 | 95% | $\color{red}{\textsf{48.9}}$ | 93.75 | $\color{red}{\textsf{52\\%}}$ | $\color{red}{\textbf{1.82x}}$ |
+| sendrecv (`NCCL_NET=IB` + `NCCL_NCHANNELS_PER_NET_PEER=4`) | 49.4 | 50 | 99% | 48.8 | 50 | 98% | 1.01x |
+
+Ceiling = what the network can carry for that pattern, per node and direction. **400 GB/s** for the ring/tree collectives: up to 8 rings, one per rail, together use the whole network of the node. sendrecv and alltoall use no ring, so their ceiling is what one GPU can send over its own rail:
+- **alltoall, 93.75 GB/s:** each GPU sends half of its data straight to the other node over its own rail (50 GB/s), so the call runs at up to 100 GB/s; in busbw units that is 100 × 15/16. It is an upper bound: protocol overhead makes the real ceiling about 5% lower.
+- **sendrecv, 50 GB/s:** each GPU pair that crosses the nodes uses one rail, and the slowest pair sets the busbw.
+- **All MI355X settings tested** (busbw at the largest size): alltoall: defaults 76.7 GB/s (82%), `NCCL_NET=IB` 89.2 GB/s (95%); sendrecv: defaults 32.4 GB/s (65%), `NCCL_NET=IB` 36.5 GB/s (73%), `NCCL_NET=IB` + `NCCL_NCHANNELS_PER_NET_PEER=4` 49.4 GB/s (99%), `NCCL_NCHANNELS_PER_NET_PEER=4` 40.0 GB/s (80%).
+
+**all_reduce, small and medium messages: RCCL's default is wrong across nodes.** With RCCL 2.30.7's defaults, all_reduce on 2 nodes × 8 GPUs returns wrong data at 256 KB (rccl-tests data check) and takes 1.4–2.2 ms from 8 B to 256 KB (about 30–50 µs is normal here). Large messages are correct and fast, so the bandwidth above is not affected. `NCCL_PROTO=LL128` gives correct results at every size and is used for all_reduce latency in §2.3. All settings, time per call in µs (✗ = wrong results at that size), data check on, 100 iterations:
+
+| RCCL setting | sizes with wrong results | 8 | 1K | 32K | 64K | 256K | 1M | 4M |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| default | 256K | 1,412.5 | 1,707.1 | 2,170.2 | 2,171.6 | 2,179.7 ✗ | 57.7 | 78.5 |
+| `NCCL_NET=IB` | 256K | 1,425.8 | 1,685.5 | 2,171.5 | 2,173.0 | 2,180.3 ✗ | 58.7 | 77.3 |
+| `NCCL_ALGO=Ring` | none | 53.5 | 65.6 | 68.8 | 69.1 | 79.5 | 166.6 | 166.8 |
+| `NCCL_ALGO=Tree` | 128K, 256K | 1,427.6 | 1,696.3 | 2,169.9 | 2,172.1 | 2,178.9 ✗ | 57.3 | 76.0 |
+| `NCCL_PROTO=Simple` | none | 77.0 | 74.8 | 88.0 | 88.6 | 91.5 | 108.0 | 156.5 |
+| `NCCL_PROTO=LL` | 32K, 128K | 1,426.5 | 1,695.0 | 2,169.9 ✗ | 2,171.7 | 2,179.1 | 2,195.3 | 315.5 |
+| **`NCCL_PROTO=LL128`** (used) | none | 39.8 | 39.7 | 45.8 | 45.8 | 49.7 | 57.8 | 76.8 |
+| `RCCL_MSCCLPP_ENABLE=0` | 1K, 128K, 256K | 1,419.5 | 1,689.6 ✗ | 2,169.0 | 2,170.2 | 2,178.6 ✗ | 57.8 | 76.2 |
+| `RCCL_MSCCL_ENABLE=0` | none | 1,405.0 | 1,692.7 | 2,169.7 | 2,171.1 | 2,178.9 | 57.8 | 77.3 |
+| `NCCL_ALGO=Ring NCCL_PROTO=LL` | none | 53.7 | 64.9 | 68.2 | 69.0 | 77.9 | 124.9 | 302.2 |
+
+> [!NOTE]
+> Between two nodes, AMD Pollara (Ethernet) performs about the same as NVIDIA InfiniBand: all_gather, reduce_scatter and broadcast are 0.95–1.00x, both near the full network. MI355X is faster in all_reduce (1.57x) and alltoall (1.82x), because NCCL is low there; B200 all_reduce could improve with SHARP (data reduced inside the InfiniBand switch), which was not used here. sendrecv is 1.01x.
+
+**Apple-to-apple: nearly.** Same test, 16 ranks, same message range, same network speed. Differences: RoCEv2 (AMD Pollara) vs InfiniBand (NVIDIA), RCCL vs NCCL. reduce, gather and scatter were not run on MI355X across 2 nodes.
+
+**Results far from paper** (also listed in the Quick summary of [`mi355x-rocm10.1-vs-b200.md`](mi355x-rocm10.1-vs-b200.md)):
+
+- **B200 all_reduce reaches only 58% (1.57x vs 1.00x on paper):** other NCCL collectives reach 90–96% on the same network, so **the likely cause is NCCL's all_reduce algorithm, not the network** (the algorithm NCCL picked was not logged). **SHARP should help:** the switches add the data up, so each GPU sends it once instead of twice. It could not be tested: the fabric has no SHARP Aggregation Manager (`sharp_am`).
+- **B200 alltoall reaches only 52% (1.82x vs 1.00x on paper):** NCCL's alltoall sends a separate piece directly to each of the 15 other GPUs and reaches only half of the ceiling. **Likely too few channels per network peer.** Not tested on B200; `NCCL_NCHANNELS_PER_NET_PEER=4` would be the first setting to try.
 
 <!-- LATENCY-BEGIN (auto: rccl-tests/compare_lat.py) -->
 ### 2.3 Measured latency (small messages)
 
-_Pending: the 2-node latency runs on ROCm 10.1 are running._
+MI355X ROCm 10.1 (RCCL 2.30.7, AMD Pollara RoCEv2) vs B200 (NCCL, NVIDIA InfiniBand). Time per call in µs, lower is better; speed = B200 time ÷ MI355X time (>1: MI355X faster). MI355X = the fastest of RCCL's default, `NCCL_NET=IB` and `NCCL_PROTO=LL128` that gives correct results (all settings in `node6100/rocm10.1/rccl_lat.md`); for all_reduce across nodes RCCL's default gives wrong results, so only `NCCL_PROTO=LL128` counts there (§2.2).
+
+#### Raw network, no GPU: Pollara vs InfiniBand
+
+> **InfiniBand is faster.** Pollara is 0.20–0.56x the speed of InfiniBand (perftest one-way latency, median of the 8 rails).
+
+| test | bytes | AMD Pollara (RoCEv2) | NVIDIA InfiniBand (ConnectX-7) | Pollara / InfiniBand speed |
+|---|---:|---:|---:|---:|
+| ib_write_lat | 8 | 5.21 | 1.33 | 0.26x |
+| ib_write_lat | 4K | 6.34 | 2.33 | 0.37x |
+| ib_write_lat | 64K | 7.97 | 4.48 | 0.56x |
+| ib_send_lat | 8 | 6.72 | 1.36 | 0.20x |
+| ib_send_lat | 4K | 7.91 | 2.33 | 0.30x |
+| ib_send_lat | 64K | 9.28 | 4.46 | 0.48x |
+
+#### Main result: 2 nodes × 1 GPU and 2 nodes × 8 GPUs, same tests
+
+**2 nodes × 1 GPU** (one GPU per node, so only the network is between them):
+
+> **Mixed.** sendrecv: **B200 faster** at every size (0.73–0.83x); all_reduce: **B200 faster** at 8 B, 1 KB, 64 KB (0.55–0.66x), **MI355X faster** at 1 MB (1.05x).
+
+| collective | bytes | MI355X (Pollara) | B200 (InfiniBand) | MI355X / B200 speed |
+|---|---:|---:|---:|---:|
+| sendrecv | 8 | 27.1 | 21.2 | 0.78x |
+| sendrecv | 1K | 28.6 | 21.0 | 0.73x |
+| sendrecv | 64K | 37.6 | 28.8 | 0.77x |
+| sendrecv | 1M | 62.5 | 52.2 | 0.83x |
+| all_reduce | 8 | 26.5 | 14.5 | 0.55x |
+| all_reduce | 1K | 26.2 | 14.6 | 0.56x |
+| all_reduce | 64K | 36.6 | 24.0 | 0.66x |
+| all_reduce | 1M | 54.7 | 57.6 | 1.05x |
+
+**2 nodes × 8 GPUs, network part only** (network part = 2-node time − 1-node time, same test and size; this removes the step among the 8 GPUs inside each node):
+
+> **InfiniBand is faster** in 7 of 8 rows: Pollara is 0.25–0.65x the speed of InfiniBand in the network part. Exception: all_reduce 1 MB (1.24x).
+
+| collective | bytes | network part, Pollara | network part, InfiniBand | Pollara / InfiniBand speed | whole call, MI355X / B200 speed |
+|---|---:|---:|---:|---:|---:|
+| sendrecv | 8 | 11.9 | 6.6 | 0.56x | 0.83x |
+| sendrecv | 1K | 10.5 | 6.5 | 0.62x | 0.83x |
+| sendrecv | 64K | 8.1 | 5.2 | 0.65x | 0.93x |
+| sendrecv | 1M | 18.4 | 5.6 | 0.31x | 0.68x |
+| all_reduce | 8 | 23.4 | 12.9 | 0.55x | 0.79x |
+| all_reduce | 1K | 34.6 | 8.6 | 0.25x | 0.85x |
+| all_reduce | 64K | 39.1 | 12.3 | 0.31x | 0.87x |
+| all_reduce | 1M | 43.6 | 54.1 | 1.24x | 1.43x |
+
+**Only in 2 nodes × 8 GPUs** (other collectives; speed only, >1: MI355X faster):
+
+| collective | 256 B | 64 KB | 1 MB |
+|---|---:|---:|---:|
+| all_gather | 0.79x | 0.88x | 1.52x |
+| reduce_scatter | 0.83x | 0.79x | 1.72x |
+| broadcast | 0.81x | 0.37x | 1.16x |
+| alltoall | 0.66x | 0.84x | 1.38x |
+
+Sources: `logs/node6100/rocm10.1/rccl/lat_2node_20261027_215244`, `../../b200-nodes/out-nccl-lat/25690497`. Updated 2026-10-28.
 <!-- LATENCY-END -->
 
 ## Appendix A. Pollara: RoCEv2 vs Ultra Ethernet

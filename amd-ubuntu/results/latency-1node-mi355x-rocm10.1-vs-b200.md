@@ -1,6 +1,6 @@
 # Latency inside one node: MI355X (RCCL) vs B200 (NCCL)
 
-Every run of `amd-ubuntu/rocm10.1/run_rccl_lat_1node_rocm10.1.sh` (MI355X, ROCm 10.1) and `b200-nodes/job-nccl-lat-1node.sh` (B200). 8 GPUs, one rank per GPU, 1000 iterations + 100 warm-up. Time per call in µs (out-of-place), lower is better. Updated 2026-10-27.
+Every run of `amd-ubuntu/rocm10.1/run_rccl_lat_1node_rocm10.1.sh` (MI355X, ROCm 10.1) and `b200-nodes/job-nccl-lat-1node.sh` (B200). 8 GPUs, one rank per GPU, 1000 iterations + 100 warm-up. Time per call in µs (out-of-place), lower is better. Updated 2026-10-28.
 
 ## sendrecv
 

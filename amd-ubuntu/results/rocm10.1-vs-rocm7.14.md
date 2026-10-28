@@ -7,13 +7,13 @@ Plan: [`../plan-new-version.txt`](../plan-new-version.txt). Scripts: [`../rocm10
 ## Summary
 
 - **hipBLASLt MX GEMM:** median +0.4% over 7 points; 1 faster, 0 slower, 6 about the same. Largest gain: MXBF8 (E5M2) (+3.6%).
-- **RVS GEMM:** median -0.0% over 9 points; 1 faster, 0 slower, 8 about the same. Largest gain: fp4 8 GPUs (+11.1%).
-- **rocHPL:** median +0.0% over 9 points; 0 faster, 0 slower, 9 about the same.
-- **RCCL bandwidth, 1 node:** median -0.0% over 10 points; 0 faster, 0 slower, 10 about the same.
+- **RVS GEMM:** median 0.0% over 9 points; 1 faster, 0 slower, 8 about the same. Largest gain: fp4 8 GPUs (+11.1%).
+- **rocHPL:** median 0.0% over 9 points; 0 faster, 0 slower, 9 about the same.
+- **RCCL bandwidth, 1 node:** median 0.0% over 10 points; 0 faster, 0 slower, 10 about the same.
 - **RCCL bandwidth, 2 nodes:** median -0.6% over 6 points; 0 faster, 0 slower, 6 about the same.
 - **RCCL latency, 1 node:** median -1.1% over 21 points; 7 faster, 5 slower, 9 about the same. Largest gain: alltoall 1K (+36.8%). Largest loss: broadcast 1K (-34.5%).
-- **RCCL latency, 2 nodes:** median +0.6% over 21 points; 5 faster, 3 slower, 13 about the same. Largest gain: all_reduce 1M (+14.1%). Largest loss: all_reduce 1K (-5384.6%).
-- **RCCL latency, 2 nodes, 1 GPU/node:** median -1.5% over 8 points; 0 faster, 2 slower, 6 about the same. Largest loss: all_reduce 8 (-5.4%).
+- **RCCL latency, 2 nodes:** median 0.0% over 21 points; 6 faster, 3 slower, 12 about the same. Largest gain: all_reduce 1M (+13.7%). Largest loss: all_reduce 8 (-41.6%).
+- **RCCL latency, 2 nodes, 1 GPU/node:** median -2.8% over 8 points; 0 faster, 3 slower, 5 about the same. Largest loss: all_reduce 8 (-6.4%).
 - **MX correctness:** every MX case passed on both versions.
 - **Not affected, not rerun:** network-only tests, Primus training and Kimi-K3 inference.
 
@@ -157,42 +157,44 @@ rccl-tests, 1000 iterations + 100 warm-up, no data check. In the Change column a
 | alltoall | 64K | 10.4 | 7.6 | +26.9% |
 | alltoall | 1M | 14.0 | 9.2 | +34.3% |
 
-### 5.2 Two nodes, 8 GPUs per node (default setting)
+On ROCm 10.1, RCCL 2.30.7's default all_reduce across 2 nodes x 8 GPUs gives wrong results (rccl-tests data check) and takes 1.4-2.2 ms per call from 8 B to 256 KB. `NCCL_PROTO=LL128` gives correct results at every size, so the 10.1 all_reduce rows in 5.2 use it; the other 10.1 rows and all 7.14 rows use RCCL's default (all settings: `node6100/rocm10.1/fix_check.md`, `node6100/rocm10.1/rccl_lat.md`).
+
+### 5.2 Two nodes, 8 GPUs per node (default setting; 10.1 all_reduce with `NCCL_PROTO=LL128`)
 
 | Collective | Size | 7.14 (µs) | 10.1 (µs) | Change (lower time = positive) |
 |---|---:|---:|---:|---:|
-| sendrecv | 8 | 20.7 | 18.6 | +10.1% |
+| sendrecv | 8 | 20.7 | 18.7 | +9.7% |
 | sendrecv | 1K | 20.4 | 18.9 | +7.4% |
 | sendrecv | 64K | 23.2 | 21.9 | +5.6% |
-| sendrecv | 1M | 49.1 | 48.5 | +1.2% |
-| all_reduce | 8 | 27.9 | 1,418.9 | -4985.7% |
-| all_reduce | 1K | 30.6 | 1,678.3 | -5384.6% |
-| all_reduce | 64K | 41.9 | 2,171.8 | -5083.3% |
-| all_reduce | 1M | 66.5 | 57.1 | +14.1% |
+| sendrecv | 1M | 49.1 | 49.5 | -0.8% |
+| all_reduce | 8 | 27.9 | 39.5 | -41.6% |
+| all_reduce | 1K | 30.6 | 39.6 | -29.4% |
+| all_reduce | 64K | 41.9 | 45.4 | -8.4% |
+| all_reduce | 1M | 66.5 | 57.4 | +13.7% |
 | all_gather | 1K | 36.1 | 36.7 | -1.7% |
-| all_gather | 64K | 38.2 | 38.5 | -0.8% |
-| all_gather | 1M | 54.5 | 54.9 | -0.7% |
-| reduce_scatter | 1K | 35.6 | 35.4 | +0.6% |
+| all_gather | 64K | 38.2 | 38.7 | -1.3% |
+| all_gather | 1M | 54.5 | 54.6 | -0.2% |
+| reduce_scatter | 1K | 35.6 | 35.6 | 0.0% |
 | reduce_scatter | 64K | 43.3 | 43.3 | 0.0% |
-| reduce_scatter | 1M | 55.0 | 55.0 | 0.0% |
-| broadcast | 8 | 15.9 | 15.5 | +2.5% |
+| reduce_scatter | 1M | 55.0 | 54.7 | +0.5% |
+| broadcast | 8 | 15.9 | 15.2 | +4.4% |
 | broadcast | 1K | 10.1 | 10.1 | 0.0% |
-| broadcast | 64K | 45.5 | 45.1 | +0.9% |
-| broadcast | 1M | 60.1 | 61.7 | -2.7% |
+| broadcast | 64K | 45.5 | 45.2 | +0.7% |
+| broadcast | 1M | 60.1 | 61.6 | -2.5% |
 | alltoall | 1K | 36.9 | 35.2 | +4.6% |
-| alltoall | 64K | 36.6 | 36.2 | +1.1% |
+| alltoall | 64K | 36.6 | 36.4 | +0.5% |
 | alltoall | 1M | 46.6 | 45.3 | +2.8% |
 
 ### 5.3 Two nodes, 1 GPU per node (default setting)
 
 | Collective | Size | 7.14 (µs) | 10.1 (µs) | Change (lower time = positive) |
 |---|---:|---:|---:|---:|
-| sendrecv | 8 | 27.4 | 27.0 | +1.5% |
-| sendrecv | 1K | 27.8 | 28.5 | -2.5% |
-| sendrecv | 64K | 37.0 | 37.7 | -1.9% |
-| sendrecv | 1M | 63.1 | 62.9 | +0.3% |
-| all_reduce | 8 | 20.4 | 21.5 | -5.4% |
-| all_reduce | 1K | 21.0 | 21.1 | -0.5% |
-| all_reduce | 64K | 36.9 | 38.2 | -3.5% |
-| all_reduce | 1M | 67.7 | 68.4 | -1.0% |
+| sendrecv | 8 | 27.4 | 27.1 | +1.1% |
+| sendrecv | 1K | 27.8 | 28.6 | -2.9% |
+| sendrecv | 64K | 37.0 | 38.0 | -2.7% |
+| sendrecv | 1M | 63.1 | 62.5 | +1.0% |
+| all_reduce | 8 | 20.4 | 21.7 | -6.4% |
+| all_reduce | 1K | 21.0 | 21.7 | -3.3% |
+| all_reduce | 64K | 36.9 | 38.7 | -4.9% |
+| all_reduce | 1M | 67.7 | 67.3 | +0.6% |
 
