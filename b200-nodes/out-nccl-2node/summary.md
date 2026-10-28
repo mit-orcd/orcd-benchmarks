@@ -2,7 +2,7 @@
 
 - Generated: 2026-08-06 18:44:04
 - Runs: node5500+node5501, node5500+node5502, node5501+node5502
-- Note: node5500-5502 are no longer in Slurm. The tables below are their historical baseline; the current hardware is the 7 new nodes covered in "New nodes" below.
+- Note: node5500-5502 are no longer in Slurm. The tables below are their historical baseline; the current hardware is the 9 new nodes covered in "New nodes" below.
 - GPUs: 8/node x 2 nodes = 16 x NVIDIA B200 (inter-node, InfiniBand + GPUDirect RDMA)
 - Config: 1 MiB-16 GiB, 5 warmup + 20 iters
 - Reference: MIT aicr-benchmarks `results_b200.md` Table 2 (b0029+b0030, 16x B200 / NDR IB). busbw is the figure of merit.
@@ -60,7 +60,7 @@ Dividing each result by one rail's line rate (50 GB/s) gives the most useful vie
 
 > Note: sendrecv here uses 16 GPUs (ring), but the reference 26.6 GB/s is a per-pair (2-GPU) bidir figure, so the two are not directly comparable and `ours / ref` is left blank.
 
-## New nodes (node5600/5601/5602/5702/5800/5801/5802)
+## New nodes (node5600/5601/5602/5700/5701/5702/5800/5801/5802)
 
 Run 2026-08-24 on 5 pairs of the 7 new nodes, same configuration as above
 (all collectives, 8 GPUs/node = 16 ranks, 1 MiB-16 GiB), plus one confirmation
@@ -165,6 +165,27 @@ or ECMP hashing collision?) and whether the corresponding inter-switch links are
 fewer, down, or error-counting. `ibdiagnet` / `ibqueryerrors` on that leaf-spine
 hop, and `ibtracert` between the affected rails, should show it directly.
 
+
+### node5700-c1 + node5701-c1 (tested 2026-10-27)
+
+The pair node5700-c1 + node5701-c1 was tested on 2026-10-27 with the same configuration and **works almost
+the same as the healthy new pairs**: every collective is within 1% of their mean except scatter, which is
+13% lower. All collectives pass the data check. (The hypercube test fails its data check here, as it does
+on every other node pair, so it is a test issue, not a node fault.)
+
+| Collective | node5700-c1+node5701-c1 | healthy new pairs (mean, n=4) | vs healthy |
+|---|---:|---:|---:|
+| sendrecv | 48.7 | 48.8 | -0.2% |
+| all_reduce | 232.5 | 233.1 | -0.3% |
+| all_gather | 376.1 | 375.4 | +0.2% |
+| reduce_scatter | 381.4 | 382.4 | -0.3% |
+| reduce | 372.7 | 374.8 | -0.6% |
+| broadcast | 361.5 | 359.1 | +0.7% |
+| alltoall | 49.2 | 48.9 | +0.6% |
+| gather | 92.9 | 93.0 | -0.1% |
+| scatter | 292.7 | 335.9 | -12.9% |
+
+Busbw in GB/s at the largest message size. Full tables: `staged-5700-5701/summary.md`.
 
 ## Bus bandwidth vs message size (GB/s)
 

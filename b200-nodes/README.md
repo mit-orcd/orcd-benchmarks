@@ -7,6 +7,10 @@ the rail tests also cover node5602/5702/5800/5802-c1): 8 × B200 per node,
 NVLink 5 / NVSwitch inside a node, 8 × NDR 400 Gb/s InfiniBand rails between
 nodes. Slurm partition **`mit_testing`**.
 
+node5700-c1 and node5701-c1 were tested on 2026-10-27 (gpu-fryer, NCCL 1-node and
+2-node) and work almost the same as the other nodes (`out-gpu-fryer/summary.md`,
+`out-nccl-1node/summary.md`, `out-nccl-2node/summary.md`).
+
 | Benchmark | What it measures |
 |---|---|
 | gpu-fryer | Sustained TFLOP/s per GPU, fp32 / bf16 / fp8, 300 s each |

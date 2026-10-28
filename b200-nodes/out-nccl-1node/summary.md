@@ -2,6 +2,7 @@
 
 - Generated: 2026-10-27 19:21:28
 - Nodes: node5500, node5501, node5502, node5600-c1, node5601-c1, node5602-c1, node5700-c1, node5701-c1, node5702-c1, node5800-c1, node5801-c1, node5802-c1 (each 8 x NVIDIA B200, single node, intra-node NVLink)
+- node5700-c1 and node5701-c1 were tested on 2026-10-27 and work almost the same as the other nodes (every collective inside the range of the other 10 nodes; all pass the data check).
 - Config: 1 thread, 1 MiB-16 GiB, 5 warmup + 20 iters
 - Collectives: sendrecv, reduce, broadcast, gather, scatter, reduce_scatter, all_gather, all_reduce, alltoall, hypercube
 - Reference: MIT aicr-benchmarks `results_b200.md`, Table 1 (b0027, 8x B200, NVLink 5.0 / NVSwitch), busbw at 900 GB/s NVLink max
