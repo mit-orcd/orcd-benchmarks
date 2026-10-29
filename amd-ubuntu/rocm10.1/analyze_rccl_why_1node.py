@@ -22,7 +22,7 @@ TIME_COLLS = ["sendrecv", "all_reduce", "all_gather", "reduce_scatter", "broadca
 DBG_COLLS = ["sendrecv", "all_reduce", "all_gather", "broadcast", "alltoall"]
 SIZES = {8: "8", 1024: "1K", 65536: "64K", 1048576: "1M"}
 BACK = 10.0   # "back to 7.14": DDA-off time within ±10 % of the 7.14 time
-BIG = 10.0    # a 7.14 -> 10.1 change counts when it is more than 10 %
+BIG = 15.0    # a 7.14 -> 10.1 change counts when it is more than 15 % (one run per column; 8 B points move ~10 %)
 ROW = re.compile(r"^\s+(\d+)\s+(\d+)\s+\S+\s+\S+\s+-?\d+\s+([\d.]+)\s")
 
 
@@ -149,10 +149,37 @@ def lbl(ps):
     return ", ".join(f"{p[0]} {SIZES[p[1]]}" for p in ps) or "none"
 
 
+def colls(ps):
+    return ", ".join(dict.fromkeys(p[0] for p in ps)) or "none"
+
+
+# DDA off slower than BOTH 7.14 and 10.1 default: the switch leaves a slower fallback, not 7.14's path
+slow_off = [p for p in pts if None not in p[2:5] and p[4] > max(p[2], p[3]) * (1 + BACK / 100)]
+moved = [p for p in pts if None not in p[3:5] and abs(pct(p[3], p[4])) > BACK]   # DDA switch changes it
+moved_nodda = [p for p in moved if p[0] not in dda_c]
+same_off = [p for p in chg_other if p not in moved]   # changed vs 7.14, same with DDA on or off
 have_t = all(T[k] for k in T)
 if not have_t:
     verdict = "The timing runs are missing, so there is no verdict; see the run log."
     one = "not decided (timing runs missing)."
+elif len(slow_off) >= len(pts) / 3:
+    v = [f"Turning DDA off does not bring back 7.14's behaviour. With `RCCL_DDA_ENABLE=0`, {len(slow_off)} of "
+         f"{len(pts)} points are more than {BACK:.0f}% slower than both 7.14 and 10.1's default, in "
+         f"{colls(slow_off)}. So the switch removes DDA and leaves a slower fallback path, not 7.14's path, "
+         "and this test cannot measure how much of the change DDA explains."]
+    if dda_c:
+        v.append(f"10.1 runs {', '.join(dda_c)} through the new DDA-IPC implementation (debug log, §2)"
+                 + (f"; the DDA switch also changes {colls(moved_nodda)}, which log no DDA line" if moved_nodda else "")
+                 + ". The faster points come with this rework of RCCL's single-node path in 2.30.7"
+                 + (f" ({lbl([p for p in changed if p[5] < 0])})" if any(p[5] < 0 for p in changed) else "") + ".")
+    if same_off:
+        v.append(f"{lbl(same_off)} change by the same amount with DDA on or off, so that change is separate "
+                 "from DDA (another change in RCCL 2.30.7 / HIP 7.16).")
+    verdict = " ".join(v)
+    one = (f"real, not noise. RCCL 10.1 runs {', '.join(dda_c) or 'no collective'} through a new DDA-IPC path; "
+           f"`RCCL_DDA_ENABLE=0` does not restore 7.14 (it is slower than both versions at {len(slow_off)} of "
+           f"{len(pts)} points), so DDA's share cannot be measured with that switch. "
+           + (f"{lbl(same_off)}: same with DDA on or off, a separate change." if same_off else ""))
 else:
     v = []
     if chg_dda:
