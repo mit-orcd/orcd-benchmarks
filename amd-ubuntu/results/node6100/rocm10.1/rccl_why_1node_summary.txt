@@ -1,0 +1,1 @@
+- **Why 1-node latency changed:** RCCL 10.1 adds a direct GPU-to-GPU (DDA) path for all_reduce, all_gather; with `RCCL_DDA_ENABLE=0` 0 of 4 changed points in those collectives return to within 10% of 7.14. 7 changed points elsewhere (sendrecv 8, sendrecv 1K, broadcast 8, broadcast 1K, alltoall 1K, alltoall 64K, alltoall 1M), 2 of them follow DDA.

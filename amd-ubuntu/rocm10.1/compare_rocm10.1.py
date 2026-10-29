@@ -320,6 +320,9 @@ w("")
 lo, ln = parse_lat(OLD / "rccl_lat_1node.md"), parse_lat(NEW / "rccl_lat_1node.md")
 lat_table(lo, ln, lambda cols: [k for k in cols if "default" in k],
           "### 5.1 One node, 8 GPUs (median of the three default runs)", "RCCL latency, 1 node")
+WHY = NEW / "rccl_why_1node_short.md"   # from analyze_rccl_why_1node.py
+if WHY.exists():
+    w(WHY.read_text().rstrip()); w("")
 lo2, ln2 = parse_lat(OLD / "rccl_lat.md"), parse_lat(NEW / "rccl_lat.md")
 FIXC = "2 nodes, 8 GPU/node, NCCL_PROTO=LL128"
 fixed = any(FIXC in ln2.get(c, {}) for c in ln2)
@@ -352,6 +355,8 @@ for test, items in changes.items():
     if worst[1] < -SAME:
         s += f". Largest loss: {worst[0]} ({worst[1]:+.1f}%)"
     S.append(s + ".")
+    if test == "RCCL latency, 1 node" and (NEW / "rccl_why_1node_summary.txt").exists():
+        S.append((NEW / "rccl_why_1node_summary.txt").read_text().rstrip())
 if mx:
     bad = {(r["version"], r["case"]) for r in mx if r["status"] != "PASS"}
     if bad:

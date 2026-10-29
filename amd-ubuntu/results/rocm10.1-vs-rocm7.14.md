@@ -12,6 +12,7 @@ Plan: [`../plan-new-version.txt`](../plan-new-version.txt). Scripts: [`../rocm10
 - **RCCL bandwidth, 1 node:** median 0.0% over 10 points; 0 faster, 0 slower, 10 about the same.
 - **RCCL bandwidth, 2 nodes:** median -0.6% over 6 points; 0 faster, 0 slower, 6 about the same.
 - **RCCL latency, 1 node:** median -1.1% over 21 points; 7 faster, 5 slower, 9 about the same. Largest gain: alltoall 1K (+36.8%). Largest loss: broadcast 1K (-34.5%).
+- **Why 1-node latency changed:** RCCL 10.1 adds a direct GPU-to-GPU (DDA) path for all_reduce, all_gather; with `RCCL_DDA_ENABLE=0` 0 of 4 changed points in those collectives return to within 10% of 7.14. 7 changed points elsewhere (sendrecv 8, sendrecv 1K, broadcast 8, broadcast 1K, alltoall 1K, alltoall 64K, alltoall 1M), 2 of them follow DDA.
 - **RCCL latency, 2 nodes:** median 0.0% over 21 points; 6 faster, 3 slower, 12 about the same. Largest gain: all_reduce 1M (+13.7%). Largest loss: all_reduce 8 (-41.6%).
 - **RCCL latency, 2 nodes, 1 GPU/node:** median -2.8% over 8 points; 0 faster, 3 slower, 5 about the same. Largest loss: all_reduce 8 (-6.4%).
 - **MX correctness:** every MX case passed on both versions.
@@ -156,6 +157,24 @@ rccl-tests, 1000 iterations + 100 warm-up, no data check. In the Change column a
 | alltoall | 1K | 7.6 | 4.8 | +36.8% |
 | alltoall | 64K | 10.4 | 7.6 | +26.9% |
 | alltoall | 1M | 14.0 | 9.2 | +34.3% |
+
+#### 5.1.1 Why the 1-node numbers changed
+
+4 of the points that changed by more than 10% are in collectives that take RCCL 10.1's new DDA path (all_reduce, all_gather). With `RCCL_DDA_ENABLE=0`, 0 of these 4 come back to within 10% of 7.14. So the DDA path does not explain the change in these collectives. 7 changed points are in collectives without DDA (sendrecv 8, sendrecv 1K, broadcast 8, broadcast 1K, alltoall 1K, alltoall 64K, alltoall 1M); turning DDA off brings 2 of them back. These come from another change in RCCL 2.30.7 / HIP 7.16 (lists of new debug lines below). Details, same-day timing and RCCL's choices: [`rccl-lat-1node-rocm10.1-why.md`](rccl-lat-1node-rocm10.1-why.md).
+
+| Collective | Size | 7.14 (µs) | 10.1 (µs) | 10.1, DDA off (µs) |
+|---|---:|---:|---:|---:|
+| sendrecv | 8 | 7.7 | 7.0 | 7.3 |
+| sendrecv | 1K | 6.5 | 8.4 | 8.5 |
+| all_reduce | 1M | 17.4 | 13.7 | 35.1 |
+| all_gather | 1K | 7.8 | 5.0 | 13.4 |
+| all_gather | 64K | 9.0 | 6.3 | 14.7 |
+| all_gather | 1M | 11.7 | 7.9 | 30.5 |
+| broadcast | 8 | 7.0 | 6.1 | 7.8 |
+| broadcast | 1K | 5.8 | 7.7 | 8.0 |
+| alltoall | 1K | 7.5 | 4.9 | 9.2 |
+| alltoall | 64K | 10.4 | 7.6 | 11.2 |
+| alltoall | 1M | 14.0 | 9.2 | 15.7 |
 
 On ROCm 10.1, RCCL 2.30.7's default all_reduce across 2 nodes x 8 GPUs gives wrong results (rccl-tests data check) and takes 1.4-2.2 ms per call from 8 B to 256 KB. `NCCL_PROTO=LL128` gives correct results at every size, so the 10.1 all_reduce rows in 5.2 use it; the other 10.1 rows and all 7.14 rows use RCCL's default (all settings: `node6100/rocm10.1/fix_check.md`, `node6100/rocm10.1/rccl_lat.md`).
 
