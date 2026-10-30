@@ -528,6 +528,9 @@ w(f"- **Why MI355X FP6 is only {pc(fp6, 10066)} of paper:** on paper FP6 runs at
   "not the hardware.** Evidence: fp6 and bf6 give the same number (not profiled).")
 fp8chk = re.search(r"- \*\*Why B200 FP8 is only 56% of paper with cuBLASLt.*", old).group(0)
 w(fp8chk)
+fp64why = re.search(r"- \*\*Why FP64 reaches over 90%.*", old)
+if fp64why:
+    w(fp64why.group(0))
 w("")
 w("> [!NOTE]")
 w(f"> In my test, MI355X FP4 GEMM is only {ratio_fp4_mp:.2f}x of B200, against 1.12x on paper. The likely reason is that ROCm's FP4 GEMM kernels are not fully optimized yet. "
