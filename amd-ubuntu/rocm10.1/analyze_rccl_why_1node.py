@@ -176,6 +176,28 @@ elif len(slow_off) >= len(pts) / 3:
         v.append(f"{lbl(same_off)} change by the same amount with DDA on or off, so that change is separate "
                  "from DDA (another change in RCCL 2.30.7 / HIP 7.16).")
     verdict = " ".join(v)
+    # plain-language version (2026-10-30): factors -> which changed -> why
+    verdict = ("**Main factors for small-message latency in one node:** (1) fixed cost per call (kernel launch, "
+        "set-up, final sync), which dominates at 8 B-1 KB; (2) algorithm (ring, tree, direct), which sets how many "
+        "steps and GPU-to-GPU handshakes a call needs; (3) protocol (LL, LL128, Simple); (4) number of channels; "
+        "(5) implementation path (copy through RCCL buffers, or read peer GPU memory directly); (6) the tuning table "
+        "that picks algorithm and protocol per size.\n\n"
+        "**Same in 7.14 and 10.1** (debug logs): channels (112 / 64 / 8), algorithm and protocol where logged "
+        "(e.g. broadcast RING/LL up to 64K on both), and the tuning table (the new 10.1 rows are all_reduce at "
+        "32 MB and above).\n\n"
+        "**What differs and why:**\n"
+        "- **Implementation path (5):** RCCL 2.30.7 adds a new DDA-IPC path for "
+        + (" and ".join(dda_c) or "no collective") + ". Each GPU reads the other 7 GPUs' buffers directly in one step, "
+        "instead of passing data around a ring in 7 steps with a handshake each. Fewer steps, less waiting: this is "
+        "the likely reason all_gather is about 30% faster and all_reduce 1M about 20% faster.\n"
+        "- **Fixed cost per call (1), probably:** sendrecv 1K and broadcast 1K are about 30% slower. Their algorithm, "
+        "protocol and channels are the same, and the change is the same with DDA on or off, so it points to a "
+        "higher per-call cost in RCCL 2.30.7 or HIP 7.16 (a deduction, not measured directly).\n"
+        "- **Not explained:** alltoall is about 30% faster without using DDA, so it comes from another part of the "
+        "2.30.7 rework; the logs do not say which.\n\n"
+        "**Notes:** this is not noise (repeat runs agree within about ±3%; the changes are 20-37%). "
+        f"`RCCL_DDA_ENABLE=0` does not restore 7.14: it falls back to a path slower than both versions "
+        f"({len(slow_off)} of {len(pts)} points more than {BACK:.0f}% slower), so it cannot show how much DDA explains.")
     one = (f"real, not noise. RCCL 10.1 runs {', '.join(dda_c) or 'no collective'} through a new DDA-IPC path; "
            f"`RCCL_DDA_ENABLE=0` does not restore 7.14 (it is slower than both versions at {len(slow_off)} of "
            f"{len(pts)} points), so DDA's share cannot be measured with that switch. "
