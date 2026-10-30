@@ -1,6 +1,6 @@
 # Why 2-node all_reduce latency differs between ROCm 7.14 and 10.1 (MI355X)
 
-node6100 + node6101, 2 nodes × 8 MI355X, 8 RoCE rails (RCCL NET/IB). Run dir: `/orcd/data/orcd/022/benchmarks/amd-ubuntu/logs/node6100/rocm10.1/rccl/why_2node_20261030_170413`. Script: [`../rocm10.1/run_rccl_why_2node.sh`](../rocm10.1/run_rccl_why_2node.sh). Question from [`rocm10.1-vs-rocm7.14.md`](rocm10.1-vs-rocm7.14.md) §5.2: there, 7.14 runs RCCL's default and 10.1 runs `NCCL_PROTO=LL128` (10.1's default gives wrong results), so the all_reduce rows compare different settings. Here both versions run the same settings, back to back.
+node6100 + node6101, 2 nodes × 8 MI355X, 8 RoCE rails (RCCL NET/IB). Run dir: `logs/node6100/rocm10.1/rccl/why_2node_20261030_170413`. Script: [`../rocm10.1/run_rccl_why_2node.sh`](../rocm10.1/run_rccl_why_2node.sh). Question from [`rocm10.1-vs-rocm7.14.md`](rocm10.1-vs-rocm7.14.md) §5.2: there, 7.14 runs RCCL's default and 10.1 runs `NCCL_PROTO=LL128` (10.1's default gives wrong results), so the all_reduce rows compare different settings. Here both versions run the same settings, back to back.
 
 ## Answer
 

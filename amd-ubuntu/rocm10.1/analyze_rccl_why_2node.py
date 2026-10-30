@@ -206,7 +206,31 @@ w("")
 OUT_MD.write_text("\n".join(L) + "\n")
 print(f"wrote {OUT_MD}")
 
-S = ["#### 5.2.1 Why 2-node all_reduce differs", ""] + [f"- {x}" for x in F] + [
+# plain-language version (2026-10-30): factors -> which changed -> why
+WHY = [
+    "**Main factors for small-message latency across 2 nodes:** the same as in one node (fixed cost per call, "
+    "algorithm, protocol, channels, tuning table), plus the network: the NIC and the switch hop between nodes "
+    "(8 RoCE rails), and RCCL's CPU proxy thread that drives the network sends. The network part adds about 10-30 µs "
+    "per call, so it dominates at small sizes.",
+    "",
+    "**Same in 7.14 and 10.1:** the hardware, the network and the default algorithm and protocol "
+    "(all_reduce: Tree/LL up to 256K, Tree/LL128 at 1M).",
+    "",
+    "**What differs and why:**",
+    "- **all_reduce, protocol (8 B-64K slower on 10.1):** RCCL 2.30.7's default Tree/LL path across nodes is "
+    "broken (wrong results, 1.4-2.2 ms per call), a regression in RCCL. So the 10.1 rows use `NCCL_PROTO=LL128`. "
+    "LL128 has more overhead per call than LL at small sizes: on 7.14 itself LL128 is 31-44% slower than LL at 8 B-8K. "
+    "With the same setting (LL128) on both, 10.1 is within about 5% of 7.14 up to 256K. "
+    "So the slow-down comes from the protocol forced by the bug, not from a slower RCCL.",
+    "- **all_reduce 1M (faster on 10.1):** both use Tree/LL128 here, and 10.1 is 14-17% faster; the logs do not show why.",
+    "- **sendrecv small (6-10% faster on 10.1), possible cause:** RCCL 2.30.7 turns on InfiniBand inline data "
+    "(its log says \"enabling IB Use Inline Data\"), which sends small messages with less work on the NIC. Not tested directly.",
+    "- **Everything else** (all_gather, reduce_scatter, broadcast, alltoall, and 5.3 with 1 GPU per node) is within "
+    "about 6%: these use the same network path, and the DDA change in one node does not apply across nodes.",
+    "",
+    "**Details (all_reduce checks):**",
+]
+S = ["#### 5.2.1 Why the 2-node numbers changed", ""] + WHY + [f"- {x}" for x in F] + [
      "", "Same-day runs with the same settings on both versions, correctness checks and RCCL's choices: "
      "[`rccl-lat-2node-rocm10.1-why.md`](rccl-lat-2node-rocm10.1-why.md)."]
 SHORT.write_text("\n".join(S) + "\n")
