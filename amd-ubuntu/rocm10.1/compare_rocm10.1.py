@@ -338,6 +338,9 @@ lat_table(lo2, ln2, lambda cols: [k for k in cols if k == "2 nodes, 8 GPU/node"]
           if fixed else "### 5.2 Two nodes, 8 GPUs per node (default setting)", "RCCL latency, 2 nodes",
           pick_new=(lambda c, cols: [FIXC] if c == "all_reduce" and FIXC in cols
                     else [k for k in cols if k == "2 nodes, 8 GPU/node"]) if fixed else None)
+WHY2 = NEW / "rccl_why_2node_short.md"   # from analyze_rccl_why_2node.py
+if WHY2.exists():
+    w(WHY2.read_text().rstrip()); w("")
 lat_table(lo2, ln2, lambda cols: [k for k in cols if k == "2 nodes, 1 GPU/node"],
           "### 5.3 Two nodes, 1 GPU per node (default setting)", "RCCL latency, 2 nodes, 1 GPU/node")
 
@@ -357,6 +360,8 @@ for test, items in changes.items():
     S.append(s + ".")
     if test == "RCCL latency, 1 node" and (NEW / "rccl_why_1node_summary.txt").exists():
         S.append((NEW / "rccl_why_1node_summary.txt").read_text().rstrip())
+    if test == "RCCL latency, 2 nodes" and (NEW / "rccl_why_2node_summary.txt").exists():
+        S.append((NEW / "rccl_why_2node_summary.txt").read_text().rstrip())
 if mx:
     bad = {(r["version"], r["case"]) for r in mx if r["status"] != "PASS"}
     if bad:
