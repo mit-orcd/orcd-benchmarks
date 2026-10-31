@@ -19,7 +19,7 @@ $\color{red}{\textsf{Red}}$ = a result far from what the specs on paper predict;
 | FP8 GEMM | 0.93x (vs gpu-fryer) or 1.48x (vs cuBLASLt) | ❌ |
 | FP4 GEMM | 0.71x (1 GPU), 0.72x (8 GPUs, one process per GPU) | ❌ |
 | FP64 GEMM | 2.14x | ❌ |
-| FP64 HPL (Linpack) (§2) | pending | ✅ same benchmark, each vendor's own build |
+| FP64 HPL (Linpack) (§2) | 1.73–1.73x | ✅ same benchmark, each vendor's own build |
 | Collectives inside one node, bandwidth (§4) | 0.47–0.59x (sendrecv 0.09x) | ⚠️ close |
 | Latency inside one node, 8 B–1 MB (§4) | mixed in sendrecv, broadcast (0.29–1.28x); MI355X faster in all_reduce, all_gather, reduce_scatter, alltoall (1.18–5.00x) (default settings, MI355X ROCm 10.1) | ✅ same tests |
 | Collectives across 2 nodes, bandwidth (§4) | 0.95–1.00x; all_reduce 1.57x; alltoall 1.82x; sendrecv 1.01x (MI355X alltoall with `NCCL_NET=IB`; sendrecv with `NCCL_NET=IB` + `NCCL_NCHANNELS_PER_NET_PEER=4`) | ✅ nearly |
@@ -63,7 +63,35 @@ On paper = vendor datasheet peak per GPU, dense (no sparsity), TFLOP/s.
 ## 2. rocHPL vs NVIDIA HPL (FP64 Linpack, 1–8 GPUs and 2 nodes)
 
 <!-- HPL-B200-START -->
-B200 HPL runs are pending; this section is filled in automatically when they finish.
+TFLOP/s, FP64. MI355X = rocHPL on ROCm 10.1, node6100 (16 GPUs: node6100 + node6101), from
+`node6100/rocm10.1/rochpl.csv`. B200 = NVIDIA HPL (NGC HPC-Benchmarks 25.04), from
+`../../b200-nodes/results/hpl-b200.md`. Both: N ≈ 75% of HBM per GPU, best of 2 runs, residual check passed.
+
+| GPUs | MI355X rocHPL (TFLOPS) | MI355X per GPU | B200 HPL (TFLOPS) | B200 per GPU | MI355X / B200 | MI355X % of FP64 GEMM | B200 % of FP64 GEMM |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 60.1 | 60.1 | 34.8 | 34.8 | **1.73x** | 78% | 97% |
+| 2 | 124.4 | 62.2 | failed | - | - | 81% | - |
+| 3 | 188.6 | 62.9 | failed | - | - | 82% | - |
+| 4 | 251.7 | 62.9 | failed | - | - | 82% | - |
+| 5 | 318.6 | 63.7 | failed | - | - | 83% | - |
+| 6 | 384.2 | 64.0 | failed | - | - | 83% | - |
+| 7 | 448.3 | 64.0 | failed | - | - | 83% | - |
+| 8 | 515.6 | 64.5 | failed | - | - | 84% | - |
+| 16 (2 nodes) | 975.4 | 61.0 | failed | - | - | 79% | - |
+
+% of FP64 GEMM = HPL per GPU ÷ the FP64 GEMM measured in §3 (MI355X RVS 77, B200 cuBLASLt 36 TFLOP/s per GPU).
+
+**How HPL differs from the FP64 GEMM in §3.** RVS and cuBLASLt run only a matrix multiply, each GPU
+alone. HPL solves a full dense system: the same GEMM, plus panel factorization (small, serial work),
+row swaps and broadcasts between GPUs and nodes. So HPL lands below the GEMM rate: MI355X keeps
+78–84% of its FP64 GEMM, B200 keeps 97–97%. MI355X / B200 is 1.73–1.73x on HPL, against 2.14x on the FP64
+GEMM and 2.12x on paper.
+
+**Apple-to-apple: nearly.**
+- Same benchmark and the same rules (problem size, best of 2 runs, residual check).
+- Each vendor's own build: rocHPL (rocBLAS) vs NVIDIA HPL (cuBLAS); NB and process grid are each vendor's default (512 vs 1024).
+- MI355X has 288 GB per GPU, B200 178 GiB usable, so MI355X runs a larger N at the same 75%, which helps it a little.
+- B200 failed points: 2, 3, 4, 5, 6, 7, 8, 16 GPUs.
 <!-- HPL-B200-END -->
 
 ---
