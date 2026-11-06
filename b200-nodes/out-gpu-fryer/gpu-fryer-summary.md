@@ -42,7 +42,95 @@ Per-node means stay within 1.5% of the 12-node mean on every precision.
 
 ---
 
-## Per-GPU Converged TFLOPS
+## Performance — Outliers and Variation
+
+Mean deviation of each B200 slot from its own node's mean, over 12 nodes (worst single node in parentheses):
+
+| Slot | FP32 | BF16 | FP8 | Peak temp (mean, range) |
+|---|---:|---:|---:|---:|
+| #0 | +0.8% (-0.5%) | +0.8% (-1.1%) | +1.4% (+0.0%) | 60.6°C (60–61) |
+| #1 | +0.7% (-1.0%) | +0.5% (-0.6%) | +0.9% (-0.4%) | 62.4°C (61–64) |
+| #2 | -0.7% (-2.7%) | -0.6% (-2.6%) | -1.0% (-2.2%) | 73.6°C (72–75) |
+| #3 | -0.3% (-1.9%) | -0.2% (-1.4%) | -0.7% (-1.7%) | 71.8°C (70–73) |
+| #4 | +0.5% (-1.6%) | +0.4% (-1.9%) | +0.8% (-0.7%) | 63.8°C (62–66) |
+| #5 | +0.9% (-0.4%) | +0.6% (-0.5%) | +1.1% (-1.3%) | 61.0°C (60–62) |
+| #6 | -0.6% (-2.2%) | -0.4% (-1.4%) | -1.2% (-2.5%) | 72.3°C (71–75) |
+| #7 | -1.2% (-2.7%) | -1.0% (-2.5%) | -1.3% (-2.8%) | 73.6°C (72–75) |
+
+- **B200**: Slots #2, #6, #7 are the slowest and among the hottest in all three precisions, across all 12 nodes; slot #3 runs just as hot with a smaller throughput deficit. Spread within one node: FP32 1.9–4.4%, BF16 1.6–4.2%, FP8 2.5–4.6%. The largest single deviation from a node mean is -2.8%. No throttling, and the pattern follows the slot rather than the node, which points to chassis position (airflow, slot proximity).
+
+## Expected Ceiling Comparison
+
+| | B200 (per-GPU dense Tensor Core peak)* | Achieved | fraction of peak |
+|---|---|---|---|
+| TF32 (FP32 input) | ~1,125 TFLOPS | 749 | 0.67× |
+| BF16 | ~2,250 TFLOPS | 1,457 | 0.65× |
+| FP8 | ~4,500 TFLOPS | 4,010 | 0.89× |
+
+*Dense, no sparsity. B200 sparse peaks are 2× these values.
+
+The B200 FP8 path achieves 89% of dense peak, which is excellent. FP32/BF16 at 65–67% is normal for cuBLAS GEMM on this matrix size. Numbers are consistent with healthy B200 Tensor Cores.
+
+## B200 vs. H200
+
+| | FP32 | BF16 | FP8 |
+|---|---|---|---|
+| B200 (measured) | 749 TFLOPS | 1,457 TFLOPS | 4,010 TFLOPS |
+| H200 (reference) | 368 TFLOPS | 713 TFLOPS | 1,468 TFLOPS |
+| **B200 / H200** | **2.04×** | **2.04×** | **2.73×** |
+
+The B200 delivers **~2.0× the throughput of an H200** in FP32 and BF16, consistent with Blackwell's generational leap over Hopper. The FP32:BF16 ratio is identical on both (1:1.94), confirming the same Tensor Core data-type scaling law. The gap widens sharply at FP8 — **2.7×** — because Blackwell's 5th-gen Tensor Cores have a substantially higher FP8 peak relative to Hopper's 4th-gen cores (B200 achieves 89% of dense peak vs H200's lower FP8 ceiling). For FP8-quantised inference workloads, the B200 advantage is disproportionately larger than the raw 2× marketing figure suggests.
+
+## Thermals / Power
+
+| | B200 peak temps (12 nodes) | Throttling |
+|---|---|---|
+| Coolest GPUs | #0, #5: 60–62°C | None |
+| Mid | #1, #4: 61–66°C | None |
+| Hottest | **#2, #3, #6, #7: 70–75°C** | None |
+
+No throttling (HW, Thermal SW, or Thermal HW) on any GPU in any precision run.
+
+## Stability
+
+- No ECC errors, XID events, or NaN/inf reported in any of the 36 sub-runs.
+- Each sub-run shows a short start-up transient, a long stable plateau (steady-state at large matrix), and a brief dip on the final measurement (teardown artifact, not real degradation).
+- "All GPUs seem healthy" reported by gpu-fryer at the end of each of the 36 sub-runs.
+
+---
+
+## Verdict per GPU (all three precisions combined)
+
+The B200 column covers that slot on all 12 nodes.
+
+| GPU | B200 (12 nodes) |
+|-----|-------------|
+| #0 | **PASS** — +1.0% vs node mean (worst -1.1%), 61°C |
+| #1 | **PASS** — +0.7% vs node mean (worst -1.0%), 62°C |
+| #2 | **PASS** — -0.8% vs node mean (worst -2.7%), 74°C |
+| #3 | **PASS** — -0.4% vs node mean (worst -1.9%), 72°C |
+| #4 | **PASS** — +0.6% vs node mean (worst -1.9%), 64°C |
+| #5 | **PASS** — +0.8% vs node mean (worst -1.3%), 61°C |
+| #6 | **PASS** — -0.8% vs node mean (worst -2.5%), 72°C |
+| #7 | **PASS** — -1.2% vs node mean (worst -2.8%), 74°C |
+
+**Recommendation:** B200 slots #2, #3, #6, #7 run about 11°C hotter than the other four on every node, and #2, #6, #7 are consistently slightly slower across **every** precision. This looks like chassis position with reduced airflow rather than a fault (no throttling, within 2.8% of the node mean). Worth tracking: if the gap widens over time or any of these begins throttling, inspect the chassis airflow/cold-aisle for those slot positions.
+
+---
+
+## Side note: What is "dense peak"?
+
+**Dense peak** is the vendor-published theoretical maximum Tensor-Core throughput for a given precision, with no sparsity. It is a hardware ceiling derived from silicon spec, not a measurement:
+
+```
+peak_FLOPS = (#Tensor Cores) × (ops per Tensor Core per cycle for that precision) × (boost clock)
+```
+
+"Ops per cycle" already encodes the precision — lower-precision formats pack more multiply-accumulates per cycle (on Blackwell, FP8 ≈ 2× BF16 ≈ 2× TF32). The published number uses the **boost clock**, so it is an upper bound rarely sustained in practice; the "sparse peak" sometimes quoted in marketing is 2× this, assuming 2:4 structured sparsity.
+
+---
+
+## Appendix: Per-GPU Converged TFLOPS
 
 ### B200 — node5500
 
@@ -212,90 +300,4 @@ Per-node means stay within 1.5% of the 12-node mean on every precision.
 | #7 | 739.5 / 764.2 | 1,442.8 / 1,453.6 | 3,972.2 / 3,996.7 | 72°C |
 | **8-GPU mean** | **749 / 767** | **1,461 / 1,476** | **4,020 / 4,054** | — |
 
-Across the 12 nodes, slots #2, #3, #6, #7 peak at 70–75°C, against 60–66°C for slots #0, #1, #4, #5, and slots #2, #6, #7 are the most often below their node's mean. The per-slot figures are in "Performance — Outliers and Variation" below.
-
-## Performance — Outliers and Variation
-
-Mean deviation of each B200 slot from its own node's mean, over 12 nodes (worst single node in parentheses):
-
-| Slot | FP32 | BF16 | FP8 | Peak temp (mean, range) |
-|---|---:|---:|---:|---:|
-| #0 | +0.8% (-0.5%) | +0.8% (-1.1%) | +1.4% (+0.0%) | 60.6°C (60–61) |
-| #1 | +0.7% (-1.0%) | +0.5% (-0.6%) | +0.9% (-0.4%) | 62.4°C (61–64) |
-| #2 | -0.7% (-2.7%) | -0.6% (-2.6%) | -1.0% (-2.2%) | 73.6°C (72–75) |
-| #3 | -0.3% (-1.9%) | -0.2% (-1.4%) | -0.7% (-1.7%) | 71.8°C (70–73) |
-| #4 | +0.5% (-1.6%) | +0.4% (-1.9%) | +0.8% (-0.7%) | 63.8°C (62–66) |
-| #5 | +0.9% (-0.4%) | +0.6% (-0.5%) | +1.1% (-1.3%) | 61.0°C (60–62) |
-| #6 | -0.6% (-2.2%) | -0.4% (-1.4%) | -1.2% (-2.5%) | 72.3°C (71–75) |
-| #7 | -1.2% (-2.7%) | -1.0% (-2.5%) | -1.3% (-2.8%) | 73.6°C (72–75) |
-
-- **B200**: Slots #2, #6, #7 are the slowest and among the hottest in all three precisions, across all 12 nodes; slot #3 runs just as hot with a smaller throughput deficit. Spread within one node: FP32 1.9–4.4%, BF16 1.6–4.2%, FP8 2.5–4.6%. The largest single deviation from a node mean is -2.8%. No throttling, and the pattern follows the slot rather than the node, which points to chassis position (airflow, slot proximity).
-
-## Expected Ceiling Comparison
-
-| | B200 (per-GPU dense Tensor Core peak)* | Achieved | fraction of peak |
-|---|---|---|---|
-| TF32 (FP32 input) | ~1,125 TFLOPS | 749 | 0.67× |
-| BF16 | ~2,250 TFLOPS | 1,457 | 0.65× |
-| FP8 | ~4,500 TFLOPS | 4,010 | 0.89× |
-
-*Dense, no sparsity. B200 sparse peaks are 2× these values.
-
-The B200 FP8 path achieves 89% of dense peak, which is excellent. FP32/BF16 at 65–67% is normal for cuBLAS GEMM on this matrix size. Numbers are consistent with healthy B200 Tensor Cores.
-
-## B200 vs. H200
-
-| | FP32 | BF16 | FP8 |
-|---|---|---|---|
-| B200 (measured) | 749 TFLOPS | 1,457 TFLOPS | 4,010 TFLOPS |
-| H200 (reference) | 368 TFLOPS | 713 TFLOPS | 1,468 TFLOPS |
-| **B200 / H200** | **2.04×** | **2.04×** | **2.73×** |
-
-The B200 delivers **~2.0× the throughput of an H200** in FP32 and BF16, consistent with Blackwell's generational leap over Hopper. The FP32:BF16 ratio is identical on both (1:1.94), confirming the same Tensor Core data-type scaling law. The gap widens sharply at FP8 — **2.7×** — because Blackwell's 5th-gen Tensor Cores have a substantially higher FP8 peak relative to Hopper's 4th-gen cores (B200 achieves 89% of dense peak vs H200's lower FP8 ceiling). For FP8-quantised inference workloads, the B200 advantage is disproportionately larger than the raw 2× marketing figure suggests.
-
-## Thermals / Power
-
-| | B200 peak temps (12 nodes) | Throttling |
-|---|---|---|
-| Coolest GPUs | #0, #5: 60–62°C | None |
-| Mid | #1, #4: 61–66°C | None |
-| Hottest | **#2, #3, #6, #7: 70–75°C** | None |
-
-No throttling (HW, Thermal SW, or Thermal HW) on any GPU in any precision run.
-
-## Stability
-
-- No ECC errors, XID events, or NaN/inf reported in any of the 36 sub-runs.
-- Each sub-run shows a short start-up transient, a long stable plateau (steady-state at large matrix), and a brief dip on the final measurement (teardown artifact, not real degradation).
-- "All GPUs seem healthy" reported by gpu-fryer at the end of each of the 36 sub-runs.
-
----
-
-## Verdict per GPU (all three precisions combined)
-
-The B200 column covers that slot on all 12 nodes.
-
-| GPU | B200 (12 nodes) |
-|-----|-------------|
-| #0 | **PASS** — +1.0% vs node mean (worst -1.1%), 61°C |
-| #1 | **PASS** — +0.7% vs node mean (worst -1.0%), 62°C |
-| #2 | **PASS** — -0.8% vs node mean (worst -2.7%), 74°C |
-| #3 | **PASS** — -0.4% vs node mean (worst -1.9%), 72°C |
-| #4 | **PASS** — +0.6% vs node mean (worst -1.9%), 64°C |
-| #5 | **PASS** — +0.8% vs node mean (worst -1.3%), 61°C |
-| #6 | **PASS** — -0.8% vs node mean (worst -2.5%), 72°C |
-| #7 | **PASS** — -1.2% vs node mean (worst -2.8%), 74°C |
-
-**Recommendation:** B200 slots #2, #3, #6, #7 run about 11°C hotter than the other four on every node, and #2, #6, #7 are consistently slightly slower across **every** precision. This looks like chassis position with reduced airflow rather than a fault (no throttling, within 2.8% of the node mean). Worth tracking: if the gap widens over time or any of these begins throttling, inspect the chassis airflow/cold-aisle for those slot positions.
-
----
-
-## Side note: What is "dense peak"?
-
-**Dense peak** is the vendor-published theoretical maximum Tensor-Core throughput for a given precision, with no sparsity. It is a hardware ceiling derived from silicon spec, not a measurement:
-
-```
-peak_FLOPS = (#Tensor Cores) × (ops per Tensor Core per cycle for that precision) × (boost clock)
-```
-
-"Ops per cycle" already encodes the precision — lower-precision formats pack more multiply-accumulates per cycle (on Blackwell, FP8 ≈ 2× BF16 ≈ 2× TF32). The published number uses the **boost clock**, so it is an upper bound rarely sustained in practice; the "sparse peak" sometimes quoted in marketing is 2× this, assuming 2:4 structured sparsity.
+Across the 12 nodes, slots #2, #3, #6, #7 peak at 70–75°C, against 60–66°C for slots #0, #1, #4, #5, and slots #2, #6, #7 are the most often below their node's mean. The per-slot figures are in "Performance — Outliers and Variation".
