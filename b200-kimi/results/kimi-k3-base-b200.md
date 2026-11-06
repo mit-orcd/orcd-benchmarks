@@ -2,7 +2,7 @@
 
 Serving `moonshotai/Kimi-K3` (2.78 T params, 1.56 TB MXFP4 checkpoint) on **2 nodes × 8 B200** via vLLM, **TP=8 × PP=2**. Measured 2026-08-21T17:13:53Z.
 
-> **Why two nodes.** The checkpoint is **1561 GB (1.42 TiB)**. One 8 × B200 node holds **1538 GB (1.40 TiB)** of HBM (8 × 192 GB) — **23 GB short of the weights alone**, before a single byte of KV cache, activation workspace, NCCL buffers or CUDA-graph pool, which together take another ~15–20 GB per GPU. There is no single-node B200 configuration for this model. TP8 shards within each node and PP2 splits the 93 layers across the pair. The MI355X baseline runs the same model on **one** node, because 8 × 288 GB = 2304 GB does fit with room to spare. Every throughput figure below is therefore also reported per GPU and per node.
+> **Why two nodes.** The checkpoint is **1561 GB (1.42 TiB)**. One 8 × B200 node holds **1538 GB (1.40 TiB)** of HBM (8 × 180 GB; 183,359 MiB each by `nvidia-smi`) — **23 GB short of the weights alone**, before a single byte of KV cache, activation workspace, NCCL buffers or CUDA-graph pool, which together take another ~15–20 GB per GPU. There is no single-node B200 configuration for this model. TP8 shards within each node and PP2 splits the 93 layers across the pair. The MI355X baseline runs the same model on **one** node, because 8 × 288 GB = 2304 GB does fit with room to spare. Every throughput figure below is therefore also reported per GPU and per node.
 
 **Run configuration** (from the server log, not assumed):
 
@@ -304,7 +304,7 @@ The asymmetry is stark: **HBM moves ~67 GB/step while NVLink moves ~0.15 GB and 
 
 ## 6. B200 vs MI355X — head to head
 
-> **Read this section carefully — it is not an equal-hardware comparison.** MI355X serves this model on **one node with 8 GPUs**; B200 needs **two nodes and 16 GPUs**, because the checkpoint does not fit in 8 × 183 GB. Total throughput therefore compares two different amounts of hardware. The per-GPU and per-node columns are the ones that carry meaning, and even those are confounded by a different engine (vLLM vs ATOM) and a different parallelism (TP8×PP2 vs TP8). Treat this as a **system-level capability comparison**, not a chip-vs-chip benchmark.
+> **Read this section carefully — it is not an equal-hardware comparison.** MI355X serves this model on **one node with 8 GPUs**; B200 needs **two nodes and 16 GPUs**, because the checkpoint does not fit in 8 × 180 GB. Total throughput therefore compares two different amounts of hardware. The per-GPU and per-node columns are the ones that carry meaning, and even those are confounded by a different engine (vLLM vs ATOM) and a different parallelism (TP8×PP2 vs TP8). Treat this as a **system-level capability comparison**, not a chip-vs-chip benchmark.
 
 ### 6.1 What was held constant, and what could not be
 
@@ -326,15 +326,15 @@ The asymmetry is stark: **HBM moves ~67 GB/step while NVLink moves ~0.15 GB and 
 
 | | MI355X | B200 | Ratio (B200/MI355X) |
 |---|---:|---:|---:|
-| HBM per GPU | 288 GB | 192 GB | 0.67× |
-| HBM per node (8 GPUs) | 2304 GB | 1538 GB | 0.67× |
+| HBM per GPU | 288 GB | 180 GB | 0.62× |
+| HBM per node (8 GPUs) | 2304 GB | 1440 GB | 0.62× |
 | HBM bandwidth | 8,000 GB/s | 8,000 GB/s | 1.00× |
 | BF16 dense peak | 2,500 TFLOP/s | 2,250 TFLOP/s | 0.90× |
 | GPU↔GPU link | Infinity Fabric (xGMI) | NVLink 5 | — |
 | link, per direction | 537 GB/s | 900 GB/s | 1.68× |
-| **Holds Kimi-K3 on one node?** | **yes** — 2304 GB vs 1561 GB of weights, 743 GB spare | **no** — 1538 GB vs 1561 GB, **23 GB short** | — |
+| **Holds Kimi-K3 on one node?** | **yes** — 2304 GB vs 1561 GB of weights, 743 GB spare | **no** — 1538 GB (by `nvidia-smi`) vs 1561 GB, **23 GB short** | — |
 
-**HBM capacity, not bandwidth or FLOPs, is the axis that decides this workload's layout.** The two parts have identical HBM bandwidth and B200 has 90% of MI355X's BF16 peak — neither of those decides anything here. Capacity does: 288 GB/GPU vs 192 GB/GPU is 1.50×, and that single ratio is the difference between one node and two.
+**HBM capacity, not bandwidth or FLOPs, is the axis that decides this workload's layout.** The two parts have identical HBM bandwidth and B200 has 90% of MI355X's BF16 peak — neither of those decides anything here. Capacity does: 288 GB/GPU vs 180 GB/GPU is 1.60×, and that single ratio is the difference between one node and two.
 
 ### 6.3 Throughput, point by point
 
@@ -656,7 +656,7 @@ Derived figures (active params, FLOP/s, HBM / NVLink / IB volumes) are computed 
 
 Three data paths, and the bottleneck analysis turns on telling them apart.
 
-**HBM** — the GPU's own on-package memory, where weights, KV cache and activations live. **Intra-GPU**: one GPU, no other GPU involved. Every weight read is a read from HBM. B200: 192 GB per GPU at 8,000 GB/s.
+**HBM** — the GPU's own on-package memory, where weights, KV cache and activations live. **Intra-GPU**: one GPU, no other GPU involved. Every weight read is a read from HBM. B200: 180 GB per GPU at 8,000 GB/s.
 
 **NVLink** — the GPU↔GPU interconnect inside one node, NVIDIA's counterpart to AMD's xGMI. **Intra-node**. B200: 1,800 GB/s bidirectional per GPU (~900 GB/s per direction, the figure a ring all-reduce sees). Carries activation all-reduces only (§4.1).
 

@@ -11,7 +11,7 @@ plus a **B200 vs MI355X** comparison.
 (TP8 × PP2); peak **1,696 tok/s** at concurrency 64. The report is
 `results/kimi-k3-base-b200.md`.
 
-Why two nodes: one B200 node has 8 × 192 GB = 1538 GB of HBM, **23 GB less than
+Why two nodes: one B200 node has 8 × 180 GB of HBM (183,359 MiB each by `nvidia-smi`, 1538 GB in total), **23 GB less than
 the weights alone**, before KV cache and workspace. The single-node run is kept
 in the chain because its out-of-memory failure is itself the measurement. The
 2-node layout is TP8 inside each node (NVLink) × PP2 across the pair (InfiniBand),

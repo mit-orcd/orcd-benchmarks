@@ -503,7 +503,7 @@ def section_paper():
     ], align=["---", "---", "---", "---:"])
     L += ["",
           "B300 advantages on paper:", "",
-          "- **1.5x memory per GPU** (288 GB vs 180-192 GB). This allows larger models or "
+          "- **1.6x memory per GPU** (288 GB vs 180 GB). This allows larger models or "
           "longer contexts per GPU, bigger micro-batches, less activation recompute, and "
           "bigger KV caches for inference.",
           "- **1.5x dense FP4 (NVFP4)**, useful for FP4 inference and FP4 training recipes.",

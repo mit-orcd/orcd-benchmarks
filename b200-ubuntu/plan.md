@@ -15,7 +15,7 @@ only, plus one *new* nccl-tests build directory.
 | Item | node5700 (Ubuntu) | node5500/5502 (Rocky 8) |
 |---|---|---|
 | OS / kernel | Ubuntu 24.04.4, 6.8.0-124-generic | RHEL 8 / 10 |
-| GPUs | 8× B200, 183 GB, driver **570.211.01** | 8× B200, driver 590.48.01 |
+| GPUs | 8× B200, 180 GB, driver **570.211.01** | 8× B200, driver 590.48.01 |
 | Slurm | **absent** (no sbatch/sinfo) | `mit_testing` partition |
 | Lmod / `module` | **absent** | modules for apptainer, nvhpc |
 | `/orcd/software` | **not mounted** → no nvhpc/26.1, no host MPI, no nvcc | mounted |

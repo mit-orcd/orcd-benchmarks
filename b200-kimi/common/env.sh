@@ -117,7 +117,7 @@ export KV_CACHE_DTYPE="${KV_CACHE_DTYPE:-fp8}"
 export SEED="${SEED:-42}"
 
 # TP8 x PP2 across the two nodes. NOT a tuning choice: the 1561 GB MXFP4 checkpoint
-# does not fit in one node's 8 x 192 GB = 1538 GB of HBM -- 23 GB short on weights
+# does not fit in one node's 8 x 180 GB of HBM (183,359 MiB each by nvidia-smi = 1538 GB) -- 23 GB short on weights
 # alone, ~150 GB short once KV pool, workspace and NCCL buffers are counted. The vLLM
 # recipe reaches the same conclusion and marks TP8xPP2 the verified B200 layout.
 export TP="${TP:-8}"

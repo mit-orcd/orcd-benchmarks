@@ -80,7 +80,7 @@
   <text class="note-s" x="958" y="106">KV pool, activations, NCCL buffers</text>
 
   <line class="cap-line" x1="800" y1="66" x2="800" y2="120"/>
-  <text class="note-s" x="800" y="136" text-anchor="middle">1,538 GB &#8212; all the HBM in one node (8 &#215; 192 GB)</text>
+  <text class="note-s" x="800" y="136" text-anchor="middle">1,538 GB &#8212; all the HBM in one node (8 &#215; 180 GB; 183,359 MiB each by nvidia-smi)</text>
   <line class="leader" x1="806" y1="74" x2="856" y2="52"/>
   <text class="over" x="862" y="52">+23 GB over</text>
 
@@ -224,7 +224,7 @@
   <!-- HBM -->
   <rect class="box" x="70" y="676" width="190" height="170" rx="6"/>
   <text class="box-t" x="165" y="704" text-anchor="middle">HBM3e</text>
-  <text class="note-s" x="165" y="723" text-anchor="middle">192 GB · 8.0 TB/s</text>
+  <text class="note-s" x="165" y="723" text-anchor="middle">180 GB · 8.0 TB/s</text>
   <rect class="stack" x="88" y="740" width="154" height="13"/>
   <rect class="stack" x="88" y="760" width="154" height="13"/>
   <rect class="stack" x="88" y="780" width="154" height="13"/>

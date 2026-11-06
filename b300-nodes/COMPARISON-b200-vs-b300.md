@@ -36,7 +36,7 @@ Sources: [NVIDIA HGX platform page](https://www.nvidia.com/en-us/data-center/hgx
 
 B300 advantages on paper:
 
-- **1.5x memory per GPU** (288 GB vs 180-192 GB). This allows larger models or longer contexts per GPU, bigger micro-batches, less activation recompute, and bigger KV caches for inference.
+- **1.6x memory per GPU** (288 GB vs 180 GB). This allows larger models or longer contexts per GPU, bigger micro-batches, less activation recompute, and bigger KV caches for inference.
 - **1.5x dense FP4 (NVFP4)**, useful for FP4 inference and FP4 training recipes.
 - **~2x attention-layer exponent throughput**, which speeds up softmax-heavy attention, mainly at long context.
 - **2x scale-out network per GPU** (ConnectX-8 800 Gb/s vs ConnectX-7 400 Gb/s), which helps multi-node training and inference.

@@ -4,7 +4,7 @@
 #
 # Submit with:   sbatch job-kimi-1node.sh
 #
-# The arithmetic says it cannot work: 8 x 192 GB = 1538 GB of HBM against 1561 GB of
+# The arithmetic says it cannot work: 8 x 180 GB of HBM (183,359 MiB each by nvidia-smi = 1538 GB) against 1561 GB of
 # weights, so a single node is ~23 GB short before a byte of KV cache, activation
 # workspace, NCCL buffers or CUDA-graph pool (another ~15-20 GB/GPU). The vLLM recipe
 # independently marks `single_node_tp` unusable for this model on B200.

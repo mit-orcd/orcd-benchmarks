@@ -6,7 +6,7 @@ $\color{red}{\textsf{Red}}$ = a result far from what the specs on paper predict;
 
 | | MI355X (this directory) | B200 |
 |---|---|---|
-| Nodes | node6100, node6101: 8 × MI355X (288 GB) each | node5500–5502, node5600–5802: 8 × B200 (192 GB) each |
+| Nodes | node6100, node6101: 8 × MI355X (288 GB) each | node5500–5502, node5600–5802: 8 × B200 (180 GB) each |
 | Network | 8 × 400G AMD Pollara RoCEv2 per node (400 GB/s) | 8 × 400G NDR InfiniBand per node (400 GB/s) |
 | Software | ROCm 10.1 (user-space install; hipBLASLt 1.4.1, RCCL 2.30.7, rocBLAS 5.7.0) for RVS (ROCm Validation Suite), rocHPL and RCCL; apptainer containers (Primus, ATOM, vLLM) | CUDA 13.x, NGC containers, vLLM |
 | Sources | `results/node6100/rocm10.1/` and `results/node6101/rocm10.1/` (RVS, RCCL, rocHPL); `logs/node6100/rocm10.1/rvs/fp4_multiproc_*`; `results/ubuntu/{primus,kimi-recipe-old-vs-new}.md` | `../b200-nodes/out-gpu-fryer/`, `../cuBLASLt/summary.md`, `../b200-nodes/out-nccl-{1node,2node}/`, `../b200-nodes/output-megatron/`, `../b200-kimi/results/kimi-k3-{base,improve}-b200.md` |
@@ -213,7 +213,7 @@ The longer sequence on MI355X gives more work per step, which tends to raise TFL
 
 **Memory: why 8 MI355X vs 16 B200.** Kimi-K3 (2.78 trillion parameters) needs **1,561 GB for the weights alone** (MXFP4 checkpoint), plus memory for the KV cache.
 - **One MI355X node fits it:** 8 × 288 GB = 2,304 GB, i.e. ≈195 GB of weights per GPU and ≈90 GB per GPU left for the KV cache.
-- **One B200 node does not:** 8 × 192 GB ≈ 1,538 GB, 23 GB short of the weights alone. B200 therefore needs two nodes (16 GPUs, TP8 × PP2: 97 GiB of weights + 59 GiB of KV cache per GPU; `../b200-kimi/results/kimi-k3-base-b200.md`).
+- **One B200 node does not:** 8 × 180 GB (183,359 MiB each by `nvidia-smi`, ≈ 1,538 GB per node), 23 GB short of the weights alone. B200 therefore needs two nodes (16 GPUs, TP8 × PP2: 97 GiB of weights + 59 GiB of KV cache per GPU; `../b200-kimi/results/kimi-k3-base-b200.md`).
 
 **The setups:**
 - **8 × MI355X (one node, TP8), three recipes:**
@@ -353,7 +353,7 @@ On paper, MI355X / B200 is 1.12x for FP4/FP8/BF16 compute, 2.12x for FP64, 0.60x
 - **3. Interconnect, two nodes (bandwidth):** all_gather, reduce_scatter, broadcast 0.95–1.00x vs 1.00x network; sendrecv 1.01x with `NCCL_NET=IB` + `NCCL_NCHANNELS_PER_NET_PEER=4` on MI355X.
 - **3. Interconnect, latency:** no latency on the spec sheets. Inside one node MI355X is faster for small messages (1.18–5.00x in all_reduce, all_gather, reduce_scatter, alltoall). Across 2 nodes point-to-point (sendrecv) is slower on MI355X (0.68–0.93x; RoCE latency 5.2 vs 1.3 µs on InfiniBand).
 - **4. Training:** 7B models 1.12–1.19x vs 1.12x BF16; both use 43–46% of BF16 peak.
-- **5. Kimi-K3:** Model fits in one MI355X node but needs two B200 nodes, as 288 vs 192 GB per GPU predicts; per-GPU throughput 1.05–2.43x across the three MI355X recipes.
+- **5. Kimi-K3:** Model fits in one MI355X node but needs two B200 nodes, as 288 vs 180 GB per GPU predicts; per-GPU throughput 1.05–2.43x across the three MI355X recipes.
 
 **Results far from the specs on paper:**
 

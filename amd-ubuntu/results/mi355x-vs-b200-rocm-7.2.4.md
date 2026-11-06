@@ -6,7 +6,7 @@ $\color{red}{\textsf{Red}}$ = a result far from what the specs on paper predict;
 
 | | MI355X (this directory) | B200 |
 |---|---|---|
-| Nodes | node6100, node6101: 8 × MI355X (288 GB) each | node5500–5502, node5600–5802: 8 × B200 (192 GB) each |
+| Nodes | node6100, node6101: 8 × MI355X (288 GB) each | node5500–5502, node5600–5802: 8 × B200 (180 GB) each |
 | Network | 8 × 400G AMD Pollara RoCEv2 per node (400 GB/s) | 8 × 400G NDR InfiniBand per node (400 GB/s) |
 | Software | host ROCm 7.2.4 for RVS (ROCm Validation Suite) and RCCL; apptainer containers (Primus, Megatron-LM, ATOM, vLLM) | CUDA 13.x, NGC containers, vLLM |
 | Sources | `results/ubuntu/{rvs,rccl,rccl_2node,sendrecv-check,primus,megatron_ref,kimi,kimi-amd-recipe}.md` | `../b200-nodes/out-gpu-fryer/`, `../cuBLASLt/summary.md`, `../b200-nodes/out-nccl-{1node,2node}/`, `../b200-nodes/output-megatron/`, `../b200-kimi/results/` |
@@ -309,7 +309,7 @@ On paper, MI355X / B200 is 1.12x for FP4/FP8/BF16 compute, 2.12x for FP64, 0.60x
 - **3. RCCL vs NCCL, one node:** Most collectives 0.48–0.59x vs 0.60x link bandwidth on paper; both GPUs 61–81% of their link peak. all_reduce 0.47x is also expected: B200 is helped by NVLink SHARP (in-switch reduction).
 - **4. RCCL vs NCCL, two nodes:** all_gather, reduce_scatter, broadcast 0.99–1.03x vs 1.00x network; both 90–96% of 400 GB/s.
 - **5. Training:** 7B models 1.12–1.19x vs 1.12x BF16; both use 43–46% of BF16 peak.
-- **6. Kimi-K3:** Model fits in one MI355X node but needs two B200 nodes, as 288 vs 192 GB per GPU predicts; per-GPU throughput at 1–4 users 1.05–1.09x vs 1.00x memory bandwidth.
+- **6. Kimi-K3:** Model fits in one MI355X node but needs two B200 nodes, as 288 vs 180 GB per GPU predicts; per-GPU throughput at 1–4 users 1.05–1.09x vs 1.00x memory bandwidth.
 
 **Results far from the specs on paper:**
 

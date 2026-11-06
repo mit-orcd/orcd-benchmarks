@@ -8,8 +8,8 @@
 # The analysis runs INSIDE the job, so results/kimi-k3-base-b200.md exists the moment
 # the allocation ends with no separate manual step.
 #
-# Why 2 nodes: the 1561 GB MXFP4 checkpoint does not fit in one node's 8 x 192 GB
-# = 1538 GB of HBM, before a single byte of KV cache. TP8 shards within each node,
+# Why 2 nodes: the 1561 GB MXFP4 checkpoint does not fit in one node's 8 x 180 GB
+# of HBM (183,359 MiB each by nvidia-smi = 1538 GB), before a single byte of KV cache. TP8 shards within each node,
 # PP2 splits the 93 layers across the pair. This is the vLLM recipe's verified B200
 # layout (`multi_node_tp_pp`), not a tuning preference. Run job-kimi-1node.sh first if
 # you want that established by measurement rather than by arithmetic.

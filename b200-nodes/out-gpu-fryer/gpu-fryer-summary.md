@@ -11,7 +11,7 @@ The B200 row is the mean across all 96 GPUs on the 12 nodes.
 
 | GPU / Metric | **GPU memory** | **FP32 TFLOPS** | **BF16 TFLOPS** | **FP8 TFLOPS** |
 |---|---|---|---|---|
-| **B200** (12 nodes) | ~160 GB | **749** | **1,457** | **4,010** |
+| **B200** (12 nodes) | 180 GB | **749** | **1,457** | **4,010** |
 | **H200** (ref) | 144 GB | **368** | **713** | **1,468** |
 | **L40S** (ref) | 48 GB | **98** | **198** | not supported |
 | **B200 / H200** | — | **2.04×** | **2.04×** | **2.73×** |

@@ -29,7 +29,8 @@ MIB = 2 ** 20
 HW = {
     "B200": dict(
         name="NVIDIA B200 (Blackwell, sm_100)",
-        hbm_bytes=183359 * MIB,     # what nvidia-smi reports on these nodes (192 GB part)
+        hbm_bytes=183359 * MIB,     # what nvidia-smi reports on these nodes (180 GB part)
+        hbm_nominal_gb=180,         # NVIDIA's published capacity; hbm_bytes drives the fit arithmetic
         hbm_bw_gbs=8000.0,          # HBM3e
         bf16_tflops=2250.0,         # dense, no sparsity
         link="NVLink 5",
@@ -40,6 +41,7 @@ HW = {
     "MI355X": dict(
         name="AMD MI355X (CDNA4, gfx950)",
         hbm_bytes=288 * 10**9,      # 288 GB; ATOM's log reports total_gpu=287.98GB
+        hbm_nominal_gb=288,
         hbm_bw_gbs=8000.0,          # HBM3E
         bf16_tflops=2500.0,         # dense
         link="Infinity Fabric (xGMI)",
@@ -392,7 +394,7 @@ def build_report(b, a, arch, args):
     W("> **Why two nodes.** The checkpoint is "
       f"**{gb(args.weight_bytes):.0f} GB ({disk_tib:.2f} TiB)**. One 8 × B200 node holds "
       f"**{gb(node_hbm_b):.0f} GB ({tib(node_hbm_b):.2f} TiB)** of HBM "
-      f"({hw['gpus_per_node']} × {gb(hw['hbm_bytes']):.0f} GB) — "
+      f"({hw['gpus_per_node']} × {hw['hbm_nominal_gb']} GB; 183,359 MiB each by `nvidia-smi`) — "
       f"**{gb(short_b):.0f} GB short of the weights alone**, before a single byte of KV "
       "cache, activation workspace, NCCL buffers or CUDA-graph pool, which together take "
       "another ~15–20 GB per GPU. There is no single-node B200 configuration for this "
@@ -969,7 +971,7 @@ def build_report(b, a, arch, args):
 
     W("> **Read this section carefully — it is not an equal-hardware comparison.** MI355X "
       "serves this model on **one node with 8 GPUs**; B200 needs **two nodes and 16 GPUs**, "
-      "because the checkpoint does not fit in 8 × 183 GB. Total throughput therefore compares "
+      "because the checkpoint does not fit in 8 × 180 GB. Total throughput therefore compares "
       "two different amounts of hardware. The per-GPU and per-node columns are the ones that "
       "carry meaning, and even those are confounded by a different engine (vLLM vs ATOM) and "
       "a different parallelism (TP8×PP2 vs TP8). Treat this as a **system-level capability "
@@ -1000,10 +1002,10 @@ def build_report(b, a, arch, args):
     W("")
     W("| | MI355X | B200 | Ratio (B200/MI355X) |")
     W("|---|---:|---:|---:|")
-    W(f"| HBM per GPU | {gb(ahw['hbm_bytes']):.0f} GB | {gb(hw['hbm_bytes']):.0f} GB | "
-      f"{hw['hbm_bytes']/ahw['hbm_bytes']:.2f}× |")
-    W(f"| HBM per node (8 GPUs) | {gb(ahw['hbm_bytes']*8):.0f} GB | {gb(hw['hbm_bytes']*8):.0f} GB | "
-      f"{hw['hbm_bytes']/ahw['hbm_bytes']:.2f}× |")
+    W(f"| HBM per GPU | {ahw['hbm_nominal_gb']} GB | {hw['hbm_nominal_gb']} GB | "
+      f"{hw['hbm_nominal_gb']/ahw['hbm_nominal_gb']:.2f}× |")
+    W(f"| HBM per node (8 GPUs) | {ahw['hbm_nominal_gb']*8} GB | {hw['hbm_nominal_gb']*8} GB | "
+      f"{hw['hbm_nominal_gb']/ahw['hbm_nominal_gb']:.2f}× |")
     W(f"| HBM bandwidth | {fmt(ahw['hbm_bw_gbs'],0)} GB/s | {fmt(hw['hbm_bw_gbs'],0)} GB/s | "
       f"{hw['hbm_bw_gbs']/ahw['hbm_bw_gbs']:.2f}× |")
     W(f"| BF16 dense peak | {fmt(ahw['bf16_tflops'],0)} TFLOP/s | {fmt(hw['bf16_tflops'],0)} TFLOP/s | "
@@ -1014,14 +1016,14 @@ def build_report(b, a, arch, args):
     W(f"| **Holds Kimi-K3 on one node?** | **yes** — "
       f"{gb(ahw['hbm_bytes']*8):.0f} GB vs {gb(args.weight_bytes):.0f} GB of weights, "
       f"{gb(ahw['hbm_bytes']*8-args.weight_bytes):.0f} GB spare | "
-      f"**no** — {gb(hw['hbm_bytes']*8):.0f} GB vs {gb(args.weight_bytes):.0f} GB, "
+      f"**no** — {gb(hw['hbm_bytes']*8):.0f} GB (by `nvidia-smi`) vs {gb(args.weight_bytes):.0f} GB, "
       f"**{gb(short_b):.0f} GB short** | — |")
     W("")
     W("**HBM capacity, not bandwidth or FLOPs, is the axis that decides this workload's "
       f"layout.** The two parts have identical HBM bandwidth and B200 has 90% of MI355X's "
       f"BF16 peak — neither of those decides anything here. Capacity does: "
-      f"{gb(ahw['hbm_bytes']):.0f} GB/GPU vs {gb(hw['hbm_bytes']):.0f} GB/GPU is "
-      f"{ahw['hbm_bytes']/hw['hbm_bytes']:.2f}×, and that single ratio is the difference "
+      f"{ahw['hbm_nominal_gb']} GB/GPU vs {hw['hbm_nominal_gb']} GB/GPU is "
+      f"{ahw['hbm_nominal_gb']/hw['hbm_nominal_gb']:.2f}×, and that single ratio is the difference "
       "between one node and two.")
     W("")
 
@@ -1652,7 +1654,7 @@ def build_report(b, a, arch, args):
     W("")
     W("**HBM** — the GPU's own on-package memory, where weights, KV cache and activations "
       "live. **Intra-GPU**: one GPU, no other GPU involved. Every weight read is a read from "
-      f"HBM. B200: {gb(hw['hbm_bytes']):.0f} GB per GPU at {fmt(hw['hbm_bw_gbs'],0)} GB/s.")
+      f"HBM. B200: {hw['hbm_nominal_gb']} GB per GPU at {fmt(hw['hbm_bw_gbs'],0)} GB/s.")
     W("")
     W(f"**NVLink** — the GPU↔GPU interconnect inside one node, NVIDIA's counterpart to AMD's "
       f"xGMI. **Intra-node**. B200: {fmt(hw['link_bidir_gbs'],0)} GB/s bidirectional per GPU "

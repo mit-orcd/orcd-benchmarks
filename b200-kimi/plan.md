@@ -25,7 +25,7 @@ moonshotai/Kimi-K3   120 files, 96 safetensors shards
 | Box | HBM/GPU | GPUs/node | HBM/node | Holds the 1561 GB of weights? |
 |---|---:|---:|---:|---|
 | MI355X (the AMD run) | 288 GB | 8 | **2304 GB** | **yes** — 743 GB spare, ~57 GB/GPU of it used for KV |
-| **B200 (here)** | **192 GB** (183,359 MiB) | **8** | **1538 GB** | **no — 23 GB short on weights alone** |
+| **B200 (here)** | **180 GB** (183,359 MiB) | **8** | **1538 GB** | **no — 23 GB short on weights alone** |
 | B300 | 268 GB | 8 | 2144 GB | yes |
 
 The 23 GB shortfall is the *optimistic* figure: it assumes 100% of HBM goes to weights.
@@ -99,7 +99,7 @@ Must be verified in step 5.1 before anything expensive is committed:
    only** — there is no cu129 tag. July's notes recorded 590.48.01 on these nodes, which
    would be fine, but the nodes have been reinstalled since. If the driver is r575, the
    whole plan stops here and the fallback in §8 applies.
-2. **`nvidia-smi` memory** — confirm 183 GB (the §1 arithmetic assumes it).
+2. **`nvidia-smi` memory** — confirm 183,359 MiB, the 180 GB part (the §1 arithmetic assumes it).
 3. **Apptainer `--nv` + IB** inside the container: `nccl` sees the `mlx5` devices.
 4. **`mlx5dv_reg_dmabuf_mr`** works. If engine init dies with errno 524, set
    `NCCL_DMABUF_ENABLE=0` and require `nvidia_peermem` (both documented in the recipe).
