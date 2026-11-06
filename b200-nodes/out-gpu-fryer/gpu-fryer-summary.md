@@ -1,5 +1,7 @@
 # GPU Fryer Results
 
+gpu-fryer is a GPU stress test: every GPU runs large matrix multiplication (cuBLAS GEMM) on random matrices nonstop, and the tool reports throughput in TFLOPS, temperature and throttling for each GPU.
+
 **Files:** `gpu-fryer-<node>-<date>.out`, newest run per node (12 nodes, 8× NVIDIA B200 each)
 Each file contains three back-to-back runs: **FP32 → BF16 → FP8**, 300 s per precision.
 
