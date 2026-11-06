@@ -402,7 +402,8 @@ w(f"| BF16 GEMM | {pr(min(bf16_fr, bf16_cu), max(bf16_fr, bf16_cu))} | ❌ |")
 w(f"| FP8 GEMM | {fp8 / FRYER_B2['fp8']:.2f}x (vs gpu-fryer) or {fp8 / CUBLAS_B2['fp8']:.2f}x (vs cuBLASLt) | ❌ |")
 w(f"| FP4 GEMM | {ratio_fp4_1:.2f}x (1 GPU), {ratio_fp4_mp:.2f}x (8 GPUs, one process per GPU) | ❌ |")
 w(f"| FP64 GEMM | {fp64 / CUBLAS_B2['fp64']:.2f}x | ❌ |")
-w(f"| FP64 HPL (Linpack) (§2) | {hpl_row} | ✅ same benchmark, each vendor's own build |")
+if hpl_row != "pending":  # no B200 HPL result published: no Summary row
+    w(f"| FP64 HPL (Linpack) (§2) | {hpl_row} | ✅ same benchmark, each vendor's own build |")
 w(f"| Collectives inside one node, bandwidth (§4) | {lo1:.2f}–{hi1:.2f}x (sendrecv {sr1:.2f}x) | ⚠️ close |")
 if r22:
     named = {c: used[c] for c in used if used[c] != "default"}
