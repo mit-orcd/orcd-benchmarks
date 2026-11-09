@@ -170,3 +170,41 @@ The recipe's speculative decoding helps at low load; at high load both are equal
 - **Our nodes vs AMD's published numbers, AMD's workload (ISL/OSL 128K/1K):** our runs already use vLLM recipe 2 itself (same image, server flags and client settings as the PDF); the published numbers are the PDF's results table. Result: our nodes are the same as AMD's at 8–16 users (1.01×) and faster at 32–128 (1.07–1.10×); at 1–4 users they are slower (0.56–0.82×).
 - **Results on our workload (1K/1K, node6101):** 54 tok/s at 1 user (TPOT 18.1 ms), 315 at 8, 1,228 at 64 and 1,735 at 128 (TPOT 71.8 ms), TTFT under 0.5 s up to 128 users. At 256 users throughput stays at 1,747 and TTFT jumps to 73 s, because `max-num-seqs 128` makes half the requests wait.
 - The comparison with ATOM and vLLM recipe 1 is in its own file: [ubuntu/kimi-recipe-old-vs-new.md](ubuntu/kimi-recipe-old-vs-new.md).
+
+## 9. Hyperloom (AMD's AI-agent inference optimizer): how it profiles and tunes
+
+Hyperloom 1.0.0 (AMD-AGI, MIT) runs Claude agents that change serving settings and kernels, measure each change, and keep only what helps. Read from its docs (`SKILL.md`) and our first test run (2026-11-09, Qwen3-8B, 1 GPU, vLLM v0.29.0, 1 hour, no kernel phase). Plan: [../plan-hyperloom.md](../plan-hyperloom.md); tokens: [../hyperloom-tokens.md](../hyperloom-tokens.md).
+
+**What it does, in order:**
+
+| Phase | Profiling | Changes it makes |
+|---|---|---|
+| PRELUDE | Baseline benchmark (throughput, TTFT, accuracy check); then a profile run: torch trace analysed by TraceLens, plus a roofline estimate of the best possible decode speed | none |
+| FRAMEWORK_AGENT (optional) | - | Finds patches to the serving engine's source code, applies one at a time, keeps it only if faster |
+| EXPLORE | Each variant is a full benchmark | Server flags and env settings (batch size, scheduler, AITER kernel switches, parallel layout); agents may also write code patches |
+| KERNEL_AGENT (GEAK) | Picks the slowest kernels from the trace | Rewrites or tunes them (GEMM tuning, fusion); needs compile + correctness test + speed test before keeping |
+| SWEEP | Re-runs the final setup at several user counts | none |
+| CLOSE | Report: gain list (what each kept change gave), token use | none |
+
+**How it decides:**
+- Every change is measured against the baseline; it is kept only if faster and accuracy holds, else undone.
+- Kept changes are stacked, and the stack is re-measured as a whole.
+- A reviewer agent approves each proposal; a monitor agent stops the session when time runs short, gains stall, or crashes rise.
+- After a 10% gain it profiles again, so later steps target the new slowest part.
+- Tested settings are remembered, so the same variant is not run twice.
+
+**Our first test (Qwen3-8B):** baseline 7,245 tok/s per GPU at 64 users. Two variants tried, both no gain: AITER dense kernels on (vLLM env switches) and scheduler settings (`--max-num-seqs 64 --max-num-batched-tokens 16384 --async-scheduling`, 7,235 tok/s). It skipped the profile run (not enough time) and the accuracy check produced no result. One hour is too short: each benchmark takes about 15 minutes.
+
+**Is this the case in our scripts now? No, only part of it.**
+
+| Hyperloom step | Our scripts |
+|---|---|
+| Baseline benchmark | ✅ same idea: `atom/run_kimi_atom_mtp.sh`, `atom/run_kimi_amdrecipe.sh` (1–256 users, repeats) |
+| Accuracy check | partly: GSM8K in some runs; output-match check added for MTP, but it is not useful because output already differs between two runs at temperature 0 |
+| Profiling | partly: `atom/run_profile.sh` + `analyze_profile.py` captured one Kimi-K3 trace (2026-10-02), but it had no GPU kernel events, so no breakdown yet. No TraceLens, no roofline, no rocprofv3 |
+| Trying settings | by hand: we tried fixed recipes and a few settings (`max-num-seqs` 64–2048, MTP draft tokens 0/2/6); no automatic search |
+| Keep only if faster, stack, re-measure | no: each run is a separate test |
+| Kernel tuning | no |
+| Sweep over users | ✅ yes |
+
+So our scripts measure well but do not profile or tune automatically. Hyperloom adds the profile → change → measure → keep loop; plan steps 5–6 then re-measure its best setup with our own scripts and check each kept change one at a time.

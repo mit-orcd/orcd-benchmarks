@@ -87,7 +87,7 @@ FP64 GEMM = 36 TFLOPS per GPU measured with cuBLASLt; peak = 37 TFLOPS per GPU (
             bs = (f"{b['tf']:,.1f}", f"{b['tf'] / g:.1f}", f"{100 * b['tf'] / g / GEMM['b2']:.0f}%")
             pb.append(100 * b["tf"] / g / GEMM["b2"])
         else:
-            bs = ("failed" if g in best else "-", "-", "-")
+            bs = ("no result" if g in best else "-", "-", "-")
         if m:
             pm.append(100 * m / g / GEMM["mi"])
         rt = f"**{m / b['tf']:.2f}x**" if m and b else "-"
@@ -114,7 +114,7 @@ GEMM and 2.12x on paper.
 - Same benchmark and the same rules (problem size, best of 2 runs, residual check).
 - Each vendor's own build: rocHPL (rocBLAS) vs NVIDIA HPL (cuBLAS); NB and process grid are each vendor's default (512 vs 1024).
 - MI355X has 288 GB per GPU, B200 178 GiB usable, so MI355X runs a larger N at the same 75%, which helps it a little.
-""" + (f"- B200 failed points: {', '.join(map(str, failed))} GPUs.\n" if failed else "")
+""" + (f"- B200 has no passing result yet at {', '.join(map(str, failed))} GPUs.\n" if failed else "")
     s = open(CMP_MD).read()
     s2 = re.sub(r"<!-- HPL-B200-START -->.*?<!-- HPL-B200-END -->",
                 lambda _: "<!-- HPL-B200-START -->\n" + sec + "<!-- HPL-B200-END -->", s, flags=re.S)

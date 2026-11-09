@@ -4,7 +4,13 @@ Written 2026-11-02 and revised the same day after user feedback. Status updated 
 
 ## Current status (2026-11-06)
 
-**Latest (2026-11-06 evening):**
+**Step 2 done (2026-11-09):** Qwen3-8B, 1 GPU, vLLM v0.29.0 image, 1 h budget, no kernel agent (`hyperloom/run_step2.sh`).
+- Try 1 stopped after 6 min: Ray could not start (socket path too long). Fix: `RAY_TMPDIR=/dev/shm/shaohao-ray`. It still used 2.54M tokens (22 calls).
+- Try 2 ran 46 min: Hyperloom baseline 7,245 tok/s/GPU at 64 users; 2 of 4 explore variants tried, no gain kept; stop reason `robustness_escalated`; accuracy eval found no results.
+- Tokens (try 2): 0.64M total over 7 calls; 87% cache read, 76K cache write, 8.8K output. Most of the hour is benchmark time, not model calls.
+- Step 4 waits for the user's go.
+
+**Earlier (2026-11-06 evening):**
 - Qwen3-8B is downloaded. `install.sh --skip-kernel-agent` ran in new overlays `hyperloom-atom` and `hyperloom-vllm`; its rc was 0 for both. The kernel-agent part starts Ray, so it still has to run on node6100.
 - `.env` is written. The user's token is the only thing blocking step 2.
 - Code checks: with only an Anthropic token, `--critic-protocol auto` picks Anthropic. The accuracy gate and profiler flags are still to be read.

@@ -19,7 +19,8 @@
 #SBATCH -J hpl-b200
 #SBATCH -o out-hpl/%x-%j.out
 set -uo pipefail
-G=${1:?usage: sbatch job-hpl-b200.sh <ngpus> <run dir>}
+G=${1:?usage: sbatch job-hpl-b200.sh <ngpus|a> <run dir>}
+[[ $G == a ]] && G=$SLURM_ARRAY_TASK_ID   # array: --array=2-8, G = task id
 RUN=${2:?run dir}
 MODE=${3:-full}             # smoke: one small run (3% of HBM) into smoke.txt, to check the launch
 SIF=/orcd/data/orcd/022/benchmarks/nvidia-hpc-benchmarks/hpc-benchmarks_25.04.sif
@@ -29,6 +30,11 @@ mkdir -p "$RUN"
 export TMPDIR=$HOME/orcd/scratch/tmp APPTAINER_TMPDIR=$HOME/orcd/scratch/tmp
 mkdir -p "$TMPDIR"
 module load apptainer 2>/dev/null
+# UCX: no shared-memory transport (it opens /proc/<pid>/fd, denied in apptainer -> rc 134), GPUs in a
+# node talk over CUDA IPC; between nodes only the 400 Gb NDR cards (mlx5_0-3 are a separate 100 Gb
+# HDR network, UCX picking them gave "UD endpoint unhandled timeout"). Tested in job-hpl-ucx-test.sh (E).
+export UCX_TLS=rc,self,cuda_copy,cuda_ipc
+export UCX_NET_DEVICES=mlx5_4:1,mlx5_7:1,mlx5_8:1,mlx5_9:1,mlx5_10:1,mlx5_13:1,mlx5_14:1,mlx5_15:1
 
 case $G in
   1) P=1 Q=1 ;; 2) P=2 Q=1 ;; 3) P=3 Q=1 ;; 4) P=2 Q=2 ;; 5) P=5 Q=1 ;;

@@ -85,4 +85,6 @@ run B "" UCX_POSIX_USE_PROC_LINK=n UCX_TLS=rc,sm,self,cuda_copy,cuda_ipc,gdr_cop
 run C "--sharens" UCX_LOG_LEVEL=warn
 # D: no shared memory at all, inside the node over IB and CUDA IPC
 run D "" UCX_TLS=rc,self,cuda_copy,cuda_ipc,gdr_copy
+# E: D without gdr_copy (not in the container), only the 400 Gb NDR cards (mlx5_0-3 are a separate 100 Gb HDR network)
+run E "" UCX_TLS=rc,self,cuda_copy,cuda_ipc UCX_NET_DEVICES=mlx5_4:1,mlx5_7:1,mlx5_8:1,mlx5_9:1,mlx5_10:1,mlx5_13:1,mlx5_14:1,mlx5_15:1
 echo "done $(date -Iseconds)"
