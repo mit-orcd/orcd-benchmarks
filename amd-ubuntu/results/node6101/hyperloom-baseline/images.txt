@@ -1,0 +1,13 @@
+ref: docker://vllm/vllm-openai-rocm:v0.29.0
+pulled: 2026-10-07T19:57:04+00:00
+size: 8.8G
+maintainer: dl.mlsedevops@amd.com
+org.label-schema.build-arch: amd64
+org.label-schema.build-date: Wednesday_7_October_2026_19:56:2_UTC
+org.label-schema.schema-version: 1.0
+org.label-schema.usage.apptainer.version: 1.5.4-1.el8
+org.label-schema.usage.singularity.deffile.bootstrap: docker
+org.label-schema.usage.singularity.deffile.from: vllm/vllm-openai-rocm:v0.29.0
+org.opencontainers.image.base.digest: sha256:e5e47f6aaab675c252c381f0dac237b31b10d87bb74d092b07fb4065efd7f5a1
+org.opencontainers.image.base.name: docker.io/vllm/vllm-openai-rocm:v0.29.0
+org.opencontainers.image.version: 22.04

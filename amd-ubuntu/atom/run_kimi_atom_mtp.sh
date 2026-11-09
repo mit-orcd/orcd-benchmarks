@@ -82,6 +82,7 @@ run_arm() {   # $1 = K, $2 = conc list
     say "k=$K: server not ready"; echo failed >"$D/FAILED"; docker rm -f "$NAME" >/dev/null 2>&1; return 1
   fi
   say "k=$K: server READY"
+  [[ -n ${GREEDY_CHECK:-} ]] && $PY "$GREEDY_CHECK" "http://localhost:${PORT}" "$D/greedy.json" 2>&1 | tee -a "$STATE"
   for C in $CONC; do
     n=$(( C * 10 ))
     timeout 5400 docker exec "$NAME" python -m atom.benchmarks.benchmark_serving \
@@ -111,6 +112,7 @@ IFS=';' read -ra A <<<"$ARMS"
 for a in "${A[@]}"; do run_arm "${a%%:*}" "${a#*:}"; done
 say "sweep done"
 exec 9>&-
+[[ -n ${NO_REPORT:-} ]] && { say "NO_REPORT set: no analysis, no push"; exit 0; }   # plan-hyperloom.md baselines
 
 mkdir -p "$BENCH_ROOT/logs/auto"
 flock "$BENCH_ROOT/logs/auto/report.lock" $PY analyze_atom_mtp.py "$OUT" 2>&1 | tee -a "$STATE"

@@ -88,3 +88,5 @@ B200 Kimi-K3 MTP (job 26092372): no MTP server started; see /orcd/data/orcd/022/
 2026-10-30T17:02:44-04:00 moved 34 pending B200 jobs (HPL g2-g8,g16, Megatron, sweeps, ablates) sched_system_all -> mit_testing QOS=unlimited (MaxTime 7d)
 [2026-10-30T23:23:27-04:00] B200 HPL analysis done (/orcd/data/orcd/022/benchmarks/b200-nodes/hpl/out-hpl/run_20261021_163151), push rc=0
 [2026-11-06T15:51:15-05:00] B200 HPL UCX test started: job 28130410, dir /orcd/data/orcd/022/benchmarks/b200-nodes/hpl/out-hpl/ucxtest_20261106_155110
+[2026-11-06T16:35:54-05:00] Hyperloom: .env template written (token needed), Qwen3-8B download restarted
+[2026-11-06T16:42:41-05:00] Hyperloom step 3: own baselines started on node6101 (logs/hyperloom/baselines-*.state); step 2 waits for the user's token

@@ -1,6 +1,44 @@
 # Plan: use AMD Hyperloom to optimize Kimi-K3 inference on 8 × MI355X
 
-Status: plan only. Written 2026-11-02 and revised the same day after user feedback. No work started.
+Written 2026-11-02 and revised the same day after user feedback. Status updated 2026-11-06.
+
+## Current status (2026-11-06)
+
+**Latest (2026-11-06 evening):**
+- Qwen3-8B is downloaded. `install.sh --skip-kernel-agent` ran in new overlays `hyperloom-atom` and `hyperloom-vllm`; its rc was 0 for both. The kernel-agent part starts Ray, so it still has to run on node6100.
+- `.env` is written. The user's token is the only thing blocking step 2.
+- Code checks: with only an Anthropic token, `--critic-protocol auto` picks Anthropic. The accuracy gate and profiler flags are still to be read.
+- Step 3 own baselines are running on node6101 (`hyperloom/run_baselines.sh`, state in `logs/hyperloom/baselines-node6101.state`). Output is separate (`hyperloom-baseline`), so published tables aren't touched.
+- The user said Claude usage is not a limit, so step 4 runs after step 2 without stopping for approval.
+
+**Not ready to run sessions yet.** The table and lists below are from earlier the same day.
+
+| Step | What | Status |
+|---|---|---|
+| 0 | Read-only checks | Partly done |
+| 1 | Install on the login node | Partly done |
+| 2 | Small token test: Qwen3-8B, 1 GPU, about 1 hour, then stop and report | Not started |
+| 3 | Same-day baselines for A, B and C, plus the MTP check | Not started |
+| 4 | Optimization sessions (only when the user asks) | Not started |
+| 5 | Re-measure the final setup with our own client | Not started |
+| 6 | Work out which changes made the gain, including the profiler results | Not started |
+| 7 | Results file and push | Not started |
+
+**Done:**
+- **Docker shim:** `common/bin/docker` now supports `--entrypoint` and `exec -w`. Tested with apptainer on node6100.
+- **Hyperloom package:** `hyperloom-inference-optimizer==1.0.0` is installed in `amd-software/hyperloom/`.
+- **Nodes:** both have enough space (about 26 TB free on `/scratch`).
+- **Profiler hotfix:** it is in `install_baremetal.sh` only, so docker mode skips it and no system files are touched.
+- **Auth and model:** Hyperloom's code supports `CLAUDE_CODE_OAUTH_TOKEN`. Custom model names are allowed by default, so Opus 5.5 should be accepted (not yet run).
+
+**Still to do before step 2:**
+1. **Qwen3-8B download:** it failed (`No module named 'requests'`). `amd-software/models/Qwen3-8B` is empty, so fix this and rerun on the login node.
+2. **Hyperloom dependencies:** run `install.sh` inside the container on the login node, saving to a new overlay (not the overlays our benchmarks use). This also fetches Magpie and InferenceX. Apptainer and `fuse2fs` are on the login node, but this has not been tried yet.
+3. **Settings:** write `.env` with Opus 5.5, docker mode and node6100.
+4. **User's token:** the user runs `claude setup-token` and types the token into the file. Claude never sees it.
+5. **Remaining code checks:** whether the Critic works with only an Anthropic token, how the accuracy gate is measured, and which profiler flags are used.
+
+**Container ROCm (user accepted the images as they are, 2026-11-03):** ROCm 10.1 applies only outside containers. Inside them, ATOM `atom-dev-nightly_202610011450.sif` has ROCm 7.2.4 and vLLM `vllm-openai-rocm-v0.29.0.sif` has 7.2.3. The version in `vllm-openai-rocm-nightly-rocm100.sif` was not found.
 
 Sources:
 - Docs: https://rocm.docs.amd.com/projects/hyperloom/en/latest/index.html (v1.0.0: install, Slurm, how-to, optimization loop, kernel path, authentication, session output, multi-node, troubleshooting).
@@ -10,7 +48,7 @@ Hyperloom 1.0.0 came out after Claude's knowledge cutoff. Everything below comes
 
 ## 0. User decisions (2026-11-02)
 
-- **ROCm:** ROCm 10.1 (`amd-software/rocm-10.1.0`, `ROCM_STACK=10.1`) for anything run outside a container. Inside a container, use the image's own ROCm. Never ROCm 7.2.4.
+- **ROCm:** ROCm 10.1 (`amd-software/rocm-10.1.0`, `ROCM_STACK=10.1`) for anything run outside a container. Inside a container, use the image's own ROCm, even where that is 7.2.4 (see Current status). Hyperloom's own default SGLang images are still not used.
 - **Containers:**
   - Run every "docker" job with apptainer through our docker shim (`common/bin/docker`).
   - Use Hyperloom's **docker mode**, so the shim stands in for docker.

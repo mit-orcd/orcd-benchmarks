@@ -24,7 +24,7 @@
 #         results/<node>/kimi-amd-recipe/<arm>.{csv,md}, results/ubuntu/kimi-amd-recipe.md
 set -uo pipefail
 ARM=${1:?usage: $0 isl128k|isl1k}
-export RESULTS_SUBDIR=kimi-amd-recipe
+export RESULTS_SUBDIR=${RESULTS_SUBDIR:-kimi-amd-recipe}
 source /orcd/data/orcd/022/benchmarks/amd-ubuntu/common/env.sh
 cd "$BENCH_ROOT/atom"
 
@@ -159,6 +159,7 @@ for C in $CONC; do
 done
 stop_server
 flock -u 9; exec 9>&-     # GPUs are free again; analysis does not need them
+[[ -n ${NO_REPORT:-} ]] && { say "NO_REPORT set: no analysis"; exit 0; }   # plan-hyperloom.md baselines
 
 # ---- 6. analysis --------------------------------------------------------------------------
 say "analysis ($ok points)"
