@@ -2,9 +2,21 @@
 
 Written 2026-11-02 and revised the same day after user feedback. Status updated 2026-11-06.
 
-## Current status (2026-11-06)
+## Current status (2026-11-09)
 
-**Step 2 done (2026-11-09):** Qwen3-8B, 1 GPU, vLLM v0.29.0 image, 1 h budget, no kernel agent (`hyperloom/run_step2.sh`).
+**Step 4 session A, first run (2026-11-10):**
+- **Result:** it ended at 10:27 UTC after about 9 h with stop reason `conc_sweep_failed`. Hyperloom's baseline was 1,661 tok/s at 64 users (our step 3: 1,605–1,652). The best gain was 0.33% (`cudagraph_full`).
+- **Why so little gain:** the 5-hour Claude limit was hit at 03:06 UTC, about 1 h 45 min in. Hyperloom caught the error and kept running about 8 h without Claude.
+- **Session dir:** `logs/hyperloom/Kimi-K3/20261110T012123Z-2c1aea52/`
+
+**Step 4 session A, resumed (started 2026-11-11 04:38 UTC):** `hyperloom/run_step4_autoresume.sh` on node6100 resumes the same session with `--resume-from`, with about 10.25 h of budget left out of 12 h.
+- At a Claude limit it saves a checkpoint and stops.
+- It then checks every 60 min and resumes when the limit is over, until step 4 is completed.
+- Progress: `logs/hyperloom/step4-autoresume-node6100.state`
+
+Steps 5–7 wait for the user.
+
+**Step 2 done (2026-11-09):** Full tables in [results/hyperloom-step2.md](results/hyperloom-step2.md). Qwen3-8B, 1 GPU, vLLM v0.29.0 image, 1 h budget, no kernel agent (`hyperloom/run_step2.sh`).
 - Try 1 stopped after 6 min: Ray could not start (socket path too long). Fix: `RAY_TMPDIR=/dev/shm/shaohao-ray`. It still used 2.54M tokens (22 calls).
 - Try 2 ran 46 min: Hyperloom baseline 7,245 tok/s/GPU at 64 users; 2 of 4 explore variants tried, no gain kept; stop reason `robustness_escalated`; accuracy eval found no results.
 - Tokens (try 2): 0.64M total over 7 calls; 87% cache read, 76K cache write, 8.8K output. Most of the hour is benchmark time, not model calls.
@@ -17,15 +29,15 @@ Written 2026-11-02 and revised the same day after user feedback. Status updated 
 - Step 3 own baselines are running on node6101 (`hyperloom/run_baselines.sh`, state in `logs/hyperloom/baselines-node6101.state`). Output is separate (`hyperloom-baseline`), so published tables aren't touched.
 - The user said Claude usage is not a limit, so step 4 runs after step 2 without stopping for approval.
 
-**Not ready to run sessions yet.** The table and lists below are from earlier the same day.
+**Step table (updated 2026-11-09).** The lists after the table are from 2026-11-06.
 
 | Step | What | Status |
 |---|---|---|
-| 0 | Read-only checks | Partly done |
-| 1 | Install on the login node | Partly done |
-| 2 | Small token test: Qwen3-8B, 1 GPU, about 1 hour, then stop and report | Not started |
-| 3 | Same-day baselines for A, B and C, plus the MTP check | Not started |
-| 4 | Optimization sessions (only when the user asks) | Not started |
+| 0 | Read-only checks | Done |
+| 1 | Install on the login node | Done (kernel-agent part installed in the vLLM overlay by step 2; ATOM overlay still to do) |
+| 2 | Small token test: Qwen3-8B, 1 GPU, about 1 hour, then stop and report | Done 2026-11-09 ([results/hyperloom-step2.md](results/hyperloom-step2.md)) |
+| 3 | Same-day baselines for A, B and C, plus the MTP check | Done 2026-11-07 (2 repeats; exact-text MTP check not usable, use GSM8K in step 5) |
+| 4 | Optimization sessions (only when the user asks) | Session A ran 2026-11-10 (0.33% gain); paused |
 | 5 | Re-measure the final setup with our own client | Not started |
 | 6 | Work out which changes made the gain, including the profiler results | Not started |
 | 7 | Results file and push | Not started |

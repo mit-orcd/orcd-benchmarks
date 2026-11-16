@@ -28,12 +28,21 @@ PORT="${PORT:-8031}"
 ARMS="${ARMS:-0:1 8 32;6:1;2:2 4 8 10 16 32 48 64}"
 ISL=1024; OSL=1024; MAXSEQS=64
 NAME="atom-kimi-mtp"
+# Nov 12 knobs (hyperloom candidates; defaults keep the old behavior):
+#   EXTRA_ARGS  extra server flags, e.g. "--moe-backend mega" or "--enable-expert-parallel"
+#   EXTRA_ENVS  extra container env "K=V K2=V2"
+#   GSM8K=1     after the sweep, run lm_eval GSM8K (5-shot, chat template, temp 0, 64 concurrent,
+#               all 1319 questions; same settings as Hyperloom's accuracy gate) -> gsm8k/ in the arm dir
+#   OUTTAG      added to the output dir name
+#   PREFIX      command put in front of the server (e.g. a rocprofv3 ... -- wrapper)
+#   NUM_PROMPTS prompts per concurrency (default 10 x C)
+EXTRA_ARGS="${EXTRA_ARGS:-}"; EXTRA_ENVS="${EXTRA_ENVS:-}"; GSM8K="${GSM8K:-0}"; OUTTAG="${OUTTAG:-}"
 
 exec 9>/dev/shm/shaohao-gpu.lock
 flock 9   # one GPU job per node
 
 TS=$(date +%Y%m%d_%H%M%S)
-OUT=$LOG_ROOT/atom/kimi_atom_mtp_$TS; mkdir -p "$OUT"
+OUT=$LOG_ROOT/atom/kimi_atom_mtp_${OUTTAG:+${OUTTAG}_}$TS; mkdir -p "$OUT"
 STATE=$OUT/STATE.txt
 say() { echo "[$(date -Iseconds)] $*" | tee -a "$STATE"; }
 say "Kimi-K3 ATOM + MTP start: image=$IMG draft=$DRAFT arms='$ARMS' out=$OUT"
@@ -55,18 +64,21 @@ run_arm() {   # $1 = K, $2 = conc list
     echo '#!/usr/bin/env bash'
     echo 'set -uo pipefail'
     echo "python -c 'import fla' 2>/dev/null || pip install --no-cache-dir flash-linear-attention 2>&1 | tail -3"
-    echo 'exec python -m atom.entrypoints.openai_server \'
+    echo "exec ${PREFIX:+$PREFIX }python -m atom.entrypoints.openai_server \\"
     echo '  --model /model --tensor-parallel-size 8 \'
     echo "  --server-port $PORT --kv_cache_dtype fp8 --max-num-seqs $MAXSEQS \\"
     echo '  --gpu-memory-utilization 0.93 --trust-remote-code \'
     echo '  --max-model-len 16384 --max-num-batched-tokens 16384 --block-size 128 \'
     echo '  --no-enable_prefix_caching \'
     (( K > 0 )) && echo "  --method dspark --draft-model /draft --num-speculative-tokens $K \\"
+    [[ -n $EXTRA_ARGS ]] && echo "  $EXTRA_ARGS \\"
     printf "  --online_quant_config '%s' 2>&1 | tee /out/atom_server.log\n" "$KIMI_QUANT"
   } >"$D/server_cmd.sh"
   chmod +x "$D/server_cmd.sh"
-  say "k=$K: starting server (conc '$CONC')"
-  docker run -d --name "$NAME" $(dgpu_args) \
+  say "k=$K: starting server (conc '$CONC') extra_args='$EXTRA_ARGS' extra_envs='$EXTRA_ENVS'"
+  local xe=() kv
+  for kv in $EXTRA_ENVS; do xe+=(-e "$kv"); done
+  docker run -d --name "$NAME" $(dgpu_args) "${xe[@]}" \
     -v "$MODEL":/model:ro -v "$DRAFT":/draft:ro -v "$D":/out \
     -e AITER_LOG_LEVEL=WARNING -e NCCL_IB_DISABLE=1 -e RCCL_MSCCL_ENABLE=1 -e NCCL_DEBUG=WARN \
     "$IMG" bash /out/server_cmd.sh >"$D/container_id.txt" 2>&1 || { say "k=$K: docker run failed"; return 1; }
@@ -84,7 +96,7 @@ run_arm() {   # $1 = K, $2 = conc list
   say "k=$K: server READY"
   [[ -n ${GREEDY_CHECK:-} ]] && $PY "$GREEDY_CHECK" "http://localhost:${PORT}" "$D/greedy.json" 2>&1 | tee -a "$STATE"
   for C in $CONC; do
-    n=$(( C * 10 ))
+    n=${NUM_PROMPTS:-$(( C * 10 ))}
     timeout 5400 docker exec "$NAME" python -m atom.benchmarks.benchmark_serving \
         --model /model --backend vllm --base-url "http://localhost:${PORT}" \
         --percentile-metrics ttft,tpot,itl,e2el --dataset-name random --ignore-eos \
@@ -104,6 +116,14 @@ run_arm() {   # $1 = K, $2 = conc list
     [[ -f $D/FAILED ]] && break
     say "k=$K c=$C rc=$rc $($PY -c "import json,sys;d=json.load(open('$D/c$C.json'));print('tok/s %.1f TPOT %.2f ms TTFT %.0f ms done %d'%(d['output_throughput'],d['median_tpot_ms'],d['median_ttft_ms'],d['completed']))" 2>/dev/null || echo 'no json')"
   done
+  if [[ $GSM8K == 1 && ! -f $D/FAILED ]]; then
+    say "k=$K: GSM8K (lm_eval) start"
+    timeout 3600 docker exec "$NAME" lm_eval --model local-chat-completions \
+        --model_args "model=/model,base_url=http://localhost:${PORT}/v1/chat/completions,api_key=EMPTY,eos_string=</s>,max_retries=5,num_concurrent=64,timeout=1800,tokenized_requests=False,max_length=16384" \
+        --tasks gsm8k --num_fewshot 5 --apply_chat_template --fewshot_as_multiturn \
+        --gen_kwargs "max_tokens=12288,temperature=0,top_p=1" --output_path /out/gsm8k >"$D/gsm8k.log" 2>&1
+    say "k=$K: GSM8K rc=$? $($PY -c "import json,glob;f=sorted(glob.glob('$D/gsm8k/**/results_*.json',recursive=True))[-1];r=json.load(open(f))['results']['gsm8k'];print('strict %.4f flexible %.4f'%(r['exact_match,strict-match'],r['exact_match,flexible-extract']))" 2>/dev/null || echo 'no result')"
+  fi
   docker stop -t 30 "$NAME" >/dev/null 2>&1; docker rm "$NAME" >/dev/null 2>&1
   sleep 30
 }

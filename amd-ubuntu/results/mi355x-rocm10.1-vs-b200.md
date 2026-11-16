@@ -148,6 +148,19 @@ row swaps and broadcasts between GPUs and nodes. So HPL lands below the GEMM rat
 78–84% of its FP64 GEMM, B200 keeps 95–97%. MI355X / B200 is 1.73–1.88x on HPL, against 2.14x on the FP64
 GEMM and 2.12x on paper.
 
+**Why MI355X HPL drops below its GEMM (rocHPL 78% of the GEMM at 1 GPU, 84% at 8, 79% on 2 nodes) and B200 does not (95–97%).**
+- HPL also does slow, memory-bound work (panel factorization, row swaps, triangular solves), and its GEMM has a thin
+  shape (inner size = block size) that gets small near the end.
+- Both GPUs have about 8 TB/s of memory bandwidth, so the slow work takes about the same time on each. But MI355X's
+  FP64 GEMM is 2.1x faster (77 vs 36 TFLOP/s), so the slow work is a bigger share of its time. On B200 the long GEMM hides it.
+- NVIDIA HPL is better tuned: it overlaps the slow work with the GEMM better, and its larger block size (1024 vs 512) gives
+  a more efficient GEMM shape.
+- 8 GPUs above 1 GPU (MI355X): a bigger total matrix, so the GEMM takes a larger share; and one GPU can factor the next
+  panel while the others update. B200 already hides the slow work at 1 GPU, so it stays flat.
+- 2 nodes: sending data between nodes is slower, so MI355X drops to 79%. B200's slow GEMM leaves time to hide the transfers.
+- So the drops come from slow steps that do not speed up with MI355X's fast GEMM, plus less mature rocHPL tuning,
+  not from weaker MI355X hardware.
+
 **Apple-to-apple: nearly.**
 - Same benchmark and the same rules (problem size, best of 2 runs, residual check).
 - Each vendor's own build: rocHPL (rocBLAS) vs NVIDIA HPL (cuBLAS); NB and process grid are each vendor's default (512 vs 1024).
