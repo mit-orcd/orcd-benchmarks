@@ -153,13 +153,14 @@ GEMM and 2.12x on paper.
   shape (inner size = block size) that gets small near the end.
 - Both GPUs have about 8 TB/s of memory bandwidth, so the slow work takes about the same time on each. But MI355X's
   FP64 GEMM is 2.1x faster (77 vs 36 TFLOP/s), so the slow work is a bigger share of its time. On B200 the long GEMM hides it.
-- NVIDIA HPL is better tuned: it overlaps the slow work with the GEMM better, and its larger block size (1024 vs 512) gives
-  a more efficient GEMM shape.
-- 8 GPUs above 1 GPU (MI355X): a bigger total matrix, so the GEMM takes a larger share; and one GPU can factor the next
-  panel while the others update. B200 already hides the slow work at 1 GPU, so it stays flat.
-- 2 nodes: sending data between nodes is slower, so MI355X drops to 79%. B200's slow GEMM leaves time to hide the transfers.
-- So the drops come from slow steps that do not speed up with MI355X's fast GEMM, plus less mature rocHPL tuning,
-  not from weaker MI355X hardware.
+- NVIDIA HPL uses a larger block size (1024 vs 512), which gives a larger GEMM shape. *Not measured:* NVIDIA HPL may also
+  overlap the slow work with the GEMM better than rocHPL; this is a likely cause, not confirmed.
+- 8 GPUs above 1 GPU (MI355X): a bigger total matrix, so the GEMM takes a larger share. *Not measured:* one GPU may also
+  factor the next panel while the others update. B200 stays flat (95–97%).
+- 2 nodes: MI355X drops to 79%, B200 does not. *Not measured:* likely slower transfers between nodes on MI355X, which
+  B200's slower GEMM hides.
+- So the main cause is that the slow steps do not speed up with MI355X's 2.1x faster GEMM. How much comes from rocHPL
+  tuning is not measured; a profile of each run (rocprofv3 for rocHPL, Nsight Systems for NVIDIA HPL) would confirm it.
 
 **Apple-to-apple: nearly.**
 - Same benchmark and the same rules (problem size, best of 2 runs, residual check).
