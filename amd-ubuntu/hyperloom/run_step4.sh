@@ -20,6 +20,10 @@ MODEL=/scratch/Kimi-K3; HOURS=${HOURS:-12}; RESUME=${RESUME:-}
 #  ~/.local/bin is put on PATH so Hyperloom finds `claude` and runs helpers with --add-dir
 #  (without it, helpers ran in the SDK mode that refused reads outside the working dir)
 KERNEL=${KERNEL:-1}; FRAMEWORK=${FRAMEWORK:-1}; CONCS=${CONCS:-1,8,64,128,256}; SPEC_CPU_MIN=${SPEC_CPU_MIN:-20}
+# Nov 17 knobs (plan-hyperloom.md §11): CONC = target user level (64); REF = reference script
+#  (kimi_atom_reference.sh); FRAMEWORK_PATH = framework checkout the framework agent may patch (none)
+TARGET=${TARGET:-10}; EXTRA_OPT=${EXTRA_OPT:-}   # Nov 18: --target-gain, extra optimize flags (e.g. --no-explore)
+CONC=${CONC:-64}; REF=${REF:-$H/hyperloom/kimi_atom_reference.sh}; FRAMEWORK_PATH=${FRAMEWORK_PATH:-}
 LTMP=/dev/shm/shaohao-tmp
 L=$H/logs/hyperloom; mkdir -p "$L" "$SW/cache/tmp" /dev/shm/shaohao-ray "$LTMP"
 ST=$L/step4-$(hostname -s).state
@@ -34,7 +38,7 @@ if [[ -n $RESUME ]]; then
 fi
 if [[ -n $RESUME ]]; then RUNLOG=$L/step4-A-run-resume-$(date -u +%Y%m%dT%H%M%SZ).log
 else RUNLOG=$L/step4-A-run-new-$(date -u +%Y%m%dT%H%M%SZ).log; fi   # never overwrite session A's step4-A-run.log
-say "settings: kernel=$KERNEL framework=$FRAMEWORK concs=$CONCS spec_cpu_min=$SPEC_CPU_MIN tmpdir=$LTMP log=$RUNLOG"
+say "settings: conc=$CONC ref=$(basename "$REF") framework_path=${FRAMEWORK_PATH:-none} kernel=$KERNEL framework=$FRAMEWORK target=$TARGET extra_opt=${EXTRA_OPT:-none} concs=$CONCS spec_cpu_min=$SPEC_CPU_MIN tmpdir=$LTMP log=$RUNLOG"
 SESSION_DIR="$RESUME" bash "$H/hyperloom/guard.sh" "$RUNLOG" "$ST" 9>&- &
 GUARD=$!
 
@@ -42,7 +46,7 @@ apptainer exec --cleanenv --overlay "$OV" -B /orcd/data/orcd/022 -B /scratch/Kim
   --env TMPDIR="$LTMP" --env REPO_ROOT="$W" --env MODEL="$MODEL" --env HOURS="$HOURS" \
   --env KERNEL="$KERNEL" --env FRAMEWORK="$FRAMEWORK" --env CONCS="$CONCS" --env HYPERLOOM_SPECIALIST_CPU_BASE_MIN="$SPEC_CPU_MIN" \
   --env RAY_TMPDIR=/dev/shm/shaohao-ray --env HYPERLOOM_IMAGE=rocm/atom-dev:nightly_202610011450 \
-  --env HF_HOME="$SW/cache/hf" --env XDG_CACHE_HOME="$SW/cache/xdg" --env REF="$H/hyperloom/kimi_atom_reference.sh" --env RESUME="$RESUME" \
+  --env HF_HOME="$SW/cache/hf" --env XDG_CACHE_HOME="$SW/cache/xdg" --env REF="$REF" --env RESUME="$RESUME" --env CONC="$CONC" --env FRAMEWORK_PATH="$FRAMEWORK_PATH" --env TARGET="$TARGET" --env EXTRA_OPT="$EXTRA_OPT" \
   "$SIF" bash -c '
     set -a; . "$REPO_ROOT/.env"; set +a
     export PYTHONPATH="$REPO_ROOT:${PYTHONPATH:-}"
@@ -59,10 +63,10 @@ apptainer exec --cleanenv --overlay "$OV" -B /orcd/data/orcd/022 -B /scratch/Kim
     echo "== optimize"
     python3 -m hyperloom.inference_optimizer.cli optimize \
       --framework atom --model "$MODEL" --gpu-type mi355x --tp 8 --model-class moe_mla \
-      --conc 64 --isl 1024 --osl 1024 --precision bf16 --max-model-len 16384 \
-      --reference-script "$REF" \
+      --conc "$CONC" --isl 1024 --osl 1024 --precision bf16 --max-model-len 16384 \
+      --reference-script "$REF" ${FRAMEWORK_PATH:+--framework-path "$FRAMEWORK_PATH"} \
       --enable-conc-sweep --conc-sweep-concs "$CONCS" $NOK \
-      --target-gain 10 --max-hours "$HOURS" ${RESUME:+--resume-from "$RESUME"}
+      --target-gain "$TARGET" $EXTRA_OPT --max-hours "$HOURS" ${RESUME:+--resume-from "$RESUME"}
     echo "optimize rc=$?"
     ray stop --force >/dev/null 2>&1 || true
   ' > "$RUNLOG" 2>&1

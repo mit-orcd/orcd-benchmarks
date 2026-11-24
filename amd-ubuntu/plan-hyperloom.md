@@ -367,3 +367,50 @@ Still open: whether to run all of A, B and C, or start with A only (decide after
 - Each kept change has a measured share of the gain and a profile-based reason.
 - GSM8K and greedy-output checks pass.
 - `results/hyperloom-kimi-k3.md` is pushed.
+
+## 10. Next steps after the Nov 16 small tests (2026-11-16)
+
+Status: [hyperloom/status-20261116.md](hyperloom/status-20261116.md). The sandbox problem and the profile
+breakdown are fixed. The two corrected candidates are blocked by the ATOM/aiter code in image
+`nightly_202610011450`: expert parallel is not supported by Kimi-K3's a16w4 SiTUv2 MoE kernel, and
+a8w4 (`mega`) supports only SwiGLU. T4 stays paused.
+
+**Will T4 improve performance as it is set now?** Probably only a few percent. T4 runs with
+`KERNEL=0 FRAMEWORK=0`, so it only tries server settings. Past results: +0.33% in the Nov 10–11
+12-hour session (`--cudagraph-mode FULL`, inside the noise), +2.56% in the 1.5-hour T3 test
+(`kda_ssm_state_fp16`, 1,720 vs 1,677 tok/s for 8 GPUs; accuracy not yet checked). The big costs at
+64 users are the MoE expert math (37%) and the all-reduce (22%), which the blocked candidates targeted.
+
+Suggested order, before spending tokens on T4 (no tokens for steps 1–2):
+1. **Check the +2.56% setting (`kda_ssm_state_fp16`)** with our own script on node6101: 64 users,
+   320 prompts, GSM8K (first 250 questions, then the full set if it holds). Keep it only if GSM8K
+   is within 0.01 of the baseline (0.980 on 250 questions, 0.961 on the full set). About 15 min.
+2. **Look for a newer ATOM image** (`rocm/atom-dev` nightlies after `202610011450`) whose MoE kernels
+   support SiTUv2 with expert parallel (a16w4 masking, or SiTUv2 in `mega`). If found: pull the SIF on
+   the login node, rerun `hyperloom/run_fix_tests.sh gpu` (baseline + a8w4 + expert parallel, small).
+3. **Decide on T4** from steps 1–2:
+   - newer image works: rebase the baseline on it, test the candidates, then resume T4;
+   - no newer image: mark expert parallel and a8w4 "blocked by ATOM"; resume T4 as is (small gains
+     expected), or with `KERNEL=1` so the kernel agent can try faster MoE kernels (more tokens; its
+     earlier runs had problems).
+4. **Not planned:** patching the ATOM/aiter MoE kernels ourselves (too large).
+
+Nothing long runs until the user says go.
+
+**Done Nov 16 (results in [hyperloom/status-20261116.md](hyperloom/status-20261116.md)):** step 1, `ATOM_GDN_SSM_DTYPE=fp16` confirmed (+3.3% at 64 users, GSM8K 0.958 vs 0.958): keep it. Step 2, no image or pull request fixes the blocks (checked ATOM/aiter `main`): expert parallel and a8w4 stay blocked. Step 3 waits for the user.
+
+## 11. Suggested next steps for Hyperloom (2026-11-17)
+
+Running T4 again with server settings only, as set now, gives a few % at most. Instead, give Hyperloom one clear goal at a time, aimed at the largest costs in the profile (64 users: MoE expert GEMMs 36.7%, all-reduce 21.7%). Nothing starts without the user's go-ahead.
+
+1. **New baseline for every run:** image `nightly_202610011450` + `ATOM_GDN_SSM_DTYPE=fp16` (1,679 output tok/s for 8 GPUs at 64 users; GSM8K same).
+2. **Short T4, server settings only (`KERNEL=0 FRAMEWORK=0`), aimed at 128 and 256 users.** The baseline caps at `--max-num-seqs 64`, so 256 users gives 1,631 tok/s, the same as 64 users. The older ATOM image reached 2,602 tok/s at 256 users ([mi355x-rocm10.1-vs-b200.md](results/mi355x-rocm10.1-vs-b200.md) §6). Let Hyperloom tune `max-num-seqs`, the batch-token limit and the CUDA-graph sizes. Expected +30–50% at those loads, no code change, a few hours.
+3. **Kernel agent on the MoE (`KERNEL=1`)** to unblock the blocked candidates: add SiTUv2 to the a8w4 `mega` kernel (`flydsl_mega_experts.py`), or add expert-parallel masking to aiter's a16w4 SiTUv2 kernel (`fused_moe.py`). Needs a GSM8K check. Costs more tokens, and earlier kernel-agent runs had problems. Gain if it works: maybe 10–20%, not measured. This replaces §10 item 4 ("not planned"): Hyperloom's agent writes the patch, not us.
+4. **Framework agent on communication (`FRAMEWORK=1`):** all-reduce fused with RMSNorm, or quick-reduce settings.
+5. **Low load (1–8 users):** tune ATOM's own speculative decoding (DSpark/MTP, `atom/run_kimi_atom_mtp.sh`). At 1 user, vLLM recipe 1 gives 71 tok/s, ATOM about 63.
+
+Suggested order: step 2 first (largest gain for the least effort), then step 3. Do not switch to the AMD vLLM recipes: at 64 users the newer ATOM image (1,642–1,679 tok/s) is faster than all three recipes in §6 (vLLM recipe 1: 1,344).
+
+**Started Nov 17, 11:01 AM ET (steps 2–5 as one chain on node6100):** `hyperloom/run_chain.sh`. Each step is a new Hyperloom session under `run_step4_autoresume.sh` (checkpoint every 30 min; at a Claude limit it stops and checks every 60 min, then resumes the same session). Budgets: s2 4 h (target 256 users, sweep 128,256), s3 12 h (`KERNEL=1`), s4 8 h (`FRAMEWORK=1`, may patch `/app/ATOM`), s5 4 h (reference `ref_fp16_mtp.sh`, DSpark K=6, target 1 user). Baseline references: `hyperloom/ref_fp16.sh`, `ref_fp16_mtp.sh`. New knobs in `run_step4.sh`: `CONC`, `REF`, `FRAMEWORK_PATH`. Chain state and restart: `logs/hyperloom/chain-20261117/` (a restarted chain skips done steps and resumes the open session); cron on login007 runs `hyperloom/chain_watchdog.sh` every hour to restart the chain if it died. Failure other than a Claude limit: retry once, then the step is marked FAILED and the chain goes on. Results per step: `hyperloom/status-chain-20261117.md`. Cancel: `touch logs/hyperloom/AUTORESUME_STOP`. The paused T4 session `20261112T213520Z-c00d9f29` is kept, not resumed.
+
+**Result (Nov 18):** all steps done at 2:36 PM ET. Only the step 3 setting gave a gain: +10.2% output tok/s at 64 users, confirmed with our own script (TPOT 11.9% lower, TTFT 4× higher, GSM8K same). Steps 2, 4, 5: no new gain. Summary and next steps: `hyperloom/status-chain-20261117.md` (sections "Summary (Nov 18)" and "Do we gain, and is Hyperloom worth continuing?"). Next: one targeted kernel-agent run of 4–6 h from the step 3 setting as baseline; if it keeps no kernel, stop using Hyperloom for Kimi-K3.

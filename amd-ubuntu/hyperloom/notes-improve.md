@@ -2,7 +2,7 @@
 
 Session A: `logs/hyperloom/Kimi-K3/20261110T012123Z-2c1aea52` (Kimi-K3, ATOM without MTP, 8 GPUs).
 - **Result:** paused on Nov 11, 21:48 UTC, after 6 legs and 7.46 h of the 12 h budget.
-- **Best gain:** **+0.33%** (1,666.6 vs 1,661.1 output tok/s/GPU at 64 users), from one setting, `--cudagraph-mode FULL`.
+- **Best gain:** **+0.33%** (1,666.6 vs 1,661.1 output tok/s for all 8 GPUs at 64 users), from one setting, `--cudagraph-mode FULL`.
 - **Checkpoint:** `logs/hyperloom/Kimi-K3/ckpt/20261110T012123Z-2c1aea52/20261111T215005Z-paused/`
 
 The low gain is mostly not because there is nothing left to improve. Hyperloom's test runs could not start. All findings below come from the session's event log (`storage/coordinator.db`) and run folders.
@@ -82,7 +82,7 @@ Replaying all 6 legs through the new check finds the 3 real limits and none of t
 - Add a **rocprofv3** kernel trace next to the PyTorch trace. GEAK's parser already merges both (`parse_profile.py --rocprof-dir`), which gives true hardware times. The roofline report itself says "confidence low" today.
 - Profile at **1, 64 and 256 users**, not only 64. The share of time in the MoE kernels and the all-reduce changes with the number of users.
 - Do this in our own step 6 too. With TraceLens and the roofline, that gives a before/after picture for every change.
-- Find out why GEAK's own baseline (2,049.55 output tok/s) differs from Hyperloom's (1,661.1 tok/s/GPU). The likely cause is a different benchmark client and metric (GEAK uses `random_range_ratio` 0.8 and 320 prompts), but this is not checked yet.
+- GEAK's baseline (2,049.55 output tok/s) vs Hyperloom's (1,661.1): both are totals for all 8 GPUs. Checked Nov 16: GEAK's client used `random_range_ratio` 1.0 (all requests the same length), Hyperloom's used 0.8. Our server with 1.0 gave 2,038.7 tok/s; with 0.8, 1,642.2. Same-length requests start and finish together, so tok/s is higher but TTFT (time to first token) is 2.8 s vs 0.3 s. Hyperloom's 0.8 number is the right baseline.
 
 ### 3. Test the candidates one at a time, with our own scripts and GSM8K
 

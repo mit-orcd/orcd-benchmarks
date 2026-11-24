@@ -26,7 +26,7 @@ MODEL="${MKIMI:-$KIMI_MODEL}"
 DRAFT="${DRAFT:-$DSPARK_MODEL}"
 PORT="${PORT:-8031}"
 ARMS="${ARMS:-0:1 8 32;6:1;2:2 4 8 10 16 32 48 64}"
-ISL=1024; OSL=1024; MAXSEQS=64
+ISL=1024; OSL=1024; MAXSEQS=${MAXSEQS:-64}; BATCHED=${BATCHED:-16384}
 NAME="atom-kimi-mtp"
 # Nov 12 knobs (hyperloom candidates; defaults keep the old behavior):
 #   EXTRA_ARGS  extra server flags, e.g. "--moe-backend mega" or "--enable-expert-parallel"
@@ -34,8 +34,12 @@ NAME="atom-kimi-mtp"
 #   GSM8K=1     after the sweep, run lm_eval GSM8K (5-shot, chat template, temp 0, 64 concurrent,
 #               all 1319 questions; same settings as Hyperloom's accuracy gate) -> gsm8k/ in the arm dir
 #   OUTTAG      added to the output dir name
+#   MAXSEQS     --max-num-seqs (default 64); BATCHED --max-num-batched-tokens (default 16384)  (Nov 18)
 #   PREFIX      command put in front of the server (e.g. a rocprofv3 ... -- wrapper)
 #   NUM_PROMPTS prompts per concurrency (default 10 x C)
+#   RANGE_RATIO random length range ratio of the client (default 0.8; GEAK used 1.0)
+#   GSM8K_LIMIT first N GSM8K questions only (short tests); STOP_T seconds docker stop waits (default 30;
+#               longer for rocprofv3 runs so it can write its files)
 EXTRA_ARGS="${EXTRA_ARGS:-}"; EXTRA_ENVS="${EXTRA_ENVS:-}"; GSM8K="${GSM8K:-0}"; OUTTAG="${OUTTAG:-}"
 
 exec 9>/dev/shm/shaohao-gpu.lock
@@ -68,7 +72,7 @@ run_arm() {   # $1 = K, $2 = conc list
     echo '  --model /model --tensor-parallel-size 8 \'
     echo "  --server-port $PORT --kv_cache_dtype fp8 --max-num-seqs $MAXSEQS \\"
     echo '  --gpu-memory-utilization 0.93 --trust-remote-code \'
-    echo '  --max-model-len 16384 --max-num-batched-tokens 16384 --block-size 128 \'
+    echo "  --max-model-len 16384 --max-num-batched-tokens $BATCHED --block-size 128 \\"
     echo '  --no-enable_prefix_caching \'
     (( K > 0 )) && echo "  --method dspark --draft-model /draft --num-speculative-tokens $K \\"
     [[ -n $EXTRA_ARGS ]] && echo "  $EXTRA_ARGS \\"
@@ -100,7 +104,7 @@ run_arm() {   # $1 = K, $2 = conc list
     timeout 5400 docker exec "$NAME" python -m atom.benchmarks.benchmark_serving \
         --model /model --backend vllm --base-url "http://localhost:${PORT}" \
         --percentile-metrics ttft,tpot,itl,e2el --dataset-name random --ignore-eos \
-        --request-rate inf --random-range-ratio 0.8 --trust-remote-code --max-concurrency "$C" \
+        --request-rate inf --random-range-ratio "${RANGE_RATIO:-0.8}" --trust-remote-code --max-concurrency "$C" \
         --num-prompts "$n" --random-input-len "$ISL" --random-output-len "$OSL" --save-result \
         --result-dir /out --result-filename "c${C}.json" >"$D/c${C}.log" 2>&1 &
     bp=$!
@@ -120,11 +124,11 @@ run_arm() {   # $1 = K, $2 = conc list
     say "k=$K: GSM8K (lm_eval) start"
     timeout 3600 docker exec "$NAME" lm_eval --model local-chat-completions \
         --model_args "model=/model,base_url=http://localhost:${PORT}/v1/chat/completions,api_key=EMPTY,eos_string=</s>,max_retries=5,num_concurrent=64,timeout=1800,tokenized_requests=False,max_length=16384" \
-        --tasks gsm8k --num_fewshot 5 --apply_chat_template --fewshot_as_multiturn \
+        --tasks gsm8k --num_fewshot 5 --apply_chat_template --fewshot_as_multiturn ${GSM8K_LIMIT:+--limit $GSM8K_LIMIT} \
         --gen_kwargs "max_tokens=12288,temperature=0,top_p=1" --output_path /out/gsm8k >"$D/gsm8k.log" 2>&1
     say "k=$K: GSM8K rc=$? $($PY -c "import json,glob;f=sorted(glob.glob('$D/gsm8k/**/results_*.json',recursive=True))[-1];r=json.load(open(f))['results']['gsm8k'];print('strict %.4f flexible %.4f'%(r['exact_match,strict-match'],r['exact_match,flexible-extract']))" 2>/dev/null || echo 'no result')"
   fi
-  docker stop -t 30 "$NAME" >/dev/null 2>&1; docker rm "$NAME" >/dev/null 2>&1
+  docker stop -t "${STOP_T:-30}" "$NAME" >/dev/null 2>&1; docker rm "$NAME" >/dev/null 2>&1
   sleep 30
 }
 
